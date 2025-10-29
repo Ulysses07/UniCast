@@ -1,0 +1,18 @@
+logLevel: info
+
+rtsp: no
+rtmp: yes
+rtmpAddress: :1935
+hls: no
+webrtc: no
+srt: no
+
+paths:
+  stream:
+    source: publisher
+    runOnReady: >
+      C:\Users\PC\Documents\UniCast\UniCast.App\bin\Debug\net8.0-windows\ffmpeg.exe
+      -i rtmps://a.rtmps.youtube.com/live2/EBMF-9V15-U367-PFBS-BT6M
+      -c copy -f tee "[f=flv]$(RTMP1) | [f=flv]$(RTMP2) | [f=flv]$(RTMP3) | [f=flv]$(RTMP4)"
+      \"[f=flv:onfail=ignore:use_fifo=1]{env:UNICAST_OUT_1}|[f=flv:onfail=ignore:use_fifo=1]{env:UNICAST_OUT_2}|[f=flv:onfail=ignore:use_fifo=1]{env:UNICAST_OUT_3}|[f=flv:onfail=ignore:use_fifo=1]{env:UNICAST_OUT_4}\""
+    runOnReadyRestart: yes

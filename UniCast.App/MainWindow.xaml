@@ -1,0 +1,77 @@
+﻿<Window x:Class="UniCast.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:UniCast.App.Views"
+        mc:Ignorable="d"
+        Title="UniCast" Height="700" Width="1100"
+        WindowStartupLocation="CenterScreen"
+        Background="#1b1b1f">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="SidebarCol" Width="64"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="#202028">
+            <StackPanel Margin="8">
+                <TextBlock Text="UNICAST"
+                           Foreground="#9aa0a6"
+                           FontWeight="Bold"
+                           FontSize="12"
+                           Margin="4,8,0,12"/>
+                <Button x:Name="BtnNavControl" Click="BtnNavControl_Click"
+                        Margin="0,4,0,0" Padding="8"
+                        Background="#2a2f3a" Foreground="White" BorderThickness="0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="▶" Margin="0,0,6,0"/>
+                        <TextBlock Text="Kontrol" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="BtnNavTargets" Click="BtnNavTargets_Click"
+                        Margin="0,6,0,0" Padding="8"
+                        Background="#2a2f3a" Foreground="White" BorderThickness="0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⛓" Margin="0,0,6,0"/>
+                        <TextBlock Text="Hedefler" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="BtnSettings" Click="BtnSettings_Click"
+                        Margin="0,6,0,0" Padding="8"
+                        Background="#2a2f3a" Foreground="White" BorderThickness="0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚙" Margin="0,0,6,0"/>
+                        <TextBlock Text="Ayarlar" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="22"/>
+            </Grid.RowDefinitions>
+
+            <!-- Top bar -->
+            <DockPanel Grid.Row="0" Background="#24242a" LastChildFill="True">
+                <TextBlock x:Name="TxtTopStatus" Foreground="#e5e7eb" Margin="10,0,0,0"
+                           VerticalAlignment="Center" Text="Hazır"/>
+            </DockPanel>
+
+            <!-- Main content -->
+            <ContentControl x:Name="MainContent" Grid.Row="1" Margin="8"/>
+
+            <!-- Status bar -->
+            <Border Grid.Row="2" Background="#24242a">
+                <TextBlock x:Name="TxtFooter"
+                           Foreground="#9aa0a6" Margin="10,0,0,0"
+                           VerticalAlignment="Center" Text="CBR • 2s GOP • NVENC/AMF/QSV var ise otomatik"/>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

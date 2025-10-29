@@ -1,0 +1,58 @@
+<UserControl x:Class="UniCast.App.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignHeight="500" d:DesignWidth="700">
+    <Grid Margin="20">
+        <StackPanel Orientation="Vertical">
+            <TextBlock Text="Varsayılan Yayın Ayarları" FontSize="16" FontWeight="Bold" Margin="0,0,0,8"/>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Kamera:" Width="150" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding DefaultCamera, UpdateSourceTrigger=PropertyChanged}" Width="300"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Mikrofon:" Width="150" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding DefaultMic, UpdateSourceTrigger=PropertyChanged}" Width="300"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Video Bitrate (kbps):" Width="150" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding VideoKbps, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Ses Bitrate (kbps):" Width="150" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding AudioKbps, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Çözünürlük:" Width="150" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+                <TextBlock Text="x" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="FPS:" Width="150" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Fps, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Encoder:" Width="150" VerticalAlignment="Center"/>
+                <ComboBox Width="150" SelectedItem="{Binding Encoder}">
+                    <ComboBoxItem Content="auto"/>
+                    <ComboBoxItem Content="libx264"/>
+                    <ComboBoxItem Content="h264_nvenc"/>
+                    <ComboBoxItem Content="h264_qsv"/>
+                    <ComboBoxItem Content="h264_amf"/>
+                </ComboBox>
+            </StackPanel>
+
+            <Button Content="Kaydet" Width="120" Height="32" Margin="0,16,0,0"
+                    Click="BtnSave_Click"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
