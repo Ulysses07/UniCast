@@ -1,129 +1,55 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using UniCast.Core;
+using System.Windows.Input;
+using UniCast.App.Infrastructure;
+using UniCast.App.Services;
+using UniCast.Core.Models;
 
 namespace UniCast.App.ViewModels
 {
-    // Tek bir RTMP hedef öğesi (YouTube, TikTok vs.)
-    public sealed class TargetItem : INotifyPropertyChanged
-    {
-        private string _url = "";
-        private bool _enabled;
-
-        public string Name { get; }
-        public Platform Platform { get; }
-
-        public string Url
-        {
-            get => _url;
-            set
-            {
-                if (_url != value)
-                {
-                    _url = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public bool Enabled
-        {
-            get => _enabled;
-            set
-            {
-                if (_enabled != value)
-                {
-                    _enabled = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public TargetItem(string name, Platform platform, string url = "", bool enabled = false)
-        {
-            Name = name;
-            Platform = platform;
-            _url = url;
-            _enabled = enabled;
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
-
-    // ViewModel: RTMP hedeflerinin tamamını tutar
     public sealed class TargetsViewModel : INotifyPropertyChanged
     {
-        public ObservableCollection<TargetItem> Targets { get; } = new()
-        {
-            new TargetItem("YouTube",   Platform.YouTube),
-            new TargetItem("Facebook",  Platform.Facebook),
-            new TargetItem("TikTok",    Platform.TikTok),
-            new TargetItem("Instagram", Platform.Instagram),
-        };
+        public ObservableCollection<TargetItem> Targets { get; } = new();
 
-        private string _warnings = "";
-        public string Warnings
+        public ICommand AddTargetCommand { get; }
+        public ICommand RemoveTargetCommand { get; }
+
+        public TargetsViewModel()
         {
-            get => _warnings;
-            set
+            AddTargetCommand = new RelayCommand(_ => AddTarget());
+            RemoveTargetCommand = new RelayCommand(item =>
             {
-                if (_warnings != value)
-                {
-                    _warnings = value;
-                    OnPropertyChanged();
-                }
+                if (item is TargetItem i && Targets.Contains(i)) Targets.Remove(i);
+            });
+
+            var saved = TargetsStore.Load();
+            if (saved.Count == 0)
+            {
+                Targets.Add(new TargetItem { Url = "rtmp://example.com/live/stream", Enabled = true });
             }
+            else
+            {
+                foreach (var t in saved) Targets.Add(t);
+            }
+
+            Targets.CollectionChanged += OnTargetsChanged;
         }
 
-        /// <summary>
-        /// Etkin (işaretli) hedeflerin dolu URL'lerini döndürür.
-        /// </summary>
-        public IEnumerable<string> GetEnabledUrls()
+        private void OnTargetsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+            => Persist();
+
+        private void Persist() => TargetsStore.Save(Targets);
+
+        private void AddTarget()
         {
-            // Hiç hedef yoksa veya kullanıcı işaretlememişse boş döner
-            var urls = Targets
-                .Where(t => t.Enabled && !string.IsNullOrWhiteSpace(t.Url))
-                .Select(t => t.Url.Trim())
-                .ToList();
-
-            // Hata durumunda debug log ekle (geliştiriciye kolaylık)
-#if DEBUG
-            if (urls.Count == 0)
-            {
-                System.Diagnostics.Debug.WriteLine("[TargetsViewModel] GetEnabledUrls() boş döndü!");
-            }
-#endif
-            return urls;
-        }
-
-        /// <summary>
-        /// Aktif preset'e göre platform kısıtlamalarını kontrol eder.
-        /// </summary>
-        public void UpdateWarnings(EncoderProfile preset)
-        {
-            var msgs = new List<string>();
-
-            foreach (var t in Targets)
-            {
-                if (!t.Enabled || string.IsNullOrWhiteSpace(t.Url))
-                    continue;
-
-                if (!PlatformRules.IsPresetAllowed(t.Platform, preset, out var reason))
-                    msgs.Add($"{t.Name}: {reason}");
-            }
-
-            Warnings = msgs.Count > 0
-                ? string.Join("\n", msgs)
-                : "";
+            Targets.Add(new TargetItem { Url = "", Enabled = true });
+            Persist();
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        private void OnPropertyChanged([CallerMemberName] string? n = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
     }
 }

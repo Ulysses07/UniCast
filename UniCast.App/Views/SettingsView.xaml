@@ -3,56 +3,74 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignHeight="500" d:DesignWidth="700">
-    <Grid Margin="20">
-        <StackPanel Orientation="Vertical">
-            <TextBlock Text="Varsayılan Yayın Ayarları" FontSize="16" FontWeight="Bold" Margin="0,0,0,8"/>
+             mc:Ignorable="d">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="16" Width="640">
 
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Kamera:" Width="150" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding DefaultCamera, UpdateSourceTrigger=PropertyChanged}" Width="300"/>
+            <TextBlock Text="Aygıtlar" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <TextBlock Text="Kamera" Width="160" VerticalAlignment="Center"/>
+                <ComboBox ItemsSource="{Binding VideoDevices}"
+                          SelectedItem="{Binding DefaultCamera, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          Width="320"/>
+                <Button Content="Yenile" Margin="8,0,0,0" Command="{Binding RefreshDevicesCommand}"/>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Mikrofon:" Width="150" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding DefaultMic, UpdateSourceTrigger=PropertyChanged}" Width="300"/>
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <TextBlock Text="Mikrofon" Width="160" VerticalAlignment="Center"/>
+                <ComboBox ItemsSource="{Binding AudioDevices}"
+                          SelectedItem="{Binding DefaultMicrophone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          Width="320"/>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Video Bitrate (kbps):" Width="150" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding VideoKbps, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+            <Separator Margin="0,12,0,12"/>
+
+            <TextBlock Text="Video / Ses" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <TextBlock Text="Encoder" Width="160" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Encoder, Mode=TwoWay}" Width="120" />
+                <TextBlock Text="(auto / h264_nvenc / h264_qsv / h264_amf / libx264)" Margin="8,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Ses Bitrate (kbps):" Width="150" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding AudioKbps, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <TextBlock Text="Video Kbps" Width="160" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding VideoKbps}" Width="100"/>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Çözünürlük:" Width="150" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
-                <TextBlock Text="x" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <TextBlock Text="Audio Kbps" Width="160" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding AudioKbps}" Width="100"/>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="FPS:" Width="150" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding Fps, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <TextBlock Text="FPS" Width="160" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Fps}" Width="100"/>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Encoder:" Width="150" VerticalAlignment="Center"/>
-                <ComboBox Width="150" SelectedItem="{Binding Encoder}">
-                    <ComboBoxItem Content="auto"/>
-                    <ComboBoxItem Content="libx264"/>
-                    <ComboBoxItem Content="h264_nvenc"/>
-                    <ComboBoxItem Content="h264_qsv"/>
-                    <ComboBoxItem Content="h264_amf"/>
-                </ComboBox>
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <TextBlock Text="Çözünürlük (W x H)" Width="160" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Width}" Width="100" Margin="0,0,8,0"/>
+                <TextBox Text="{Binding Height}" Width="100"/>
             </StackPanel>
 
-            <Button Content="Kaydet" Width="120" Height="32" Margin="0,16,0,0"
-                    Click="BtnSave_Click"/>
+            <Separator Margin="0,12,0,12"/>
+
+            <TextBlock Text="Kayıt" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+
+            <CheckBox Content="Yerel kayıt (FLV)" IsChecked="{Binding EnableLocalRecord}" Margin="0,4,0,4"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <TextBlock Text="Kayıt Klasörü" Width="160" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding RecordFolder}" Width="360"/>
+                <Button Content="Seç..." Command="{Binding BrowseRecordFolderCommand}" Margin="8,0,0,0"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button Content="Kaydet" Width="120" Command="{Binding SaveCommand}"/>
+            </StackPanel>
+
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </UserControl>

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
-using UniCast.Encoder;
 
 namespace UniCast.App.Services
 {
@@ -12,7 +11,6 @@ namespace UniCast.App.Services
         (IReadOnlyList<string> video, IReadOnlyList<string> audio) ListDevices();
     }
 
-
     public sealed class DeviceService : IDeviceService
     {
         private static string ResolveFfmpegPath()
@@ -20,8 +18,6 @@ namespace UniCast.App.Services
             var exe = System.IO.Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
             return System.IO.File.Exists(exe) ? exe : "ffmpeg";
         }
-        public static (string[] video, string[] audio) ListDshowDevices()
-            => FfmpegProcess.ListDshowDevices();
 
         public (IReadOnlyList<string> video, IReadOnlyList<string> audio) ListDevices()
         {
@@ -44,18 +40,13 @@ namespace UniCast.App.Services
             var video = new List<string>();
             var audio = new List<string>();
 
-            // FFmpeg çıktısındaki tipik kalıplar:
-            // [dshow @ ...] "Integrated Camera"
-            // [dshow @ ...] "Microphone (Realtek ...)"
             var re = new Regex(@"^\[dshow @ .*?\]\s+""(?<name>.+)""$", RegexOptions.Multiline);
             var currentSection = "";
 
             foreach (var line in output.Split('\n'))
             {
-                if (line.Contains("DirectShow video devices"))
-                    currentSection = "video";
-                else if (line.Contains("DirectShow audio devices"))
-                    currentSection = "audio";
+                if (line.Contains("DirectShow video devices")) currentSection = "video";
+                else if (line.Contains("DirectShow audio devices")) currentSection = "audio";
                 else
                 {
                     var m = re.Match(line);

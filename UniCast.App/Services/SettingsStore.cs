@@ -1,29 +1,26 @@
 ﻿using System;
 using System.IO;
 using System.Text.Json;
+using UniCast.Core.Settings;
 
 namespace UniCast.App.Services
 {
-    /// <summary>
-    /// JSON tabanlı kalıcı ayar depolayıcı.
-    /// AppData\UniCast\settings.json dosyasını kullanır.
-    /// </summary>
     public static class SettingsStore
     {
-        private static readonly string SettingsDir =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UniCast");
-        private static readonly string SettingsFile = Path.Combine(SettingsDir, "settings.json");
+        private static readonly string Dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UniCast");
+        private static readonly string FilePath = Path.Combine(Dir, "settings.json");
 
         public static SettingsData Load()
         {
             try
             {
-                if (!File.Exists(SettingsFile))
-                    return new SettingsData(); // Varsayılan
-
-                var json = File.ReadAllText(SettingsFile);
-                var data = JsonSerializer.Deserialize<SettingsData>(json);
-                return data ?? new SettingsData();
+                if (!Directory.Exists(Dir)) Directory.CreateDirectory(Dir);
+                if (!File.Exists(FilePath)) { var def = new SettingsData(); Save(def); return def; }
+                var json = File.ReadAllText(FilePath);
+                var data = JsonSerializer.Deserialize<SettingsData>(json) ?? new SettingsData();
+                Sanitize(data);
+                return data;
             }
             catch
             {
@@ -31,31 +28,28 @@ namespace UniCast.App.Services
             }
         }
 
-        public static void Save(SettingsData data)
+        public static void Save(SettingsData d)
         {
-            try
-            {
-                if (!Directory.Exists(SettingsDir))
-                    Directory.CreateDirectory(SettingsDir);
-
-                var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(SettingsFile, json);
-            }
-            catch
-            {
-                // kaydetme hataları sessiz geçilir
-            }
+            Sanitize(d);
+            if (!Directory.Exists(Dir)) Directory.CreateDirectory(Dir);
+            var json = JsonSerializer.Serialize(d, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(FilePath, json);
         }
-    }
 
-    /// <summary>
-    /// JSON’a yazılan ayar modeli.
-    /// </summary>
-    public sealed class SettingsData
-    {
-        public int VideoKbps { get; set; } = 3500;
-        public int Fps { get; set; } = 30;
-        public string RecordFolder { get; set; } =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "UniCast");
+        private static void Sanitize(SettingsData d)
+        {
+            d.Encoder ??= "auto";
+            d.DefaultCamera ??= "";
+            d.DefaultMicrophone ??= "";
+            d.RecordFolder ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "UniCast");
+
+            if (d.VideoKbps <= 0) d.VideoKbps = 3500;
+            if (d.AudioKbps <= 0) d.AudioKbps = 160;
+            if (d.Fps is < 10 or > 60) d.Fps = 30;
+            if (d.Width <= 0) d.Width = 1280;
+            if (d.Height <= 0) d.Height = 720;
+
+            Directory.CreateDirectory(d.RecordFolder);
+        }
     }
 }

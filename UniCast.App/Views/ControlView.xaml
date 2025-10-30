@@ -3,50 +3,30 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d"
-             d:DesignHeight="300" d:DesignWidth="600">
-    <Grid Margin="12">
+             mc:Ignorable="d">
+    <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="8"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="8"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="0" VerticalAlignment="Center">
-            <TextBlock Text="Kamera:" Margin="0,0,8,0" VerticalAlignment="Center"/>
-            <ComboBox x:Name="CmbVideoDevices" Width="260" Margin="0,0,16,0"/>
-            <TextBlock Text="Mikrofon:" Margin="0,0,8,0" VerticalAlignment="Center"/>
-            <ComboBox x:Name="CmbAudioDevices" Width="260"/>
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,8">
+            <Button Content="Start" Width="120" Margin="0,0,8,0"
+                    Command="{Binding StartCommand}"/>
+            <Button Content="Stop" Width="120"
+                    Command="{Binding StopCommand}"/>
         </StackPanel>
 
-        <!-- Preset -->
-        <StackPanel Orientation="Horizontal" Grid.Row="2" VerticalAlignment="Center">
-            <TextBlock Text="Profil:" Margin="0,0,8,0" VerticalAlignment="Center"/>
-            <ComboBox x:Name="CmbPreset" Width="240" SelectedIndex="0">
-                <ComboBoxItem Content="720p30 / 3500 / 128" Tag="1280x720x30x3500x128"/>
-                <ComboBoxItem Content="1080p30 / 6000 / 160" Tag="1920x1080x30x6000x160"/>
-                <ComboBoxItem Content="1080p60 / 8000 / 160" Tag="1920x1080x60x8000x160"/>
-            </ComboBox>
-            <TextBlock Text="FPS:" Margin="16,0,8,0" VerticalAlignment="Center"/>
-            <TextBlock Text="{Binding Fps, StringFormat={}{0:0}}" VerticalAlignment="Center"/>
-            <TextBlock Text="Video:" Margin="8,0,4,0" VerticalAlignment="Center"/>
-            <TextBlock Text="{Binding VideoKbps, StringFormat={}{0:0} kbps}" VerticalAlignment="Center"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Status: " FontWeight="Bold"/>
+            <TextBlock Text="{Binding Status}" Margin="8,0,16,0"/>
+            <TextBlock Text="Metric: " FontWeight="Bold"/>
+            <TextBlock Text="{Binding Metric}"/>
         </StackPanel>
 
-        <!-- Start / Stop -->
-        <StackPanel Orientation="Horizontal" Grid.Row="4" VerticalAlignment="Center">
-            <Button x:Name="StartBtn" Content="Start" Width="120" Height="36" Margin="0,0,12,0"/>
-            <Button x:Name="StopBtn" Content="Stop" Width="120" Height="36"/>
-            <TextBlock Text="{Binding Status}" Margin="16,0,0,0" VerticalAlignment="Center"/>
-        </StackPanel>
-
-        <!-- Bilgi -->
-        <Border Grid.Row="5" Margin="0,8,0,0" Padding="8" BorderBrush="#333" BorderThickness="1" CornerRadius="6">
-            <TextBlock TextWrapping="Wrap"
-                       Text="Start ile sectiginiz Kamera/Mikrofon ve Preset'e gore yayin baslar. Targets ekranindan RTMP/RTMPS URL'leri ekleyin."/>
+        <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1" CornerRadius="4" Padding="8">
+            <TextBlock Text="(Preview placeholder)" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
     </Grid>
 </UserControl>

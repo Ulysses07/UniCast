@@ -1,86 +1,105 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using UniCast.Core;
-using UniCast.Encoder;
+using System.Windows.Input;
+using UniCast.App.Infrastructure;
+using UniCast.App.Services;
+using UniCast.Core.Models;
+using UniCast.Core.Settings;
+using System.Collections.ObjectModel;
 
 namespace UniCast.App.ViewModels
 {
-    public sealed class ControlViewModel : INotifyPropertyChanged, IDisposable
+    public sealed class ControlViewModel : INotifyPropertyChanged
     {
-        private readonly IEncoderService _encoder;
+        private readonly IStreamController _stream;
+        private readonly Func<(ObservableCollection<TargetItem> targets, SettingsData settings)> _provider;
+        private CancellationTokenSource? _cts;
+
+        public ControlViewModel(
+            IStreamController stream,
+            Func<(ObservableCollection<TargetItem> targets, SettingsData settings)> provider)
+        {
+            _stream = stream;
+            _provider = provider;
+
+            StartCommand = new RelayCommand(async _ => await StartAsync(), _ => !IsRunning);
+            StopCommand = new RelayCommand(async _ => await StopAsync(), _ => IsRunning);
+        }
 
         private string _status = "Idle";
-        private double _fps;
-        private double _videoKbps;
+        public string Status { get => _status; private set { _status = value; OnPropertyChanged(); } }
 
-        public ControlViewModel(IEncoderService encoder)
+        private string _metric = "";
+        public string Metric { get => _metric; private set { _metric = value; OnPropertyChanged(); } }
+
+        private bool _isRunning;
+        public bool IsRunning
         {
-            _encoder = encoder;
-            // Encoder metriklerini üstten dinleyip property’lere akıt
-            _encoder.OnMetrics += m =>
+            get => _isRunning;
+            private set
             {
-                Fps = m.Fps;
-                VideoKbps = m.VideoKbps;
-            };
+                _isRunning = value;
+                OnPropertyChanged();
+                (StartCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (StopCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
         }
 
-        // UI’nin seçtiği profil (varsayılan 720p30 / 3500 / 128)
-        public EncoderProfile Preset { get; set; } = new EncoderProfile(
-            "720p30", // name
-            1280,     // width
-            720,      // height
-            30,       // fps
-            3500,     // videoKbps
-            128       // audioKbps
-        );
+        public ICommand StartCommand { get; }
+        public ICommand StopCommand { get; }
 
-        public string? SelectedCamera { get; set; }
-        public string? SelectedMic { get; set; }
-
-        public string Status
+        private async Task StartAsync()
         {
-            get => _status;
-            private set { _status = value; OnPropertyChanged(); }
+            try
+            {
+                var (targets, settings) = _provider();
+                _cts = new CancellationTokenSource();
+
+                Status = "Starting…";
+                Metric = "";
+
+                await _stream.StartAsync(targets, settings, _cts.Token);
+                IsRunning = true;
+
+                // poll stream state into VM (lightweight)
+                _ = Task.Run(async () =>
+                {
+                    while (IsRunning)
+                    {
+                        Status = _stream.LastMessage;
+                        Metric = _stream.LastMetric;
+                        await Task.Delay(200);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Status = "Start error: " + ex.Message;
+                IsRunning = false;
+            }
         }
 
-        public double Fps
+        private async Task StopAsync()
         {
-            get => _fps;
-            private set { _fps = value; OnPropertyChanged(); }
-        }
-
-        public double VideoKbps
-        {
-            get => _videoKbps;
-            private set { _videoKbps = value; OnPropertyChanged(); }
-        }
-
-        public async Task StartAsync(IEnumerable<string> urls)
-        {
-            var list = urls?.Where(u => !string.IsNullOrWhiteSpace(u)).Select(u => u.Trim()).ToList() ?? new();
-            if (list.Count == 0)
-                throw new InvalidOperationException("En az bir hedef URL girin.");
-
-            Status = "Starting…";
-            await _encoder.StartAsync(Preset, list, SelectedCamera, SelectedMic, CancellationToken.None);
-            Status = "Streaming";
-        }
-
-        public async Task StopAsync()
-        {
-            Status = "Stopping…";
-            await _encoder.StopAsync(CancellationToken.None);
-            Status = "Stopped";
-        }
-
-        public void Dispose()
-        {
-            try { _encoder?.StopAsync(CancellationToken.None).GetAwaiter().GetResult(); } catch { }
+            try
+            {
+                Status = "Stopping…";
+                _cts?.Cancel();
+                await _stream.StopAsync();
+            }
+            catch (Exception ex)
+            {
+                Status = "Stop error: " + ex.Message;
+            }
+            finally
+            {
+                IsRunning = false;
+                Status = "Stopped";
+                Metric = "";
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
