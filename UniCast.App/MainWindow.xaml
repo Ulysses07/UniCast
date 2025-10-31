@@ -15,6 +15,7 @@
             <Button x:Name="BtnControl"  Content="Kontrol"  Margin="0,4,0,0" Height="36"/>
             <Button x:Name="BtnTargets"  Content="Hedefler" Margin="0,4,0,0" Height="36"/>
             <Button x:Name="BtnSettings" Content="Ayarlar"  Margin="0,4,0,0" Height="36"/>
+            <Button x:Name="BtnPreview" Content="Preview" Margin="0,4,0,0" Height="36"/>
         </StackPanel>
 
         <!-- İçerik -->

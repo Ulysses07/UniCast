@@ -12,21 +12,26 @@ namespace UniCast.Encoder
         public event Action<string>? OnLog;
         public event Action<string>? OnMetric;
         public event Action<int?>? OnExit;
+
         private Process? _proc;
+        private string _lastErrorLine = "";
 
         public static string ResolveFfmpegPath()
         {
             var exeDir = AppDomain.CurrentDomain.BaseDirectory;
             var local = Path.Combine(exeDir, "ffmpeg.exe");
             if (File.Exists(local)) return local;
+
             var local2 = Path.Combine(exeDir, "ffmpeg", "bin", "ffmpeg.exe");
             if (File.Exists(local2)) return local2;
+
             return "ffmpeg";
         }
 
         public Task StartAsync(string args, CancellationToken ct)
         {
-            if (_proc is not null) throw new InvalidOperationException("FFmpeg already running.");
+            if (_proc is not null)
+                throw new InvalidOperationException("FFmpeg already running.");
 
             var psi = new ProcessStartInfo
             {
@@ -36,28 +41,52 @@ namespace UniCast.Encoder
                 UseShellExecute = false,
                 RedirectStandardError = true
             };
-            _proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
-            _proc.Exited += (_, __) => OnExit?.Invoke(_proc?.ExitCode);
 
-            if (!_proc.Start()) throw new InvalidOperationException("FFmpeg failed to start.");
+            _proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
+
+            _proc.Exited += (_, __) =>
+            {
+                // İnsan okunabilir hata mesajı üret
+                if (!string.IsNullOrWhiteSpace(_lastErrorLine))
+                {
+                    var meaning = ErrorDictionary.Translate(_lastErrorLine);
+                    OnLog?.Invoke("FFmpeg: " + meaning);
+                }
+
+                OnExit?.Invoke(_proc?.ExitCode);
+            };
+
+            if (!_proc.Start())
+                throw new InvalidOperationException("FFmpeg failed to start.");
 
             _ = Task.Run(async () =>
             {
                 try
                 {
                     using var reader = _proc.StandardError;
-                    var buffer = new char[1024];
+                    var buffer = new char[2048];
+
                     while (!_proc.HasExited && !ct.IsCancellationRequested)
                     {
                         var n = await reader.ReadAsync(buffer, 0, buffer.Length);
                         if (n > 0)
                         {
-                            var s = new string(buffer, 0, n);
-                            foreach (var line in s.Split('\n'))
+                            var chunk = new string(buffer, 0, n);
+
+                            foreach (var line in chunk.Split('\n'))
                             {
                                 var ln = line.TrimEnd();
-                                if (IsMetric(ln)) OnMetric?.Invoke(ln);
-                                else if (!string.IsNullOrWhiteSpace(ln)) OnLog?.Invoke(ln);
+
+                                if (string.IsNullOrWhiteSpace(ln))
+                                    continue;
+
+                                // Son error satırını tut
+                                _lastErrorLine = ln;
+
+                                if (IsMetric(ln))
+                                    OnMetric?.Invoke(ln);
+                                else
+                                    OnLog?.Invoke(ln);
                             }
                         }
                         else
@@ -66,7 +95,10 @@ namespace UniCast.Encoder
                         }
                     }
                 }
-                catch (Exception ex) { OnLog?.Invoke("stderr read error: " + ex.Message); }
+                catch (Exception ex)
+                {
+                    OnLog?.Invoke("stderr read error: " + ex.Message);
+                }
             }, ct);
 
             return Task.CompletedTask;
@@ -75,13 +107,17 @@ namespace UniCast.Encoder
         public async Task StopAsync()
         {
             if (_proc is null) return;
+
             try
             {
-                if (!_proc.HasExited) { try { _proc.Kill(true); } catch { } }
+                if (!_proc.HasExited)
+                {
+                    try { _proc.Kill(true); } catch { }
+                }
             }
             finally
             {
-                await Task.Delay(100);
+                await Task.Delay(120);
                 _proc?.Dispose();
                 _proc = null;
             }
@@ -92,7 +128,10 @@ namespace UniCast.Encoder
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private static bool IsMetric(string line)
-            => !string.IsNullOrWhiteSpace(line) && (MetricRegex.IsMatch(line) || line.Contains("bitrate=") || line.Contains("fps="));
+            => !string.IsNullOrWhiteSpace(line) &&
+               (MetricRegex.IsMatch(line) ||
+                line.Contains("bitrate=") ||
+                line.Contains("fps="));
 
         public void Dispose() => _ = StopAsync();
     }

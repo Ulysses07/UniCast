@@ -1,4 +1,5 @@
-﻿using UniCast.App.ViewModels;
+﻿using System.Threading.Tasks;
+using UniCast.App.ViewModels;
 
 namespace UniCast.App.Views
 {
@@ -8,6 +9,9 @@ namespace UniCast.App.Views
         {
             InitializeComponent();
             DataContext = vm;
+
+            Loaded += async (_, __) => await vm.StartPreviewAsync();
+            Unloaded += async (_, __) => await vm.StopPreviewAsync();
         }
     }
 }

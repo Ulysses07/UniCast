@@ -1,0 +1,21 @@
+<UserControl x:Class="UniCast.App.Views.PreviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Background="#111" Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="Start Preview" Width="140" Margin="0,0,8,0"
+                    Command="{Binding StartPreviewCommand}"/>
+            <Button Content="Stop" Width="100"
+                    Command="{Binding StopPreviewCommand}"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" BorderBrush="#333" BorderThickness="1" CornerRadius="6" Background="#000">
+            <Image Stretch="Uniform" Source="{Binding Image}"/>
+        </Border>
+    </Grid>
+</UserControl>

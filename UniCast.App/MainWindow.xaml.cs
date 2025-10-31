@@ -38,6 +38,8 @@ namespace UniCast.App
             BtnControl.Click += (_, __) => MainContent.Content = new ControlView(_controlVm);
             BtnTargets.Click += (_, __) => MainContent.Content = new TargetsView(_targetsVm);
             BtnSettings.Click += (_, __) => MainContent.Content = new SettingsView { DataContext = _settingsVm };
+            BtnPreview.Click += (_, __) => MainContent.Content = new PreviewView(new PreviewViewModel());
+
         }
     }
 }

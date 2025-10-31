@@ -5,6 +5,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.0.20250507" />
+  </ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\UniCast.Core\UniCast.Core.csproj" />
 	</ItemGroup>

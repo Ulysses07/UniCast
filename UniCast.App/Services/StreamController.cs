@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,8 +16,10 @@ namespace UniCast.App.Services
         Task StartAsync(IEnumerable<TargetItem> targets, SettingsData settings, CancellationToken ct);
         Task StopAsync();
         bool IsRunning { get; }
+        bool IsReconnecting { get; }
         string LastMessage { get; }
         string LastMetric { get; }
+        string LastAdvisory { get; }
     }
 
     public sealed class StreamController : IStreamController
@@ -25,24 +28,29 @@ namespace UniCast.App.Services
         private FfmpegProcess? _ff;
 
         public bool IsRunning { get; private set; }
+        public bool IsReconnecting { get; private set; }
         public string LastMessage { get; private set; } = "Idle";
         public string LastMetric { get; private set; } = "";
+        public string LastAdvisory { get; private set; } = "";
 
-        public async Task StartAsync(IEnumerable<TargetItem> targets, SettingsData settings, CancellationToken ct)
+        private int _reconnectAttempts = 0;
+        private const int MaxReconnectAttempts = 3;
+        private const int ReconnectDelayMs = 3000;
+
+        public async Task StartAsync(IEnumerable<TargetItem> targets, SettingsData settings, CancellationToken externalCt)
         {
-            if (IsRunning) throw new InvalidOperationException("Stream zaten çalışıyor.");
+            if (IsRunning && !IsReconnecting)
+                throw new InvalidOperationException("Stream already running.");
 
-            // Hızlı doğrulama (net kullanıcı mesajları)
-            if (string.IsNullOrWhiteSpace(settings.DefaultCamera))
-                throw new InvalidOperationException("Kamera seçilmemiş (Ayarlar > Kamera).");
-            if (string.IsNullOrWhiteSpace(settings.DefaultMicrophone))
-                throw new InvalidOperationException("Mikrofon seçilmemiş (Ayarlar > Mikrofon).");
+            IsRunning = true;
+            IsReconnecting = false;
+            _reconnectAttempts = 0;
 
-            bool anyTarget = false;
-            foreach (var t in targets) if (t.Enabled && !string.IsNullOrWhiteSpace(t.Url)) { anyTarget = true; break; }
-            if (!anyTarget)
-                throw new InvalidOperationException("Aktif ve boş olmayan en az bir RTMP/RTMPS hedef ekleyin (Hedefler sekmesi).");
+            await RunFfmpeg(targets, settings, externalCt);
+        }
 
+        private async Task RunFfmpeg(IEnumerable<TargetItem> targets, SettingsData settings, CancellationToken externalCt)
+        {
             var profile = new EncoderProfile
             {
                 Width = settings.Width,
@@ -54,37 +62,116 @@ namespace UniCast.App.Services
                 GopSeconds = 2
             };
 
-            string? recordFile = null;
-            if (settings.EnableLocalRecord)
-            {
-                Directory.CreateDirectory(settings.RecordFolder);
-                recordFile = Path.Combine(settings.RecordFolder, $"unicast_{DateTime.Now:yyyyMMdd_HHmmss}.flv");
-            }
+            string ts = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string? recordFile = settings.EnableLocalRecord
+                ? Path.Combine(settings.RecordFolder, $"unicast_{ts}.mp4")
+                : null;
+
+            string? recordFileMkv = settings.EnableLocalRecord
+                ? Path.Combine(settings.RecordFolder, $"unicast_{ts}.mkv")
+                : null;
+
+            if (recordFile != null) Directory.CreateDirectory(settings.RecordFolder);
 
             var build = FfmpegArgsBuilder.BuildSingleEncodeMultiRtmp(targets, settings, profile, recordFile);
+            LastAdvisory = build.Advisory;
 
-            _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            _cts = CancellationTokenSource.CreateLinkedTokenSource(externalCt);
+
             _ff = new FfmpegProcess();
             _ff.OnLog += s => LastMessage = s;
             _ff.OnMetric += s => LastMetric = s;
-            _ff.OnExit += code => { IsRunning = false; LastMessage = $"FFmpeg exited {(code is null ? "" : $"(code {code})")}"; };
+
+            _ff.OnExit += async code =>
+            {
+                IsRunning = false;
+
+                // Kullanıcı STOP ettiyse kayıt onarımı çalışmaz
+                if (!(_cts?.IsCancellationRequested ?? false))
+                {
+                    // --- MP4 SALVAGE LOGIC ---
+                    if (settings.EnableLocalRecord && recordFile != null && File.Exists(recordFile))
+                    {
+                        var info = new FileInfo(recordFile);
+                        if (info.Length < 200_000) // 200 KB'dan küçükse bozuk kabul
+                        {
+                            try
+                            {
+                                string fixedFile = recordFile.Replace(".mp4", ".fixed.mp4");
+                                var ff = FfmpegProcess.ResolveFfmpegPath();
+
+                                var psi = new ProcessStartInfo
+                                {
+                                    FileName = ff,
+                                    Arguments = $"-err_detect ignore_err -i \"{recordFile}\" -c copy \"{fixedFile}\" -y",
+                                    CreateNoWindow = true,
+                                    UseShellExecute = false
+                                };
+                                Process.Start(psi)?.WaitForExit();
+
+                                if (File.Exists(fixedFile) && new FileInfo(fixedFile).Length > 200_000)
+                                {
+                                    File.Delete(recordFile);
+                                    File.Move(fixedFile, recordFile);
+                                    LastMessage = "Kayıt dosyası kurtarıldı.";
+                                }
+                                else
+                                {
+                                    if (recordFileMkv != null && File.Exists(recordFileMkv))
+                                    {
+                                        File.Delete(recordFile);
+                                        File.Move(recordFileMkv, recordFile);
+                                        LastMessage = "MP4 bozuldu → MKV'e döndürüldü.";
+                                    }
+                                }
+                            }
+                            catch { /* Sessiz geç */ }
+                        }
+                    }
+                }
+
+                // Kullanıcı stop ettiyse reconnect etme
+                if (_cts?.IsCancellationRequested ?? false) return;
+
+                // --- AUTO RECONNECT ---
+                if (_reconnectAttempts < MaxReconnectAttempts)
+                {
+                    IsReconnecting = true;
+                    _reconnectAttempts++;
+
+                    LastMessage = $"Bağlantı koptu — Yeniden bağlanılıyor {_reconnectAttempts}/{MaxReconnectAttempts}...";
+                    await Task.Delay(ReconnectDelayMs);
+
+                    await RunFfmpeg(targets, settings, externalCt);
+                }
+                else
+                {
+                    IsReconnecting = false;
+                    LastMessage = "Yayın koptu ve yeniden bağlanılamadı. Lütfen internet ve RTMP ayarlarını kontrol edin.";
+                }
+            };
 
             await _ff.StartAsync(build.Args, _cts.Token);
-            IsRunning = true;
-            LastMessage = $"Started: {build.VideoEncoder}/aac → {build.Outputs.Length} hedef";
+            LastMessage = "Yayın başladı";
         }
 
         public async Task StopAsync()
         {
-            if (!IsRunning) return;
+            if (!IsRunning && !IsReconnecting) return;
+
+            IsRunning = false;
+            IsReconnecting = false;
+
             try
             {
                 _cts?.Cancel();
-                if (_ff is not null) await _ff.StopAsync();
+                if (_ff is not null)
+                    await _ff.StopAsync();
             }
             finally
             {
-                IsRunning = false; LastMessage = "Stopped"; LastMetric = "";
+                LastMessage = "Yayın durduruldu";
+                LastMetric = "";
             }
         }
     }

@@ -12,21 +12,23 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,8">
-            <Button Content="Start" Width="120" Margin="0,0,8,0"
-                    Command="{Binding StartCommand}"/>
-            <Button Content="Stop" Width="120"
-                    Command="{Binding StopCommand}"/>
+            <Button Content="Start" Command="{Binding StartCommand}" Width="120" Margin="0,0,8,0"/>
+            <Button Content="Stop"  Command="{Binding StopCommand}"  Width="120"/>
         </StackPanel>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-            <TextBlock Text="Status: " FontWeight="Bold"/>
+            <TextBlock Text="Durum: " FontWeight="Bold"/>
             <TextBlock Text="{Binding Status}" Margin="8,0,16,0"/>
-            <TextBlock Text="Metric: " FontWeight="Bold"/>
+            <TextBlock Text="Metrik: " FontWeight="Bold"/>
             <TextBlock Text="{Binding Metric}"/>
         </StackPanel>
+        <TextBlock Text="{Binding Advisory}"
+           Foreground="DarkOrange"
+           TextWrapping="Wrap"
+           Margin="0,4,0,0"/>
 
-        <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1" CornerRadius="4" Padding="8">
-            <TextBlock Text="(Preview placeholder)" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <Border Grid.Row="2" BorderBrush="#333" BorderThickness="1" CornerRadius="6" Background="#000">
+            <Image Stretch="Uniform" Source="{Binding PreviewImage}"/>
         </Border>
     </Grid>
 </UserControl>

@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.0.20250507" />
+  </ItemGroup>
+
 </Project>

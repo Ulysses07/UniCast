@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Media;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
 using UniCast.Core.Models;
@@ -16,6 +17,7 @@ namespace UniCast.App.ViewModels
     {
         private readonly IStreamController _stream;
         private readonly Func<(ObservableCollection<TargetItem> targets, SettingsData settings)> _provider;
+        private readonly PreviewService _preview = new();
         private CancellationTokenSource? _cts;
 
         public ControlViewModel(
@@ -25,10 +27,30 @@ namespace UniCast.App.ViewModels
             _stream = stream;
             _provider = provider;
 
+            _preview.OnFrame += bmp => PreviewImage = bmp;
+
             StartCommand = new RelayCommand(async _ => await StartAsync(), _ => !IsRunning);
             StopCommand = new RelayCommand(async _ => await StopAsync(), _ => IsRunning);
         }
 
+        // --- Preview ---
+        private ImageSource? _previewImage;
+        public ImageSource? PreviewImage
+        {
+            get => _previewImage;
+            private set { _previewImage = value; OnPropertyChanged(); }
+        }
+
+        public async Task StartPreviewAsync()
+        {
+            if (_preview.IsRunning) return;
+            var s = Services.SettingsStore.Load();
+            await _preview.StartAsync(width: s.Width, height: s.Height, fps: s.Fps);
+        }
+
+        public Task StopPreviewAsync() => _preview.StopAsync();
+
+        // --- Stream state ---
         private string _status = "Idle";
         public string Status { get => _status; private set { _status = value; OnPropertyChanged(); } }
 
@@ -48,6 +70,14 @@ namespace UniCast.App.ViewModels
             }
         }
 
+        // --- Advisory (Encoder seçimi + platform limitleri) ---
+        private string _advisory = "";
+        public string Advisory
+        {
+            get => _advisory;
+            private set { _advisory = value; OnPropertyChanged(); }
+        }
+
         public ICommand StartCommand { get; }
         public ICommand StopCommand { get; }
 
@@ -60,14 +90,18 @@ namespace UniCast.App.ViewModels
 
                 Status = "Starting…";
                 Metric = "";
+                Advisory = "";
 
                 await _stream.StartAsync(targets, settings, _cts.Token);
                 IsRunning = true;
 
-                // poll stream state into VM (lightweight)
+                // Advisory'yi UI'ya yansıt
+                Advisory = _stream.LastAdvisory;
+
+                // Background metric/status updater
                 _ = Task.Run(async () =>
                 {
-                    while (IsRunning)
+                    while (IsRunning || _stream.IsReconnecting)
                     {
                         Status = _stream.LastMessage;
                         Metric = _stream.LastMetric;
@@ -78,6 +112,7 @@ namespace UniCast.App.ViewModels
             catch (Exception ex)
             {
                 Status = "Start error: " + ex.Message;
+                Advisory = "";
                 IsRunning = false;
             }
         }
@@ -99,6 +134,7 @@ namespace UniCast.App.ViewModels
                 IsRunning = false;
                 Status = "Stopped";
                 Metric = "";
+                Advisory = "";
             }
         }
 
