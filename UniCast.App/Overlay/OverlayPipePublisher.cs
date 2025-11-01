@@ -5,26 +5,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
-using static System.Net.Mime.MediaTypeNames;
 
-namespace UniCast.Overlay
+namespace UniCast.App.Overlay
 {
     /// <summary>
-    /// Verilen WPF Visual'dan (UserControl) PNG (alpha) kareler üretip named pipe'a yazar.
-    /// FFmpeg image2pipe ile okur.
+    /// Verilen WPF FrameworkElement'ten periyodik PNG (alpha) kare üretip named pipe'a yazar.
+    /// FFmpeg: -f image2pipe -r 20 -i \\.\pipe\unicast_overlay
     /// </summary>
     public sealed class OverlayPipePublisher : IAsyncDisposable
     {
-        private readonly System.Windows.Controls.UserControl _visual;
+        private readonly FrameworkElement _visual;
         private readonly string _pipeName;
         private readonly int _fps;
         private CancellationTokenSource? _cts;
         private Task? _loop;
 
-        public OverlayPipePublisher(System.Windows.Controls.UserControl visual, string pipeName = "unicast_overlay", int fps = 20)
+        public OverlayPipePublisher(FrameworkElement visual, string pipeName = "unicast_overlay", int fps = 20)
         {
             _visual = visual;
-            _pipeName = pipeName; // sadece isim, \\.\pipe\ ÖN EKİ YOK!
+            _pipeName = pipeName; // sadece isim; client: \\.\pipe\{name}
             _fps = Math.Clamp(fps, 5, 60);
         }
 
@@ -57,15 +56,16 @@ namespace UniCast.Overlay
             {
                 try
                 {
-                    RenderTargetBitmap bmp = await Application.Current.Dispatcher.InvokeAsync(() =>
+                    var bmp = await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         int w = Math.Max(1, (int)Math.Ceiling(_visual.ActualWidth));
                         int h = Math.Max(1, (int)Math.Ceiling(_visual.ActualHeight));
                         if (w <= 0 || h <= 0) { w = 1280; h = 280; }
 
                         var rtb = new RenderTargetBitmap(w, h, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
-                        _visual.Measure(new Size(w, h));
-                        _visual.Arrange(new Rect(0, 0, w, h));
+                        _visual.Measure(new System.Windows.Size(w, h));
+                        _visual.Arrange(new Rect(new System.Windows.Point(0, 0), _visual.DesiredSize));
+                        _visual.UpdateLayout();
                         rtb.Render(_visual);
                         return rtb;
                     });
@@ -84,7 +84,7 @@ namespace UniCast.Overlay
                 catch (OperationCanceledException) { }
                 catch
                 {
-                    // FFmpeg kapanırsa pipe düşer: sessiz çık
+                    // FFmpeg kapanırsa pipe düşer – sessiz çık
                     break;
                 }
             }

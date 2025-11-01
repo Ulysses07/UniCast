@@ -1,11 +1,10 @@
-<UserControl x:Class="UniCast.App.Overlay.ChatOverlayView"
+<UserControl x:Class="UniCast.App.Views.ChatOverlayView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              SnapsToDevicePixels="True"
              UseLayoutRounding="True"
              Background="Transparent">
-    <Grid x:Name="Root" Background="Transparent">
-        <!-- Çizim yüzeyi; code-behind çiziyor -->
+    <Grid Background="Transparent">
         <Canvas x:Name="Surface" IsHitTestVisible="False" Background="Transparent"/>
     </Grid>
 </UserControl>

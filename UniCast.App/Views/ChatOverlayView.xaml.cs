@@ -12,7 +12,7 @@ namespace UniCast.App.Views
         private readonly List<(string author, string text, DateTime ts)> _messages = new();
         private readonly DropShadowEffect _shadow = new()
         {
-            Color = Colors.Black,
+            Color = System.Windows.Media.Colors.Black,
             BlurRadius = 6,
             ShadowDepth = 0,
             Opacity = 0.75
@@ -49,7 +49,7 @@ namespace UniCast.App.Views
             for (int i = _messages.Count - 1; i >= 0; i--)
             {
                 var (author, text, _) = _messages[i];
-                var bubble = DrawBubble($"{author}: {text}", MaxWidth: ActualWidth * 0.9);
+                var bubble = CreateBubble($"{author}: {text}", ActualWidth * 0.9);
                 y -= bubble.Height + 8;
                 if (y < 0) break;
                 Canvas.SetLeft(bubble, margin);
@@ -58,29 +58,30 @@ namespace UniCast.App.Views
             }
         }
 
-        private Border DrawBubble(string text, double MaxWidth)
+        private Border CreateBubble(string text, double maxWidth)
         {
             var tb = new TextBlock
             {
                 Text = text,
                 TextWrapping = TextWrapping.Wrap,
-                Foreground = Brushes.White,
+                Foreground = System.Windows.Media.Brushes.White,
                 FontSize = 22,
                 Effect = _shadow,
-                MaxWidth = MaxWidth - 24
+                MaxWidth = maxWidth - 24
             };
 
-            var bg = new Border
+            var border = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(150, 20, 20, 20)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(150, 20, 20, 20)),
                 CornerRadius = new CornerRadius(14),
                 Padding = new Thickness(12, 8, 12, 8),
                 Child = tb
             };
 
-            bg.Measure(new Size(MaxWidth, double.PositiveInfinity));
-            bg.Arrange(new Rect(new Point(0, 0), bg.DesiredSize));
-            return bg;
+            // Ölç ve yerleştir (WPF türleri tam adla)
+            border.Measure(new System.Windows.Size(maxWidth, double.PositiveInfinity));
+            border.Arrange(new Rect(new System.Windows.Point(0, 0), border.DesiredSize));
+            return border;
         }
     }
 }
