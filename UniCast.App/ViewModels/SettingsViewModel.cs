@@ -18,105 +18,129 @@ namespace UniCast.App.ViewModels
             _devices = devices;
             _settings = SettingsStore.Load();
 
-            _defaultCamera = _settings.DefaultCamera ?? string.Empty;
-            _defaultMicrophone = _settings.DefaultMicrophone ?? string.Empty;
+            // Load persisted basic settings
+            _defaultCamera = _settings.DefaultCamera ?? "";
+            _defaultMicrophone = _settings.DefaultMicrophone ?? "";
             _encoder = string.IsNullOrWhiteSpace(_settings.Encoder) ? "auto" : _settings.Encoder!;
             _videoKbps = _settings.VideoKbps;
             _audioKbps = _settings.AudioKbps;
             _fps = _settings.Fps;
             _width = _settings.Width;
             _height = _settings.Height;
-            _recordFolder = _settings.RecordFolder ?? string.Empty;
+            _recordFolder = _settings.RecordFolder ?? "";
             _enableLocalRecord = _settings.EnableLocalRecord;
+
+            // Instagram
+            _instagramUserId = _settings.InstagramUserId ?? "";
+            _instagramSessionId = _settings.InstagramSessionId ?? "";
+
+            // Facebook
+            _facebookPageId = _settings.FacebookPageId ?? "";
+            _facebookLiveVideoId = _settings.FacebookLiveVideoId ?? "";
+            _facebookAccessToken = _settings.FacebookAccessToken ?? "";
 
             SaveCommand = new RelayCommand(_ => Save());
             BrowseRecordFolderCommand = new RelayCommand(_ => BrowseFolder());
             RefreshDevicesCommand = new RelayCommand(_ => RefreshDevices());
 
             RefreshDevices();
-
-            if (string.IsNullOrWhiteSpace(_defaultCamera) && VideoDevices.Count > 0)
-                DefaultCamera = VideoDevices[0];
-            if (string.IsNullOrWhiteSpace(_defaultMicrophone) && AudioDevices.Count > 0)
-                DefaultMicrophone = AudioDevices[0];
         }
 
+        // Device lists
         public ObservableCollection<string> VideoDevices { get; } = new();
         public ObservableCollection<string> AudioDevices { get; } = new();
 
-        private string _defaultCamera = string.Empty;
-        public string DefaultCamera
-        {
-            get => _defaultCamera ?? string.Empty;
-            set { _defaultCamera = value ?? string.Empty; OnPropertyChanged(); }
-        }
+        // Standard fields
+        private string _defaultCamera;
+        public string DefaultCamera { get => _defaultCamera; set { _defaultCamera = value; OnPropertyChanged(); } }
 
-        private string _defaultMicrophone = string.Empty;
-        public string DefaultMicrophone
-        {
-            get => _defaultMicrophone ?? string.Empty;
-            set { _defaultMicrophone = value ?? string.Empty; OnPropertyChanged(); }
-        }
+        private string _defaultMicrophone;
+        public string DefaultMicrophone { get => _defaultMicrophone; set { _defaultMicrophone = value; OnPropertyChanged(); } }
 
-        private string _encoder = "auto";
-        public string Encoder
-        {
-            get => string.IsNullOrWhiteSpace(_encoder) ? "auto" : _encoder;
-            set { _encoder = string.IsNullOrWhiteSpace(value) ? "auto" : value; OnPropertyChanged(); }
-        }
+        private string _encoder;
+        public string Encoder { get => _encoder; set { _encoder = value; OnPropertyChanged(); } }
 
-        private int _videoKbps = 3500;
+        private int _videoKbps;
         public int VideoKbps { get => _videoKbps; set { _videoKbps = value; OnPropertyChanged(); } }
 
-        private int _audioKbps = 160;
+        private int _audioKbps;
         public int AudioKbps { get => _audioKbps; set { _audioKbps = value; OnPropertyChanged(); } }
 
-        private int _fps = 30;
+        private int _fps;
         public int Fps { get => _fps; set { _fps = value; OnPropertyChanged(); } }
 
-        private int _width = 1280;
+        private int _width;
         public int Width { get => _width; set { _width = value; OnPropertyChanged(); } }
 
-        private int _height = 720;
+        private int _height;
         public int Height { get => _height; set { _height = value; OnPropertyChanged(); } }
 
-        private string _recordFolder = string.Empty;
-        public string RecordFolder { get => _recordFolder ?? string.Empty; set { _recordFolder = value ?? string.Empty; OnPropertyChanged(); } }
+        private string _recordFolder;
+        public string RecordFolder { get => _recordFolder; set { _recordFolder = value; OnPropertyChanged(); } }
 
         private bool _enableLocalRecord;
         public bool EnableLocalRecord { get => _enableLocalRecord; set { _enableLocalRecord = value; OnPropertyChanged(); } }
 
+        // Instagram fields
+        private string _instagramUserId;
+        public string InstagramUserId { get => _instagramUserId; set { _instagramUserId = value; OnPropertyChanged(); } }
+
+        private string _instagramSessionId;
+        public string InstagramSessionId { get => _instagramSessionId; set { _instagramSessionId = value; OnPropertyChanged(); } }
+
+        // Facebook fields
+        private string _facebookPageId;
+        public string FacebookPageId { get => _facebookPageId; set { _facebookPageId = value; OnPropertyChanged(); } }
+
+        private string _facebookLiveVideoId;
+        public string FacebookLiveVideoId { get => _facebookLiveVideoId; set { _facebookLiveVideoId = value; OnPropertyChanged(); } }
+
+        private string _facebookAccessToken;
+        public string FacebookAccessToken { get => _facebookAccessToken; set { _facebookAccessToken = value; OnPropertyChanged(); } }
+
+        // Commands
         public ICommand SaveCommand { get; }
         public ICommand BrowseRecordFolderCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
 
         private void Save()
         {
-            _settings.DefaultCamera = DefaultCamera.Trim();
-            _settings.DefaultMicrophone = DefaultMicrophone.Trim();
+            _settings.DefaultCamera = (DefaultCamera ?? "").Trim();
+            _settings.DefaultMicrophone = (DefaultMicrophone ?? "").Trim();
             _settings.Encoder = string.IsNullOrWhiteSpace(Encoder) ? "auto" : Encoder.Trim();
             _settings.VideoKbps = VideoKbps;
             _settings.AudioKbps = AudioKbps;
             _settings.Fps = Fps;
             _settings.Width = Width;
             _settings.Height = Height;
-            _settings.RecordFolder = RecordFolder.Trim();
+            _settings.RecordFolder = (RecordFolder ?? "").Trim();
             _settings.EnableLocalRecord = EnableLocalRecord;
+
+            // Instagram
+            _settings.InstagramUserId = (InstagramUserId ?? "").Trim();
+            _settings.InstagramSessionId = (InstagramSessionId ?? "").Trim();
+
+            // Facebook
+            _settings.FacebookPageId = (FacebookPageId ?? "").Trim();
+            _settings.FacebookLiveVideoId = (FacebookLiveVideoId ?? "").Trim();
+            _settings.FacebookAccessToken = (FacebookAccessToken ?? "").Trim();
 
             SettingsStore.Save(_settings);
         }
 
         private void BrowseFolder()
         {
-            using var dlg = new System.Windows.Forms.FolderBrowserDialog
+            var dlg = new Microsoft.Win32.OpenFileDialog
             {
-                Description = "Kayıt klasörünü seç",
-                ShowNewFolderButton = true
+                CheckFileExists = false,
+                FileName = "Klasör seç",
+                ValidateNames = false
             };
-            var result = dlg.ShowDialog();
-            if (result == System.Windows.Forms.DialogResult.OK && !string.IsNullOrWhiteSpace(dlg.SelectedPath))
+            if (dlg.ShowDialog() == true)
             {
-                RecordFolder = dlg.SelectedPath;
+                var path = System.IO.Path.GetDirectoryName(dlg.FileName) ?? "";
+                if (!string.IsNullOrWhiteSpace(path))
+                    RecordFolder = path;
             }
         }
 

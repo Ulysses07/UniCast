@@ -54,6 +54,42 @@
                 <TextBox Text="{Binding Width}" Width="100" Margin="0,0,8,0"/>
                 <TextBox Text="{Binding Height}" Width="100"/>
             </StackPanel>
+            <!-- Instagram Ayarları -->
+            <GroupBox Header="Instagram" Margin="0,16,0,0">
+                <StackPanel Margin="12">
+                    <TextBlock Text="User ID (numeric)" />
+                    <TextBox Text="{Binding InstagramUserId, UpdateSourceTrigger=PropertyChanged}" 
+                 Margin="0,4,0,12" />
+
+                    <TextBlock Text="Session ID (cookie 'sessionid=')" />
+                    <!-- PasswordBox: binding için code-behind kullanıyoruz -->
+                    <PasswordBox x:Name="PwdInstagramSession"
+                     PasswordChanged="PwdInstagramSession_PasswordChanged"
+                     Margin="0,4,0,12" />
+
+                    <TextBlock Text="Not: Instagram canlı chat için hesapta aktif canlı yayın ve geçerli sessionid gerekir." 
+                   Foreground="DarkOrange" TextWrapping="Wrap" />
+                </StackPanel>
+            </GroupBox>
+            <!-- Facebook Ayarları -->
+            <GroupBox Header="Facebook" Margin="0,16,0,0">
+                <StackPanel Margin="12">
+                    <TextBlock Text="Page ID (numeric)" />
+                    <TextBox Text="{Binding FacebookPageId, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
+
+                    <TextBlock Text="Live Video ID (opsiyonel — doğrudan o yayından okuyacak)" />
+                    <TextBox Text="{Binding FacebookLiveVideoId, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
+
+                    <TextBlock Text="Page Access Token" />
+                    <PasswordBox x:Name="PwdFacebookToken"
+                 PasswordChanged="PwdFacebookToken_PasswordChanged"
+                 Margin="0,4,0,12"/>
+                    <TextBlock Text="Not: Token sayfa yetkili uzun ömürlü olmalı (pages_read_engagement)."
+               Foreground="DarkOrange" TextWrapping="Wrap"/>
+                </StackPanel>
+            </GroupBox>
+
+
 
             <Separator Margin="0,12,0,12"/>
 
