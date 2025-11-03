@@ -2,7 +2,6 @@
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
 using UniCast.Core.Settings;
@@ -13,6 +12,7 @@ namespace UniCast.App.ViewModels
     {
         private readonly PreviewService _service = new();
         private ImageSource? _image;
+        private bool _isStarting;
 
         public ImageSource? Image
         {
@@ -25,20 +25,30 @@ namespace UniCast.App.ViewModels
 
         public PreviewViewModel()
         {
-            _service.OnFrame += frame =>
-            {
-                // UI thread'e marshall etmeye gerek kalmasın diye Freeze ettik
-                Image = frame;
-            };
+            // PreviewService, dondurulmuş (Freeze) BitmapSource döndürüyorsa
+            // UI thread'e dispatch etmeye gerek yok.
+            _service.OnFrame += frame => { Image = frame; };
 
             StartPreviewCommand = new RelayCommand(async _ =>
             {
-                // İstersen Settings'ten çözünürlük/fps çekebiliriz
-                SettingsData s = Services.SettingsStore.Load();
-                await _service.StartAsync(preferredIndex: -1, width: s.Width, height: s.Height, fps: s.Fps);
+                if (_isStarting) return;
+                _isStarting = true;
+                try
+                {
+                    SettingsData s = Services.SettingsStore.Load();
+                    // NOT: preferredIndex parametresi yok -> width/height/fps ile çağırıyoruz
+                    await _service.StartAsync(width: s.Width, height: s.Height, fps: s.Fps);
+                }
+                finally
+                {
+                    _isStarting = false;
+                }
             });
 
-            StopPreviewCommand = new RelayCommand(async _ => await _service.StopAsync());
+            StopPreviewCommand = new RelayCommand(async _ =>
+            {
+                await _service.StopAsync();
+            });
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

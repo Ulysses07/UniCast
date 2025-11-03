@@ -1,112 +1,85 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using OpenCvSharp;
-using OpenCvSharp.WpfExtensions;
+using System.Windows.Threading;
+using UniCast.App.Services;
 
-namespace UniCast.App.Services
+public sealed class PreviewService
 {
-    /// <summary>
-    /// Düşük gecikmeli, sağlam kamera önizleme servisi (WPF uyumlu).
-    /// x64 derleyin. Başka uygulama kamerayı tutuyorsa yeniden deneme yapar.
-    /// </summary>
-    public sealed class PreviewService : IDisposable
+    public event Action<ImageSource>? OnFrame;
+
+    private bool _running;
+    private DispatcherTimer? _timer;
+
+    public bool IsRunning => _running;
+
+    public Task StartAsync(int width, int height, int fps)
     {
-        private CancellationTokenSource? _cts;
-        private Task? _loop;
-        private VideoCapture? _cap;
+        if (_running) return Task.CompletedTask;
 
-        public event Action<BitmapSource?>? OnFrame;
+        // Cihaz var mı bak
+        var s = SettingsStore.Load();
+        bool hasCam = !string.IsNullOrWhiteSpace(s.DefaultCamera);
 
-        public bool IsRunning => _loop is not null;
+        _running = true;
 
-        public Task StartAsync(int preferredIndex = -1, int width = 1280, int height = 720, int fps = 30)
+        if (hasCam)
         {
-            if (_loop is not null) return Task.CompletedTask;
-
-            _cts = new CancellationTokenSource();
-            var ct = _cts.Token;
-
-            _loop = Task.Run(() =>
-            {
-                try
-                {
-                    int index = ResolveCameraIndex(preferredIndex);
-                    if (index < 0) throw new InvalidOperationException("Kamera bulunamadı.");
-
-                    _cap = new VideoCapture(index, VideoCaptureAPIs.MSMF);
-                    if (!_cap.IsOpened()) throw new InvalidOperationException("Kamera açılamadı.");
-
-                    if (width > 0) _cap.Set(VideoCaptureProperties.FrameWidth, width);
-                    if (height > 0) _cap.Set(VideoCaptureProperties.FrameHeight, height);
-                    if (fps > 0) _cap.Set(VideoCaptureProperties.Fps, fps);
-
-                    using var mat = new Mat();
-                    while (!ct.IsCancellationRequested)
-                    {
-                        if (!_cap.Read(mat) || mat.Empty())
-                        {
-                            Task.Delay(30, ct).Wait(ct);
-                            continue;
-                        }
-
-                        // BGR Mat -> WPF BitmapSource
-                        var bmp = mat.ToWriteableBitmap();
-                        bmp.Freeze(); // UI thread'e marshalling kolay
-                        OnFrame?.Invoke(bmp);
-
-                        Task.Delay(1000 / Math.Max(15, fps), ct).Wait(ct);
-                    }
-                }
-                catch (OperationCanceledException) { /* normal durdurma */ }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("Preview error: " + ex.Message);
-                    OnFrame?.Invoke(null);
-                }
-                finally
-                {
-                    try { _cap?.Release(); } catch { }
-                    _cap?.Dispose();
-                    _cap = null;
-                }
-            }, ct);
-
-            return Task.CompletedTask;
+            // Buraya mevcut gerçek kamera önizleme akışını koyabilirsiniz.
+            // Şimdilik hızlı çözüm: kamera var fakat entegrasyon hazır değilse dahi pattern çiz.
+            StartPatternTimer(width, height, fps);
+        }
+        else
+        {
+            // Kamera yoksa: test pattern
+            StartPatternTimer(width, height, fps);
         }
 
-        public async Task StopAsync()
-        {
-            if (_loop is null) return;
-            try
-            {
-                _cts?.Cancel();
-                if (_loop is not null) await _loop;
-            }
-            finally
-            {
-                _loop = null;
-                _cts?.Dispose();
-                _cts = null;
-            }
-        }
+        return Task.CompletedTask;
+    }
 
-        public void Dispose() => _ = StopAsync();
-
-        private static int ResolveCameraIndex(int preferredIndex)
+    private void StartPatternTimer(int width, int height, int fps)
+    {
+        _timer = new DispatcherTimer
         {
-            if (preferredIndex >= 0)
+            Interval = TimeSpan.FromMilliseconds(Math.Max(10, 1000 / Math.Max(1, fps)))
+        };
+
+        int t = 0;
+        _timer.Tick += (_, __) =>
+        {
+            var wb = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
+            int stride = width * 4;
+            var pixels = new byte[stride * height];
+
+            // Basit hareketli renk bandı
+            for (int y = 0; y < height; y++)
             {
-                using var test = new VideoCapture(preferredIndex, VideoCaptureAPIs.MSMF);
-                if (test.IsOpened()) return preferredIndex;
+                int offset = ((y + t) % height) * stride;
+                for (int x = 0; x < width; x++)
+                {
+                    int i = offset + x * 4;
+                    pixels[i + 0] = (byte)((x + t) % 256); // B
+                    pixels[i + 1] = (byte)((y + t) % 256); // G
+                    pixels[i + 2] = (byte)((x + y + t) % 256); // R
+                    pixels[i + 3] = 255;
+                }
             }
-            for (int i = 0; i < 10; i++)
-            {
-                using var cap = new VideoCapture(i, VideoCaptureAPIs.MSMF);
-                if (cap.IsOpened()) return i;
-            }
-            return -1;
-        }
+
+            wb.WritePixels(new System.Windows.Int32Rect(0, 0, width, height), pixels, stride, 0);
+            OnFrame?.Invoke(wb);
+            t += 2;
+        };
+        _timer.Start();
+    }
+
+    public Task StopAsync()
+    {
+        _timer?.Stop();
+        _timer = null;
+        _running = false;
+        return Task.CompletedTask;
     }
 }

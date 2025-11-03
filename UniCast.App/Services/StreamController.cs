@@ -67,13 +67,31 @@ namespace UniCast.App.Services
                 ? Path.Combine(settings.RecordFolder, $"unicast_{ts}.mp4")
                 : null;
 
+            // Eski fallback için bırakıyoruz (MP4 onarım başarısız olursa MKV’e dönmek istersen tee’de mkv de yazabilirsin)
             string? recordFileMkv = settings.EnableLocalRecord
                 ? Path.Combine(settings.RecordFolder, $"unicast_{ts}.mkv")
                 : null;
 
-            if (recordFile != null) Directory.CreateDirectory(settings.RecordFolder);
+            if (!string.IsNullOrWhiteSpace(recordFile))
+            {
+                var dir = Path.GetDirectoryName(recordFile);
+                if (!string.IsNullOrWhiteSpace(dir))
+                    Directory.CreateDirectory(dir);
+            }
 
-            var build = FfmpegArgsBuilder.BuildSingleEncodeMultiRtmp(targets, settings, profile, recordFile);
+            // --- OVERLAY’Lİ ARGÜMANLAR ---
+            // Overlay’i alta hizalamak için (yaklaşık 280px yüksekliğe göre)
+            int overlayY = Math.Max(0, profile.Height - 320);
+            var build = FfmpegArgsBuilder.BuildSingleEncodeMultiRtmpWithOverlay(
+                targets,
+                settings,
+                profile,
+                recordFile,
+                overlayPipeName: "unicast_overlay",
+                overlayX: 20,
+                overlayY: overlayY
+            );
+
             LastAdvisory = build.Advisory;
 
             _cts = CancellationTokenSource.CreateLinkedTokenSource(externalCt);
@@ -86,7 +104,7 @@ namespace UniCast.App.Services
             {
                 IsRunning = false;
 
-                // Kullanıcı STOP ettiyse kayıt onarımı çalışmaz
+                // Kullanıcı STOP etmediyse kayıt dosyası onarımı dene
                 if (!(_cts?.IsCancellationRequested ?? false))
                 {
                     // --- MP4 SALVAGE LOGIC ---
@@ -125,7 +143,10 @@ namespace UniCast.App.Services
                                     }
                                 }
                             }
-                            catch { /* Sessiz geç */ }
+                            catch
+                            {
+                                // Sessiz geç
+                            }
                         }
                     }
                 }

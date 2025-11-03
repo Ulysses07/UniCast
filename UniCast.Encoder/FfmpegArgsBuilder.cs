@@ -10,71 +10,192 @@ namespace UniCast.Encoder
 {
     public static class FfmpegArgsBuilder
     {
+        // ---- FFmpeg argüman üretimi sonucu ----
         public sealed class BuildResult
         {
-            public required string Args;
-            public required string[] Outputs;
-            public required string VideoEncoder;
-            public required string AudioEncoder;
+            public required string Args { get; init; }
+            public required string[] Outputs { get; init; }
+            public required string VideoEncoder { get; init; }
+            public required string AudioEncoder { get; init; }
             public string Advisory { get; init; } = "";
         }
 
-        public static BuildResult BuildSingleEncodeMultiRtmp(
+        // --------------------------------------------------------------------
+        // A) OVERLAY'LI: tek encode → çoklu RTMP (+opsiyonel kayıt) + chat overlay
+        //     - Kamera/Mikrofon yoksa lavfi fallback (testsrc/anullsrc)
+        //     - Overlay input: named pipe üzerinden PNG (image2pipe)
+        // --------------------------------------------------------------------
+        public static BuildResult BuildSingleEncodeMultiRtmpWithOverlay(
             IEnumerable<TargetItem> targets,
             SettingsData settings,
             EncoderProfile profile,
-            string? recordFilePath = null)
+            string? recordFile,
+            string overlayPipeName = "unicast_overlay",
+            int overlayX = 20,
+            int overlayY = 20)
         {
-            var active = targets.Where(t => t.Enabled && !string.IsNullOrWhiteSpace(t.Url)).ToList();
-            if (active.Count == 0) throw new InvalidOperationException("Aktif RTMP/RTMPS hedefi yok.");
-
-            // 1) Platform kısıtlarını uygula ve advisory metni oluştur
-            var requested = profile;
-            var caps = active.Select(t => PlatformRules.DetectByUrl(t.Url))
-                             .Select(PlatformRules.Get);
-            var capped = ApplyCaps(caps, requested, out string capNote);
-
-            // 2) Donanım encoder auto-detect (settings.Encoder == "auto")
-            var (venc, aenc, vopts, encNote) = ChooseVideoEncoderAuto(capped, settings);
-
-            // 3) Kaynak doğrulamaları
-            if (string.IsNullOrWhiteSpace(settings.DefaultCamera))
-                throw new InvalidOperationException("Kamera seçilmemiş (Ayarlar > Kamera).");
-            if (string.IsNullOrWhiteSpace(settings.DefaultMicrophone))
-                throw new InvalidOperationException("Mikrofon seçilmemiş (Ayarlar > Mikrofon).");
-
-            var gop = Math.Max(1, capped.GopSeconds) * capped.Fps;
-            var audioKbps = Math.Min(capped.AudioKbps, 320);
-
-            // 4) Argümanlar
             var sb = new StringBuilder();
-            sb.Append(" -hide_banner -loglevel warning -stats ");
-            sb.Append($" -f dshow -rtbufsize 256M -video_size {capped.Width}x{capped.Height} -framerate {capped.Fps} ");
-            sb.Append($" -i video=\"{settings.DefaultCamera}\":audio=\"{settings.DefaultMicrophone}\" ");
-            sb.Append($" -pix_fmt yuv420p -r {capped.Fps} -s {capped.Width}x{capped.Height} ");
-            sb.Append($" -c:v {venc} {vopts} -b:v {capped.VideoKbps}k -maxrate {capped.VideoKbps}k -bufsize {capped.VideoKbps * 2}k -g {gop} -keyint_min {gop} ");
-            sb.Append($" -c:a aac -b:a {audioKbps}k -ar 48000 -ac 2 ");
 
-            var teeParts = new List<string>();
-            foreach (var t in active)
-                teeParts.Add($"[f=flv:onfail=ignore]{t.Url.Trim()}");
-            if (!string.IsNullOrWhiteSpace(recordFilePath))
-                teeParts.Add($"[f=flv:onfail=ignore]{recordFilePath}");
+            // --- GİRİŞLER ---
+            // Cihaz yoksa lavfi fallback: testsrc (video) + anullsrc (audio)
+            bool useLavfiVideo = string.IsNullOrWhiteSpace(settings.DefaultCamera);
+            bool useLavfiAudio = string.IsNullOrWhiteSpace(settings.DefaultMicrophone);
 
-            sb.Append($" -f tee \"{string.Join("|", teeParts)}\"");
+            if (useLavfiVideo)
+                sb.Append($" -f lavfi -i testsrc=size={profile.Width}x{profile.Height}:rate={profile.Fps} ");
+            else
+                sb.Append($" -f dshow -rtbufsize 1024M -i video=\"{settings.DefaultCamera}\" ");
 
-            var advisory = BuildAdvisoryText(requested, capped, encNote, capNote);
+            if (useLavfiAudio)
+                sb.Append($" -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 ");
+            else
+                sb.Append($" -f dshow -rtbufsize 1024M -i audio=\"{settings.DefaultMicrophone}\" ");
+
+            // 2: Overlay (PNG stream via named pipe)
+            sb.Append($" -thread_queue_size 128 -framerate 20 -f image2pipe -vcodec png -i \\\\.\\pipe\\{overlayPipeName} ");
+
+            // --- CODEC/AYARLAR ---
+            var vCodec = SelectVideoCodec(settings.Encoder);
+            var aCodec = "aac";
+            int g = Math.Max(2, profile.GopSeconds) * profile.Fps;
+
+            // [0:v] ana video (lavfi veya dshow), [2:v] overlay PNG
+            var vf = $"[0:v][2:v]overlay={overlayX}:{overlayY}:format=auto";
+            sb.Append($" -filter_complex \"{vf}\" ");
+
+            sb.Append($" -c:v {vCodec} -b:v {profile.VideoKbps}k -maxrate {profile.VideoKbps}k -bufsize {profile.VideoKbps * 2}k ");
+            sb.Append($" -g {g} -r {profile.Fps} -s {profile.Width}x{profile.Height} -pix_fmt yuv420p ");
+            sb.Append($" -c:a {aCodec} -b:a {profile.AudioKbps}k -ar 48000 -ac 2 ");
+
+            // --- ÇIKIŞLAR (tee) ---
+            var tee = new List<string>();
+            foreach (var t in targets)
+            {
+                var url = t.Url?.Trim();
+                if (!string.IsNullOrWhiteSpace(url))
+                    tee.Add($"[f=flv]{url}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(recordFile))
+                tee.Add($"[f=mp4]{recordFile}");
+
+            sb.Append($" -f tee \"{string.Join("|", tee)}\"");
+
+            var advisory = $"Overlay aktif (pipe: \\\\.\\pipe\\{overlayPipeName})";
+            if (useLavfiVideo || useLavfiAudio)
+            {
+                var parts = new List<string>();
+                if (useLavfiVideo) parts.Add("video=testsrc");
+                if (useLavfiAudio) parts.Add("audio=anullsrc");
+                advisory += " | Lavfi fallback: " + string.Join(", ", parts);
+            }
 
             return new BuildResult
             {
                 Args = sb.ToString(),
-                Outputs = active.Select(a => a.Url.Trim()).ToArray(),
-                VideoEncoder = venc,
-                AudioEncoder = "aac",
+                Outputs = tee.ToArray(),
+                VideoEncoder = vCodec,
+                AudioEncoder = aCodec,
                 Advisory = advisory
             };
         }
 
+        // --------------------------------------------------------------------
+        // B) OVERLAY'SİZ: tek encode → çoklu RTMP (+opsiyonel kayıt)
+        //     - Kamera/Mikrofon yoksa lavfi fallback (testsrc/anullsrc)
+        // --------------------------------------------------------------------
+        public static BuildResult BuildSingleEncodeMultiRtmp(
+            IEnumerable<TargetItem> targets,
+            SettingsData settings,
+            EncoderProfile profile,
+            string? recordFile)
+        {
+            var sb = new StringBuilder();
+
+            // --- GİRİŞLER (lavfi fallback dahil) ---
+            bool useLavfiVideo = string.IsNullOrWhiteSpace(settings.DefaultCamera);
+            bool useLavfiAudio = string.IsNullOrWhiteSpace(settings.DefaultMicrophone);
+
+            if (useLavfiVideo)
+                sb.Append($" -f lavfi -i testsrc=size={profile.Width}x{profile.Height}:rate={profile.Fps} ");
+            else
+                sb.Append($" -f dshow -rtbufsize 1024M -i video=\"{settings.DefaultCamera}\" ");
+
+            if (useLavfiAudio)
+                sb.Append($" -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 ");
+            else
+                sb.Append($" -f dshow -rtbufsize 1024M -i audio=\"{settings.DefaultMicrophone}\" ");
+
+            // --- CODEC/AYARLAR ---
+            var vCodec = SelectVideoCodec(settings.Encoder);
+            var aCodec = "aac";
+            int g = Math.Max(2, profile.GopSeconds) * profile.Fps;
+
+            sb.Append($" -map 0:v:0 -map 1:a:0 "); // video=0, audio=1 girişlerinden
+
+            sb.Append($" -c:v {vCodec} -b:v {profile.VideoKbps}k -maxrate {profile.VideoKbps}k -bufsize {profile.VideoKbps * 2}k ");
+            sb.Append($" -g {g} -r {profile.Fps} -s {profile.Width}x{profile.Height} -pix_fmt yuv420p ");
+            sb.Append($" -c:a {aCodec} -b:a {profile.AudioKbps}k -ar 48000 -ac 2 ");
+
+            // --- ÇIKIŞLAR (tee) ---
+            var tee = new List<string>();
+            foreach (var t in targets)
+            {
+                var url = t.Url?.Trim();
+                if (!string.IsNullOrWhiteSpace(url))
+                    tee.Add($"[f=flv]{url}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(recordFile))
+                tee.Add($"[f=mp4]{recordFile}");
+
+            sb.Append($" -f tee \"{string.Join("|", tee)}\"");
+
+            var advisory = "Overlay kapalı";
+            if (useLavfiVideo || useLavfiAudio)
+            {
+                var parts = new List<string>();
+                if (useLavfiVideo) parts.Add("video=testsrc");
+                if (useLavfiAudio) parts.Add("audio=anullsrc");
+                advisory += " | Lavfi fallback: " + string.Join(", ", parts);
+            }
+
+            return new BuildResult
+            {
+                Args = sb.ToString(),
+                Outputs = tee.ToArray(),
+                VideoEncoder = vCodec,
+                AudioEncoder = aCodec,
+                Advisory = advisory
+            };
+        }
+
+        // --------------------------------------------------------------------
+        // Yardımcılar
+        // --------------------------------------------------------------------
+        /// <summary>
+        /// Kullanıcı Encoder tercihine göre ffmpeg -c:v değeri.
+        /// Auto durumda basitçe libx264 döndürür (istersen donanım probe ekleyebilirsin).
+        /// </summary>
+        private static string SelectVideoCodec(string? pref)
+        {
+            var p = (pref ?? "auto").Trim().ToLowerInvariant();
+            return p switch
+            {
+                "h264_nvenc" => "h264_nvenc",
+                "nvenc" => "h264_nvenc",
+                "h264_qsv" => "h264_qsv",
+                "qsv" => "h264_qsv",
+                "h264_amf" => "h264_amf",
+                "amf" => "h264_amf",
+                "x264" => "libx264",
+                "libx264" => "libx264",
+                "auto" => "libx264",
+                _ => "libx264"
+            };
+        }
+
+        // (İsteğe bağlı) Platform kısıtlarını ve encoder notlarını advisory içine toplayan yardımcılar:
         private static string BuildAdvisoryText(EncoderProfile req, EncoderProfile eff, string encNote, string capNote)
         {
             var diffs = new List<string>();
@@ -104,31 +225,6 @@ namespace UniCast.Encoder
             return sb.ToString();
         }
 
-        private static (string venc, string aenc, string vopts, string encNote)
-            ChooseVideoEncoderAuto(EncoderProfile p, SettingsData settings)
-        {
-            var desired = (settings.Encoder ?? "auto").Trim().ToLowerInvariant();
-
-            // Kullanıcı spesifik encoder yazmışsa doğrudan onu kullan
-            if (desired is "h264_nvenc" or "h264_qsv" or "h264_amf" or "libx264")
-            {
-                return desired switch
-                {
-                    "h264_nvenc" => ("h264_nvenc", "aac", "-preset p4 -rc cbr -tune ll", "Donanım encoder: NVENC."),
-                    "h264_qsv" => ("h264_qsv", "aac", "-preset veryfast -global_quality 23", "Donanım encoder: Intel QSV."),
-                    "h264_amf" => ("h264_amf", "aac", "-usage transcoding -quality quality -rc cbr", "Donanım encoder: AMD AMF."),
-                    _ => ("libx264", "aac", "-preset veryfast -profile:v high", "Yazılım encoder: libx264.")
-                };
-            }
-
-            // Auto: nvenc > qsv > amf > x264
-            var probe = EncoderProbe.Run();
-            if (probe.HasNvenc) return ("h264_nvenc", "aac", "-preset p4 -rc cbr -tune ll", "Donanım encoder otomatik: NVENC seçildi.");
-            if (probe.HasQsv) return ("h264_qsv", "aac", "-preset veryfast -global_quality 23", "Donanım encoder otomatik: Intel QSV seçildi.");
-            if (probe.HasAmf) return ("h264_amf", "aac", "-usage transcoding -quality quality -rc cbr", "Donanım encoder otomatik: AMD AMF seçildi.");
-            return ("libx264", "aac", "-preset veryfast -profile:v high", "Donanım encoder bulunamadı: libx264 kullanılıyor.");
-        }
-
         private static EncoderProfile ApplyCaps(IEnumerable<PlatformConstraint> constraints, EncoderProfile p, out string capNote)
         {
             var c = constraints.Aggregate(new { W = int.MaxValue, H = int.MaxValue, F = int.MaxValue, V = int.MaxValue, A = int.MaxValue },
@@ -143,8 +239,10 @@ namespace UniCast.Encoder
             int w = Math.Min(p.Width, c.W), h = Math.Min(p.Height, c.H);
             int f = Math.Min(p.Fps, c.F), vk = Math.Min(p.VideoKbps, c.V), ak = Math.Min(p.AudioKbps, c.A);
 
-            // 2'ye bölünebilirlik
-            if ((w & 1) == 1) w--; if ((h & 1) == 1) h--; if (w < 2 || h < 2) { w = 1280; h = 720; }
+            // 2'ye bölünebilirlik (yuv420p gereği)
+            if ((w & 1) == 1) w--;
+            if ((h & 1) == 1) h--;
+            if (w < 2 || h < 2) { w = 1280; h = 720; }
 
             capNote = $"Maks: {c.W}x{c.H}@{c.F}fps, {c.V}kbps video / {c.A}kbps audio.";
             return new EncoderProfile

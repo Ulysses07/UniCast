@@ -3,11 +3,14 @@ using System.Net.Http;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+
 using UniCast.App.Services;
-using UniCast.App.Services.Chat;
+using UniCast.App.Services.Chat;   // YouTubeChatIngestor, TikTokChatIngestor, InstagramChatIngestor, FacebookChatIngestor
 using UniCast.App.ViewModels;
 using UniCast.App.Views;
+
 using UniCast.Core.Chat;
+using UniCast.Core.Settings;
 
 namespace UniCast.App
 {
@@ -22,10 +25,13 @@ namespace UniCast.App
         // Chat çekirdekleri
         private readonly ChatBus _chatBus = new();
         private readonly ChatViewModel _chatVm = new();
+
+        // Ingestorlar
         private YouTubeChatIngestor? _ytIngestor;
         private TikTokChatIngestor? _tiktok;
         private InstagramChatIngestor? _instagram;
         private FacebookChatIngestor? _facebook;
+
         private CancellationTokenSource? _chatCts;
 
         public MainWindow()
@@ -52,7 +58,7 @@ namespace UniCast.App
             if (FindName("MainContent") is ContentControl cc)
                 cc.Content = new ControlView(_controlVm);
 
-            // Navigasyon butonları
+            // Navigasyon butonları (yoksa sessiz geç)
             WireNavButton("BtnControl", () =>
             {
                 if (FindName("MainContent") is ContentControl c)
@@ -96,59 +102,49 @@ namespace UniCast.App
         {
             try
             {
+                _chatCts?.Cancel();
                 _chatCts = new CancellationTokenSource();
 
-                // ✅ YouTube Chat
-                try
+                var s = Services.SettingsStore.Load();
+
+                // YouTube – ayarlar doluysa başlat (özellik atamadan!)
+                if (!string.IsNullOrWhiteSpace(s.YouTubeApiKey) &&
+                    !string.IsNullOrWhiteSpace(s.YouTubeChannelId))
                 {
                     _ytIngestor = new YouTubeChatIngestor(new HttpClient());
                     _chatBus.Attach(_ytIngestor);
                     await _ytIngestor.StartAsync(_chatCts.Token);
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("YouTube chat start error: " + ex.Message);
-                }
 
-                // ✅ TikTok Chat
-                try
+                // TikTok
+                if (!string.IsNullOrWhiteSpace(s.TikTokRoomId))
                 {
                     _tiktok = new TikTokChatIngestor(new HttpClient());
                     _chatBus.Attach(_tiktok);
                     await _tiktok.StartAsync(_chatCts.Token);
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("TikTok chat start error: " + ex.Message);
-                }
 
-                // ✅ Instagram Chat
-                try
+                // Instagram
+                if (!string.IsNullOrWhiteSpace(s.InstagramUserId) &&
+                    !string.IsNullOrWhiteSpace(s.InstagramSessionId))
                 {
                     _instagram = new InstagramChatIngestor(new HttpClient());
                     _chatBus.Attach(_instagram);
                     await _instagram.StartAsync(_chatCts.Token);
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("Instagram chat start error: " + ex.Message);
-                }
-                // ✅ Facebook Chat
-                try
+
+                // Facebook
+                if (!string.IsNullOrWhiteSpace(s.FacebookAccessToken) &&
+                    !string.IsNullOrWhiteSpace(s.FacebookPageId))
                 {
                     _facebook = new FacebookChatIngestor(new HttpClient());
                     _chatBus.Attach(_facebook);
                     await _facebook.StartAsync(_chatCts.Token);
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("Facebook chat start error: " + ex.Message);
-                }
-
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Chat global start error: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Chat start error: " + ex.Message);
             }
         }
 
@@ -156,14 +152,20 @@ namespace UniCast.App
         {
             try { _chatCts?.Cancel(); } catch { }
 
-            try { _ytIngestor?.StopAsync().GetAwaiter().GetResult(); } catch { }
-            try { _tiktok?.StopAsync().GetAwaiter().GetResult(); } catch { }
-            try { _instagram?.StopAsync().GetAwaiter().GetResult(); } catch { }
-            try { _facebook?.StopAsync().GetAwaiter().GetResult(); } catch { }
+            // Kibar kapanış
+            TryStop(_ytIngestor);
+            TryStop(_tiktok);
+            TryStop(_instagram);
+            TryStop(_facebook);
 
             _chatBus.Dispose();
-
             base.OnClosed(e);
+
+            static void TryStop(IChatIngestor? ing)
+            {
+                try { ing?.StopAsync().GetAwaiter().GetResult(); } catch { }
+                try { (ing as IAsyncDisposable)?.DisposeAsync().GetAwaiter().GetResult(); } catch { }
+            }
         }
     }
 }
