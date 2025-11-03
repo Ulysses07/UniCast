@@ -3,14 +3,12 @@ using System.Net.Http;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-
+using UniCast.App.Overlay;
 using UniCast.App.Services;
 using UniCast.App.Services.Chat;   // YouTubeChatIngestor, TikTokChatIngestor, InstagramChatIngestor, FacebookChatIngestor
 using UniCast.App.ViewModels;
 using UniCast.App.Views;
-
 using UniCast.Core.Chat;
-using UniCast.Core.Settings;
 
 namespace UniCast.App
 {
@@ -31,6 +29,9 @@ namespace UniCast.App
         private TikTokChatIngestor? _tiktok;
         private InstagramChatIngestor? _instagram;
         private FacebookChatIngestor? _facebook;
+
+        // Overlay
+        private ChatOverlayController? _overlay;
 
         private CancellationTokenSource? _chatCts;
 
@@ -89,6 +90,20 @@ namespace UniCast.App
                     c.Content = new ChatView { DataContext = _chatVm };
             });
 
+            // Overlay'i Settings çözünürlüğü ile başlat
+            try
+            {
+                var s = Services.SettingsStore.Load();
+                var ow = Math.Max(320, s.Width);
+                var oh = Math.Max(240, s.Height);
+                _overlay = new ChatOverlayController(width: ow, height: oh, pipeName: "unicast_overlay");
+                _overlay.Start();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Overlay start error: " + ex.Message);
+            }
+
             Loaded += MainWindow_Loaded;
         }
 
@@ -98,7 +113,7 @@ namespace UniCast.App
                 b.Click += (_, __) => onClick();
         }
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private async void MainWindow_Loaded(object? sender, RoutedEventArgs e)
         {
             try
             {
@@ -107,37 +122,41 @@ namespace UniCast.App
 
                 var s = Services.SettingsStore.Load();
 
-                // YouTube – ayarlar doluysa başlat (özellik atamadan!)
+                // YouTube – ayarlar doluysa başlat ve overlay'e bağla
                 if (!string.IsNullOrWhiteSpace(s.YouTubeApiKey) &&
                     !string.IsNullOrWhiteSpace(s.YouTubeChannelId))
                 {
                     _ytIngestor = new YouTubeChatIngestor(new HttpClient());
+                    _ytIngestor.OnMessage += OnIngestorMessageToOverlay;
                     _chatBus.Attach(_ytIngestor);
                     await _ytIngestor.StartAsync(_chatCts.Token);
                 }
 
-                // TikTok
+                // TikTok – ayarlar doluysa başlat ve overlay'e bağla
                 if (!string.IsNullOrWhiteSpace(s.TikTokRoomId))
                 {
                     _tiktok = new TikTokChatIngestor(new HttpClient());
+                    _tiktok.OnMessage += OnIngestorMessageToOverlay;
                     _chatBus.Attach(_tiktok);
                     await _tiktok.StartAsync(_chatCts.Token);
                 }
 
-                // Instagram
+                // Instagram – ayarlar doluysa başlat ve overlay'e bağla
                 if (!string.IsNullOrWhiteSpace(s.InstagramUserId) &&
                     !string.IsNullOrWhiteSpace(s.InstagramSessionId))
                 {
                     _instagram = new InstagramChatIngestor(new HttpClient());
+                    _instagram.OnMessage += OnIngestorMessageToOverlay;
                     _chatBus.Attach(_instagram);
                     await _instagram.StartAsync(_chatCts.Token);
                 }
 
-                // Facebook
+                // Facebook – ayarlar doluysa başlat ve overlay'e bağla
                 if (!string.IsNullOrWhiteSpace(s.FacebookAccessToken) &&
                     !string.IsNullOrWhiteSpace(s.FacebookPageId))
                 {
                     _facebook = new FacebookChatIngestor(new HttpClient());
+                    _facebook.OnMessage += OnIngestorMessageToOverlay;
                     _chatBus.Attach(_facebook);
                     await _facebook.StartAsync(_chatCts.Token);
                 }
@@ -148,9 +167,21 @@ namespace UniCast.App
             }
         }
 
+        // Tüm ingestörlerden gelen mesajı overlay'e bas
+        private void OnIngestorMessageToOverlay(ChatMessage msg)
+        {
+            try { _overlay?.Push(msg.Author, msg.Text); } catch { }
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             try { _chatCts?.Cancel(); } catch { }
+
+            // Ingestör event unsub
+            if (_ytIngestor != null) _ytIngestor.OnMessage -= OnIngestorMessageToOverlay;
+            if (_tiktok != null) _tiktok.OnMessage -= OnIngestorMessageToOverlay;
+            if (_instagram != null) _instagram.OnMessage -= OnIngestorMessageToOverlay;
+            if (_facebook != null) _facebook.OnMessage -= OnIngestorMessageToOverlay;
 
             // Kibar kapanış
             TryStop(_ytIngestor);
@@ -158,7 +189,11 @@ namespace UniCast.App
             TryStop(_instagram);
             TryStop(_facebook);
 
+            // Overlay kapat
+            try { if (_overlay != null) _overlay.DisposeAsync().AsTask().GetAwaiter().GetResult(); } catch { }
+
             _chatBus.Dispose();
+
             base.OnClosed(e);
 
             static void TryStop(IChatIngestor? ing)

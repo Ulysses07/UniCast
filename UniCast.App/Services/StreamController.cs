@@ -83,14 +83,9 @@ namespace UniCast.App.Services
             // Overlay’i alta hizalamak için (yaklaşık 280px yüksekliğe göre)
             int overlayY = Math.Max(0, profile.Height - 320);
             var build = FfmpegArgsBuilder.BuildSingleEncodeMultiRtmpWithOverlay(
-                targets,
-                settings,
-                profile,
-                recordFile,
-                overlayPipeName: "unicast_overlay",
-                overlayX: 20,
-                overlayY: overlayY
-            );
+                targets, settings, profile, recordFile,
+                overlayPipeName: "unicast_overlay", overlayX: 20, overlayY: 20);
+
 
             LastAdvisory = build.Advisory;
 
