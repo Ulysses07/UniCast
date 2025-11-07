@@ -1,21 +1,41 @@
-﻿using UniCast.Core.Streaming;
+﻿using System;
+using UniCast.Core.Models; // StreamTarget ve StreamPlatform burada varsayıldı
 
 namespace UniCast.Encoder.Extensions
 {
-    internal static class StreamTargetExtensions
+    public static class StreamTargetExtensions
     {
         /// <summary>
-        /// RTMP çıkış URL'sini, varsa stream key ile birleştirir.
-        /// "rtmp://server/app" + "streamkey" => "rtmp://server/app/streamkey"
-        /// Stream key boşsa URL olduğu gibi döner.
+        /// Hedef platforma göre tam RTMP/RTMPS publish URL'sini üretir.
+        /// - Url boşsa platforma özgü kök + StreamKey kullanılır.
+        /// - Url doluysa ve StreamKey içermiyorsa sonuna eklenir.
         /// </summary>
-        public static string ResolveUrl(this StreamTarget target)
+        public static string ResolveUrl(this StreamTarget t)
         {
-            var u = target?.Url?.Trim() ?? string.Empty;
-            var k = target?.Key?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(u)) return string.Empty;
-            if (string.IsNullOrWhiteSpace(k)) return u;
-            return u.EndsWith("/") ? (u + k) : (u + "/" + k);
+            if (t == null) throw new ArgumentNullException(nameof(t));
+
+            string? url = t.Url;
+            string key = t.StreamKey ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return t.Platform switch
+                {
+                    StreamPlatform.YouTube => $"rtmp://a.rtmp.youtube.com/live2/{key}",
+                    StreamPlatform.Facebook => $"rtmps://live-api-s.facebook.com:443/rtmp/{key}",
+                    StreamPlatform.Twitch => $"rtmp://live.twitch.tv/app/{key}",
+                    _ when !string.IsNullOrWhiteSpace(key)
+                                            => $"rtmp://localhost/live/{key}", // varsayılan (geliştirme)
+                    _ => throw new InvalidOperationException("Target Url/StreamKey belirtilmemiş.")
+                };
+            }
+
+            if (!string.IsNullOrWhiteSpace(key) && !url.Contains(key, StringComparison.Ordinal))
+            {
+                var sep = url.EndsWith("/") ? "" : "/";
+                url = $"{url}{sep}{key}";
+            }
+            return url;
         }
     }
 }

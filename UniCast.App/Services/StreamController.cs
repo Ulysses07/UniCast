@@ -1,114 +1,335 @@
-﻿// File: UniCast.App/Services/StreamController.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UniCast.Core.Models;
 using UniCast.Core.Settings;
-using UniCast.Core.Streaming;
-using UniCast.Encoder;
-using UniCast.Encoder.Extensions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using UniCast.Encoder.Extensions; // ResolveUrl()
 
 namespace UniCast.App.Services
 {
     /// <summary>
-    /// Yayını başlatma, hedefleri hazırlama ve FFMPEG argümanlarını üretme işlerini yönetir.
-    /// Bu sürüm CS1739, CS8601 ve ResolveUrl eksikliğini giderir.
+    /// FFmpeg tabanlı yayın denetleyicisi – bir profili ve birden çok hedefi yönetir.
     /// </summary>
-    public class StreamController
+    public sealed class StreamController : IStreamController
     {
-        public string LastAdvisory { get; private set; } = string.Empty;
+        // --- Public API (IStreamController) ---
+        public bool IsRunning { get; private set; }
+        public bool IsReconnecting => _isReconnecting;
+        public Profile CurrentProfile { get; private set; } = Profile.Default();
+        public IReadOnlyList<StreamTarget> Targets => _targets;
 
-        /// <summary>
-        /// UI'dan gelen ayarlar ve hedeflerle tek encode + çoklu RTMP çıkış (overlay ile) başlatır.
-        /// </summary>
-        public async Task<bool> StartStreamingAsync(SettingsData settings, IEnumerable<TargetItem> targets, Profile profile)
+        public string? LastAdvisory { get; private set; }
+        public string? LastMessage { get; private set; }
+        public string? LastMetric { get; private set; }
+
+        public event EventHandler<string>? OnLog;
+        public event EventHandler<StreamMetric>? OnMetric;
+        public event EventHandler<int /*exitCode*/>? OnExit;
+
+        // --- Private fields ---
+        private readonly List<StreamTarget> _targets = new();
+        private Process? _ffmpeg;
+        private readonly object _gate = new();
+        private CancellationTokenSource? _procCts;
+        private bool _isReconnecting;
+
+        // --- Targets management ---
+        public void AddTarget(StreamTarget target)
         {
-            // Hedefleri Core modeline dönüştür
-            var coreTargets = (targets ?? Enumerable.Empty<TargetItem>())
-                .Where(t => t.Enabled && !string.IsNullOrWhiteSpace(t.Url))
-                .Select(t => new StreamTarget
-                {
-                    Name = t.Name ?? string.Empty,
-                    Url = t.Url ?? string.Empty,
-                    Key = t.Key ?? string.Empty,
-                    Enabled = true
-                })
-                .ToList();
-
-            if (coreTargets.Count == 0)
-            {
-                LastAdvisory = "Aktif hedef bulunamadı.";
-                return false;
-            }
-
-            // Overlay konumlandırma – mevcut mantığı koruyarak güvenli varsayımlar
-            int overlayX = 20;
-            int overlayY = Math.Max(0, (profile?.Height ?? 720) - 320);
-            int overlayFps = Math.Max(1, settings?.Fps ?? 30);
-
-            // *** KRİTİK: FfmpegArgsBuilder doğru imza ile çağrılıyor ***
-            var build = FfmpegArgsBuilder.BuildSingleEncodeMultiRtmpWithOverlay(
-                settings,
-                coreTargets,
-                overlayX: overlayX,
-                overlayY: overlayY,
-                overlayFps: overlayFps
-            );
-
-            // CS8601 fix: Advisory null ise boş string ata
-            LastAdvisory = build.Advisory ?? string.Empty;
-
-            // FFmpeg'i başlat (projende zaten varsa kendi runner'ını kullan)
-            return await StartFfmpegAsync(build.Args);
+            if (target == null) return;
+            _targets.Add(target);
+            OnLog?.Invoke(this, $"[targets] eklendi: {(target.DisplayName ?? target.Platform.ToString())}");
         }
 
-        /// <summary>
-        /// Örnek FFmpeg başlatma. Projende süreç yönetimini farklı yapıyorsan bunu kaldır.
-        /// </summary>
-        private Task<bool> StartFfmpegAsync(string args)
+        public void RemoveTarget(StreamTarget target)
         {
-            // ffmpeg.exe konumu: projende ayarlardan geliyorsa orayı kullan.
-            // Burada PATH'te bulunduğu varsayılıyor.
-            var psi = new ProcessStartInfo
+            if (target == null) return;
+            _targets.Remove(target);
+            OnLog?.Invoke(this, $"[targets] çıkarıldı: {(target.DisplayName ?? target.Platform.ToString())}");
+        }
+
+        // --- Start/Stop lifecycle ---
+        public async Task StartAsync(Profile profile, CancellationToken ct = default)
+        {
+            lock (_gate)
             {
-                FileName = "ffmpeg",
-                Arguments = args,
-                UseShellExecute = false,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true,
-                WorkingDirectory = Directory.GetCurrentDirectory()
+                if (IsRunning)
+                    throw new InvalidOperationException("Yayın zaten çalışıyor.");
+
+                CurrentProfile = profile ?? Profile.Default();
+            }
+
+            var enabledTargets = _targets.Where(t => t?.Enabled == true).ToList();
+            if (enabledTargets.Count == 0)
+                throw new InvalidOperationException("Etkin yayın hedefi yok. En az bir hedef ekleyin.");
+
+            var ffmpegPath = ResolveFfmpegPath();
+            if (ffmpegPath == null)
+                throw new FileNotFoundException("ffmpeg bulunamadı. Uygulama dizinine veya PATH'e ekleyin.");
+
+            var args = BuildFfmpegArgs(CurrentProfile, enabledTargets);
+
+            _procCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            var p = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = ffmpegPath,
+                    Arguments = args,
+                    UseShellExecute = false,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = false,
+                    RedirectStandardInput = true,
+                    CreateNoWindow = true,
+                    StandardErrorEncoding = Encoding.UTF8
+                },
+                EnableRaisingEvents = true
             };
+
+            p.ErrorDataReceived += (s, e) =>
+            {
+                if (e.Data is null) return;
+
+                LastMessage = e.Data;
+                OnLog?.Invoke(this, e.Data);
+
+                var line = e.Data;
+                var metric = TryParseMetric(line, DateTime.UtcNow);
+                if (metric != null)
+                {
+                    OnMetric?.Invoke(this, metric);
+                    LastMetric = BuildMetricText(metric);
+                }
+
+                if (line.Contains("testsrc", StringComparison.OrdinalIgnoreCase) ||
+                    line.Contains("anullsrc", StringComparison.OrdinalIgnoreCase))
+                {
+                    LastAdvisory = "Gerçek cihaz bulunamadı; test kaynakları kullanılıyor.";
+                }
+            };
+
+            p.Exited += (s, e) =>
+            {
+                lock (_gate) { IsRunning = false; }
+                var code = p.ExitCode;
+                OnExit?.Invoke(this, code);
+                OnLog?.Invoke(this, $"[ffmpeg] exited with code {code}");
+                _procCts?.Cancel();
+                _isReconnecting = false;
+            };
+
+            if (!p.Start())
+                throw new InvalidOperationException("ffmpeg başlatılamadı.");
+
+            p.BeginErrorReadLine();
+
+            lock (_gate)
+            {
+                _ffmpeg = p;
+                IsRunning = true;
+            }
+
+            OnLog?.Invoke(this, $"[start] profil: {CurrentProfile.Name}, hedef sayısı: {enabledTargets.Count}");
+            await Task.CompletedTask;
+        }
+
+        public async Task StartAsync(Profile profile, IEnumerable<StreamTarget> targets, CancellationToken ct)
+        {
+            _targets.Clear();
+            if (targets != null) _targets.AddRange(targets);
+            await StartAsync(profile, ct);
+        }
+
+        public async Task StartAsync(IEnumerable<TargetItem> targets, SettingsData settings, CancellationToken ct)
+        {
+            _targets.Clear();
+            if (targets != null)
+            {
+                foreach (var i in targets)
+                {
+                    _targets.Add(new StreamTarget
+                    {
+                        Platform = i.Platform,
+                        DisplayName = i.Name,
+                        StreamKey = i.Key,
+                        Url = i.Url,
+                        Enabled = i.Enabled
+                    });
+                }
+            }
+            var p = CurrentProfile ?? Profile.Default();
+            await StartAsync(p, ct);
+        }
+
+        public async Task StopAsync(CancellationToken ct = default)
+        {
+            Process? p;
+            lock (_gate) { p = _ffmpeg; }
+
+            if (p == null)
+            {
+                OnLog?.Invoke(this, "[stop] aktif süreç yok.");
+                return;
+            }
 
             try
             {
-                var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
-                proc.ErrorDataReceived += (_, e) => { if (!string.IsNullOrEmpty(e.Data)) Debug.WriteLine(e.Data); };
-                proc.OutputDataReceived += (_, e) => { if (!string.IsNullOrEmpty(e.Data)) Debug.WriteLine(e.Data); };
-
-                bool started = proc.Start();
-                if (started)
+                _isReconnecting = false;
+                if (!p.HasExited)
                 {
-                    proc.BeginErrorReadLine();
-                    proc.BeginOutputReadLine();
+                    await TrySendQuitAsync(p, ct);
+
+                    var waitMs = 2000;
+                    if (!p.WaitForExit(waitMs))
+                    {
+                        OnLog?.Invoke(this, "[stop] graceful quit başarısız, Kill() çağrılıyor.");
+                        p.Kill(entireProcessTree: true);
+                    }
                 }
-                return Task.FromResult(started);
             }
             catch (Exception ex)
             {
-                LastAdvisory = $"FFmpeg başlatılamadı: {ex.Message}";
-                return Task.FromResult(false);
+                OnLog?.Invoke(this, $"[stop][error] {ex.Message}");
+            }
+            finally
+            {
+                lock (_gate)
+                {
+                    IsRunning = false;
+                    _ffmpeg = null;
+                }
             }
         }
-    }
 
-    // ---- NOTLAR ----
-    // SettingsData, TargetItem, Profile tipleri projende zaten mevcut olmalı.
-    // - SettingsData: en azından Fps bilgisini içeriyor olmalı (int Fps).
-    // - TargetItem: Name, Url, Key, Enabled alanlarını içeriyor olmalı.
-    // - Profile: en azından Height bilgisini içeriyor olmalı (int Height).
+        public async ValueTask DisposeAsync()
+        {
+            try { await StopAsync(); } catch { /* ignore */ }
+            _procCts?.Dispose();
+        }
+
+        // --- Helpers ---
+
+        private static string? ResolveFfmpegPath()
+        {
+            try
+            {
+                var baseDir = AppContext.BaseDirectory;
+                var local = Path.Combine(baseDir, "ffmpeg.exe");
+                if (File.Exists(local)) return local;
+            }
+            catch { /* ignore */ }
+
+            try
+            {
+                var paths = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator);
+                foreach (var dir in paths)
+                {
+                    try
+                    {
+                        var candidate = Path.Combine(dir.Trim(), "ffmpeg.exe");
+                        if (File.Exists(candidate)) return candidate;
+                    }
+                    catch { /* ignore */ }
+                }
+            }
+            catch { /* ignore */ }
+
+            try
+            {
+                var which = "/usr/bin/ffmpeg";
+                if (File.Exists(which)) return which;
+            }
+            catch { /* ignore */ }
+
+            return null;
+        }
+
+        private static string BuildFfmpegArgs(Profile p, IList<StreamTarget> targets)
+        {
+            var input = $"-f lavfi -i testsrc=size={p.Width}x{p.Height}:rate={p.Fps} -f lavfi -i anullsrc=cl=stereo:r=48000";
+
+            var vcodec = string.IsNullOrWhiteSpace(p.VideoCodec) ? "libx264" : p.VideoCodec;
+            var acodec = string.IsNullOrWhiteSpace(p.AudioCodec) ? "aac" : p.AudioCodec;
+            var preset = string.IsNullOrWhiteSpace(p.VideoPreset) ? "veryfast" : p.VideoPreset;
+
+            var enc = $"-c:v {vcodec} -preset {preset} -b:v {p.VideoBitrateKbps}k -pix_fmt yuv420p " +
+                      $"-c:a {acodec} -b:a {p.AudioBitrateKbps}k -ar 48000 -ac 2";
+
+            var urls = targets.Select(t => SafeTeeChunk(t.ResolveUrl())).ToArray();
+            var teeSpec = string.Join("|", urls);
+            var output = $"-f tee \"{teeSpec}\"";
+
+            var map = "-map 0:v:0 -map 1:a:0";
+
+            var args = $"{input} {enc} {map} {output}";
+            return args;
+        }
+
+        private static string SafeTeeChunk(string url)
+        {
+            return $"[f=flv]{url}";
+        }
+
+        private static async Task TrySendQuitAsync(Process p, CancellationToken ct)
+        {
+            try
+            {
+                if (p.StartInfo.RedirectStandardInput && p.StandardInput.BaseStream.CanWrite)
+                {
+                    await p.StandardInput.WriteAsync("q");
+                    await p.StandardInput.FlushAsync();
+                }
+            }
+            catch { /* ignore */ }
+
+            try { await Task.Delay(300, ct); } catch { /* ignore */ }
+        }
+
+        private static StreamMetric? TryParseMetric(string line, DateTime tsUtc)
+        {
+            double? fps = null;
+            double? br = null;
+
+            try
+            {
+                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                foreach (var p in parts)
+                {
+                    if (p.StartsWith("fps=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var v = p.Substring(4);
+                        if (double.TryParse(v.Replace(",", "."), System.Globalization.NumberStyles.Any,
+                                System.Globalization.CultureInfo.InvariantCulture, out var f))
+                            fps = f;
+                    }
+                    else if (p.StartsWith("bitrate=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var v = p.Substring(8).ToLowerInvariant();
+                        if (v.EndsWith("kbits/s") && double.TryParse(
+                                v.Replace("kbits/s", "").Trim().Replace(",", "."),
+                                System.Globalization.NumberStyles.Any,
+                                System.Globalization.CultureInfo.InvariantCulture, out var kb))
+                            br = kb; // kbps
+                    }
+                }
+            }
+            catch { /* ignore */ }
+
+            if (fps == null && br == null) return null;
+            return new StreamMetric { TimestampUtc = tsUtc, Fps = fps, BitrateKbps = br };
+        }
+
+        private static string BuildMetricText(StreamMetric m)
+        {
+            var fps = m.Fps.HasValue ? $"{m.Fps:0.#} fps" : null;
+            var br = m.BitrateKbps.HasValue ? $"{m.BitrateKbps:0.#} kbps" : null;
+            if (fps != null && br != null) return $"{fps}, {br}";
+            return fps ?? br ?? string.Empty;
+        }
+    }
 }

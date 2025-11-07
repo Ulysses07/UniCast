@@ -11,6 +11,8 @@ using UniCast.Core.Models;
 using UniCast.Core.Settings;
 using System.Collections.ObjectModel;
 
+
+
 namespace UniCast.App.ViewModels
 {
     public sealed class ControlViewModel : INotifyPropertyChanged
@@ -100,15 +102,21 @@ namespace UniCast.App.ViewModels
                 IsRunning = true;
 
                 // Advisory'yi UI'ya yansıt
+#pragma warning disable CS8601 // Olası null başvuru ataması.
                 Advisory = _stream.LastAdvisory;
+#pragma warning restore CS8601 // Olası null başvuru ataması.
 
                 // Background metric/status updater
                 _ = Task.Run(async () =>
                 {
                     while (IsRunning || _stream.IsReconnecting)
                     {
+#pragma warning disable CS8601 // Olası null başvuru ataması.
                         Status = _stream.LastMessage;
+#pragma warning restore CS8601 // Olası null başvuru ataması.
+#pragma warning disable CS8601 // Olası null başvuru ataması.
                         Metric = _stream.LastMetric;
+#pragma warning restore CS8601 // Olası null başvuru ataması.
                         await Task.Delay(200);
                     }
                 });

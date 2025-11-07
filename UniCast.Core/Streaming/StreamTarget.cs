@@ -1,9 +1,13 @@
-﻿namespace UniCast.Core.Streaming;
-
-public class StreamTarget
+﻿namespace UniCast.Core.Models
 {
-    public string Name { get; set; } = "";
-    public string Url { get; set; } = "";   // Örn: rtmp://a.rtmp.youtube.com/live2
-    public string Key { get; set; } = "";   // Örn: abc-def-ghi-123
-    public bool Enabled { get; set; }       // UI'daki toggle
+    public enum StreamPlatform { Custom, YouTube, Facebook, Twitch }
+
+    public sealed class StreamTarget
+    {
+        public StreamPlatform Platform { get; set; } = StreamPlatform.Custom;
+        public string? DisplayName { get; set; } // UI’da gösterilecek ad
+        public string? Url { get; set; }         // rtmp(s)://.../app
+        public string? StreamKey { get; set; }   // publish key
+        public bool Enabled { get; set; } = true;
+    }
 }

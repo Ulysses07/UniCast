@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
+using UniCast.Core.Models;
 using UniCast.Core.Settings;
-using UniCast.Core.Streaming;
+using UniCast.Encoder.Extensions;
 
 namespace UniCast.Encoder
 {
