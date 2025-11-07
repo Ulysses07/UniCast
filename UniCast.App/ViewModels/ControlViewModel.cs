@@ -43,9 +43,13 @@ namespace UniCast.App.ViewModels
 
         public async Task StartPreviewAsync()
         {
-            if (_preview.IsRunning) return;
             var s = Services.SettingsStore.Load();
-            await _preview.StartAsync(width: s.Width, height: s.Height, fps: s.Fps);
+
+            if (!_preview.IsRunning)
+            {
+                // preferredIndex: bilmiyorsak -1
+                await _preview.StartAsync(-1, s.Width, s.Height, s.Fps);
+            }
         }
 
         public Task StopPreviewAsync() => _preview.StopAsync();

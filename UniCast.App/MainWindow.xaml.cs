@@ -89,9 +89,11 @@ namespace UniCast.App
                 if (FindName("MainContent") is ContentControl c)
                     c.Content = new ChatView { DataContext = _chatVm };
             });
+        }
+
 
             // Overlay'i Settings çözünürlüğü ile başlat
-            try
+            /*try
             {
                 var s = Services.SettingsStore.Load();
                 var ow = Math.Max(320, s.Width);
@@ -105,7 +107,7 @@ namespace UniCast.App
             }
 
             Loaded += MainWindow_Loaded;
-        }
+        }*/
 
         private void WireNavButton(string name, Action onClick)
         {

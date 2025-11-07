@@ -35,9 +35,8 @@ namespace UniCast.App.ViewModels
                 _isStarting = true;
                 try
                 {
-                    SettingsData s = Services.SettingsStore.Load();
-                    // NOT: preferredIndex parametresi yok -> width/height/fps ile çağırıyoruz
-                    await _service.StartAsync(width: s.Width, height: s.Height, fps: s.Fps);
+                    SettingsData  s = Services.SettingsStore.Load();
+                    await _service.StartAsync(-1, s.Width, s.Height, s.Fps);
                 }
                 finally
                 {

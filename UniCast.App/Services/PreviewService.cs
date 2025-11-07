@@ -1,162 +1,220 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using DirectShowLib;
-using OpenCvSharp;
-using OpenCvSharp.WpfExtensions;
-using UniCast.Core.Settings;
 
 namespace UniCast.App.Services
 {
+    /// <summary>
+    /// AForge.Video.DirectShow ile kamera önizleme:
+    /// - Cihazları listeler, öncelik sırasına göre açmayı dener (preferredIndex, Camo, DroidCam, diğerleri).
+    /// - En yakın çözünürlük/fps profilini seçer.
+    /// - NewFrame ile gelen Bitmap'i WPF ImageSource'a çevirir ve OnFrame olayıyla yayar.
+    /// </summary>
     public sealed class PreviewService : IDisposable
     {
         public event Action<ImageSource>? OnFrame;
 
-        private VideoCapture? _cap;
+        private readonly object _sync = new();
+        private AForge.Video.DirectShow.VideoCaptureDevice? _device;
         private CancellationTokenSource? _cts;
-        private Task? _loop;
-        private readonly object _gate = new();
+        private bool _isRunning;
 
-        public bool IsRunning { get; private set; }
-
-        public Task StartAsync(int width, int height, int fps)
+        public bool IsRunning
         {
-            lock (_gate)
+            get { lock (_sync) return _isRunning; }
+            private set { lock (_sync) _isRunning = value; }
+        }
+
+        /// <summary>
+        /// preferredIndex: Aygıt listesi indeksine öncelik (>=0 ise).
+        /// width/height/fps: hedef profil (cihaz yeteneğine en yakın seçilir).
+        /// </summary>
+        public async Task StartAsync(int preferredIndex, int width, int height, int fps)
+        {
+            lock (_sync)
             {
-                if (IsRunning) return Task.CompletedTask;
-                IsRunning = true;
+                if (IsRunning) return;
                 _cts = new CancellationTokenSource();
             }
 
-            try
+            await Task.Run(() =>
             {
-                var s = SettingsStore.Load();
-                var want = (s.DefaultCamera ?? "").Trim(); // ör: "DroidCam", "DroidCam Video"
+                var all = new AForge.Video.DirectShow.FilterInfoCollection(
+                    AForge.Video.DirectShow.FilterCategory.VideoInputDevice);
 
-                // DirectShow cihazları
-                var dsDevs = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
-                if (dsDevs is null || dsDevs.Length == 0)
-                    throw new InvalidOperationException("Kamera bulunamadı (DirectShow).");
+                if (all.Count == 0)
+                    throw new InvalidOperationException("Sistemde hiçbir video aygıtı bulunamadı.");
 
-                string[] allNames = dsDevs.Select(d => d.Name).ToArray();
+                // Öncelik sırası listesi
+                var order = new System.Collections.Generic.List<int>();
 
-                var candidates = allNames
-                    .Where(n => !string.IsNullOrWhiteSpace(want) && string.Equals(n, want, StringComparison.Ordinal))
-                    .Concat(allNames.Where(n => !string.IsNullOrWhiteSpace(want) && n.IndexOf(want, StringComparison.OrdinalIgnoreCase) >= 0))
-                    .Concat(allNames) // hepsini dene
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray();
+                // 1) preferredIndex geçerliyse ekle
+                if (preferredIndex >= 0 && preferredIndex < all.Count) order.Add(preferredIndex);
 
-                var prioritized = candidates
-                    .OrderByDescending(n => n.IndexOf("droidcam", StringComparison.OrdinalIgnoreCase) >= 0)
-                    .ToArray();
+                // 2) “Camo” varsa ekle
+                int camo = IndexOf(all, "Camo");
+                if (camo >= 0 && !order.Contains(camo)) order.Add(camo);
 
-                bool opened = false;
-                for (int i = 0; i < prioritized.Length && !opened; i++)
+                // 3) “DroidCam Video” varsa ekle
+                int droid = IndexOf(all, "DroidCam Video");
+                if (droid >= 0 && !order.Contains(droid)) order.Add(droid);
+
+                // 4) Kalanları ekle
+                for (int i = 0; i < all.Count; i++)
+                    if (!order.Contains(i)) order.Add(i);
+
+                Exception? last = null;
+
+                foreach (int idx in order)
                 {
-                    var name = prioritized[i];
-
-                    // DSHOW
-                    if (TryOpen($"video={name}", VideoCaptureAPIs.DSHOW, width, height, fps)) { opened = true; break; }
-                    // FFMPEG backend
-                    if (TryOpen($"video={name}", VideoCaptureAPIs.FFMPEG, width, height, fps)) { opened = true; break; }
-                    // MSMF index
-                    int msIndex = Array.IndexOf(allNames, name);
-                    if (msIndex >= 0 && TryOpen(msIndex, VideoCaptureAPIs.MSMF, width, height, fps)) { opened = true; break; }
-                }
-
-                if (!opened)
-                {
-                    if (!TryOpen(0, VideoCaptureAPIs.DSHOW, width, height, fps))
-                        throw new InvalidOperationException($"Kamera açılamadı: \"{(string.IsNullOrWhiteSpace(want) ? "(seçilmedi)" : want)}\"");
-                }
-
-                var ct = _cts!.Token;
-                _loop = Task.Run(() =>
-                {
-                    using var mat = new Mat();
-                    while (!ct.IsCancellationRequested)
+                    try
                     {
-                        try
+                        OpenDevice(all[idx], width, height, fps);
+
+                        IsRunning = true;
+
+                        // Kapatma bekçisi
+                        var token = _cts!.Token;
+                        token.Register(() =>
                         {
-                            if (!_cap!.Read(mat) || mat.Empty())
-                            {
-                                Task.Delay(10, ct).Wait(ct);
-                                continue;
-                            }
-                            var bmp = BitmapSourceConverter.ToBitmapSource(mat);
-                            bmp.Freeze();
-                            OnFrame?.Invoke(bmp);
-                        }
-                        catch (OperationCanceledException) { break; }
-                        catch { Task.Delay(20, ct).Wait(ct); }
+                            try { SafeStop(); } catch { }
+                        });
+
+                        return; // başarı
                     }
-                }, ct);
-            }
-            catch
-            {
-                StopAsync().GetAwaiter().GetResult();
-                throw;
-            }
+                    catch (Exception ex)
+                    {
+                        last = ex;
+                        SafeStop(); // yarım açılışları temizle
+                    }
+                }
 
-            return Task.CompletedTask;
-        }
-
-        private bool TryOpen(string deviceString, VideoCaptureAPIs api, int w, int h, int fps)
-        {
-            try
-            {
-                _cap?.Release(); _cap?.Dispose();
-                _cap = new VideoCapture(deviceString, api);
-                if (!_cap.IsOpened()) return false;
-                ApplyFormat(w, h, fps);
-                return _cap.IsOpened();
-            }
-            catch { return false; }
-        }
-
-        private bool TryOpen(int index, VideoCaptureAPIs api, int w, int h, int fps)
-        {
-            try
-            {
-                _cap?.Release(); _cap?.Dispose();
-                _cap = new VideoCapture(index, api);
-                if (!_cap.IsOpened()) return false;
-                ApplyFormat(w, h, fps);
-                return _cap.IsOpened();
-            }
-            catch { return false; }
-        }
-
-        private void ApplyFormat(int w, int h, int fps)
-        {
-            _cap!.Set(VideoCaptureProperties.FrameWidth, w);
-            _cap.Set(VideoCaptureProperties.FrameHeight, h);
-            _cap.Set(VideoCaptureProperties.Fps, fps);
+                throw new InvalidOperationException(
+                    $"Kamera açılamadı. Denenenler: {string.Join(", ", order.Select(i => $"{i}:{all[i].Name}"))}",
+                    last
+                );
+            });
         }
 
         public async Task StopAsync()
         {
-            Task? loop;
-            lock (_gate)
+            CancellationTokenSource? cts;
+            lock (_sync)
             {
-                if (!IsRunning) return;
-                IsRunning = false;
-                _cts?.Cancel();
-                loop = _loop;
-                _loop = null;
+                cts = _cts;
+                _cts = null;
             }
-            if (loop != null) { try { await loop; } catch { } }
-            _cap?.Release(); _cap?.Dispose(); _cap = null;
-            _cts?.Dispose(); _cts = null;
+            try { cts?.Cancel(); } catch { }
+
+            await Task.Run(SafeStop);
+            IsRunning = false;
+        }
+
+        private static int IndexOf(AForge.Video.DirectShow.FilterInfoCollection all, string name)
+            => Enumerable.Range(0, all.Count)
+                         .FirstOrDefault(i => all[i].Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+        private void OpenDevice(AForge.Video.DirectShow.FilterInfo info, int targetW, int targetH, int targetFps)
+        {
+            var dev = new AForge.Video.DirectShow.VideoCaptureDevice(info.MonikerString);
+
+            // En yakın profile "snap"
+            var caps = dev.VideoCapabilities;
+            if (caps != null && caps.Length > 0)
+            {
+                var best = caps
+                    .Select(c => new
+                    {
+                        Cap = c,
+                        Score =
+                            Math.Abs(c.FrameSize.Width - targetW) +
+                            Math.Abs(c.FrameSize.Height - targetH) +
+                            3 * Math.Abs(c.AverageFrameRate - targetFps)
+                    })
+                    .OrderBy(x => x.Score)
+                    .First().Cap;
+
+                dev.VideoResolution = best;
+            }
+
+            // Kare yakalama
+            dev.NewFrame += (s, e) =>
+            {
+                try
+                {
+                    using var bmp = (System.Drawing.Bitmap)e.Frame.Clone();
+
+                    // WPF ImageSource'a çevir
+                    var img = ConvertToImageSource(bmp);
+                    img.Freeze(); // UI thread'e marshalling gerekmesin
+
+                    OnFrame?.Invoke(img);
+                }
+                catch
+                {
+                    // frame drop — yut
+                }
+            };
+
+            dev.Start();
+
+            // Açıldı mı?
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            while (!dev.IsRunning)
+            {
+                if (sw.ElapsedMilliseconds > 3000)
+                {
+                    try { dev.SignalToStop(); dev.WaitForStop(); } catch { }
+                    throw new InvalidOperationException($"Kamera açılamadı (name={info.Name}).");
+                }
+                Thread.Sleep(20);
+            }
+
+            lock (_sync) _device = dev;
+        }
+
+        private void SafeStop()
+        {
+            lock (_sync)
+            {
+                if (_device != null)
+                {
+                    try
+                    {
+                        if (_device.IsRunning)
+                        {
+                            _device.SignalToStop();
+                            _device.WaitForStop();
+                        }
+                    }
+                    catch { }
+                    finally
+                    {
+                        try { _device.Stop(); } catch { }
+                        _device = null;
+                    }
+                }
+            }
+        }
+
+        private static BitmapSource ConvertToImageSource(System.Drawing.Bitmap bmp)
+        {
+            using var ms = new MemoryStream();
+            bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);
+            ms.Position = 0;
+
+            var img = new BitmapImage();
+            img.BeginInit();
+            img.CacheOption = BitmapCacheOption.OnLoad;
+            img.StreamSource = ms;
+            img.EndInit();
+            return img;
         }
 
         public void Dispose()
         {
-            try { StopAsync().GetAwaiter().GetResult(); } catch { }
+            try { _cts?.Cancel(); } catch { }
+            SafeStop();
         }
     }
 }
