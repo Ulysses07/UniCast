@@ -8,14 +8,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using UniCast.Core.Models;
 using UniCast.Core.Settings;
-using UniCast.Encoder.Extensions; // ResolveUrl()
+using UniCast.Encoder;              // FfmpegArgsBuilder
+using UniCast.Encoder.Extensions;   // ResolveUrl()
 
 namespace UniCast.App.Services
 {
     /// <summary>
     /// FFmpeg tabanlı yayın denetleyicisi – bir profili ve birden çok hedefi yönetir.
     /// </summary>
-    public sealed class StreamController : IStreamController
+    public sealed class StreamController : IStreamController, IAsyncDisposable
     {
         // --- Public API (IStreamController) ---
         public bool IsRunning { get; private set; }
@@ -37,6 +38,7 @@ namespace UniCast.App.Services
         private readonly object _gate = new();
         private CancellationTokenSource? _procCts;
         private bool _isReconnecting;
+        private SettingsData? _settings; // gerçek cihazlar ve encode ayarları için
 
         // --- Targets management ---
         public void AddTarget(StreamTarget target)
@@ -68,11 +70,16 @@ namespace UniCast.App.Services
             if (enabledTargets.Count == 0)
                 throw new InvalidOperationException("Etkin yayın hedefi yok. En az bir hedef ekleyin.");
 
+            // Ayarları yükle (dışarıdan verilmediyse)
+            var s = _settings ?? SettingsStore.Load();
+
+            // FFmpeg yolunu çöz
             var ffmpegPath = ResolveFfmpegPath();
             if (ffmpegPath == null)
                 throw new FileNotFoundException("ffmpeg bulunamadı. Uygulama dizinine veya PATH'e ekleyin.");
 
-            var args = BuildFfmpegArgs(CurrentProfile, enabledTargets);
+            // Args üret – gerçek cihazları dshow ile kullan
+            var args = FfmpegArgsBuilder.BuildSingleEncodeMultiRtmp(s, enabledTargets, includeOverlayPipe: false);
 
             _procCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             var p = new Process
@@ -91,7 +98,7 @@ namespace UniCast.App.Services
                 EnableRaisingEvents = true
             };
 
-            p.ErrorDataReceived += (s, e) =>
+            p.ErrorDataReceived += (sdr, e) =>
             {
                 if (e.Data is null) return;
 
@@ -100,7 +107,7 @@ namespace UniCast.App.Services
 
                 var line = e.Data;
                 var metric = TryParseMetric(line, DateTime.UtcNow);
-                if (metric != null)
+                if (metric is not null)
                 {
                     OnMetric?.Invoke(this, metric);
                     LastMetric = BuildMetricText(metric);
@@ -113,7 +120,7 @@ namespace UniCast.App.Services
                 }
             };
 
-            p.Exited += (s, e) =>
+            p.Exited += (sdr, e) =>
             {
                 lock (_gate) { IsRunning = false; }
                 var code = p.ExitCode;
@@ -162,6 +169,9 @@ namespace UniCast.App.Services
                     });
                 }
             }
+
+            // Bu çağrıda SettingsData geldi: gerçek cihaz bilgileri burada
+            _settings = settings;
             var p = CurrentProfile ?? Profile.Default();
             await StartAsync(p, ct);
         }
@@ -249,32 +259,6 @@ namespace UniCast.App.Services
             return null;
         }
 
-        private static string BuildFfmpegArgs(Profile p, IList<StreamTarget> targets)
-        {
-            var input = $"-f lavfi -i testsrc=size={p.Width}x{p.Height}:rate={p.Fps} -f lavfi -i anullsrc=cl=stereo:r=48000";
-
-            var vcodec = string.IsNullOrWhiteSpace(p.VideoCodec) ? "libx264" : p.VideoCodec;
-            var acodec = string.IsNullOrWhiteSpace(p.AudioCodec) ? "aac" : p.AudioCodec;
-            var preset = string.IsNullOrWhiteSpace(p.VideoPreset) ? "veryfast" : p.VideoPreset;
-
-            var enc = $"-c:v {vcodec} -preset {preset} -b:v {p.VideoBitrateKbps}k -pix_fmt yuv420p " +
-                      $"-c:a {acodec} -b:a {p.AudioBitrateKbps}k -ar 48000 -ac 2";
-
-            var urls = targets.Select(t => SafeTeeChunk(t.ResolveUrl())).ToArray();
-            var teeSpec = string.Join("|", urls);
-            var output = $"-f tee \"{teeSpec}\"";
-
-            var map = "-map 0:v:0 -map 1:a:0";
-
-            var args = $"{input} {enc} {map} {output}";
-            return args;
-        }
-
-        private static string SafeTeeChunk(string url)
-        {
-            return $"[f=flv]{url}";
-        }
-
         private static async Task TrySendQuitAsync(Process p, CancellationToken ct)
         {
             try
@@ -303,7 +287,8 @@ namespace UniCast.App.Services
                     if (p.StartsWith("fps=", StringComparison.OrdinalIgnoreCase))
                     {
                         var v = p.Substring(4);
-                        if (double.TryParse(v.Replace(",", "."), System.Globalization.NumberStyles.Any,
+                        if (double.TryParse(v.Replace(",", "."),
+                                System.Globalization.NumberStyles.Any,
                                 System.Globalization.CultureInfo.InvariantCulture, out var f))
                             fps = f;
                     }

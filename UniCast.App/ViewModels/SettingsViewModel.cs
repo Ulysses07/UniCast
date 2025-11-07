@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
+using UniCast.App.Services.Capture; // IDeviceService
 using UniCast.Core.Settings;
 
 namespace UniCast.App.ViewModels
@@ -18,7 +19,7 @@ namespace UniCast.App.ViewModels
             _devices = devices;
             _settings = SettingsStore.Load();
 
-            // Load persisted basic settings
+            // Persisted basic settings
             _defaultCamera = _settings.DefaultCamera ?? "";
             _defaultMicrophone = _settings.DefaultMicrophone ?? "";
             _encoder = string.IsNullOrWhiteSpace(_settings.Encoder) ? "auto" : _settings.Encoder!;
@@ -41,9 +42,9 @@ namespace UniCast.App.ViewModels
 
             SaveCommand = new RelayCommand(_ => Save());
             BrowseRecordFolderCommand = new RelayCommand(_ => BrowseFolder());
-            RefreshDevicesCommand = new RelayCommand(_ => RefreshDevices());
+            RefreshDevicesCommand = new RelayCommand(async _ => await RefreshDevicesAsync());
 
-            RefreshDevices();
+            _ = RefreshDevicesAsync();
         }
 
         // Device lists
@@ -144,17 +145,18 @@ namespace UniCast.App.ViewModels
             }
         }
 
-        private void RefreshDevices()
+        private async Task RefreshDevicesAsync()
         {
-            var (video, audio) = _devices.ListDevices();
+            var videos = await _devices.GetVideoFriendlyNamesAsync();
+            var audios = await _devices.GetAudioFriendlyNamesAsync();
 
             VideoDevices.Clear();
-            foreach (var v in video) VideoDevices.Add(v);
+            foreach (var v in videos) VideoDevices.Add(v);
             if (!string.IsNullOrWhiteSpace(DefaultCamera) && !VideoDevices.Contains(DefaultCamera))
                 VideoDevices.Add(DefaultCamera);
 
             AudioDevices.Clear();
-            foreach (var a in audio) AudioDevices.Add(a);
+            foreach (var a in audios) AudioDevices.Add(a);
             if (!string.IsNullOrWhiteSpace(DefaultMicrophone) && !AudioDevices.Contains(DefaultMicrophone))
                 AudioDevices.Add(DefaultMicrophone);
         }

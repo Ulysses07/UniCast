@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using UniCast.App.Overlay;
 using UniCast.App.Services;
+using UniCast.App.Services.Capture;
 using UniCast.App.Services.Chat;   // YouTubeChatIngestor, TikTokChatIngestor, InstagramChatIngestor, FacebookChatIngestor
 using UniCast.App.ViewModels;
 using UniCast.App.Views;
