@@ -6,6 +6,7 @@ using UniCast.App.Infrastructure;
 using UniCast.App.Services;
 using UniCast.App.Services.Capture; // IDeviceService
 using UniCast.Core.Settings;
+using UniCast.Core.Chat; // SettingsData
 
 namespace UniCast.App.ViewModels
 {

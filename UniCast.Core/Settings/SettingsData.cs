@@ -1,42 +1,64 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using UniCast.Core.Models;
 
 namespace UniCast.Core.Settings
 {
+    /// <summary>
+    /// Uygulamanın genel ayarları: cihaz seçimleri, encode, sosyal hedef bilgileri vb.
+    /// ViewModel’lerin beklediği tüm alanlar eklendi.
+    /// </summary>
     public sealed class SettingsData
     {
-        public string DefaultCamera { get; set; } = "";
-        public string DefaultMicrophone { get; set; } = "";
+        // --- Cihaz seçimleri ---
+        public string? DefaultCamera { get; set; }          // dshow: video="..."
+        public string? DefaultMicrophone { get; set; }      // dshow: audio="..."
 
-        public string Encoder { get; set; } = "auto";
-        public int VideoKbps { get; set; } = 3500;
-        public int AudioKbps { get; set; } = 160;
-        public int Fps { get; set; } = 30;
+        // --- Encoder & kalite ---
+        /// <summary>libx264 | h264_nvenc | hevc_nvenc | libx265 vb.</summary>
+        public string Encoder { get; set; } = "libx264";
+        public int VideoKbps { get; set; } = 2500;
+        public int AudioKbps { get; set; } = 128;
 
+        // --- Çözünürlük & fps ---
         public int Width { get; set; } = 1280;
         public int Height { get; set; } = 720;
+        public int Fps { get; set; } = 30;
 
-        public bool EnableLocalRecord { get; set; } = false;
-        public string RecordFolder { get; set; } =
+        // --- Yerel kayıt ---
+        public string? RecordFolder { get; set; } =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "UniCast");
-        public bool ShowOverlay { get; set; } = false;
-        public double OverlayX { get; set; } = 0;
-        public double OverlayY { get; set; } = 0;
-        public double OverlayOpacity { get; set; } = 0.9;
-        public double OverlayFontSize { get; set; } = 18;
+        public bool EnableLocalRecord { get; set; } = false;
 
-        // YouTube
-        public string YouTubeApiKey { get; set; } = "";         // Secret - DPAPI ile saklanacak
-        public string YouTubeChannelId { get; set; } = "";
+        // --- Sosyal/Platform alanları (ViewModel’ler istiyor) ---
+        public string? YouTubeApiKey { get; set; }
+        public string? YouTubeChannelId { get; set; }
+        public string? TikTokRoomId { get; set; }
+        public string? InstagramUserId { get; set; }
+        public string? InstagramSessionId { get; set; }
+        public string? FacebookAccessToken { get; set; }
+        public string? FacebookPageId { get; set; }
+        public string? FacebookLiveVideoId { get; set; }
 
-        // TikTok
-        public string TikTokSessionCookie { get; set; } = "";   // Secret - DPAPI ile saklanacak
-        public string TikTokRoomId { get; set; } = "";
+        // --- Profil yönetimi ---
+        public List<Profile> Profiles { get; set; } = new()
+        {
+            Profile.Default()
+        };
 
-        public string InstagramUserId { get; set; } = "";   // plain
-        public string InstagramSessionId { get; set; } = ""; // plain (DPAPI ile şifrelenerek kaydedilecek)
-        public string FacebookPageId { get; set; } = "";       // Sayfa ID (numerik)
-        public string FacebookLiveVideoId { get; set; } = "";   // Opsiyonel: canlı video ID'sini doğrudan ver
-        public string FacebookAccessToken { get; set; } = "";   // Page Access Token (encrypted kaydedilecek)
+        /// <summary>Seçili profilin adı (UI bu string’i saklıyor)</summary>
+        public string? SelectedProfileName { get; set; } = Profile.Default().Name;
+
+        /// <summary>Seçili profili getir; yoksa varsayılanı döner.</summary>
+        public Profile GetSelectedProfile()
+        {
+            var p = Profiles.FirstOrDefault(x =>
+                !string.IsNullOrWhiteSpace(SelectedProfileName) &&
+                string.Equals(x.Name, SelectedProfileName, StringComparison.OrdinalIgnoreCase));
+
+            return p ?? Profile.Default();
+        }
     }
 }

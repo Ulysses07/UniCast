@@ -1,13 +1,19 @@
-﻿namespace UniCast.Core
+﻿namespace UniCast.Core.Models
 {
-    public sealed class EncoderProfile
+    public sealed class Profile
     {
-        public int Width { get; init; } = 1280;
-        public int Height { get; init; } = 720;
-        public int Fps { get; init; } = 30;
-        public int VideoKbps { get; init; } = 3500;
-        public int AudioKbps { get; init; } = 160;
-        public string Encoder { get; init; } = "auto";
-        public int GopSeconds { get; init; } = 2;
+        public string Name { get; set; } = "Default";
+        public int Width { get; set; } = 1280;
+        public int Height { get; set; } = 720;
+        public int Fps { get; set; } = 30;
+
+        public static Profile Default() => new Profile();
+
+        public static Profile GetByName(string? name, IEnumerable<Profile>? list)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return list?.FirstOrDefault() ?? Default();
+            var l = list ?? Array.Empty<Profile>();
+            return l.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)) ?? Default();
+        }
     }
 }

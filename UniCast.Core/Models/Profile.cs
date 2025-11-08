@@ -1,6 +1,6 @@
 ﻿namespace UniCast.Core.Models
 {
-    public sealed class Profile
+    public sealed class Profiles
     {
         public string Name { get; set; } = "Default";
         public int Width { get; set; } = 1920;

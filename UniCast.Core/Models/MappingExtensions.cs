@@ -4,7 +4,7 @@ namespace UniCast.Core.Models
 {
     public static class MappingExtensions
     {
-        public static IEnumerable<StreamTarget> ToStreamTargets(this IEnumerable<TargetItem> items)
+        public static IEnumerable<StreamTarget> ToStreamTargets(this IEnumerable<TargetItem> items, Settings.SettingsData settings)
         {
             if (items == null) yield break;
             foreach (var i in items)
