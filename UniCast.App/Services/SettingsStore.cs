@@ -17,10 +17,10 @@ namespace UniCast.App.Services
         {
             // Plain alanlar
             public bool ShowOverlay { get; set; }
-            public double OverlayX { get; set; }
-            public double OverlayY { get; set; }
+            public int OverlayX { get; set; }
+            public int OverlayY { get; set; }
             public double OverlayOpacity { get; set; }
-            public double OverlayFontSize { get; set; }
+            public int OverlayFontSize { get; set; }
 
             public string YouTubeChannelId { get; set; } = "";
             public string TikTokRoomId { get; set; } = "";
@@ -43,6 +43,7 @@ namespace UniCast.App.Services
             public string DefaultMicrophone { get; set; } = "";
             public string RecordFolder { get; set; } = "";
             public bool EnableLocalRecord { get; set; } = false;
+
             // Instagram
             public string InstagramUserId { get; set; } = "";      // plain
             public string InstagramSessionIdEnc { get; set; } = ""; // encrypted (base64)
@@ -67,30 +68,35 @@ namespace UniCast.App.Services
                     OverlayOpacity = p.OverlayOpacity,
                     OverlayFontSize = p.OverlayFontSize,
 
-                    YouTubeChannelId = p.YouTubeChannelId,
-                    TikTokRoomId = p.TikTokRoomId,
+                    YouTubeChannelId = p.YouTubeChannelId ?? "",
+                    TikTokRoomId = p.TikTokRoomId ?? "",
 
-                    // Secrets (unprotect)
-                    YouTubeApiKey = SecretStore.Unprotect(p.YouTubeApiKeyEnc),
-                    TikTokSessionCookie = SecretStore.Unprotect(p.TikTokSessionCookieEnc),
-                    FacebookPageId = p.FacebookPageId,
-                    FacebookLiveVideoId = p.FacebookLiveVideoId,
-                    FacebookAccessToken = SecretStore.Unprotect(p.FacebookAccessTokenEnc),
+                    // Secrets (unprotect) – null gelebilirse "" yap
+                    YouTubeApiKey = SecretStore.Unprotect(p.YouTubeApiKeyEnc) ?? "",
+                    TikTokSessionCookie = SecretStore.Unprotect(p.TikTokSessionCookieEnc) ?? "",
+                    FacebookPageId = p.FacebookPageId ?? "",
+                    FacebookLiveVideoId = p.FacebookLiveVideoId ?? "",
+                    FacebookAccessToken = SecretStore.Unprotect(p.FacebookAccessTokenEnc) ?? "",
 
                     // Encoding / General
-                    Encoder = p.Encoder,
+                    Encoder = p.Encoder ?? "auto",
                     VideoKbps = p.VideoKbps,
                     AudioKbps = p.AudioKbps,
                     Fps = p.Fps,
                     Width = p.Width,
                     Height = p.Height,
-                    DefaultCamera = p.DefaultCamera,
-                    DefaultMicrophone = p.DefaultMicrophone,
-                    RecordFolder = p.RecordFolder,
+                    DefaultCamera = p.DefaultCamera ?? "",
+                    DefaultMicrophone = p.DefaultMicrophone ?? "",
+                    RecordFolder = p.RecordFolder ?? "",
                     EnableLocalRecord = p.EnableLocalRecord,
-                    InstagramUserId = p.InstagramUserId,
-                    InstagramSessionId = SecretStore.Unprotect(p.InstagramSessionIdEnc)
+
+                    // Instagram
+                    InstagramUserId = p.InstagramUserId ?? "",
+                    InstagramSessionId = SecretStore.Unprotect(p.InstagramSessionIdEnc) ?? ""
                 };
+
+                // Yükleme sonrası güvenli aralıklar
+                s.Normalize();
 
                 return s;
             }
@@ -113,12 +119,12 @@ namespace UniCast.App.Services
                 OverlayOpacity = s.OverlayOpacity,
                 OverlayFontSize = s.OverlayFontSize,
 
-                YouTubeChannelId = s.YouTubeChannelId,
-                TikTokRoomId = s.TikTokRoomId,
+                YouTubeChannelId = s.YouTubeChannelId ?? "",
+                TikTokRoomId = s.TikTokRoomId ?? "",
 
-                // Secrets (protect)
-                YouTubeApiKeyEnc = SecretStore.Protect(s.YouTubeApiKey),
-                TikTokSessionCookieEnc = SecretStore.Protect(s.TikTokSessionCookie),
+                // Secrets (protect) – null ise "" ver ki CS8604 çıkmasın
+                YouTubeApiKeyEnc = SecretStore.Protect(s.YouTubeApiKey ?? ""),
+                TikTokSessionCookieEnc = SecretStore.Protect(s.TikTokSessionCookie ?? ""),
                 InstagramUserId = s.InstagramUserId ?? "",
                 InstagramSessionIdEnc = SecretStore.Protect(s.InstagramSessionId ?? ""),
                 FacebookPageId = s.FacebookPageId ?? "",

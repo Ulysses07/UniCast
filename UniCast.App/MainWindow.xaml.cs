@@ -32,7 +32,7 @@ namespace UniCast.App
         private FacebookChatIngestor? _facebook;
 
         // Overlay
-        private ChatOverlayController? _overlay;
+        private readonly ChatOverlayController? _overlay;
 
         private CancellationTokenSource? _chatCts;
 

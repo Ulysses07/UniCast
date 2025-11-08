@@ -44,6 +44,12 @@ namespace UniCast.Core.Settings
         public string? FacebookAccessToken { get; set; }
         public string? FacebookPageId { get; set; }
         public string? FacebookLiveVideoId { get; set; }
+        public bool ShowOverlay { get; set; } = false;
+        public int OverlayX { get; set; } = 24;     // piksel, sol üst x
+        public int OverlayY { get; set; } = 24;     // piksel, sol üst y
+        public double OverlayOpacity { get; set; } = 0.85;  // 0.0 - 1.0
+        public int OverlayFontSize { get; set; } = 18;      // px / pt
+        public string? TikTokSessionCookie { get; set; }
 
         // --- Profil yönetimi ---
         public List<Profile> Profiles { get; set; } = new()
@@ -62,6 +68,14 @@ namespace UniCast.Core.Settings
                 string.Equals((string)x.Name, SelectedProfileName, StringComparison.OrdinalIgnoreCase)));
 
             return p ?? Profile.Default();
+        }
+        public void Normalize()
+        {
+            // .NET 8'de Math.Clamp hazır.
+            OverlayOpacity = Math.Clamp(OverlayOpacity, 0.0, 1.0);
+            OverlayFontSize = Math.Clamp(OverlayFontSize, 8, 96);
+            if (OverlayX < 0) OverlayX = 0;
+            if (OverlayY < 0) OverlayY = 0;
         }
     }
 }
