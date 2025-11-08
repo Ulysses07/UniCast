@@ -1,148 +1,183 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using UniCast.Core.Models;
 using UniCast.Core.Settings;
-using UniCast.Encoder.Extensions;
+using UniCast.Encoder.Extensions; // ResolveUrl()
 
 namespace UniCast.Encoder
 {
     /// <summary>
-    /// Bazı çağrılar string döndürürken, bazıları Advisory+Args bekliyor.
-    /// Bu küçük tip, geriye dönük uyumluluk için eklendi.
+    /// Tek encode → çoklu RTMP/RTMPS çıkış için FFmpeg argüman üretici.
+    /// - Video kaynağı: ddagrab (ekran) | dshow (kamera) | lavfi testsrc (fallback)
+    /// - Audio kaynağı: dshow (mikrofon) | lavfi anullsrc (fallback)
+    /// - Çıkış: tee muxer ile birden fazla RTMP/RTMPS
     /// </summary>
-    public sealed class BuildResult
-    {
-        public string Args { get; init; } = "";
-        public string? Advisory { get; init; } = null;
-    }
-
     public static class FfmpegArgsBuilder
     {
-        /// <summary>
-        /// DirectShow (kamera+mikrofon) girişinden tek encode yapıp
-        /// tee muxer ile birden fazla RTMP çıkışı üretir.
-        /// includeOverlayPipe=true ise \\.\pipe\unicast_overlay girişini overlay olarak bind eder.
-        /// </summary>
-        public static string BuildSingleEncodeMultiRtmp(
-            SettingsData s,
-            IEnumerable<StreamTarget> targets,
-            bool includeOverlayPipe)
+        public static string BuildFfmpegArgs(
+            Profile profile,
+            IReadOnlyList<StreamTarget> targets,
+            string? explicitVideoDevice = null,
+            string? explicitAudioDevice = null,
+            bool screenCapture = false
+        )
         {
-            // Geçerli URL'leri topla
-            var targetUrls = (targets ?? Enumerable.Empty<StreamTarget>())
-                .Select(t => t?.ResolveUrl() ?? "")
-                .Where(u => !string.IsNullOrWhiteSpace(u))
-                .ToList();
+            if (profile == null) throw new ArgumentNullException(nameof(profile));
+            if (targets == null || targets.Count == 0) throw new ArgumentException("En az bir hedef gerekli.", nameof(targets));
 
-            if (targetUrls.Count == 0)
-                throw new InvalidOperationException("Geçerli RTMP hedefi yok.");
+            // 1) Girişleri yapılandır
+            var inputs = BuildInputs(profile, explicitVideoDevice, explicitAudioDevice, screenCapture);
 
-            var sb = new StringBuilder();
+            // 2) Encoder / mux parametreleri
+            var enc = BuildEncoding(profile);
+            var map = BuildMaps(inputs);
+
+            // 3) Çıkışlar (tee)
+            var tee = BuildTee(targets);
+
+            // 4) Tümünü birleştir
+            var args = string.Join(" ",
+                inputs.VideoInput,
+                inputs.AudioInput,
+                enc,
+                map,
+                tee
+            );
+
+            return args;
+        }
+
+        // ---------------------- INPUTS ----------------------
+
+        private sealed class Inputs
+        {
+            public string VideoInput { get; init; } = "";
+            public string AudioInput { get; init; } = "";
+            public bool HasVideo { get; init; }
+            public bool HasAudio { get; init; }
+            public int VideoIndex { get; init; } = -1; // -1 → lavfi testsrc / ddagrab / dshow video için 0
+            public int AudioIndex { get; init; } = -1; // -1 → lavfi anullsrc / dshow audio için 1
+        }
+
+        private static Inputs BuildInputs(
+            Profile p,
+            string? explicitVideoDevice,
+            string? explicitAudioDevice,
+            bool screenCaptureFlag
+        )
+        {
+            // Profile içinde DefaultCamera/Microphone yok → sadece explicit parametreleri kullan.
+            var videoName = explicitVideoDevice?.Trim();
+            var audioName = explicitAudioDevice?.Trim();
+
+            // Ekran yakalama sinyali:
+            // - açık işaret (StartAsync parametresi) veya
+            // - videoName == "__SCREEN__"
+            var wantScreen = screenCaptureFlag || string.Equals(videoName, "__SCREEN__", StringComparison.OrdinalIgnoreCase);
+
+            // FRAMERATE / ÇÖZÜNÜRLÜK
+            var fps = Math.Max(1, p.Fps);
+            var width = Math.Max(16, p.Width);
+            var height = Math.Max(16, p.Height);
 
             // --- Video input ---
-            if (!string.IsNullOrWhiteSpace(s.DefaultCamera))
+            string videoInput;
+            bool hasVideo = true;
+            int vIndex = 0; // 0. input
+
+            if (wantScreen)
             {
-                // DirectShow kamera
-                sb.Append($" -f dshow -thread_queue_size 512 -i video=\"{s.DefaultCamera}\"");
+                // Windows 10+ → Desktop Duplication (ddagrab)
+                videoInput = $"-f ddagrab -thread_queue_size 1024 -framerate {fps} -video_size {width}x{height} -draw_mouse 1 -i desktop";
+            }
+            else if (!string.IsNullOrWhiteSpace(videoName))
+            {
+                // Kamera
+                // Cihaz adı FFmpeg’in -list_devices çıktısındaki “tam metin” olmalı.
+                videoInput = $"-f dshow -thread_queue_size 1024 -rtbufsize 256M -i video=\"{videoName}\"";
             }
             else
             {
-                // Fallback test pattern
-                sb.Append($" -f lavfi -i testsrc=size={s.Width}x{s.Height}:rate={s.Fps}");
+                // Fallback: testsrc
+                hasVideo = false; // gerçek video yok, ama yine de video üreteceğiz (lavfi)
+                vIndex = 0;
+                videoInput = $"-f lavfi -i testsrc=size={width}x{height}:rate={fps}";
             }
 
             // --- Audio input ---
-            if (!string.IsNullOrWhiteSpace(s.DefaultMicrophone))
+            string audioInput;
+            bool hasAudio = true;
+            int aIndex = 1; // ikinci input (0 video, 1 audio varsayımı)
+
+            if (!string.IsNullOrWhiteSpace(audioName))
             {
-                sb.Append($" -f dshow -thread_queue_size 512 -i audio=\"{s.DefaultMicrophone}\"");
+                // Mikrofon
+                audioInput = $"-f dshow -thread_queue_size 1024 -rtbufsize 256M -i audio=\"{audioName}\"";
             }
             else
             {
-                // Sessiz kaynak
-                sb.Append(" -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100");
+                // Fallback: sessiz
+                hasAudio = false;
+                audioInput = "-f lavfi -i anullsrc=cl=stereo:r=48000";
             }
 
-            // --- Overlay pipe opsiyonel giriş ---
-            if (includeOverlayPipe)
+            return new Inputs
             {
-                sb.Append(" -thread_queue_size 512 -f image2pipe -use_wallclock_as_timestamps 1 -i \\\\.\\pipe\\unicast_overlay");
-            }
-
-            // --- Video codec seçimi ---
-            var enc = (s.Encoder ?? "x264").Trim().ToLowerInvariant();
-            string vCodec = enc switch
-            {
-                "nvenc" => "h264_nvenc",
-                "qsv" => "h264_qsv",
-                "amf" => "h264_amf",
-                "x264" => "libx264",
-                "auto" => "libx264",
-                _ => "libx264"
+                VideoInput = videoInput,
+                AudioInput = audioInput,
+                HasVideo = hasVideo,
+                HasAudio = hasAudio,
+                VideoIndex = vIndex,
+                AudioIndex = aIndex
             };
+        }
 
-            // --- Filtergraph ---
-            // Giriş indeksleri:
-            // 0: video (kamera veya testsrc)
-            // 1: audio (mikrofon veya anullsrc)
-            // 2: overlay (varsa)
-            string vFilter;
-            if (includeOverlayPipe)
-            {
-                // PNG alpha overlay'i 0:0 konuma bind et
-                vFilter = $"[0:v]scale={s.Width}:{s.Height}[base];[base][2:v]overlay=0:0:format=auto";
-            }
-            else
-            {
-                vFilter = $"scale={s.Width}:{s.Height}";
-            }
+        // ---------------------- ENCODING ----------------------
 
-            sb.Append($" -filter_complex \"{vFilter}\"");
+        private static string BuildEncoding(Profile p)
+        {
+            // Video codec seçimi: NVENC/QSV/AMF yoksa libx264
+            var vcodec = string.IsNullOrWhiteSpace(p.VideoCodec) ? "libx264" : p.VideoCodec;
+            var preset = string.IsNullOrWhiteSpace(p.VideoPreset) ? "veryfast" : p.VideoPreset;
+            var vbit = Math.Max(100, p.VideoBitrateKbps);
 
-            // Video/audio map
-            sb.Append(" -map 0:v -map 1:a");
+            // Audio codec
+            var acodec = string.IsNullOrWhiteSpace(p.AudioCodec) ? "aac" : p.AudioCodec;
+            var abit = Math.Max(64, p.AudioBitrateKbps);
 
-            // Ortak encode ayarları
-            var vb = Math.Max(300, s.VideoKbps); // güvenli alt sınır
-            var ab = Math.Max(64, s.AudioKbps);
-
-            sb.Append($" -c:v {vCodec} -b:v {vb}k -maxrate {vb}k -bufsize {Math.Max(1, vb / 2)}k");
-            sb.Append($" -preset veryfast -g {Math.Max(2, s.Fps) * 2} -r {s.Fps}");
-            sb.Append($" -c:a aac -b:a {ab}k -ar 44100 -ac 2");
-
-            // Çoklu çıkış: tee muxer
-            var teeParts = targetUrls.Select(u => $"[f=flv]{u}");
-            sb.Append($" -f tee \"{string.Join("|", teeParts)}\"");
+            var sb = new StringBuilder();
+            sb.Append($"-c:v {vcodec} -preset {preset} -b:v {vbit}k -pix_fmt yuv420p ");
+            sb.Append($"-c:a {acodec} -b:a {abit}k -ar 48000 -ac 2 ");
+            // CBR / VBV güvenli ayarlar isterseniz buraya vbv_maxrate / bufsize ekleyebilirsiniz.
 
             return sb.ToString().Trim();
         }
 
-        /// <summary>
-        /// StreamController tarafının beklediği imza:
-        /// overlayX/overlayY parametreleri şimdilik advisory amaçlı. Filtreye konum sabit 0:0 veriyoruz.
-        /// Geriye Advisory+Args dönen bir sonuç verir (geriye dönük uyumluluk).
-        /// </summary>
-        public static BuildResult BuildSingleEncodeMultiRtmpWithOverlay(
-            SettingsData s,
-            IEnumerable<StreamTarget> targets,
-            int overlayX = 0,
-            int overlayY = 0,
-            int overlayFps = 30)
+        private static string BuildMaps(Inputs inputs)
         {
-            // Not: overlayX/overlayY henüz doğrudan FFmpeg arg'ına işlenmiyor; ihtiyaca göre
-            // overlay=overlayX:overlayY şeklinde değiştirilebilir. Şimdilik 0:0 sabit.
-            var args = BuildSingleEncodeMultiRtmp(s, targets, includeOverlayPipe: true);
+            // Her durumda 2 input başlatıyoruz (videoInput + audioInput).
+            var vMap = "-map 0:v:0";
+            var aMap = "-map 1:a:0";
+            return $"{vMap} {aMap}";
+        }
 
-            // Kullanıcıya olası notları döndür (örnek)
-            string? advisory = null;
-            if (string.IsNullOrWhiteSpace(s.DefaultCamera))
-                advisory = "Uyarı: Kamera seçili değil, 'testsrc' kullanılacak.";
-            else if (string.IsNullOrWhiteSpace(s.DefaultMicrophone))
-                advisory = "Uyarı: Mikrofon seçili değil, 'anullsrc' kullanılacak.";
+        // ---------------------- OUTPUTS (TEE) ----------------------
 
-            return new BuildResult
-            {
-                Args = args,
-                Advisory = advisory
-            };
+        private static string BuildTee(IReadOnlyList<StreamTarget> targets)
+        {
+            // tee: [onfail=ignore] ile bir hedef hata verirse diğerleri devam etsin.
+            var chunks = targets
+                .Where(t => t != null && !string.IsNullOrWhiteSpace(t.ResolveUrl()))
+                .Select(t => $"[f=flv:onfail=ignore]{t.ResolveUrl()}")
+                .ToArray();
+
+            if (chunks.Length == 0)
+                throw new InvalidOperationException("Geçerli RTMP/RTMPS hedefi yok.");
+
+            var joined = string.Join("|", chunks);
+            return $"-f tee \"{joined}\"";
         }
     }
 }

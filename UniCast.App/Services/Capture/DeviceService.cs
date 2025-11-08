@@ -2,73 +2,98 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.Devices.Enumeration;
-using Windows.Media.Devices;
+using AForge.Video.DirectShow;
 
 namespace UniCast.App.Services.Capture
 {
     /// <summary>
-    /// WinRT (Windows.Devices.Enumeration) ile kamera/mikrofonları listeler
-    /// ve FFmpeg için dshow tabanlı giriş argümanı üretir.
+    /// Cihaz adlarını DirectShow üzerinden toplar.
+    /// Böylece FFmpeg -f dshow ile birebir aynı "friendly name" gelir.
     /// </summary>
     public sealed class DeviceService : IDeviceService
     {
-        public async Task<IReadOnlyList<string>> GetVideoFriendlyNamesAsync()
+        public Task<IReadOnlyList<string>> GetVideoFriendlyNamesAsync()
         {
+            var list = new List<string>();
             try
             {
-                var devices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
-                // Bazı sistemlerde birden fazla aynı isim dönebiliyor; benzersizleştiriyoruz.
-                return devices.Select(d => d.Name)
-                              .Where(n => !string.IsNullOrWhiteSpace(n))
-                              .Distinct()
-                              .ToList();
+                var coll = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+                foreach (FilterInfo fi in coll)
+                    if (!string.IsNullOrWhiteSpace(fi?.Name))
+                        list.Add(fi.Name);
             }
-            catch
-            {
-                return Array.Empty<string>();
-            }
+            catch { /* ignore */ }
+
+            // Tercih edilen sıraya göre küçük bir kalite: Camo/DroidCam üstlere
+            list = list
+                .OrderByDescending(n => n.Contains("Camo", StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(n => n.Contains("DroidCam", StringComparison.OrdinalIgnoreCase))
+                .ThenBy(n => n)
+                .ToList();
+
+            return Task.FromResult<IReadOnlyList<string>>(list);
         }
 
-        public async Task<IReadOnlyList<string>> GetAudioFriendlyNamesAsync()
+        public Task<IReadOnlyList<string>> GetAudioFriendlyNamesAsync()
         {
+            var list = new List<string>();
             try
             {
-                var selector = MediaDevice.GetAudioCaptureSelector();
-                var devices = await DeviceInformation.FindAllAsync(selector);
-                return devices.Select(d => d.Name)
-                              .Where(n => !string.IsNullOrWhiteSpace(n))
-                              .Distinct()
-                              .ToList();
+                var coll = new FilterInfoCollection(FilterCategory.AudioInputDevice);
+                foreach (FilterInfo fi in coll)
+                    if (!string.IsNullOrWhiteSpace(fi?.Name))
+                        list.Add(fi.Name);
             }
-            catch
-            {
-                return Array.Empty<string>();
-            }
+            catch { /* ignore */ }
+
+            // Benzer öncelik sırası
+            list = list
+                .OrderByDescending(n => n.Contains("Camo", StringComparison.OrdinalIgnoreCase)
+                                     || n.Contains("DroidCam", StringComparison.OrdinalIgnoreCase))
+                .ThenBy(n => n)
+                .ToList();
+
+            return Task.FromResult<IReadOnlyList<string>>(list);
         }
 
         /// <summary>
-        /// dshow tabanlı FFmpeg giriş argümanı:
-        /// -f dshow -i video="NAME":audio="NAME"
-        /// Not: Çözünürlük/FPS’i capture’da zorlamak yerine encoder tarafında scale/fps filter ile ayarlamak genelde daha stabil.
+        /// FFmpeg dshow girdisini üretir (tek veya çift giriş).
+        /// Not: Uygulamada FfmpegArgsBuilder zaten iki ayrı -i kullanıyor;
+        /// bu metodu kullansan da kullanmasan da adlar DirectShow'tan geldiği için eşleşir.
         /// </summary>
-        public string BuildFfmpegInputArgs(string? videoFriendlyName, string? audioFriendlyName, int? width = null, int? height = null, int? fps = null)
+        public string BuildFfmpegInputArgs(string? videoFriendlyName, string? audioFriendlyName,
+                                           int? width = null, int? height = null, int? fps = null)
         {
-            var hasVideo = !string.IsNullOrWhiteSpace(videoFriendlyName);
-            var hasAudio = !string.IsNullOrWhiteSpace(audioFriendlyName);
+            bool hasVideo = !string.IsNullOrWhiteSpace(videoFriendlyName);
+            bool hasAudio = !string.IsNullOrWhiteSpace(audioFriendlyName);
 
             if (!hasVideo && !hasAudio)
                 return string.Empty;
 
-            string input = hasVideo && hasAudio
-                ? $"video=\"{videoFriendlyName}\"\\:audio=\"{audioFriendlyName}\"" // ':' karakteri bazı cmd ortamlarda kaçış isteyebilir
-                : hasVideo
-                    ? $"video=\"{videoFriendlyName}\""
-                    : $"audio=\"{audioFriendlyName}\"";
+            // DİKKAT: "video=" ve "audio=" adlar tırnak içinde olmalı, ':' kaçışı GEREKMİYOR
+            // Ayrı girişler kullanıyorsak iki tane -f dshow -i yazacağız (uygulamadaki mantık).
+            // İlla tek satır yapmak istersen: audio="...":video="..." biçimi de kullanılabilir.
 
-            // dshow’da format zorlamak sürücüden sürücüye değişir; bu nedenle burada eklemiyoruz.
-            // Gerekirse: -video_size {width}x{height} -framerate {fps} -pixel_format yuyv422 vb.
-            return $"-f dshow -i {input}";
+            var parts = new List<string>();
+
+            if (hasVideo)
+            {
+                var vopts = new List<string> { "-f", "dshow", "-thread_queue_size", "512" };
+                if (width is int w && height is int h) { vopts.AddRange(new[] { "-video_size", $"{w}x{h}" }); }
+                if (fps is int f) { vopts.AddRange(new[] { "-framerate", $"{f}" }); }
+                vopts.AddRange(new[] { "-i", $"video=\"{videoFriendlyName}\"" });
+                parts.Add(string.Join(' ', vopts));
+            }
+
+            if (hasAudio)
+            {
+                var aopts = new List<string> { "-f", "dshow", "-thread_queue_size", "512" };
+                // Genelde sample rate/format dayatmayız; sürücüye bırakırız.
+                aopts.AddRange(new[] { "-i", $"audio=\"{audioFriendlyName}\"" });
+                parts.Add(string.Join(' ', aopts));
+            }
+
+            return string.Join(' ', parts);
         }
     }
 }
