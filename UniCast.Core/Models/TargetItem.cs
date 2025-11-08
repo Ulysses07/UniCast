@@ -1,61 +1,63 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace UniCast.Core.Models
 {
     /// <summary>
-    /// Eski VM'lerin beklediği hedef modeli. WPF binding için INotifyPropertyChanged uygulanır.
+    /// UI’da kullanılan hedef satırı (Targets paneli)
     /// </summary>
     public sealed class TargetItem : INotifyPropertyChanged
     {
-        private string? _name;
-        private string? _key;
+        private Platform _platform;
         private string? _url;
-        private StreamPlatform _platform = StreamPlatform.Custom;
-        private bool _enabled = true;
+        private string? _key;
+        private bool _enabled;
+        private string? _displayName;
 
-        public string? Name
+        public Platform Platform
         {
-            get => _name;
-            set => SetField(ref _name, value);
+            get => _platform;
+            set { if (_platform != value) { _platform = value; OnPropertyChanged(); } }
         }
 
-        public string? Key
-        {
-            get => _key;
-            set => SetField(ref _key, value);
-        }
-
-        /// <summary>rtmp/rtmps kök URL (ör. rtmp://a.rtmp.youtube.com/live2)</summary>
+        /// <summary> Örn: rtmps://a.rtmp.youtube.com/live2 </summary>
         public string? Url
         {
             get => _url;
-            set => SetField(ref _url, value);
+            set { if (_url != value) { _url = value; OnPropertyChanged(); } }
         }
 
-        public StreamPlatform Platform
+        /// <summary> Yayın anahtarı </summary>
+        public string? Key
         {
-            get => _platform;
-            set => SetField(ref _platform, value);
+            get => _key;
+            set { if (_key != value) { _key = value; OnPropertyChanged(); } }
         }
 
+        /// <summary> UI’da etkin/pasif </summary>
         public bool Enabled
         {
             get => _enabled;
-            set => SetField(ref _enabled, value);
+            set { if (_enabled != value) { _enabled = value; OnPropertyChanged(); } }
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void OnPropertyChanged([CallerMemberName] string? name = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
+        /// <summary> UI’da görünen ad (opsiyonel) </summary>
+        public string? DisplayName
         {
-            if (Equals(field, value)) return false;
-            field = value!;
-            OnPropertyChanged(name);
-            return true;
+            get => _displayName;
+            set { if (_displayName != value) { _displayName = value; OnPropertyChanged(); } }
         }
+
+        public override string ToString()
+        {
+            var name = !string.IsNullOrWhiteSpace(DisplayName) ? DisplayName : Platform.ToString();
+            return $"{name} | {(Enabled ? "On" : "Off")} | {Url ?? "-"}";
+        }
+
+        // INotifyPropertyChanged
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string? propName = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
     }
 }

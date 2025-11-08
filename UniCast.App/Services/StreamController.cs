@@ -12,94 +12,51 @@ using UniCast.Encoder;
 
 namespace UniCast.App.Services
 {
-    /// <summary>
-    /// ffmpeg süreç yönetimi. Yeni akış modeli:
-    /// - Etkin hedefler: TargetsView üzerinden eklenir (StreamTarget listesi)
-    /// - Giriş kaynakları: SettingsData.DefaultCamera / DefaultMicrophone (yoksa testsrc/anullsrc)
-    /// </summary>
     public sealed class StreamController : IStreamController, IAsyncDisposable
     {
-        // ---- IStreamController üyeleri ----
         public bool IsRunning { get; private set; }
         public bool IsReconnecting { get; private set; } = false;
-
         public string? LastAdvisory { get; private set; }
         public string? LastMessage { get; private set; }
         public string? LastMetric { get; private set; }
 
         public Profile CurrentProfile { get; private set; } = Profile.Default();
-        public IReadOnlyList<StreamTarget> Targets => _targets;
+        private readonly List<StreamTarget> _targets = new();
 
         public event EventHandler<string>? OnLog;
         public event EventHandler<StreamMetric>? OnMetric;
         public event EventHandler<int>? OnExit;
 
-        private readonly List<StreamTarget> _targets = new();
         private readonly object _gate = new();
         private Process? _ffmpeg;
         private CancellationTokenSource? _procCts;
 
-        // ---- hedef yönetimi ----
+        // ----------------- Public API -----------------
+
         public void AddTarget(StreamTarget target)
         {
             if (target == null) return;
             _targets.Add(target);
-            OnLog?.Invoke(this, $"[targets] eklendi: {target.Platform} → {target.Url}");
+            OnLog?.Invoke(this, $"[targets] eklendi: {target.DisplayName ?? target.Platform.ToString()}");
         }
 
         public void RemoveTarget(StreamTarget target)
         {
             if (target == null) return;
             _targets.Remove(target);
-            OnLog?.Invoke(this, $"[targets] çıkarıldı: {target.Platform} → {target.Url}");
+            OnLog?.Invoke(this, $"[targets] çıkarıldı: {target.DisplayName ?? target.Platform.ToString()}");
         }
 
-        // ---- Yeni başlangıç (profil+ayarlarla) ----
         public Task StartAsync(Profile profile, CancellationToken ct = default)
-        {
-            // SettingsData olmadan da çağrılabiliyordu; burada sadece profili güncelliyoruz.
-            lock (_gate) { CurrentProfile = profile ?? Profile.Default(); }
-            // SettingsData’ya ihtiyaç duyulan parametreler UI’dan geldiği için
-            // StartAsync(IEnumerable<TargetItem>, SettingsData, ...) yolu tercih edilmeli.
-            return StartInternalAsync(null, null, useScreen: false, ct);
-        }
+            => StartInternalAsync(profile, videoDevice: null, audioDevice: null, screenCapture: false, ct);
 
-        // Eski imza – UI ControlViewModel’den geliyor
-        public async Task StartAsync(IEnumerable<TargetItem> items, SettingsData settings, CancellationToken ct = default)
-        {
-            if (items == null) throw new ArgumentNullException(nameof(items));
-            if (settings == null) throw new ArgumentNullException(nameof(settings));
-
-            _targets.Clear();
-            foreach (var i in items)
-            {
-                if (i == null) continue;
-                if (!i.Enabled) continue;
-
-                _targets.Add(new StreamTarget
-                {
-                    Platform = i.Platform,
-                    Url = i.Url,
-                    Enabled = i.Enabled
-                });
-            }
-
-            lock (_gate)
-            {
-                CurrentProfile = settings.GetSelectedProfile();
-            }
-
-            await StartInternalAsync(settings.DefaultCamera,
-                                     settings.DefaultMicrophone,
-                                     useScreen: false,
-                                     ct);
-        }
+        public Task StartAsync(Profile profile, string? videoDevice, string? audioDevice, bool screenCapture, CancellationToken ct = default)
+            => StartInternalAsync(profile, videoDevice, audioDevice, screenCapture, ct);
 
         public async Task StopAsync(CancellationToken ct = default)
         {
             Process? p;
             lock (_gate) { p = _ffmpeg; }
-
             if (p == null)
             {
                 OnLog?.Invoke(this, "[stop] aktif süreç yok.");
@@ -134,18 +91,40 @@ namespace UniCast.App.Services
             _procCts?.Dispose();
         }
 
-        // ======================================================
-        // ===============  PRIVATE İÇ AKIŞ  ====================
-        // ======================================================
-        private async Task StartInternalAsync(
-            string? videoDevice,
-            string? audioDevice,
-            bool useScreen,
-            CancellationToken ct)
+        // ---- IStreamController eski imzalar (derleme uyumu için) ----
+
+        async Task IStreamController.StartAsync(Profile profile, IEnumerable<StreamTarget> targets, CancellationToken ct)
+        {
+            _targets.Clear();
+            if (targets != null) _targets.AddRange(targets);
+            await StartInternalAsync(profile, null, null, false, ct);
+        }
+
+        async Task IStreamController.StartAsync(IEnumerable<TargetItem> items, SettingsData settings, CancellationToken ct)
+        {
+            // UI’nin Targets paneli TargetItem tutuyor. Onları burada StreamTarget’a map’leyelim:
+            var mapped = items?.ToStreamTargets() ?? Array.Empty<StreamTarget>();
+            _targets.Clear();
+            _targets.AddRange(mapped);
+
+            // SettingsData tarafında cihaz adları varsa kullan; yoksa null geç.
+            var screenCapture = settings?.CaptureSource == CaptureSource.Screen;
+            var videoDevice = settings?.CaptureSource == CaptureSource.Camera ? settings?.SelectedVideoDevice : null;
+            var audioDevice = settings?.SelectedAudioDevice;
+
+            var profile = settings?.GetSelectedProfile() ?? Profile.Default();
+            await StartInternalAsync(profile, videoDevice, audioDevice, screenCapture, ct);
+        }
+
+        // ----------------- Internal -----------------
+
+        private async Task StartInternalAsync(Profile profile, string? videoDevice, string? audioDevice, bool screenCapture, CancellationToken ct)
         {
             lock (_gate)
             {
-                if (IsRunning) throw new InvalidOperationException("Yayın zaten çalışıyor.");
+                if (IsRunning)
+                    throw new InvalidOperationException("Yayın zaten çalışıyor.");
+                CurrentProfile = profile ?? Profile.Default();
             }
 
             var enabledTargets = _targets.Where(t => t?.Enabled == true && !string.IsNullOrWhiteSpace(t.Url)).ToList();
@@ -156,33 +135,13 @@ namespace UniCast.App.Services
             if (ffmpegPath == null)
                 throw new FileNotFoundException("ffmpeg bulunamadı. Uygulama dizinine veya PATH'e ekleyin.");
 
-            // ViewModel’lerin doldurduğu ayarları SettingsService üzerinden alıyorsanız
-            // oradan SettingsData geçebilirsiniz. Burada basit bir SettingsData türetiyorum:
-            var s = new SettingsData
-            {
-                DefaultCamera = videoDevice,
-                DefaultMicrophone = audioDevice,
-                // Control/Settings VM zaten bunları dolduruyor; fallback olsun diye:
-                Width = CurrentProfile.Width,
-                Height = CurrentProfile.Height,
-                Fps = CurrentProfile.Fps,
-                Encoder = CurrentProfile.Encoder ?? "libx264",
-                VideoKbps = CurrentProfile.VideoKbps,
-                AudioKbps = CurrentProfile.AudioKbps,
-                EnableLocalRecord = CurrentProfile.EnableLocalRecord,
-                RecordFolder = CurrentProfile.RecordFolder
-            };
-
-            // Argümanları kur
-            var build = FfmpegArgsBuilder.BuildSingleEncodeMultiRtmpWithOverlay(
-                s,
+            var args = FfmpegArgsBuilder.BuildFfmpegArgs(
+                CurrentProfile,
                 enabledTargets,
-                overlayX: 0,
-                overlayY: 0
+                videoDevice,
+                audioDevice,
+                screenCapture
             );
-
-            if (!string.IsNullOrWhiteSpace(build.Advisory))
-                LastAdvisory = build.Advisory;
 
             _procCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             var p = new Process
@@ -190,7 +149,7 @@ namespace UniCast.App.Services
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = ffmpegPath,
-                    Arguments = build.Args,
+                    Arguments = args,
                     UseShellExecute = false,
                     RedirectStandardError = true,
                     RedirectStandardOutput = false,
@@ -201,7 +160,7 @@ namespace UniCast.App.Services
                 EnableRaisingEvents = true
             };
 
-            p.ErrorDataReceived += (sdr, e) =>
+            p.ErrorDataReceived += (s, e) =>
             {
                 if (e.Data is null) return;
                 var line = e.Data;
@@ -209,13 +168,13 @@ namespace UniCast.App.Services
                 LastMessage = line;
                 OnLog?.Invoke(this, line);
 
-                // kaba metrik ayrıştırma
                 if (line.Contains("bitrate=") || line.Contains("fps="))
                 {
                     var metric = TryParseMetric(line, DateTime.UtcNow);
                     if (metric != null)
                     {
-                        LastMetric = $"fps={metric.Fps?.ToString("0.#") ?? "?"} bitrate={metric.BitrateKbps?.ToString("0.#") ?? "?"}kbits/s";
+                        LastMetric = $"fps={metric.Fps?.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) ?? "?"} " +
+                                     $"bitrate={(metric.BitrateKbps?.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) ?? "?")}kbits/s";
                         OnMetric?.Invoke(this, metric);
                     }
                 }
@@ -225,13 +184,13 @@ namespace UniCast.App.Services
                 }
             };
 
-            p.Exited += (sdr, e) =>
+            p.Exited += (s, e) =>
             {
                 lock (_gate) { IsRunning = false; }
                 var code = p.ExitCode;
                 OnExit?.Invoke(this, code);
                 OnLog?.Invoke(this, $"[ffmpeg] exited with code {code}");
-                try { _procCts?.Cancel(); } catch { }
+                _procCts?.Cancel();
             };
 
             if (!p.Start())
@@ -245,13 +204,12 @@ namespace UniCast.App.Services
                 IsRunning = true;
             }
 
-            OnLog?.Invoke(this, $"[start] profil: {CurrentProfile.Name}, hedef: {enabledTargets.Count}");
+            OnLog?.Invoke(this, $"[start] profil: {CurrentProfile.Name}, hedef: {enabledTargets.Count}, screenCapture={(screenCapture ? "on" : "off")}, video={videoDevice ?? "-"}, audio={audioDevice ?? "-"}");
             await Task.CompletedTask;
         }
 
         private static string? ResolveFfmpegPath()
         {
-            // 1) Uygulama klasörü
             try
             {
                 var baseDir = AppContext.BaseDirectory;
@@ -260,7 +218,6 @@ namespace UniCast.App.Services
             }
             catch { }
 
-            // 2) PATH
             try
             {
                 var paths = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator);
@@ -273,14 +230,6 @@ namespace UniCast.App.Services
                     }
                     catch { }
                 }
-            }
-            catch { }
-
-            // 3) WSL/Linux (geliştirici makinesi ihtimali)
-            try
-            {
-                var which = "/usr/bin/ffmpeg";
-                if (File.Exists(which)) return which;
             }
             catch { }
 
@@ -301,7 +250,7 @@ namespace UniCast.App.Services
             try { await Task.Delay(300, ct); } catch { }
         }
 
-        private static StreamMetric? TryParseMetric(string line, DateTime tsUtc)
+        private static StreamMetric TryParseMetric(string line, DateTime tsUtc)
         {
             double? fps = null;
             double? br = null;
@@ -331,7 +280,6 @@ namespace UniCast.App.Services
             }
             catch { }
 
-            if (fps == null && br == null) return null;
             return new StreamMetric { TimestampUtc = tsUtc, Fps = fps, BitrateKbps = br };
         }
     }

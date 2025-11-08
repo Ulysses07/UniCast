@@ -1,70 +1,114 @@
-﻿using System.Text;
+﻿using System;
+using System.Linq;
+using System.Text;
 using UniCast.Core.Models;
 using UniCast.Core.Settings;
 
 namespace UniCast.Encoder
 {
+    /// <summary>
+    /// FFmpeg argümanlarını üretir.
+    /// - SettingsData’ya BAĞIMLI DEĞİL.
+    /// - Kamera yoksa otomatik ekran yakalamaya düşer.
+    /// - Ses yoksa anullsrc kullanır.
+    /// </summary>
     public static class FfmpegArgsBuilder
     {
-        // Geriye dönük uyumluluk için alias
-        public static string BuildArgs(Profile profile, IEnumerable<StreamTarget> targets, SettingsData s,
-                                       string? videoDevice = null, string? audioDevice = null, bool? screenCapture = null)
-            => BuildFfmpegArgs(profile, targets, s, videoDevice, audioDevice, screenCapture ?? s.UseScreenCapture);
-
-        public static string BuildFfmpegArgs(Profile profile, IEnumerable<StreamTarget> targets, SettingsData s,
-                                             string? videoDevice, string? audioDevice, bool screenCapture)
+        public static string BuildFfmpegArgs(
+            Profile profile,
+            System.Collections.Generic.IReadOnlyList<StreamTarget> targets,
+            string? videoDevice,
+            string? audioDevice,
+            bool screenCapture)
         {
-            var sb = new StringBuilder();
+            if (profile == null) profile = Profile.Default();
+            targets ??= Array.Empty<StreamTarget>();
 
-            // -------- INPUT --------
+            var enabledTargets = targets.Where(t => t?.Enabled == true && !string.IsNullOrWhiteSpace(t.Url)).ToList();
+            if (enabledTargets.Count == 0)
+                throw new InvalidOperationException("Etkin RTMP hedefi yok.");
+
+            var w = profile.Width > 0 ? profile.Width : 1280;
+            var h = profile.Height > 0 ? profile.Height : 720;
+            var fps = profile.Fps > 0 ? profile.Fps : 30;
+            var vKbps = profile.VideoBitrateKbps > 0 ? profile.VideoBitrateKbps : 3500;
+            var aKbps = profile.AudioBitrateKbps > 0 ? profile.AudioBitrateKbps : 128;
+
+            // 1) Video input
+            string videoIn;
             if (screenCapture)
             {
-                // gdigrab: tüm Windows ffmpeg build'lerinde var
-                sb.Append($" -f gdigrab -framerate {s.Fps} -video_size {s.Width}x{s.Height} -i desktop");
-                if (!string.IsNullOrWhiteSpace(audioDevice))
-                    sb.Append($" -f dshow -i audio=\"{audioDevice}\"");
+                videoIn = $"-f gdigrab -framerate {fps} -i desktop";
+            }
+            else if (!string.IsNullOrWhiteSpace(videoDevice))
+            {
+                videoIn = $"-f dshow -i video=\"{videoDevice}\"";
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(videoDevice))
-                    sb.Append($" -f dshow -i video=\"{videoDevice}\"");
-                if (!string.IsNullOrWhiteSpace(audioDevice))
-                    sb.Append($" -f dshow -i audio=\"{audioDevice}\"");
+                // Kamera yok/boş → otomatik ekran yakalama
+                videoIn = $"-f gdigrab -framerate {fps} -i desktop";
+                // Eğer mutlaka testsrc istiyorsan şunu aç:
+                // videoIn = $"-f lavfi -i testsrc=size={w}x{h}:rate={fps}";
             }
 
-            // -------- MAP --------
-            var hasVideo = screenCapture || !string.IsNullOrWhiteSpace(videoDevice);
-            var hasAudio = !string.IsNullOrWhiteSpace(audioDevice);
-
-            if (hasVideo && hasAudio) sb.Append(" -map 0:v:0 -map 1:a:0");
-            else if (hasVideo) sb.Append(" -map 0:v:0");
-            else if (hasAudio) sb.Append(" -map 0:a:0");
-
-            // -------- ENCODE --------
-            if (s.Encoder.Equals("x264", StringComparison.OrdinalIgnoreCase))
+            // 2) Audio input
+            string audioIn;
+            if (!string.IsNullOrWhiteSpace(audioDevice))
             {
-                sb.Append($" -c:v libx264 -preset veryfast -b:v {s.VideoKbps}k -pix_fmt yuv420p -r {s.Fps}");
+                audioIn = $"-f dshow -i audio=\"{audioDevice}\"";
             }
-            else // nvenc
+            else
             {
-                sb.Append($" -c:v h264_nvenc -preset p5 -b:v {s.VideoKbps}k -rc vbr -r {s.Fps}");
+                // sessizlik
+                audioIn = $"-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100";
             }
-            if (hasAudio) sb.Append($" -c:a aac -b:a {s.AudioKbps}k -ar 48000 -ac 2");
 
-            // -------- OUTPUT(S) --------
-            int idx = 0;
-            foreach (var t in targets.Where(t => t.Enabled))
+            // 3) Filtre / encode
+            var vf = $"-vf scale={w}:{h},fps={fps}";
+            var vEnc = $"-c:v libx264 -preset veryfast -profile:v high -pix_fmt yuv420p -b:v {vKbps}k -maxrate {vKbps}k -bufsize {2 * vKbps}k -g {fps * 2}";
+            var aEnc = $"-c:a aac -b:a {aKbps}k -ar 44100 -ac 2";
+
+            // 4) Map ve output’lar
+            var sb = new StringBuilder();
+            sb.Append($"{videoIn} {audioIn} ");
+            sb.Append($"{vf} {vEnc} {aEnc} ");
+
+            // input indexleri: 0=video, 1=audio (yukarıdaki sıraya göre)
+            sb.Append("-map 0:v:0 -map 1:a:0 ");
+
+            if (enabledTargets.Count == 1)
             {
-                var url = t.Url?.Trim();
-                if (string.IsNullOrWhiteSpace(url)) continue;
-
-                if (idx > 0) sb.Append(" -copyts -shortest");
-                // Varsayılan olarak FLV/RTMP
-                sb.Append($" -f flv \"{url}\"");
-                idx++;
+                var t = enabledTargets[0];
+                var url = BuildRtmpUrl(t);
+                sb.Append($"-f flv \"{url}\"");
+            }
+            else
+            {
+                // tek encode + tee muxer ile çoklu RTMP
+                var outs = enabledTargets.Select(t => $"[f=flv]{EscapeTee(BuildRtmpUrl(t))}");
+                sb.Append($"-f tee \"{string.Join("|", outs)}\"");
             }
 
-            return sb.ToString().Trim();
+            return sb.ToString();
+        }
+
+        private static string BuildRtmpUrl(StreamTarget t)
+        {
+            // Url + (opsiyonel) StreamKey birleştir
+            // Çoğu servis RTMP endpoint + / + key formatını bekler.
+            if (!string.IsNullOrWhiteSpace(t.StreamKey))
+            {
+                var sep = t.Url!.EndsWith("/") ? "" : "/";
+                return $"{t.Url}{sep}{t.StreamKey}";
+            }
+            return t.Url!;
+        }
+
+        private static string EscapeTee(string s)
+        {
+            // tee muxer için | özel karakter, hedeflerde kaçış gerektirir.
+            return s.Replace("|", "\\|");
         }
     }
 }
