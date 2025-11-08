@@ -7,6 +7,14 @@
         public int Height { get; set; } = 720;
         public int Fps { get; set; } = 30;
 
+        // >>> EKLENENLER: FfmpegArgsBuilder'ın beklediği alanlar
+        public int VideoBitrateKbps { get; set; } = 3500;   // yoksa 3500’e düşer
+        public int AudioBitrateKbps { get; set; } = 128;    // yoksa 128’e düşer
+        public string VideoPreset { get; set; } = "veryfast";
+        public string AudioCodec { get; set; } = "aac";
+        public string VideoCodec { get; set; } = "libx264";
+        // <<<
+
         public static Profile Default() => new Profile();
 
         public static Profile GetByName(string? name, IEnumerable<Profile>? list)

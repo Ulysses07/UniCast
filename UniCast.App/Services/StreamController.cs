@@ -19,6 +19,8 @@ namespace UniCast.App.Services
         public string? LastAdvisory { get; private set; }
         public string? LastMessage { get; private set; }
         public string? LastMetric { get; private set; }
+        public IReadOnlyList<StreamTarget> Targets => _targets;
+
 
         public Profile CurrentProfile { get; private set; } = Profile.Default();
         private readonly List<StreamTarget> _targets = new();

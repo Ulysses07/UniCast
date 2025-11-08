@@ -15,6 +15,9 @@ namespace UniCast.Core.Settings
         // --- Cihaz seçimleri ---
         public string? DefaultCamera { get; set; }          // dshow: video="..."
         public string? DefaultMicrophone { get; set; }      // dshow: audio="..."
+        public CaptureSource CaptureSource { get; set; } = CaptureSource.Camera;
+        public string? SelectedVideoDevice { get; set; }  // örn: video="USB2.0 Camera"
+        public string? SelectedAudioDevice { get; set; }  // örn: audio="Mikrofon (USB Audio Device)"
 
         // --- Encoder & kalite ---
         /// <summary>libx264 | h264_nvenc | hevc_nvenc | libx265 vb.</summary>
@@ -54,9 +57,9 @@ namespace UniCast.Core.Settings
         /// <summary>Seçili profili getir; yoksa varsayılanı döner.</summary>
         public Profile GetSelectedProfile()
         {
-            var p = Profiles.FirstOrDefault(x =>
+            var p = Profiles.FirstOrDefault((Func<Profile, bool>)(x =>
                 !string.IsNullOrWhiteSpace(SelectedProfileName) &&
-                string.Equals(x.Name, SelectedProfileName, StringComparison.OrdinalIgnoreCase));
+                string.Equals((string)x.Name, SelectedProfileName, StringComparison.OrdinalIgnoreCase)));
 
             return p ?? Profile.Default();
         }
