@@ -3,9 +3,8 @@
     public class CaptureDevice
     {
         public string Name { get; set; } = "";
-        public string Id { get; set; } = ""; // DevicePath (SymLink)
+        public string Id { get; set; } = ""; // Bu ID sayesinde cihaz karışıklığı biter
 
-        // UI'da ComboBox içinde düzgün görünmesi için
         public override string ToString() => Name;
     }
 }

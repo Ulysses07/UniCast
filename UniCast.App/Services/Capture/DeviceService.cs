@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using UniCast.Core.Models;
-using UniCast.Capture; // Unicast.Capture kütüphanesi referansı
+using UniCast.Capture; // REFERANS: Unicast.Capture Projesi
 
 namespace UniCast.App.Services.Capture
 {
@@ -12,25 +12,23 @@ namespace UniCast.App.Services.Capture
 
         public DeviceService()
         {
-            // Core kütüphanedeki servisi başlat
+            // Kendi yazdığımız modern servisi başlatıyoruz
             _captureService = new MediaFoundationCaptureService();
         }
 
         public async Task<List<CaptureDevice>> GetVideoDevicesAsync()
         {
-            // HATA DÜZELTME: Metot adı GetVideoDevicesAsync oldu ve await eklendi.
             return await _captureService.GetVideoDevicesAsync();
         }
 
         public async Task<List<CaptureDevice>> GetAudioDevicesAsync()
         {
-            // HATA DÜZELTME: Metot adı GetAudioDevicesAsync oldu ve await eklendi.
             return await _captureService.GetAudioDevicesAsync();
         }
 
         public async Task<string?> GetDeviceNameByIdAsync(string id)
         {
-            // ID'ye göre doğru cihaz ismini bulma mantığı
+            // ID verince ismini bulur (FFmpeg için gerekli)
             var videos = await GetVideoDevicesAsync();
             var v = videos.FirstOrDefault(x => x.Id == id);
             if (v != null) return v.Name;

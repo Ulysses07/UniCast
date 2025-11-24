@@ -1,16 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using UniCast.Core.Models; // CaptureDevice modelini tanıması için
+using UniCast.Core.Models;
 
 namespace UniCast.App.Services.Capture
 {
     public interface IDeviceService
     {
-        // Eski metodlar yerine bunları kullanıyoruz:
+        // Artık CaptureDevice listesi dönüyor
         Task<List<CaptureDevice>> GetVideoDevicesAsync();
         Task<List<CaptureDevice>> GetAudioDevicesAsync();
 
-        // FFmpeg için ID -> İsim çevirici
+        // FFmpeg için ID'den İsim bulan metot
         Task<string?> GetDeviceNameByIdAsync(string id);
     }
 }
