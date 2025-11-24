@@ -40,6 +40,18 @@ namespace UniCast.App.Overlay
             await _publisher.StopAsync();
         }
 
+        public void UpdatePosition(int x, int y)
+        {
+            // 1. View üzerindeki konumu değiştir
+            _view.Dispatcher.Invoke(() =>
+            {
+                _view.SetPosition(x, y);
+            });
+
+            // 2. Publisher'ı dürt (Yeni konumda tekrar çiz)
+            _publisher.Invalidate();
+        }
+
         public void Push(string author, string message)
         {
             // 1. UI Thread üzerinde View'a mesajı ekle

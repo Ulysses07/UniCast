@@ -200,6 +200,14 @@ namespace UniCast.App
                 Log.Error(ex, "MainWindow_Loaded sırasında hata oluştu.");
             }
         }
+        public void UpdateOverlayPosition(int x, int y)
+        {
+            if (_overlay != null)
+            {
+                _overlay.UpdatePosition(x, y);
+                Log.Information("Overlay konumu güncellendi: {X}, {Y}", x, y);
+            }
+        }
 
         // --- Mesajları Overlay'e İlet ---
         private void OnIngestorMessageToOverlay(ChatMessage msg)

@@ -19,6 +19,20 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Page Remove="Views\ChatOverlayView.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Include="Views\ChatOverlayView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="Views\ChatOverlayView.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="AForge" Version="2.2.5" />
 		<PackageReference Include="AForge.Video" Version="2.2.5" />
 		<PackageReference Include="AForge.Video.DirectShow" Version="2.2.5" />
