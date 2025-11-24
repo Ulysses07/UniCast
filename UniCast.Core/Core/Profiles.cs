@@ -1,4 +1,4 @@
-﻿namespace UniCast.Core.Models
+﻿namespace UniCast.Core.Core
 {
     public sealed class Profile
     {

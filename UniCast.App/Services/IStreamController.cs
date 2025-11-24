@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using UniCast.Core.Core;
 using UniCast.Core.Models;
-using UniCast.Core.Settings; // SettingsData için
+using UniCast.Core.Settings;
+using UniCast.Core.Streaming;
 
 namespace UniCast.App.Services
 {
@@ -15,27 +17,30 @@ namespace UniCast.App.Services
 
         IReadOnlyList<StreamTarget> Targets { get; }
 
-        // 1) Klasik başlangıç
+        // --- YENİ EKLENEN METOTLAR (StartWithResultAsync) ---
+        // UI tarafı artık bunları kullanarak "Başarılı/Başarısız" bilgisini alacak.
+
+        // 1) En detaylı başlangıç (ViewModel genelde bunu kullanır)
+        Task<StreamStartResult> StartWithResultAsync(IEnumerable<TargetItem> targets, SettingsData settings, CancellationToken ct);
+
+        // 2) Manuel profil ile başlangıç
+        Task<StreamStartResult> StartWithResultAsync(Profile profile, CancellationToken ct = default);
+
+        // --- ESKİ METOTLAR (Legacy Support) ---
         Task StartAsync(Profile profile, CancellationToken ct = default);
-
-        // 2) Dışarıdan hedef ver
         Task StartAsync(Profile profile, IEnumerable<StreamTarget> targets, CancellationToken ct);
-
-        // 3) Eski VM çağrısı (TargetItem + SettingsData)
         Task StartAsync(IEnumerable<TargetItem> targets, SettingsData settings, CancellationToken ct);
-
         Task StopAsync(CancellationToken ct = default);
 
         void AddTarget(StreamTarget target);
         void RemoveTarget(StreamTarget target);
 
-        // VM'in bizzat okuduğu son durumlar
         string? LastAdvisory { get; }
         string? LastMessage { get; }
-        string? LastMetric { get; } // string olarak
+        string? LastMetric { get; }
 
         event EventHandler<string>? OnLog;
-        event EventHandler<StreamMetric>? OnMetric; // UniCast.Core.Models.StreamMetric
-        event EventHandler<int /*exitCode*/>? OnExit;
+        event EventHandler<StreamMetric>? OnMetric;
+        event EventHandler<int>? OnExit;
     }
 }

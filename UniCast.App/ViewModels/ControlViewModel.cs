@@ -1,14 +1,15 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
-using UniCast.Core.Models;
+using UniCast.Core.Models;   // StreamStartResult için
 using UniCast.Core.Settings;
-using System.Collections.ObjectModel;
-
-
 
 namespace UniCast.App.ViewModels
 {
@@ -43,10 +44,8 @@ namespace UniCast.App.ViewModels
         public async Task StartPreviewAsync()
         {
             var s = Services.SettingsStore.Load();
-
             if (!_preview.IsRunning)
             {
-                // preferredIndex: bilmiyorsak -1
                 await _preview.StartAsync(-1, s.Width, s.Height, s.Fps);
             }
         }
@@ -54,7 +53,7 @@ namespace UniCast.App.ViewModels
         public Task StopPreviewAsync() => _preview.StopAsync();
 
         // --- Stream state ---
-        private string _status = "Idle";
+        private string _status = "Hazır";
         public string Status { get => _status; private set { _status = value; OnPropertyChanged(); } }
 
         private string _metric = "";
@@ -73,7 +72,7 @@ namespace UniCast.App.ViewModels
             }
         }
 
-        // --- Advisory (Encoder seçimi + platform limitleri) ---
+        // --- Advisory: Kullanıcıya Hata/Uyarı Gösterilen Alan ---
         private string _advisory = "";
         public string Advisory
         {
@@ -88,40 +87,55 @@ namespace UniCast.App.ViewModels
         {
             try
             {
+                // 1. Hazırlık
                 var (targets, settings) = _provider();
                 _cts = new CancellationTokenSource();
 
-                Status = "Starting…";
+                Status = "Başlatılıyor...";
                 Metric = "";
-                Advisory = "";
+                Advisory = ""; // Önceki hataları temizle
 
-                await _stream.StartAsync(targets, settings, _cts.Token);
-                IsRunning = true;
+                // 2. Başlatma İsteği (Result Pattern Kullanımı)
+                // Artık try-catch yerine sonucu if-else ile kontrol ediyoruz
+                var result = await _stream.StartWithResultAsync(targets, settings, _cts.Token);
 
-                // Advisory'yi UI'ya yansıt
-#pragma warning disable CS8601 // Olası null başvuru ataması.
-                Advisory = _stream.LastAdvisory;
-#pragma warning restore CS8601 // Olası null başvuru ataması.
-
-                // Background metric/status updater
-                _ = Task.Run(async () =>
+                if (result.Success)
                 {
-                    while (IsRunning || _stream.IsReconnecting)
+                    // --- BAŞARILI ---
+                    IsRunning = true;
+                    Status = "Yayında";
+
+                    // Arka plan durum takipçisi (Status Updater)
+                    _ = Task.Run(async () =>
                     {
-#pragma warning disable CS8601 // Olası null başvuru ataması.
-                        Status = _stream.LastMessage;
-#pragma warning restore CS8601 // Olası null başvuru ataması.
-#pragma warning disable CS8601 // Olası null başvuru ataması.
-                        Metric = _stream.LastMetric;
-#pragma warning restore CS8601 // Olası null başvuru ataması.
-                        await Task.Delay(200);
-                    }
-                });
+                        while (IsRunning || _stream.IsReconnecting)
+                        {
+                            Status = _stream.LastMessage ?? "Yayında";
+                            Metric = _stream.LastMetric ?? "";
+
+                            // Eğer yayın sırasında bağlantı koparsa (Reconnect uyarısı vb.) onu da yansıt
+                            if (!string.IsNullOrEmpty(_stream.LastAdvisory))
+                                Advisory = _stream.LastAdvisory;
+
+                            await Task.Delay(200);
+                        }
+                    });
+                }
+                else
+                {
+                    // --- BAŞARISIZ (Hata Yönetimi) ---
+                    IsRunning = false;
+                    Status = "Hata";
+
+                    // Kullanıcıya "neden olmadığını" Türkçe ve net bir dille yazıyoruz
+                    Advisory = result.UserMessage ?? "Bilinmeyen bir hata oluştu.";
+                }
             }
             catch (Exception ex)
             {
-                Status = "Start error: " + ex.Message;
-                Advisory = "";
+                // Beklenmedik "Crash" durumları için son güvenlik ağı
+                Status = "Kritik Hata";
+                Advisory = $"Beklenmedik hata: {ex.Message}";
                 IsRunning = false;
             }
         }
@@ -130,20 +144,21 @@ namespace UniCast.App.ViewModels
         {
             try
             {
-                Status = "Stopping…";
+                Status = "Durduruluyor...";
                 _cts?.Cancel();
                 await _stream.StopAsync();
             }
             catch (Exception ex)
             {
-                Status = "Stop error: " + ex.Message;
+                Status = "Durdurma Hatası";
+                Advisory = ex.Message;
             }
             finally
             {
                 IsRunning = false;
-                Status = "Stopped";
+                Status = "Durduruldu";
                 Metric = "";
-                Advisory = "";
+                // Advisory'i temizlemiyoruz, belki durdurma nedenini görmek ister
             }
         }
 

@@ -1,4 +1,4 @@
-﻿namespace UniCast.Core.Models
+﻿namespace UniCast.Core.Streaming
 {
     public enum StreamPlatform { Custom, YouTube, Facebook, Twitch }
 

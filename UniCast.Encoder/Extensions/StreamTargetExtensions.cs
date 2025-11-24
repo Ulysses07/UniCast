@@ -1,5 +1,5 @@
 ﻿using System;
-using UniCast.Core.Models; // StreamTarget ve StreamPlatform burada varsayıldı
+using UniCast.Core.Streaming; // StreamTarget ve StreamPlatform burada varsayıldı
 
 namespace UniCast.Encoder.Extensions
 {
@@ -12,7 +12,7 @@ namespace UniCast.Encoder.Extensions
         /// </summary>
         public static string ResolveUrl(this StreamTarget t)
         {
-            if (t == null) throw new ArgumentNullException(nameof(t));
+            ArgumentNullException.ThrowIfNull(t);
 
             string? url = t.Url;
             string key = t.StreamKey ?? string.Empty;

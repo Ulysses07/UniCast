@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using UniCast.Core.Core;
 
 namespace UniCast.Core.Models
 {

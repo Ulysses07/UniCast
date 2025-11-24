@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UniCast.Core
+namespace UniCast.Core.Core
 {
     public enum Platform { Unknown, YouTube, Facebook, TikTok, Instagram, Twitch }
 

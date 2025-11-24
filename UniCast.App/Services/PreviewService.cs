@@ -142,7 +142,7 @@ namespace UniCast.App.Services
             {
                 try
                 {
-                    using var bmp = (System.Drawing.Bitmap)e.Frame.Clone();
+                    using var bmp = (Bitmap)e.Frame.Clone();
 
                     // WPF ImageSource'a çevir
                     var img = ConvertToImageSource(bmp);
@@ -197,7 +197,7 @@ namespace UniCast.App.Services
             }
         }
 
-        private static BitmapSource ConvertToImageSource(System.Drawing.Bitmap bmp)
+        private static BitmapSource ConvertToImageSource(Bitmap bmp)
         {
             using var ms = new MemoryStream();
             bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);
