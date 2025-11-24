@@ -54,3 +54,77 @@
 2025-11-24 14:32:01.656 [INF] MainWindow kapatılıyor, kaynaklar serbest bırakılıyor...
 2025-11-24 14:32:01.659 [INF] [Stream] [stop] Süreç yok.
 2025-11-24 14:32:01.662 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-24 14:45:26.939 [INF] ===================================================
+2025-11-24 14:45:26.961 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-24 14:45:26.962 [INF] ===================================================
+2025-11-24 14:45:27.461 [INF] MainWindow yüklendi, servisler başlatılıyor...
+2025-11-24 14:45:29.045 [INF] [Stream] [start] Başladı: Default
+2025-11-24 14:45:29.071 [INF] [Stream] ffmpeg version 2025-10-19-git-dc39a576ad-full_build-www.gyan.dev
+2025-11-24 14:45:29.072 [INF] [Stream]  Copyright (c) 2000-2025 the FFmpeg developers
+2025-11-24 14:45:29.073 [INF] [Stream]   built with gcc 15.2.0 (Rev8, Built by MSYS2 project)
+2025-11-24 14:45:29.074 [INF] [Stream]   configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper
+2025-11-24 14:45:29.075 [INF] [Stream]   libavutil      60. 13.100 / 60. 13.100
+2025-11-24 14:45:29.076 [INF] [Stream]   libavcodec     62. 16.100 / 62. 16.100
+2025-11-24 14:45:29.077 [INF] [Stream]   libavformat    62.  6.101 / 62.  6.101
+2025-11-24 14:45:29.078 [INF] [Stream]   libavdev
+2025-11-24 14:45:29.079 [INF] [Stream] ice    62.  2.100 / 62.  2.100
+2025-11-24 14:45:29.080 [INF] [Stream]   libavfilter    11.  9.100 / 11.  9.100
+2025-11-24 14:45:29.081 [INF] [Stream]   libswscale      9.  3.100 /  9.  3.100
+2025-11-24 14:45:29.082 [INF] [Stream]   libswresample   6.  2.100 /  6.  2.100
+2025-11-24 14:45:29.083 [INF] [Stream] [gdigrab @ 000001a1ee917100] Capturing whole desktop as 1920x1080x32 at (0,0)
+2025-11-24 14:45:29.126 [INF] [Stream] [gdigrab @ 000001a1ee917100]
+2025-11-24 14:45:29.133 [INF] [Stream]  Stream #0: not enough frames to estimate rate; consider increasing probesize
+2025-11-24 14:45:29.134 [INF] [Stream] Input #0, gdigrab, from 'desktop':
+2025-11-24 14:45:29.136 [INF] [Stream]   Duration: N/A, start: 1763984729.103331, bitrate: 1990668 kb/s
+2025-11-24 14:45:29.137 [INF] [Stream]   Stream #0:0: Video: bmp, bgra, 1920x1080, 1990668 kb/s, 30 fps, 1000k tbr, 1000k tbn, start 1763984729.103331
+2025-11-24 14:45:29.138 [INF] [Stream] [out @ 000001a1ee922b80] The "sample_fmts" option is deprecated: set the supported sample formats
+2025-11-24 14:45:29.139 [INF] [Stream] [out @ 000001a1ee922b80] The "all_channel_counts" option is deprecated: accept all channel counts
+2025-11-24 14:45:29.140 [INF] [Stream] Input #1, lavfi, from 'anullsrc=channel_layout=stereo:sample_rate=44100':
+2025-11-24 14:45:29.141 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: 705 kb/s
+2025-11-24 14:45:29.142 [INF] [Stream]   Stream #1:0: Audio: pcm_u8, 44100 Hz, stereo, u8, 705 kb/s
+2025-11-24 14:45:29.143 [INF] [Stream] Stream mapping:
+2025-11-24 14:45:29.144 [INF] [Stream]   Stream #0:0 -> #0:0 (bmp (native) -> h264 (libx264))
+2025-11-24 14:45:29.145 [INF] [Stream]   Stream #1:0 -> #0:1 (pcm_u8 (native) -> aac (native))
+2025-11-24 14:45:29.146 [INF] [Stream] Press [q] to stop, [?] for help
+2025-11-24 14:45:29.164 [INF] [Stream] [libx264 @ 000001a1ee92b040]
+2025-11-24 14:45:29.166 [INF] [Stream]  using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-11-24 14:45:29.168 [INF] [Stream] [libx264 @ 000001a1ee92b040] profile High 4:4:4 Predictive, level 3.1, 4:4:4, 8-bit
+2025-11-24 14:45:30.714 [INF] [Stream] [rtmps @ 000001a1f26024c0]
+2025-11-24 14:45:30.717 [ERR] [Stream]  Server error: Publish Rejected: Invalid URL
+2025-11-24 14:45:30.718 [ERR] [Stream] [tee @ 000001a1ee923000] Slave '[f=flv]rtmps://live-api-s.facebook.com:443/rtmp/FB-1526913761827855-0-Ab2GXPRKntgJTLPWN8A08ZSR': error opening: Operation not permitted
+2025-11-24 14:45:30.719 [ERR] [Stream] [tee @ 000001a1ee923000] Slave muxer #1 failed: Operation not permitted, continuing with 1/2 slaves.
+2025-11-24 14:45:30.721 [INF] [Stream] Output #0, tee, to '[f=flv]rtmps://a.rtmps.youtube.com/live2/e54v-pkzg-y2ss-wjff-6ghh|[f=flv]rtmps://live-api-s.facebook.com:443/rtmp/FB-1526913761827855-0-Ab2GXPRKntgJTLPWN8A08ZSR':
+2025-11-24 14:45:30.723 [INF] [Stream]   Metadata:
+2025-11-24 14:45:30.725 [INF] [Stream]     encoder         : Lavf62.6.101
+2025-11-24 14:45:30.726 [INF] [Stream]   Stream #0:0: Video: h264, yuv444p(tv, progressive), 1280x720, q=2-31, 3500 kb/s, 30 fps, 30 tbn
+2025-11-24 14:45:30.728 [INF] [Stream]     Metadata:
+2025-11-24 14:45:30.730 [INF] [Stream]       encoder         : Lavc62.16.100 libx264
+2025-11-24 14:45:30.731 [INF] [Stream]     Side data:
+2025-11-24 14:45:30.733 [INF] [Stream]       CPB properties: bitrate max/min/avg: 3500000/0/3500000 buffer size: 7000000 vbv_delay: N/A
+2025-11-24 14:45:30.734 [INF] [Stream]   Stream #0:1: Audio: aac (LC), 44100 Hz, stereo, fltp, 128 kb/s
+2025-11-24 14:45:30.736 [INF] [Stream]     Metadata:
+2025-11-24 14:45:30.738 [INF] [Stream]       encoder         : Lavc62.16.100 aac
+2025-11-24 14:45:41.901 [INF] MainWindow kapatılıyor, kaynaklar serbest bırakılıyor...
+2025-11-24 14:45:41.985 [INF] [Stream] FFmpeg: Yayın hatası oluştu. RTMP adresini, stream key’i ve internet bağlantısını kontrol edin.
+2025-11-24 14:45:41.987 [WRN] [Stream] FFmpeg beklenmedik çıkış kodu: -1
+2025-11-24 15:30:48.465 [INF] ===================================================
+2025-11-24 15:30:48.486 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-24 15:30:48.487 [INF] ===================================================
+2025-11-24 15:30:48.918 [INF] MainWindow yüklendi, servisler başlatılıyor...
+2025-11-24 15:30:51.076 [INF] MainWindow kapatılıyor, kaynaklar serbest bırakılıyor...
+2025-11-24 15:30:51.083 [INF] [Stream] [stop] Süreç yok.
+2025-11-24 15:30:51.086 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-24 15:35:28.199 [INF] ===================================================
+2025-11-24 15:35:28.220 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-24 15:35:28.221 [INF] ===================================================
+2025-11-24 15:35:28.630 [INF] MainWindow yüklendi, servisler başlatılıyor...
+2025-11-24 15:35:31.414 [INF] MainWindow kapatılıyor, kaynaklar serbest bırakılıyor...
+2025-11-24 15:35:31.422 [INF] [Stream] [stop] Süreç yok.
+2025-11-24 15:35:31.425 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-24 15:41:09.752 [INF] ===================================================
+2025-11-24 15:41:09.771 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-24 15:41:09.772 [INF] ===================================================
+2025-11-24 15:41:10.235 [INF] MainWindow yüklendi, servisler başlatılıyor...
+2025-11-24 15:41:23.293 [INF] MainWindow kapatılıyor, kaynaklar serbest bırakılıyor...
+2025-11-24 15:41:23.304 [INF] [Stream] [stop] Süreç yok.
+2025-11-24 15:41:23.309 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
@@ -6,28 +7,25 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using UniCast.Core.Chat;
-using UniCast.App.Services;           // SettingsStore
+using UniCast.App.Services;
 using UniCast.Core.Settings;
 
 namespace UniCast.App.Services.Chat
 {
     /// <summary>
-    /// TikTok canlı chat okuyucu (best-effort, public). Ayar: SettingsData.TikTokRoomId
-    /// Not: TikTok resmi bir public API vermediği için WebSocket reverse yöntemi kullanılır.
-    /// SettingsData.TikTokRoomId eğer sadece harf/rakam içeriyorsa kullanıcı adı olarak kabul edilir ve room_id resolve edilir.
-    /// Numeric ise direkt room_id olarak kullanılır.
+    /// TikTok WebSocket ingestörü. Polling yapısına adapte edilmiştir.
+    /// Bağlantı koparsa Base Class otomatik reconnect yapar.
     /// </summary>
-    public sealed class TikTokChatIngestor : IChatIngestor
+    public sealed class TikTokChatIngestor : PollingChatIngestorBase
     {
         private readonly HttpClient _http;
         private ClientWebSocket? _ws;
-        private CancellationTokenSource? _linkedCts;
-        private Task? _listenerTask;
-        private string? _roomId;
+        private string _roomId = "";
 
-        public event Action<ChatMessage>? OnMessage;
-        public string Name => "TikTokChat";
-        public bool IsRunning { get; private set; }
+        // Buffer
+        private readonly byte[] _buffer = new byte[64 * 1024];
+
+        public override string Name => "TikTokChat";
 
         public TikTokChatIngestor(HttpClient? http = null)
         {
@@ -35,174 +33,135 @@ namespace UniCast.App.Services.Chat
             _http.Timeout = TimeSpan.FromSeconds(15);
             if (!_http.DefaultRequestHeaders.UserAgent.ToString().Contains("Mozilla"))
             {
-                _http.DefaultRequestHeaders.Add("User-Agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+                _http.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
             }
         }
 
-        public async Task StartAsync(CancellationToken ct)
+        protected override void ValidateSettings()
         {
-            if (IsRunning) return;
-
             var s = SettingsStore.Load();
-            var ident = s.TikTokRoomId?.Trim();
+            if (string.IsNullOrWhiteSpace(s.TikTokRoomId))
+                throw new InvalidOperationException("TikTok RoomID (veya Kullanıcı Adı) eksik.");
+        }
 
-            if (string.IsNullOrWhiteSpace(ident))
-                throw new InvalidOperationException("TikTok ayarları eksik: Settings -> TikTokRoomId boş.");
+        protected override async Task InitializeAsync(CancellationToken ct)
+        {
+            var s = SettingsStore.Load();
+            var ident = (s.TikTokRoomId ?? "").Trim();
 
-            // room_id mi, kullanıcı adı mı?
+            // Oda ID Çözümleme
             if (IsNumeric(ident))
             {
                 _roomId = ident;
             }
             else
             {
-                // Kullanıcı adından room_id çöz
-                _roomId = await ResolveRoomIdFromUsernameAsync(ident!, ct)
-                    ?? throw new InvalidOperationException("TikTok: room_id çözülemedi (kullanıcı yayında mı?).");
+                _roomId = await ResolveRoomIdFromUsernameAsync(ident, ct)
+                    ?? throw new Exception("TikTok: Kullanıcı adından RoomID çözülemedi (Yayın kapalı olabilir).");
             }
 
-            _linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            await ConnectAndListenAsync(_linkedCts.Token);
-            IsRunning = true;
+            // WebSocket Bağlantısı
+            _ws?.Dispose();
+            _ws = new ClientWebSocket();
+            _ws.Options.SetRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+
+            var wsUrl = new Uri($"wss://webcast5.tiktok.com/ws/room/{_roomId}/?aid=1988&app_language=en&device_platform=web");
+            await _ws.ConnectAsync(wsUrl, ct);
         }
 
-        public async Task StopAsync()
+        protected override async Task<(IEnumerable<ChatMessage> messages, int? nextDelayMs)> FetchMessagesAsync(CancellationToken ct)
         {
-            IsRunning = false;
-            try { _linkedCts?.Cancel(); } catch { }
+            // WebSocket kapalıysa hata fırlat (Base class yakalayıp reconnect yapacak)
+            if (_ws == null || _ws.State != WebSocketState.Open)
+                throw new Exception("WebSocket bağlantısı koptu.");
 
-            if (_ws is { State: WebSocketState.Open })
+            var list = new List<ChatMessage>();
+            var sb = new StringBuilder();
+            WebSocketReceiveResult result;
+
+            // Tek bir mesaj paketini oku
+            do
             {
-                try { await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None); }
-                catch { /* ignore */ }
+                result = await _ws.ReceiveAsync(new ArraySegment<byte>(_buffer), ct);
+                if (result.MessageType == WebSocketMessageType.Close)
+                    throw new Exception("TikTok sunucusu bağlantıyı kapattı.");
+
+                sb.Append(Encoding.UTF8.GetString(_buffer, 0, result.Count));
             }
+            while (!result.EndOfMessage);
 
-            try { await (_listenerTask ?? Task.CompletedTask); } catch { /* ignore */ }
+            // Parse Et
+            var json = sb.ToString();
+            ParseTikTokJson(json, list);
 
+            // TikTok canlı akış olduğu için "bekleme süresi" (NextDelay) düşük olabilir
+            // Ancak Base Class mesaj varsa 1sn bekliyor, bu da stabilite için iyidir.
+            return (list, 1000);
+        }
+
+        public override async Task StopAsync()
+        {
+            await base.StopAsync();
             _ws?.Dispose();
             _ws = null;
         }
 
-        public async ValueTask DisposeAsync() => await StopAsync();
+        // --- Helpers ---
 
-        // ---------- internals ----------
-
-        private async Task ConnectAndListenAsync(CancellationToken ct)
-        {
-            if (string.IsNullOrEmpty(_roomId))
-                throw new InvalidOperationException("TikTok: room_id boş.");
-
-            // Bilinen webcast endpointlerinden biri (rev-eng; zamanla değişebilir)
-            var wsUrl = new Uri($"wss://webcast5.tiktok.com/ws/room/{_roomId}/?aid=1988&app_language=en&device_platform=web");
-
-            _ws = new ClientWebSocket();
-            _ws.Options.SetRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-
-            await _ws.ConnectAsync(wsUrl, ct);
-
-            _listenerTask = Task.Run(() => ListenLoopAsync(ct), ct);
-        }
-
-        private async Task ListenLoopAsync(CancellationToken ct)
-        {
-            var buffer = new ArraySegment<byte>(new byte[64 * 1024]);
-            var sb = new StringBuilder();
-
-            while (!ct.IsCancellationRequested && _ws?.State == WebSocketState.Open)
-            {
-                sb.Clear();
-                WebSocketReceiveResult? res;
-
-                do
-                {
-                    res = await _ws.ReceiveAsync(buffer, ct);
-                    if (res.MessageType == WebSocketMessageType.Close) return;
-
-                    sb.Append(Encoding.UTF8.GetString(buffer.Array!, 0, res.Count));
-                }
-                while (!res.EndOfMessage);
-
-                var json = sb.ToString();
-                TryParseAndEmit(json);
-            }
-        }
-
-        private void TryParseAndEmit(string json)
+        private void ParseTikTokJson(string json, List<ChatMessage> list)
         {
             try
             {
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 
-                // Farklı formatlar görülebiliyor; en yaygın bazı yolları deneriz:
-                if (root.TryGetProperty("data", out var data))
+                // Format 1: data.messages[]
+                if (root.TryGetProperty("data", out var data) && data.TryGetProperty("messages", out var arr))
                 {
-                    // 1) data.messages[]
-                    if (data.TryGetProperty("messages", out var arr))
-                    {
-                        foreach (var m in arr.EnumerateArray())
-                        {
-                            if (!m.TryGetProperty("content", out var c)) continue;
-
-                            var text = c.TryGetProperty("content", out var cc) ? (cc.GetString() ?? "") : "";
-                            var author = "User";
-                            if (c.TryGetProperty("user", out var u) && u.TryGetProperty("nickname", out var nn))
-                                author = nn.GetString() ?? author;
-
-                            if (string.IsNullOrWhiteSpace(text)) continue;
-
-                            OnMessage?.Invoke(new ChatMessage(
-                                Id: Guid.NewGuid().ToString("N"),
-                                Source: ChatSource.TikTok,
-                                Timestamp: DateTimeOffset.Now,
-                                Author: author,
-                                Text: text
-                            ));
-                        }
-                        return;
-                    }
+                    foreach (var m in arr.EnumerateArray()) ExtractMessage(m, list);
                 }
-
-                // 2) Bazı JSON’larda doğrudan "messages" kökte olabilir
-                if (root.TryGetProperty("messages", out var messages))
+                // Format 2: messages[] (root)
+                else if (root.TryGetProperty("messages", out var messages))
                 {
-                    foreach (var m in messages.EnumerateArray())
-                    {
-                        var text = m.TryGetProperty("text", out var t) ? (t.GetString() ?? "") : "";
-                        var author = m.TryGetProperty("user", out var u) && u.TryGetProperty("nickname", out var n)
-                            ? (n.GetString() ?? "User")
-                            : "User";
-
-                        if (string.IsNullOrWhiteSpace(text)) continue;
-
-                        OnMessage?.Invoke(new ChatMessage(
-                            Id: Guid.NewGuid().ToString("N"),
-                            Source: ChatSource.TikTok,
-                            Timestamp: DateTimeOffset.Now,
-                            Author: author,
-                            Text: text
-                        ));
-                    }
+                    foreach (var m in messages.EnumerateArray()) ExtractMessage(m, list);
                 }
             }
-            catch
+            catch { /* Parse hatası önemsiz */ }
+        }
+
+        private void ExtractMessage(JsonElement m, List<ChatMessage> list)
+        {
+            string text = "";
+            string author = "TikTok User";
+
+            // Farklı JSON yapıları olabiliyor, en yaygın ikisini deniyoruz
+            if (m.TryGetProperty("content", out var c)) // İç içe yapı
             {
-                // format değişirse sessiz yut; loglamak istersen buraya yaz
+                text = c.TryGetProperty("content", out var cc) ? (cc.GetString() ?? "") : "";
+                if (c.TryGetProperty("user", out var u) && u.TryGetProperty("nickname", out var nn))
+                    author = nn.GetString() ?? author;
+            }
+            else // Düz yapı
+            {
+                text = m.TryGetProperty("text", out var t) ? (t.GetString() ?? "") : "";
+                if (m.TryGetProperty("user", out var u2) && u2.TryGetProperty("nickname", out var nn2))
+                    author = nn2.GetString() ?? author;
+            }
+
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                list.Add(new ChatMessage(Guid.NewGuid().ToString("N"), ChatSource.TikTok, DateTimeOffset.Now, author, text));
             }
         }
 
         private static bool IsNumeric(string s)
         {
-            for (int i = 0; i < s.Length; i++)
-                if (!char.IsDigit(s[i])) return false;
+            foreach (char c in s) if (!char.IsDigit(c)) return false;
             return s.Length > 0;
         }
 
         private async Task<string?> ResolveRoomIdFromUsernameAsync(string username, CancellationToken ct)
         {
-            // Basit HTML scrape ile sayfadaki room_id'yi bulmaya çalışırız.
-            // (Yayın kapalıysa ya da TikTok HTML'i değiştiyse null dönebilir.)
             try
             {
                 var html = await _http.GetStringAsync($"https://www.tiktok.com/@{username}/live", ct);
@@ -210,18 +169,16 @@ namespace UniCast.App.Services.Chat
                 if (idx < 0) return null;
 
                 var colon = html.IndexOf(':', idx);
-                if (colon < 0) return null;
+                var end = html.IndexOfAny(new[] { ',', '}', '"' }, colon + 2); // Basit parse
 
-                var end = html.IndexOfAny(new[] { ',', '}', '\n', '\r' }, colon + 1);
-                if (end < 0) end = html.Length;
-
-                var raw = html.Substring(colon + 1, end - (colon + 1)).Trim().Trim('"');
-                return string.IsNullOrWhiteSpace(raw) ? null : raw;
+                if (colon > 0 && end > colon)
+                {
+                    var id = html.Substring(colon + 1, end - (colon + 1)).Trim().Replace("\"", "");
+                    return IsNumeric(id) ? id : null;
+                }
             }
-            catch
-            {
-                return null;
-            }
+            catch { }
+            return null;
         }
     }
 }

@@ -4,89 +4,145 @@ using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace UniCast.App.Overlay
 {
-    /// <summary>
-    /// Verilen WPF FrameworkElement'ten periyodik PNG (alpha) kare üretip named pipe'a yazar.
-    /// FFmpeg: -f image2pipe -r 20 -i \\.\pipe\unicast_overlay
-    /// </summary>
     public sealed class OverlayPipePublisher : IAsyncDisposable
     {
         private readonly FrameworkElement _visual;
         private readonly string _pipeName;
-        private readonly int _fps;
-        private CancellationTokenSource? _cts;
-        private Task? _loop;
+        private readonly int _width;
+        private readonly int _height;
 
-        public OverlayPipePublisher(FrameworkElement visual, string pipeName = "unicast_overlay", int fps = 20)
+        private const int TargetFps = 30;
+        private readonly TimeSpan _frameInterval = TimeSpan.FromMilliseconds(1000.0 / TargetFps);
+
+        private CancellationTokenSource? _cts;
+        private Task? _runner;
+
+        // Durum Yönetimi
+        private bool _isDirty = true;
+        private RenderTargetBitmap? _bmp;
+
+        // UYARI DÜZELTME: '_encoder' alanı kullanılmıyordu, sildik.
+        // private PngBitmapEncoder? _encoder; 
+
+        public bool IsRunning { get; private set; }
+
+        public OverlayPipePublisher(FrameworkElement visual, string pipeName, int width, int height)
         {
             _visual = visual;
-            _pipeName = pipeName; // sadece isim; client: \\.\pipe\{name}
-            _fps = Math.Clamp(fps, 5, 60);
+            _pipeName = pipeName;
+            _width = width;
+            _height = height;
+        }
+
+        public void Invalidate()
+        {
+            _isDirty = true;
         }
 
         public void Start()
         {
-            if (_loop is not null) return;
+            if (IsRunning) return;
             _cts = new CancellationTokenSource();
-            _loop = Task.Run(() => RunAsync(_cts.Token));
+            IsRunning = true;
+            _runner = Task.Run(() => LoopAsync(_cts.Token));
         }
 
         public async Task StopAsync()
         {
-            try { _cts?.Cancel(); } catch { }
-            if (_loop is not null) { try { await _loop; } catch { } }
-            _loop = null;
+            if (!IsRunning) return;
+            _cts?.Cancel();
+            if (_runner != null)
+            {
+                try { await _runner.ConfigureAwait(false); } catch { }
+            }
+            IsRunning = false;
         }
 
         public async ValueTask DisposeAsync() => await StopAsync();
 
-        private async Task RunAsync(CancellationToken ct)
+        private async Task LoopAsync(CancellationToken ct)
         {
-            using var server = new NamedPipeServerStream(_pipeName, PipeDirection.Out, 1,
-                PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 1024 * 1024, 1024 * 1024);
+            using var server = new NamedPipeServerStream(
+                _pipeName,
+                PipeDirection.Out,
+                1,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous);
 
-            await server.WaitForConnectionAsync(ct);
+            try
+            {
+                await server.WaitForConnectionAsync(ct);
+            }
+            catch
+            {
+                return;
+            }
 
-            var frameDelay = TimeSpan.FromMilliseconds(1000.0 / _fps);
-
-            while (!ct.IsCancellationRequested)
+            while (!ct.IsCancellationRequested && server.IsConnected)
             {
                 try
                 {
-                    var bmp = await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    var startTime = DateTime.UtcNow;
+
+                    if (_isDirty)
                     {
-                        int w = Math.Max(1, (int)Math.Ceiling(_visual.ActualWidth));
-                        int h = Math.Max(1, (int)Math.Ceiling(_visual.ActualHeight));
-                        if (w <= 0 || h <= 0) { w = 1280; h = 280; }
+                        byte[]? frameData = null;
 
-                        var rtb = new RenderTargetBitmap(w, h, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
-                        _visual.Measure(new System.Windows.Size(w, h));
-                        _visual.Arrange(new Rect(new System.Windows.Point(0, 0), _visual.DesiredSize));
-                        _visual.UpdateLayout();
-                        rtb.Render(_visual);
-                        return rtb;
-                    });
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            frameData = RenderFrame();
+                        });
 
-                    using var ms = new MemoryStream();
-                    var enc = new PngBitmapEncoder();
-                    enc.Frames.Add(BitmapFrame.Create(bmp));
-                    enc.Save(ms);
+                        if (frameData != null)
+                        {
+                            await server.WriteAsync(frameData, 0, frameData.Length, ct);
+                            await server.FlushAsync(ct);
+                            _isDirty = false;
+                        }
+                    }
 
-                    ms.Position = 0;
-                    await ms.CopyToAsync(server, ct);
-                    await server.FlushAsync(ct);
-
-                    await Task.Delay(frameDelay, ct);
+                    var elapsed = DateTime.UtcNow - startTime;
+                    var delay = _frameInterval - elapsed;
+                    if (delay > TimeSpan.Zero)
+                    {
+                        await Task.Delay(delay, ct);
+                    }
                 }
-                catch (OperationCanceledException) { }
-                catch
+                catch (Exception)
                 {
-                    // FFmpeg kapanırsa pipe düşer – sessiz çık
                     break;
                 }
+            }
+        }
+
+        private byte[]? RenderFrame()
+        {
+            try
+            {
+                if (_bmp == null)
+                {
+                    _bmp = new RenderTargetBitmap(_width, _height, 96, 96, PixelFormats.Pbgra32);
+                }
+
+                _bmp.Clear();
+                _bmp.Render(_visual);
+
+                // Encoder'ı yerel olarak oluşturuyoruz
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(_bmp));
+
+                using var ms = new MemoryStream();
+                encoder.Save(ms);
+                return ms.ToArray();
+            }
+            catch
+            {
+                return null;
             }
         }
     }
