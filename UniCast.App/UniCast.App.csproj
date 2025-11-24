@@ -34,6 +34,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Unicast.Capture\UniCast.Capture.csproj" />
 		<ProjectReference Include="..\UniCast.Core\UniCast.Core.csproj" />
 		<ProjectReference Include="..\UniCast.Encoder\UniCast.Encoder.csproj" />
 	</ItemGroup>

@@ -1,8 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
 	<PropertyGroup>
-		<TargetFramework>net8.0-windows10.0.19041</TargetFramework>
-		<UseWindowsForms>false</UseWindowsForms>
-		<Nullable>enable</Nullable>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Platforms>AnyCPU;x64</Platforms>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\UniCast.Core\UniCast.Core.csproj" />
+	</ItemGroup>
+
 </Project>

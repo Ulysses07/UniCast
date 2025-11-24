@@ -1,13 +1,16 @@
-﻿namespace UniCast.App.Services.Capture
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using UniCast.Core.Models; // CaptureDevice modelini tanıması için
+
+namespace UniCast.App.Services.Capture
 {
     public interface IDeviceService
     {
-        Task<IReadOnlyList<string>> GetVideoFriendlyNamesAsync();
-        Task<IReadOnlyList<string>> GetAudioFriendlyNamesAsync();
+        // Eski metodlar yerine bunları kullanıyoruz:
+        Task<List<CaptureDevice>> GetVideoDevicesAsync();
+        Task<List<CaptureDevice>> GetAudioDevicesAsync();
 
-        /// dshow tabanlı FFmpeg giriş argümanı:
-        /// -f dshow -i video="NAME":audio="NAME"
-        string BuildFfmpegInputArgs(string? videoFriendlyName, string? audioFriendlyName,
-                                    int? width = null, int? height = null, int? fps = null);
+        // FFmpeg için ID -> İsim çevirici
+        Task<string?> GetDeviceNameByIdAsync(string id);
     }
 }

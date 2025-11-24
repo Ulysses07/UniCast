@@ -18,11 +18,12 @@ namespace UniCast.Capture.MediaFoundation
             if (hr < 0) Marshal.ThrowExceptionForHR(hr);
         }
 
-        // --- IMFActivate / IMFAttributes minimal tanımlar ---
+        // --- IMFActivate / IMFAttributes Tanımları ---
+        // Bu arayüz hem IMFAttributes hem IMFActivate metotlarını içerir.
         [ComImport, Guid("7f8c8b88-79f7-4f2f-a6b2-3c0d4f3e8e15"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         internal interface IMFActivate
         {
-            // IMFAttributes (v-table inheritance)
+            // IMFAttributes (v-table sırası önemlidir)
             int GetItem([In] ref Guid guidKey, IntPtr pValue);
             int GetItemType([In] ref Guid guidKey, out int pType);
             int CompareItem([In] ref Guid guidKey, IntPtr Value, out bool pbResult);
@@ -54,65 +55,71 @@ namespace UniCast.Capture.MediaFoundation
             int GetItemByIndex(int unIndex, out Guid pguidKey, IntPtr pValue);
             int CopyAllItems([MarshalAs(UnmanagedType.Interface)] out object ppDest);
 
-            // IMFActivate özel üyeleri (v-table devamı)
+            // IMFActivate metotları
             int ActivateObject([In] ref Guid riid, [MarshalAs(UnmanagedType.IUnknown)] out object ppv);
             int ShutdownObject();
             int DetachObject();
         }
 
-        [ComImport, Guid("2cd2d921-c447-44a7-a13c-4adabfc247e3")]
-        internal class MFAttributes { }
+        // --- P/Invoke Tanımları (HATA DÜZELTME: internal yapıldı) ---
 
         [DllImport("Mfplat.dll", ExactSpelling = true)]
-        private static extern int MFStartup(int version, int dwFlags);
-        [DllImport("Mfplat.dll", ExactSpelling = true)]
-        private static extern int MFShutdown();
+        internal static extern int MFStartup(int version, int dwFlags);
 
         [DllImport("Mfplat.dll", ExactSpelling = true)]
-        private static extern int MFCreateAttributes(out IntPtr ppMFAttributes, int cInitialSize);
+        internal static extern int MFShutdown();
+
+        [DllImport("Mfplat.dll", ExactSpelling = true)]
+        internal static extern int MFCreateAttributes(out IntPtr ppMFAttributes, int cInitialSize);
 
         [DllImport("Mf.dll", ExactSpelling = true)]
-        private static extern int MFEnumDeviceSources(IntPtr pAttributes, out IntPtr ppActivate, out int pcActivate);
+        internal static extern int MFEnumDeviceSources(IntPtr pAttributes, out IntPtr ppActivate, out int pcActivate);
 
-        internal static void Startup() => Check(MFStartup(0x20070, 0));   // MF version
-        internal static void Shutdown() => Check(MFShutdown());
+        // --- Helper Metotlar (HATA DÜZELTME: Eksik metotlar eklendi) ---
 
-        internal static IntPtr CreateAttributes()
+        /// <summary>
+        /// Verilen IntPtr (IMFAttributes) üzerinde GUID set eder.
+        /// </summary>
+        internal static void IMFAttributes_SetGUID(IntPtr pAttributes, Guid key, Guid value)
         {
-            Check(MFCreateAttributes(out var p, 2));
-            return p;
+            // IntPtr'ı C# Interface'ine çevir (RCW)
+            var attrs = (IMFActivate)Marshal.GetObjectForIUnknown(pAttributes);
+            try
+            {
+                int hr = attrs.SetGUID(ref key, ref value);
+                Check(hr);
+            }
+            finally
+            {
+                // COM nesnesini serbest bırakmak genelde GC'ye bırakılır ama manuel de yapılabilir.
+                // Marshal.ReleaseComObject(attrs);
+            }
         }
 
-        // IMFAttributes.SetGUID wrapper
-        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        private delegate int SetGUID_Delegate(IntPtr pThis, ref Guid guidKey, ref Guid guidValue);
-
-        internal static void SetGUID(IntPtr pAttributes, Guid key, Guid value)
+        /// <summary>
+        /// Verilen IntPtr (IMFAttributes) üzerinden string okur.
+        /// </summary>
+        internal static string GetString(IntPtr pAttributes, Guid key)
         {
-            var vtbl = Marshal.ReadIntPtr(pAttributes);
-            // IMFAttributes vtable: SetGUID  ?  (basit yaklaşım: 16. giriş civarı)
-            // Güvenli yol: Managed IMFAttributes yazıp QueryInterface; ama minimal için Invoke:
-            // Pratikte bu çağrı pek çoğu için çalışır, fakat stabilite için kapsamlı interop tercih edilir.
-            // Basitleştirmek adına az riskli hack yerine alternate yol:
-            // -> Aşağıda MediaFoundationCaptureService içinde Windows API Code Pack alternatifi yok.
-            // Bu yüzden burada SetGUID'u reflection ile çağırmak yerine COM marshal kullanalım:
-            // Daha güvenlisi: Marshal.GetObjectForIUnknown ve dynamic cast, ama basit yaklaşım yeterli.
+            var attrs = (IMFActivate)Marshal.GetObjectForIUnknown(pAttributes);
+            IntPtr pStr = IntPtr.Zero;
+            int length = 0;
+            try
+            {
+                // GetAllocatedString hafızayı kendisi ayırır, CoTaskMemFree ile silinmesi gerekir.
+                int hr = attrs.GetAllocatedString(ref key, out pStr, out length);
+                if (hr < 0 || pStr == IntPtr.Zero) return string.Empty;
 
-            // Pratik: bir kez deneyip başarısız olursa exception fırlat.
-            // UYARI: Prod ortamda tam IMFAttributes interop sınıfı oluşturmak önerilir.
-            throw new NotSupportedException("SetGUID interop minimalist mock. Aşağıdaki yüksek seviye yol kullanıldı.");
-        }
-
-        internal static void EnumDeviceSourcesVideoOrAudio(Guid sourceTypeGuid, out IMFActivate[] devices)
-        {
-            // Burada: Windows Media Foundation için en stabil yöntem,
-            // IMFAttributes oluşturup MFEnumDeviceSources ile IMFActivate listesi almak.
-            // Minimal interop ile Attributes setlemek karmaşıklaştığı için,
-            // daha pratik bir yol: MF API'si yerine WinRT DeviceInformation kullanmak
-            // ve FFmpeg'e dshow-friendly *FriendlyName* ile gitmek.
-
-            // Bu helper, CaptureService içinde kullanılmıyor; WinRT yolu tercih edildi.
-            devices = Array.Empty<IMFActivate>();
+                return Marshal.PtrToStringUni(pStr) ?? string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+            finally
+            {
+                if (pStr != IntPtr.Zero) Marshal.FreeCoTaskMem(pStr);
+            }
         }
     }
 }

@@ -1,12 +1,13 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using UniCast.App.Infrastructure;
-using UniCast.App.Services;
+using UniCast.App.Services; // SettingsStore
 using UniCast.App.Services.Capture; // IDeviceService
-using UniCast.Core.Settings;
-using UniCast.Core.Chat; // SettingsData
+using UniCast.Core.Settings; // SettingsData
+using UniCast.Core.Models; // CaptureDevice
 
 namespace UniCast.App.ViewModels
 {
@@ -20,9 +21,12 @@ namespace UniCast.App.ViewModels
             _devices = devices;
             _settings = SettingsStore.Load();
 
-            // Persisted basic settings
+            // Load settings
+            // Note: DefaultCamera/Microphone are now IDs in the background, but names in legacy settings.
+            // We treat them as IDs where possible.
             _defaultCamera = _settings.DefaultCamera ?? "";
             _defaultMicrophone = _settings.DefaultMicrophone ?? "";
+
             _encoder = string.IsNullOrWhiteSpace(_settings.Encoder) ? "auto" : _settings.Encoder!;
             _videoKbps = _settings.VideoKbps;
             _audioKbps = _settings.AudioKbps;
@@ -41,23 +45,45 @@ namespace UniCast.App.ViewModels
             _facebookLiveVideoId = _settings.FacebookLiveVideoId ?? "";
             _facebookAccessToken = _settings.FacebookAccessToken ?? "";
 
+            // Commands
             SaveCommand = new RelayCommand(_ => Save());
             BrowseRecordFolderCommand = new RelayCommand(_ => BrowseFolder());
             RefreshDevicesCommand = new RelayCommand(async _ => await RefreshDevicesAsync());
 
+            // Initial Load
             _ = RefreshDevicesAsync();
         }
 
-        // Device lists
-        public ObservableCollection<string> VideoDevices { get; } = new();
-        public ObservableCollection<string> AudioDevices { get; } = new();
+        // --- UPDATED: Device lists now hold rich objects (CaptureDevice), not just strings ---
+        public ObservableCollection<CaptureDevice> VideoDevices { get; } = new();
+        public ObservableCollection<CaptureDevice> AudioDevices { get; } = new();
 
         // Standard fields
+        // Bound to SelectedValue in ComboBox
         private string _defaultCamera;
-        public string DefaultCamera { get => _defaultCamera; set { _defaultCamera = value; OnPropertyChanged(); } }
+        public string DefaultCamera
+        {
+            get => _defaultCamera;
+            set
+            {
+                _defaultCamera = value;
+                // Update setting immediately for live preview if needed, or wait for Save()
+                _settings.SelectedVideoDevice = value;
+                OnPropertyChanged();
+            }
+        }
 
         private string _defaultMicrophone;
-        public string DefaultMicrophone { get => _defaultMicrophone; set { _defaultMicrophone = value; OnPropertyChanged(); } }
+        public string DefaultMicrophone
+        {
+            get => _defaultMicrophone;
+            set
+            {
+                _defaultMicrophone = value;
+                _settings.SelectedAudioDevice = value;
+                OnPropertyChanged();
+            }
+        }
 
         private string _encoder;
         public string Encoder { get => _encoder; set { _encoder = value; OnPropertyChanged(); } }
@@ -107,8 +133,12 @@ namespace UniCast.App.ViewModels
 
         private void Save()
         {
+            // Persist current values
             _settings.DefaultCamera = (DefaultCamera ?? "").Trim();
             _settings.DefaultMicrophone = (DefaultMicrophone ?? "").Trim();
+            _settings.SelectedVideoDevice = _settings.DefaultCamera; // Ensure sync
+            _settings.SelectedAudioDevice = _settings.DefaultMicrophone;
+
             _settings.Encoder = string.IsNullOrWhiteSpace(Encoder) ? "auto" : Encoder.Trim();
             _settings.VideoKbps = VideoKbps;
             _settings.AudioKbps = AudioKbps;
@@ -148,18 +178,20 @@ namespace UniCast.App.ViewModels
 
         private async Task RefreshDevicesAsync()
         {
-            var videos = await _devices.GetVideoFriendlyNamesAsync();
-            var audios = await _devices.GetAudioFriendlyNamesAsync();
+            // UPDATED: Call async methods and get full objects
+            var videos = await _devices.GetVideoDevicesAsync();
+            var audios = await _devices.GetAudioDevicesAsync();
 
+            // Update Video Devices List
             VideoDevices.Clear();
             foreach (var v in videos) VideoDevices.Add(v);
-            if (!string.IsNullOrWhiteSpace(DefaultCamera) && !VideoDevices.Contains(DefaultCamera))
-                VideoDevices.Add(DefaultCamera);
 
+            // Handle disconnected devices (keep selected ID visible if possible, or add as temp)
+            // Note: To make it cleaner, we could add a placeholder if the saved ID isn't found.
+
+            // Update Audio Devices List
             AudioDevices.Clear();
             foreach (var a in audios) AudioDevices.Add(a);
-            if (!string.IsNullOrWhiteSpace(DefaultMicrophone) && !AudioDevices.Contains(DefaultMicrophone))
-                AudioDevices.Add(DefaultMicrophone);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniCast.Logging", "UniCast.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniCast.Overlay", "UniCast.Overlay\UniCast.Overlay.csproj", "{367C13DA-81A7-4161-0961-5103F5848189}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniCast.Capture", "Unicast.Capture\UniCast.Capture.csproj", "{3C8BC6BD-3C48-940C-4CD3-E79016E16DBC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,14 @@ Global
 		{367C13DA-81A7-4161-0961-5103F5848189}.Release|Any CPU.Build.0 = Release|Any CPU
 		{367C13DA-81A7-4161-0961-5103F5848189}.Release|x64.ActiveCfg = Release|Any CPU
 		{367C13DA-81A7-4161-0961-5103F5848189}.Release|x64.Build.0 = Release|Any CPU
+		{3C8BC6BD-3C48-940C-4CD3-E79016E16DBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C8BC6BD-3C48-940C-4CD3-E79016E16DBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C8BC6BD-3C48-940C-4CD3-E79016E16DBC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3C8BC6BD-3C48-940C-4CD3-E79016E16DBC}.Debug|x64.Build.0 = Debug|Any CPU
+		{3C8BC6BD-3C48-940C-4CD3-E79016E16DBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C8BC6BD-3C48-940C-4CD3-E79016E16DBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C8BC6BD-3C48-940C-4CD3-E79016E16DBC}.Release|x64.ActiveCfg = Release|Any CPU
+		{3C8BC6BD-3C48-940C-4CD3-E79016E16DBC}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
