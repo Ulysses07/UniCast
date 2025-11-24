@@ -1,13 +1,22 @@
 ﻿namespace UniCast.Core.Streaming
 {
-    public enum StreamPlatform { Custom, YouTube, Facebook, Twitch }
+    // GÜNCELLEME: TikTok ve Instagram eklendi
+    public enum StreamPlatform
+    {
+        Custom,
+        YouTube,
+        Facebook,
+        Twitch,
+        TikTok,
+        Instagram
+    }
 
     public sealed class StreamTarget
     {
         public StreamPlatform Platform { get; set; } = StreamPlatform.Custom;
-        public string? DisplayName { get; set; } // UI’da gösterilecek ad
-        public string? Url { get; set; }         // rtmp(s)://.../app
-        public string? StreamKey { get; set; }   // publish key
+        public string? DisplayName { get; set; }
+        public string? Url { get; set; }
+        public string? StreamKey { get; set; }
         public bool Enabled { get; set; } = true;
     }
 }
