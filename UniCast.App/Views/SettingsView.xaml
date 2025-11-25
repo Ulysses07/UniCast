@@ -6,7 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="1200">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
-        <StackPanel MaxWidth="800" Width="764">
+        <StackPanel MaxWidth="800" Width="761">
 
             <TextBlock Text="⚙️ Ayarlar" FontSize="24" FontWeight="Bold" Margin="0,0,0,20" Foreground="{StaticResource TextMain}"/>
 
@@ -21,11 +21,14 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Kamera" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+
                         <ComboBox Grid.Column="1" ItemsSource="{Binding VideoDevices}"
                                   SelectedValue="{Binding DefaultCamera, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  SelectedValuePath="Id" DisplayMemberPath="Name"/>
+                                  SelectedValuePath="Id" DisplayMemberPath="Name"
+                                  Height="35"/>
+
                         <Button Grid.Column="2" Content="🔄" Command="{Binding RefreshDevicesCommand}" 
-                                Width="40" Margin="10,0,0,0" ToolTip="Cihazları Yenile"/>
+                                Width="40" Height="35" Margin="10,0,0,0" ToolTip="Cihazları Yenile"/>
                     </Grid>
 
                     <Grid>
@@ -34,9 +37,11 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Mikrofon" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+
                         <ComboBox Grid.Column="1" ItemsSource="{Binding AudioDevices}"
                                   SelectedValue="{Binding DefaultMicrophone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  SelectedValuePath="Id" DisplayMemberPath="Name"/>
+                                  SelectedValuePath="Id" DisplayMemberPath="Name"
+                                  Height="35"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -52,28 +57,25 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Çözünürlük" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <TextBox Text="{Binding Width}" Width="80" Margin="0,0,10,0"/>
-                            <TextBlock Text="x" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <TextBox Text="{Binding Height}" Width="80"/>
+                            <TextBox Text="{Binding Width}" Width="80" Height="30" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
+                            <TextBlock Text="x" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="{StaticResource TextMuted}"/>
+                            <TextBox Text="{Binding Height}" Width="80" Height="30" VerticalContentAlignment="Center"/>
                         </StackPanel>
                     </Grid>
 
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="100"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="FPS" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
-                        <TextBox Grid.Column="1" Text="{Binding Fps}" Width="80" HorizontalAlignment="Left"/>
-                    </Grid>
+                        <TextBox Grid.Column="1" Text="{Binding Fps}" Height="30" VerticalContentAlignment="Center"/>
 
-                    <Grid Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="150"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Video Bitrate (Kbps)" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
-                        <TextBox Grid.Column="1" Text="{Binding VideoKbps}" Width="100" HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Column="3" Text="Video Bitrate (Kbps)" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                        <TextBox Grid.Column="4" Text="{Binding VideoKbps}" Height="30" VerticalContentAlignment="Center"/>
                     </Grid>
 
                     <TextBlock Text="Ses Senkronizasyonu (Gecikme)" Margin="0,10,0,5" Foreground="{StaticResource TextMuted}"/>
@@ -87,6 +89,8 @@
                         <TextBlock Grid.Column="1" Text="{Binding AudioDelayMs, StringFormat={}{0} ms}" 
                                    Foreground="{StaticResource TextMain}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                     </Grid>
+                    <TextBlock Text="İpucu: Ses görüntüden önce geliyorsa bu değeri artırın." 
+                               FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
 
@@ -97,18 +101,23 @@
                     <Expander Header="Instagram Ayarları" Margin="0,0,0,10" Foreground="{StaticResource TextMain}">
                         <StackPanel Margin="10">
                             <TextBlock Text="User ID" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
-                            <TextBox Text="{Binding InstagramUserId, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Text="{Binding InstagramUserId, UpdateSourceTrigger=PropertyChanged}" Height="30"/>
+
                             <TextBlock Text="Session ID" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
-                            <PasswordBox x:Name="PwdInstagramSession" PasswordChanged="PwdInstagramSession_PasswordChanged"/>
+                            <PasswordBox x:Name="PwdInstagramSession" PasswordChanged="PwdInstagramSession_PasswordChanged" Height="30"/>
+
+                            <TextBlock Text="Not: Instagram canlı chat için hesapta aktif canlı yayın gerekir." 
+                                       Foreground="Orange" FontSize="10" Margin="0,5,0,0"/>
                         </StackPanel>
                     </Expander>
 
                     <Expander Header="Facebook Ayarları" Foreground="{StaticResource TextMain}">
                         <StackPanel Margin="10">
                             <TextBlock Text="Page Access Token" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
-                            <PasswordBox x:Name="PwdFacebookToken" PasswordChanged="PwdFacebookToken_PasswordChanged"/>
+                            <PasswordBox x:Name="PwdFacebookToken" PasswordChanged="PwdFacebookToken_PasswordChanged" Height="30"/>
+
                             <TextBlock Text="Page ID" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
-                            <TextBox Text="{Binding FacebookPageId, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Text="{Binding FacebookPageId, UpdateSourceTrigger=PropertyChanged}" Height="30"/>
                         </StackPanel>
                     </Expander>
                 </StackPanel>
@@ -119,22 +128,23 @@
                     <TextBlock Text="Yerel Kayıt" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
 
                     <CheckBox Content="Yayın sırasında bilgisayara da kaydet (MP4)" 
-                              IsChecked="{Binding EnableLocalRecord}" Margin="0,0,0,10"/>
+                              IsChecked="{Binding EnableLocalRecord}" Margin="0,0,0,10" Foreground="{StaticResource TextMain}"/>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding RecordFolder}" IsReadOnly="True"/>
-                        <Button Grid.Column="1" Content="📂 Seç" Command="{Binding BrowseRecordFolderCommand}" Margin="10,0,0,0"/>
+                        <TextBox Text="{Binding RecordFolder}" IsReadOnly="True" Height="35" VerticalContentAlignment="Center"/>
+                        <Button Grid.Column="1" Content="📂 Seç" Command="{Binding BrowseRecordFolderCommand}" 
+                                Margin="10,0,0,0" Height="35" Width="60"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <Button Content="💾 Ayarları Kaydet" Command="{Binding SaveCommand}" 
-                    HorizontalAlignment="Right" Width="200" Height="45" 
-                    Background="{StaticResource Primary}" BorderThickness="0"/>
+                    HorizontalAlignment="Right" Width="200" Height="50" 
+                    Background="{StaticResource Primary}" BorderThickness="0" FontWeight="Bold" FontSize="16"/>
 
         </StackPanel>
     </ScrollViewer>

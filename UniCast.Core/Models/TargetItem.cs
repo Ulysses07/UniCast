@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using UniCast.Core.Core;
+using UniCast.Core.Streaming; // ÖNEMLİ: Platform enum'ı buradan gelmeli
 
 namespace UniCast.Core.Models
 {
@@ -10,40 +10,40 @@ namespace UniCast.Core.Models
     /// </summary>
     public sealed class TargetItem : INotifyPropertyChanged
     {
-        private Platform _platform;
-        private string? _url;
-        private string? _key;
-        private bool _enabled;
-        private string? _displayName;
+        // HATA DÜZELTME 1: Eksik olan 'Id' özelliği eklendi
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        public Platform Platform
+        // HATA DÜZELTME 2: Tür 'StreamPlatform' yapıldı (Platform çakışmasını önler)
+        private StreamPlatform _platform;
+        public StreamPlatform Platform
         {
             get => _platform;
             set { if (_platform != value) { _platform = value; OnPropertyChanged(); } }
         }
 
-        /// <summary> Örn: rtmps://a.rtmp.youtube.com/live2 </summary>
+        private string? _url;
         public string? Url
         {
             get => _url;
             set { if (_url != value) { _url = value; OnPropertyChanged(); } }
         }
 
-        /// <summary> Yayın anahtarı </summary>
-        public string? Key
+        // HATA DÜZELTME 3: 'Key' ismi 'StreamKey' olarak değiştirildi (ViewModel ile uyum için)
+        private string? _streamKey;
+        public string? StreamKey
         {
-            get => _key;
-            set { if (_key != value) { _key = value; OnPropertyChanged(); } }
+            get => _streamKey;
+            set { if (_streamKey != value) { _streamKey = value; OnPropertyChanged(); } }
         }
 
-        /// <summary> UI’da etkin/pasif </summary>
+        private bool _enabled;
         public bool Enabled
         {
             get => _enabled;
             set { if (_enabled != value) { _enabled = value; OnPropertyChanged(); } }
         }
 
-        /// <summary> UI’da görünen ad (opsiyonel) </summary>
+        private string? _displayName;
         public string? DisplayName
         {
             get => _displayName;
@@ -56,7 +56,6 @@ namespace UniCast.Core.Models
             return $"{name} | {(Enabled ? "On" : "Off")} | {Url ?? "-"}";
         }
 
-        // INotifyPropertyChanged
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? propName = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));

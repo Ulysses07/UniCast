@@ -16,19 +16,19 @@
                 <TextBlock Text="🔗 Yeni Hedef Ekle" FontSize="18" FontWeight="Bold" Foreground="{StaticResource Primary}" Margin="0,0,0,15"/>
 
                 <TextBlock Text="Platform" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
-                <ComboBox ItemsSource="{Binding PlatformOptions}" SelectedItem="{Binding SelectedPlatform}" Margin="0,0,0,15"/>
+                <ComboBox ItemsSource="{Binding PlatformOptions}" SelectedItem="{Binding SelectedPlatform}" Margin="0,0,0,15" Height="35"/>
 
                 <TextBlock Text="İsim (Örn: Ana Kanal)" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding DisplayName}" Margin="0,0,0,15"/>
+                <TextBox Text="{Binding DisplayName}" Margin="0,0,0,15" Height="35"/>
 
                 <TextBlock Text="RTMP URL" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding Url}" Margin="0,0,0,15"/>
+                <TextBox Text="{Binding Url}" Margin="0,0,0,15" Height="35"/>
 
                 <TextBlock Text="Yayın Anahtarı (Stream Key)" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding StreamKey}" Margin="0,0,0,20"/>
+                <TextBox Text="{Binding StreamKey}" Margin="0,0,0,20" Height="35"/>
 
                 <Button Content="Listeye Ekle" Command="{Binding AddCommand}" 
-                        Background="{StaticResource Primary}" BorderThickness="0" Height="40"/>
+                        Background="{StaticResource Primary}" BorderThickness="0" Height="45" FontWeight="SemiBold"/>
             </StackPanel>
         </Border>
 
@@ -51,20 +51,18 @@
 
                                 <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding DisplayName}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextMain}"/>
-                                    <TextBlock Text="{Binding Platform}" FontSize="12" Foreground="{StaticResource Primary}"/>
                                     <TextBlock Text="{Binding Url}" FontSize="11" Foreground="{StaticResource TextMuted}" TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
 
                                 <Button Grid.Column="2" Content="🗑️" 
                                         Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                         CommandParameter="{Binding}"
-                                        Background="Transparent" BorderThickness="0" Foreground="#FF5555" FontSize="16"/>
+                                        Background="Transparent" BorderThickness="0" Foreground="#FF5555" FontSize="16" Cursor="Hand"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
-
     </Grid>
 </UserControl>

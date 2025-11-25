@@ -31,6 +31,15 @@ namespace UniCast.App.ViewModels
 
             StartCommand = new RelayCommand(async _ => await StartAsync(), _ => !IsRunning);
             StopCommand = new RelayCommand(async _ => await StopAsync(), _ => IsRunning);
+
+            // HATA DÜZELTME: StartPreviewCommand burada tanımlanıyor
+            StartPreviewCommand = new RelayCommand(async _ =>
+            {
+                if (_preview.IsRunning)
+                    await StopPreviewAsync();
+                else
+                    await StartPreviewAsync();
+            });
         }
 
         // --- Preview ---
@@ -46,6 +55,7 @@ namespace UniCast.App.ViewModels
             var s = Services.SettingsStore.Load();
             if (!_preview.IsRunning)
             {
+                // -1 varsayılan kamera demek
                 await _preview.StartAsync(-1, s.Width, s.Height, s.Fps);
             }
         }
@@ -83,6 +93,9 @@ namespace UniCast.App.ViewModels
         public ICommand StartCommand { get; }
         public ICommand StopCommand { get; }
 
+        // HATA DÜZELTME: Eksik olan Property buraya eklendi
+        public ICommand StartPreviewCommand { get; }
+
         private async Task StartAsync()
         {
             try
@@ -96,7 +109,6 @@ namespace UniCast.App.ViewModels
                 Advisory = ""; // Önceki hataları temizle
 
                 // 2. Başlatma İsteği (Result Pattern Kullanımı)
-                // Artık try-catch yerine sonucu if-else ile kontrol ediyoruz
                 var result = await _stream.StartWithResultAsync(targets, settings, _cts.Token);
 
                 if (result.Success)
@@ -113,7 +125,6 @@ namespace UniCast.App.ViewModels
                             Status = _stream.LastMessage ?? "Yayında";
                             Metric = _stream.LastMetric ?? "";
 
-                            // Eğer yayın sırasında bağlantı koparsa (Reconnect uyarısı vb.) onu da yansıt
                             if (!string.IsNullOrEmpty(_stream.LastAdvisory))
                                 Advisory = _stream.LastAdvisory;
 
@@ -126,14 +137,11 @@ namespace UniCast.App.ViewModels
                     // --- BAŞARISIZ (Hata Yönetimi) ---
                     IsRunning = false;
                     Status = "Hata";
-
-                    // Kullanıcıya "neden olmadığını" Türkçe ve net bir dille yazıyoruz
                     Advisory = result.UserMessage ?? "Bilinmeyen bir hata oluştu.";
                 }
             }
             catch (Exception ex)
             {
-                // Beklenmedik "Crash" durumları için son güvenlik ağı
                 Status = "Kritik Hata";
                 Advisory = $"Beklenmedik hata: {ex.Message}";
                 IsRunning = false;
@@ -158,7 +166,6 @@ namespace UniCast.App.ViewModels
                 IsRunning = false;
                 Status = "Durduruldu";
                 Metric = "";
-                // Advisory'i temizlemiyoruz, belki durdurma nedenini görmek ister
             }
         }
 

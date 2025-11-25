@@ -1,51 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using UniCast.Core.Core;
+﻿using System.Collections.Generic;
+using System.Linq;
 using UniCast.Core.Streaming;
 
 namespace UniCast.Core.Models
 {
     public static class MappingExtensions
     {
-        /// <summary>
-        /// UI’daki TargetItem listesini encoder’ın kullandığı StreamTarget listesine dönüştürür.
-        /// Sadece Enabled == true olanları alır. Platform enum dönüşümü güvenli yapılır.
-        /// </summary>
-        public static IReadOnlyList<StreamTarget> ToStreamTargets(this IEnumerable<TargetItem> items)
+        public static List<StreamTarget> ToStreamTargets(this IEnumerable<TargetItem> items)
         {
-            var list = new List<StreamTarget>();
-            if (items == null) return list;
+            if (items == null) return new List<StreamTarget>();
 
-            foreach (var it in items)
+            return items.Select(i => new StreamTarget
             {
-                if (it == null || !it.Enabled) continue;
-
-                list.Add(new StreamTarget
-                {
-                    Platform = MapPlatform(it.Platform),
-                    Url = it.Url,
-                    StreamKey = it.Key,
-                    Enabled = true,
-                    DisplayName = string.IsNullOrWhiteSpace(it.DisplayName) ? it.Platform.ToString() : it.DisplayName
-                });
-            }
-            return list;
-        }
-
-        /// <summary>
-        /// UniCast.Core.Platform → UniCast.Core.Models.StreamPlatform map’i
-        /// </summary>
-        private static StreamPlatform MapPlatform(Platform p)
-        {
-            // İsim eşlemeyle dene, olmazsa Custom
-            try
-            {
-                var name = Enum.GetName(typeof(Platform), p);
-                if (name != null && Enum.TryParse<StreamPlatform>(name, ignoreCase: true, out var sp))
-                    return sp;
-            }
-            catch { }
-            return StreamPlatform.Custom;
+                Platform = i.Platform, // Artık türler uyumlu (StreamPlatform)
+                DisplayName = i.DisplayName,
+                Url = i.Url,
+                StreamKey = i.StreamKey, // İsimler uyumlu
+                Enabled = i.Enabled
+            }).ToList();
         }
     }
 }
