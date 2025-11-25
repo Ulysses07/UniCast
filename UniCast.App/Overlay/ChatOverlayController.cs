@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using System.Windows;
 using UniCast.App.Views;
-using Size = System.Windows.Size;
 
 namespace UniCast.App.Overlay
 {
@@ -13,20 +12,15 @@ namespace UniCast.App.Overlay
 
         public ChatOverlayController(int width, int height, string pipeName)
         {
-            // 1. Görseli (View) oluştur
             _view = new ChatOverlayView
             {
                 Width = width,
                 Height = height
             };
 
-            // View'in render edilebilmesi için bellekte "Measure/Arrange" yapılması gerekir
-            // (Ekranda görünmese bile boyutlarının hesaplanması için)
-            _view.Measure(new Size(width, height));
-            _view.Arrange(new Rect(new Size(width, height)));
+            _view.Measure(new System.Windows.Size(width, height));
+            _view.Arrange(new System.Windows.Rect(new System.Windows.Size(width, height)));
 
-            // 2. Publisher'ı oluştur
-            // HATA DÜZELTME: Artık 'fps' parametresi göndermiyoruz.
             _publisher = new OverlayPipePublisher(_view, pipeName, width, height);
         }
 
@@ -42,28 +36,29 @@ namespace UniCast.App.Overlay
 
         public void UpdatePosition(int x, int y)
         {
-            // 1. View üzerindeki konumu değiştir
             _view.Dispatcher.Invoke(() =>
             {
                 _view.SetPosition(x, y);
             });
+            _publisher.Invalidate();
+        }
 
-            // 2. Publisher'ı dürt (Yeni konumda tekrar çiz)
+        // EKSİK OLAN METOT BU:
+        public void UpdateSize(double width)
+        {
+            _view.Dispatcher.Invoke(() =>
+            {
+                _view.SetWidth(width);
+            });
             _publisher.Invalidate();
         }
 
         public void Push(string author, string message)
         {
-            // 1. UI Thread üzerinde View'a mesajı ekle
-            // (WPF kontrollerine sadece kendi thread'inden erişilebilir)
             _view.Dispatcher.Invoke(() =>
             {
                 _view.AddMessage(author, message);
             });
-
-            // 2. PERFORMANS OPTİMİZASYONU:
-            // Publisher'a "Hey, görüntü değişti, yeni kare çiz!" diyoruz.
-            // Bu sayede chat gelmediğinde CPU harcanmıyor.
             _publisher.Invalidate();
         }
 

@@ -209,6 +209,15 @@ namespace UniCast.App
             }
         }
 
+        public void UpdateOverlaySize(double width)
+        {
+            if (_overlay != null)
+            {
+                _overlay.UpdateSize(width);
+                Log.Information("Overlay genişliği: {Width}", width);
+            }
+        }
+
         // --- Mesajları Overlay'e İlet ---
         private void OnIngestorMessageToOverlay(ChatMessage msg)
         {

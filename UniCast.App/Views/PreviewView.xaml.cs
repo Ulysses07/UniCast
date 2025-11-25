@@ -1,16 +1,23 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
+using System.Windows.Input; // MouseButtonEventArgs buradan gelir
 using UniCast.App.Services;
+using Application = System.Windows.Application;
+using Point = System.Windows.Point;
 
 namespace UniCast.App.Views
 {
-    // HATA DÜZELTME: WPF UserControl olduğunu belirtiyoruz
+    // HATA DÜZELTME: WPF UserControl
     public partial class PreviewView : System.Windows.Controls.UserControl
     {
         private bool _isDragging = false;
-        private System.Windows.Point _startPoint; // System.Windows.Point (Using ekli olduğu için sorun yok ama aşağıda dikkat)
+        private Point _startPoint;
         private double _startX, _startY;
+
+        private bool _isResizing = false;
+        private Point _resizeStartPoint;
+        private double _startWidth;
 
         public PreviewView(object? viewModel = null)
         {
@@ -20,13 +27,15 @@ namespace UniCast.App.Views
             var s = SettingsStore.Load();
             Canvas.SetLeft(DraggableChatBox, s.OverlayX);
             Canvas.SetTop(DraggableChatBox, s.OverlayY);
+            DraggableChatBox.Width = s.OverlayWidth;
         }
 
-        // HATA DÜZELTME: MouseButtonEventArgs zaten WPF'e özeldir ama MouseEventArgs çakışabilir.
-        // System.Windows.Input namespace'i yukarıda olduğu için genelde sorun olmaz ama
-        // garanti olsun diye parametreleri kontrol ediyoruz.
+        // --- TAŞIMA (DRAG) ---
         private void ChatBox_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            // HATA DÜZELTME: 'ResizeHandle' ismini kullanıyoruz
+            if (e.OriginalSource == ResizeHandle) return;
+
             _isDragging = true;
             _startPoint = e.GetPosition(OverlayCanvas);
             _startX = Canvas.GetLeft(DraggableChatBox);
@@ -34,20 +43,17 @@ namespace UniCast.App.Views
             DraggableChatBox.CaptureMouse();
         }
 
-        // HATA DÜZELTME: MouseEventArgs (WPF: System.Windows.Input)
+        // HATA DÜZELTME: System.Windows.Input.MouseEventArgs (Tam Ad)
         private void ChatBox_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (_isDragging)
             {
-                var currentPoint = e.GetPosition(OverlayCanvas);
-                var offsetX = currentPoint.X - _startPoint.X;
-                var offsetY = currentPoint.Y - _startPoint.Y;
+                var current = e.GetPosition(OverlayCanvas);
+                var offX = current.X - _startPoint.X;
+                var offY = current.Y - _startPoint.Y;
 
-                var newX = _startX + offsetX;
-                var newY = _startY + offsetY;
-
-                if (newX < 0) newX = 0;
-                if (newY < 0) newY = 0;
+                var newX = Math.Max(0, _startX + offX);
+                var newY = Math.Max(0, _startY + offY);
 
                 Canvas.SetLeft(DraggableChatBox, newX);
                 Canvas.SetTop(DraggableChatBox, newY);
@@ -60,20 +66,67 @@ namespace UniCast.App.Views
             {
                 _isDragging = false;
                 DraggableChatBox.ReleaseMouseCapture();
-
-                var newX = (int)Canvas.GetLeft(DraggableChatBox);
-                var newY = (int)Canvas.GetTop(DraggableChatBox);
-
-                var s = SettingsStore.Load();
-                s.OverlayX = newX;
-                s.OverlayY = newY;
-                SettingsStore.Save(s);
-
-                if (System.Windows.Application.Current.MainWindow is MainWindow mw)
-                {
-                    mw.UpdateOverlayPosition(newX, newY);
-                }
+                SavePosition();
             }
+        }
+
+        // --- BOYUTLANDIRMA (RESIZE) ---
+        private void Resize_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _isResizing = true;
+            _resizeStartPoint = e.GetPosition(OverlayCanvas);
+            _startWidth = DraggableChatBox.Width;
+
+            e.Handled = true;
+            // HATA DÜZELTME: 'ResizeHandle' ismini kullanıyoruz
+            ResizeHandle.CaptureMouse();
+        }
+
+        // HATA DÜZELTME: System.Windows.Input.MouseEventArgs (Tam Ad)
+        private void Resize_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (_isResizing)
+            {
+                var current = e.GetPosition(OverlayCanvas);
+                var diffX = current.X - _resizeStartPoint.X;
+
+                // Min genişlik 200px
+                DraggableChatBox.Width = Math.Max(200, _startWidth + diffX);
+            }
+        }
+
+        private void Resize_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_isResizing)
+            {
+                _isResizing = false;
+                // HATA DÜZELTME: 'ResizeHandle' ismini kullanıyoruz
+                ResizeHandle.ReleaseMouseCapture();
+                SaveSize();
+            }
+        }
+
+        // --- KAYIT ---
+        private void SavePosition()
+        {
+            var s = SettingsStore.Load();
+            s.OverlayX = (int)Canvas.GetLeft(DraggableChatBox);
+            s.OverlayY = (int)Canvas.GetTop(DraggableChatBox);
+            SettingsStore.Save(s);
+
+            if (Application.Current.MainWindow is MainWindow mw)
+                mw.UpdateOverlayPosition(s.OverlayX, s.OverlayY);
+        }
+
+        private void SaveSize()
+        {
+            var s = SettingsStore.Load();
+            s.OverlayWidth = DraggableChatBox.Width;
+            SettingsStore.Save(s);
+
+            // HATA DÜZELTME: MainWindow.cs içine UpdateOverlaySize metodunu ekleyeceğiz
+            if (Application.Current.MainWindow is MainWindow mw)
+                mw.UpdateOverlaySize(s.OverlayWidth);
         }
     }
 }

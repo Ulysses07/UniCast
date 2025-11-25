@@ -16,7 +16,8 @@ namespace UniCast.Encoder
             string? videoDeviceName,
             string? audioDeviceName,
             bool screenCapture,
-            int audioDelayMs) // YENİ PARAMETRE
+            int audioDelayMs,
+            string? localRecordPath)
         {
             var sb = new StringBuilder();
 
@@ -40,23 +41,16 @@ namespace UniCast.Encoder
                 sb.Append("-f lavfi -i testsrc=size=1280x720:rate=30 ");
             }
 
-            // GİRİŞ 1: SES (Gecikme Ayarlı)
+            // GİRİŞ 1: SES
             if (!string.IsNullOrWhiteSpace(audioDeviceName))
             {
-                // Ses Gecikmesi Varsa Ekler
                 if (audioDelayMs > 0)
-                {
-                    // Milisaniyeyi saniyeye çevir (örn: 200ms -> 0.200s)
                     sb.Append($"-itsoffset {audioDelayMs / 1000.0:0.000} ");
-                }
 
-                // -f dshow burada tekrar yazılmalı çünkü yukarıda screenCapture ile silinmiş olabilir
-                // veya -itsoffset'ten sonra yeni giriş başlıyor.
                 sb.Append($"-f dshow -i audio=\"{audioDeviceName}\" ");
             }
             else
             {
-                // Ses yoksa sessizlik üret (Input 1)
                 sb.Append("-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 ");
             }
 
@@ -64,7 +58,10 @@ namespace UniCast.Encoder
             bool hasHorizontal = targets.Any(t => IsHorizontal(MapPlatform(t.Platform)));
             bool hasVertical = targets.Any(t => IsVertical(MapPlatform(t.Platform)));
 
-            string mapHorizontal = "0:v"; // Video her zaman Input 0
+            // Kayıt varsa yatay çıkış zorunlu
+            if (!string.IsNullOrEmpty(localRecordPath)) hasHorizontal = true;
+
+            string mapHorizontal = "0:v";
             string mapVertical = "0:v";
 
             if (hasVertical)
@@ -73,7 +70,7 @@ namespace UniCast.Encoder
 
                 if (hasHorizontal)
                 {
-                    // Hem Yatay Hem Dikey -> Split & Crop
+                    // Hem Yatay Hem Dikey
                     sb.Append("[0:v]split=2[v_hor][v_raw_vert];");
                     sb.Append("[v_raw_vert]crop=w=ih*(9/16):h=ih:x=(iw-ow)/2:y=0[v_vert]");
                     mapHorizontal = "[v_hor]";
@@ -81,23 +78,20 @@ namespace UniCast.Encoder
                 }
                 else
                 {
-                    // Sadece Dikey -> Crop
+                    // Sadece Dikey
                     sb.Append("[0:v]crop=w=ih*(9/16):h=ih:x=(iw-ow)/2:y=0[v_vert]");
                     mapVertical = "[v_vert]";
                 }
-
                 sb.Append("\" ");
             }
 
-            // --- Çıkışlar (Outputs) ---
+            // --- Çıkışlar ---
             foreach (var target in targets)
             {
                 Platform p = MapPlatform(target.Platform);
                 string videoSource = IsVertical(p) ? mapVertical : mapHorizontal;
 
-                sb.Append($"-map {videoSource} ");
-                sb.Append("-map 1:a "); // Ses her zaman Input 1
-
+                sb.Append($"-map {videoSource} -map 1:a ");
                 sb.Append("-c:v libx264 -preset ultrafast -tune zerolatency ");
                 sb.Append("-b:v 2500k -maxrate 2500k -bufsize 5000k ");
                 sb.Append("-pix_fmt yuv420p ");
@@ -105,10 +99,19 @@ namespace UniCast.Encoder
                 sb.Append($"-f flv \"{target.Url}\" ");
             }
 
+            // --- Yerel Kayıt ---
+            if (!string.IsNullOrEmpty(localRecordPath))
+            {
+                sb.Append($"-map {mapHorizontal} -map 1:a ");
+                sb.Append("-c:v libx264 -preset ultrafast -crf 23 ");
+                sb.Append("-c:a aac -b:a 192k ");
+                sb.Append("-movflags +faststart ");
+                sb.Append($"-f mp4 \"{localRecordPath}\" ");
+            }
+
             return sb.ToString();
         }
 
-        // --- Yardımcı Metotlar ---
         private static Platform MapPlatform(StreamPlatform sp)
         {
             return sp switch

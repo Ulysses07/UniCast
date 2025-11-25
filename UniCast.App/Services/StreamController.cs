@@ -4,18 +4,17 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using UniCast.App.Services.Capture; // DeviceService
+using UniCast.App.Services.Capture;
 using UniCast.Core.Core;
 using UniCast.Core.Models;
 using UniCast.Core.Settings;
 using UniCast.Core.Streaming;
-using UniCast.Encoder; // FfmpegProcess & ArgsBuilder
+using UniCast.Encoder;
 
 namespace UniCast.App.Services
 {
     public sealed class StreamController : IStreamController, IAsyncDisposable
     {
-        // --- Properties ---
         public bool IsRunning { get; private set; }
         public bool IsReconnecting { get; private set; } = false;
         public string? LastAdvisory { get; private set; }
@@ -32,21 +31,8 @@ namespace UniCast.App.Services
         private FfmpegProcess? _ffmpegProcess;
         private CancellationTokenSource? _procCts;
 
-        // ----------------- Public API -----------------
-
-        public void AddTarget(StreamTarget target)
-        {
-            if (target == null) return;
-            _targets.Add(target);
-            OnLog?.Invoke(this, $"[targets] Eklendi: {target.DisplayName ?? target.Platform.ToString()}");
-        }
-
-        public void RemoveTarget(StreamTarget target)
-        {
-            if (target == null) return;
-            _targets.Remove(target);
-            OnLog?.Invoke(this, $"[targets] Çıkarıldı: {target.DisplayName ?? target.Platform.ToString()}");
-        }
+        public void AddTarget(StreamTarget target) { if (target != null) { _targets.Add(target); OnLog?.Invoke(this, $"[targets] Eklendi: {target.DisplayName}"); } }
+        public void RemoveTarget(StreamTarget target) { if (target != null) { _targets.Remove(target); OnLog?.Invoke(this, $"[targets] Çıkarıldı: {target.DisplayName}"); } }
 
         public async Task StartAsync(Profile profile, CancellationToken ct = default)
         {
@@ -54,11 +40,8 @@ namespace UniCast.App.Services
             if (!result.Success) throw new InvalidOperationException(result.UserMessage ?? "Yayın başlatılamadı.");
         }
 
-        public Task<StreamStartResult> StartWithResultAsync(Profile profile, CancellationToken ct = default)
-            => StartInternalAsync(profile, null, null, false, ct);
-
-        public Task<StreamStartResult> StartWithResultAsync(Profile profile, string? videoDevice, string? audioDevice, bool screenCapture, CancellationToken ct = default)
-            => StartInternalAsync(profile, videoDevice, audioDevice, screenCapture, ct);
+        public Task<StreamStartResult> StartWithResultAsync(Profile profile, CancellationToken ct = default) => StartInternalAsync(profile, null, null, false, ct);
+        public Task<StreamStartResult> StartWithResultAsync(Profile profile, string? videoDevice, string? audioDevice, bool screenCapture, CancellationToken ct = default) => StartInternalAsync(profile, videoDevice, audioDevice, screenCapture, ct);
 
         public async Task<StreamStartResult> StartWithResultAsync(IEnumerable<TargetItem> items, SettingsData settings, CancellationToken ct)
         {
@@ -69,20 +52,17 @@ namespace UniCast.App.Services
             var screenCapture = settings?.CaptureSource == CaptureSource.Screen;
             var videoDevice = settings?.CaptureSource == CaptureSource.Camera ? settings?.SelectedVideoDevice : null;
             var audioDevice = settings?.SelectedAudioDevice;
-
             var profile = settings?.GetSelectedProfile() ?? Profile.Default();
 
             return await StartInternalAsync(profile, videoDevice, audioDevice, screenCapture, ct);
         }
 
-        // Legacy support
         async Task IStreamController.StartAsync(Profile profile, IEnumerable<StreamTarget> targets, CancellationToken ct)
         {
             _targets.Clear(); if (targets != null) _targets.AddRange(targets);
             var res = await StartWithResultAsync(profile, ct);
             if (!res.Success) throw new InvalidOperationException(res.UserMessage);
         }
-
         async Task IStreamController.StartAsync(IEnumerable<TargetItem> items, SettingsData settings, CancellationToken ct)
         {
             var res = await StartWithResultAsync(items, settings, ct);
@@ -91,47 +71,21 @@ namespace UniCast.App.Services
 
         public async Task StopAsync(CancellationToken ct = default)
         {
-            if (_ffmpegProcess == null)
-            {
-                OnLog?.Invoke(this, "[stop] Aktif yayın süreci yok.");
-                return;
-            }
-
-            try
-            {
-                OnLog?.Invoke(this, "[stop] Yayın durduruluyor...");
-                await _ffmpegProcess.StopAsync();
-            }
-            catch (Exception ex)
-            {
-                OnLog?.Invoke(this, $"[stop][error] {ex.Message}");
-            }
-            finally
-            {
-                _ffmpegProcess?.Dispose();
-                _ffmpegProcess = null;
-                IsRunning = false;
-                try { _procCts?.Cancel(); } catch { }
-                _procCts?.Dispose();
-                _procCts = null;
-            }
+            if (_ffmpegProcess == null) { OnLog?.Invoke(this, "[stop] Süreç yok."); return; }
+            try { await _ffmpegProcess.StopAsync(); }
+            catch (Exception ex) { OnLog?.Invoke(this, $"[stop] Hata: {ex.Message}"); }
+            finally { _ffmpegProcess?.Dispose(); _ffmpegProcess = null; IsRunning = false; _procCts?.Cancel(); _procCts = null; }
         }
-
         public async ValueTask DisposeAsync() => await StopAsync();
-
-        // ----------------- Internal Logic -----------------
 
         private async Task<StreamStartResult> StartInternalAsync(Profile profile, string? videoDeviceId, string? audioDeviceId, bool screenCapture, CancellationToken ct)
         {
             if (IsRunning) return StreamStartResult.Fail(StreamErrorCode.InvalidConfig, "Yayın zaten çalışıyor.");
-
             CurrentProfile = profile ?? Profile.Default();
 
             var enabledTargets = _targets.Where(t => t?.Enabled == true && !string.IsNullOrWhiteSpace(t.Url)).ToList();
-            if (enabledTargets.Count == 0)
-                return StreamStartResult.Fail(StreamErrorCode.InvalidConfig, "Etkin yayın hedefi yok. Lütfen en az bir hedef (RTMP) ekleyin.");
+            if (enabledTargets.Count == 0) return StreamStartResult.Fail(StreamErrorCode.InvalidConfig, "Yayın hedefi seçilmedi.");
 
-            // 1. Cihaz İsimlerini Çözümle
             var deviceService = new DeviceService();
             string? finalVideoName = videoDeviceId;
             string? finalAudioName = audioDeviceId;
@@ -141,98 +95,81 @@ namespace UniCast.App.Services
                 var name = await deviceService.GetDeviceNameByIdAsync(videoDeviceId);
                 if (!string.IsNullOrEmpty(name)) finalVideoName = name;
             }
-
             if (!string.IsNullOrEmpty(audioDeviceId))
             {
                 var name = await deviceService.GetDeviceNameByIdAsync(audioDeviceId);
                 if (!string.IsNullOrEmpty(name)) finalAudioName = name;
             }
 
-            // 2. Ses Gecikmesini Ayarlardan Oku
-            // Öncelik Profil'de, yoksa Genel Ayarlar'da
             var globalSettings = SettingsStore.Load();
             int delayMs = CurrentProfile.AudioDelayMs > 0 ? CurrentProfile.AudioDelayMs : globalSettings.AudioDelayMs;
 
-            // 3. Argümanları Oluştur (GÜNCELLENDİ: delayMs eklendi)
+            string? recordPath = null;
+            if (globalSettings.EnableLocalRecord && !string.IsNullOrWhiteSpace(globalSettings.RecordFolder))
+            {
+                try
+                {
+                    if (!Directory.Exists(globalSettings.RecordFolder))
+                        Directory.CreateDirectory(globalSettings.RecordFolder);
+                    string fileName = $"UniCast_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.mp4";
+                    recordPath = Path.Combine(globalSettings.RecordFolder, fileName);
+                    OnLog?.Invoke(this, $"[record] Kayıt aktif: {fileName}");
+                }
+                catch (Exception ex)
+                {
+                    OnLog?.Invoke(this, $"[record] Hata: {ex.Message}");
+                    recordPath = null;
+                }
+            }
+
             var args = FfmpegArgsBuilder.BuildFfmpegArgs(
                 CurrentProfile,
                 enabledTargets,
                 finalVideoName,
                 finalAudioName,
                 screenCapture,
-                delayMs // 6. Parametre
+                delayMs,
+                recordPath
             );
 
             _procCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             _ffmpegProcess = new FfmpegProcess();
 
-            _ffmpegProcess.OnLog += (line) =>
-            {
-                LastMessage = line;
-                OnLog?.Invoke(this, line);
-                if (line.Contains("Connection") || line.Contains("Reconnect")) LastAdvisory = line;
+            _ffmpegProcess.OnLog += (line) => { LastMessage = line; OnLog?.Invoke(this, line); if (line.Contains("Connection")) LastAdvisory = line; };
+            _ffmpegProcess.OnMetric += (line) => {
+                var m = TryParseMetric(line, DateTime.UtcNow);
+                if (m != null) { LastMetric = $"fps={m.Fps:0.#}"; OnMetric?.Invoke(this, m); }
             };
-
-            _ffmpegProcess.OnMetric += (line) =>
-            {
-                var metric = TryParseMetric(line, DateTime.UtcNow);
-                if (metric != null)
-                {
-                    LastMetric = $"fps={metric.Fps:0.#} bitrate={metric.BitrateKbps:0.#}k";
-                    OnMetric?.Invoke(this, metric);
-                }
-            };
-
-            _ffmpegProcess.OnExit += (code) =>
-            {
-                IsRunning = false;
-                OnExit?.Invoke(this, code ?? -1);
-                OnLog?.Invoke(this, $"[ffmpeg] Çıkış kodu: {code}");
-            };
+            _ffmpegProcess.OnExit += (code) => { IsRunning = false; OnExit?.Invoke(this, code ?? -1); };
 
             try
             {
                 await _ffmpegProcess.StartAsync(args, _procCts.Token);
                 IsRunning = true;
-                OnLog?.Invoke(this, $"[start] Yayın başladı. Profil: {CurrentProfile.Name}");
+                OnLog?.Invoke(this, $"[start] Başladı: {CurrentProfile.Name}");
                 return StreamStartResult.Ok();
             }
             catch (Exception ex)
             {
-                IsRunning = false;
-                _ffmpegProcess = null;
-
+                IsRunning = false; _ffmpegProcess = null;
                 var msg = ex.Message.ToLowerInvariant();
-                if (msg.Contains("camera") || msg.Contains("video device") || msg.Contains("busy"))
-                    return StreamStartResult.Fail(StreamErrorCode.CameraBusy, "Kamera başlatılamadı. Başka bir uygulama (Zoom, Teams vb.) kamerayı kullanıyor olabilir.", ex.Message);
-
-                if (msg.Contains("found") || msg.Contains("find"))
-                    return StreamStartResult.Fail(StreamErrorCode.FfmpegNotFound, "FFmpeg yayın aracı bulunamadı.", ex.Message);
-
-                return StreamStartResult.Fail(StreamErrorCode.Unknown, $"Yayın başlatılamadı: {ex.Message}", ex.Message);
+                if (msg.Contains("camera") || msg.Contains("video device")) return StreamStartResult.Fail(StreamErrorCode.CameraBusy, "Kamera meşgul.", ex.Message);
+                if (msg.Contains("found")) return StreamStartResult.Fail(StreamErrorCode.FfmpegNotFound, "FFmpeg bulunamadı.", ex.Message);
+                return StreamStartResult.Fail(StreamErrorCode.Unknown, $"Hata: {ex.Message}", ex.Message);
             }
         }
 
         private static StreamMetric TryParseMetric(string line, DateTime tsUtc)
         {
             if (string.IsNullOrWhiteSpace(line)) return new StreamMetric { TimestampUtc = tsUtc };
-            double? fps = null;
-            double? br = null;
+            double? fps = null; double? br = null;
             try
             {
-                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 foreach (var p in parts)
                 {
-                    if (p.StartsWith("fps=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var v = p.Substring(4);
-                        if (double.TryParse(v.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var f)) fps = f;
-                    }
-                    else if (p.StartsWith("bitrate=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var v = p.Substring(8).ToLowerInvariant();
-                        if (v.EndsWith("kbits/s") && double.TryParse(v.Replace("kbits/s", "").Trim().Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var kb)) br = kb;
-                    }
+                    if (p.StartsWith("fps=", StringComparison.OrdinalIgnoreCase) && double.TryParse(p.Substring(4).Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var f)) fps = f;
+                    if (p.StartsWith("bitrate=", StringComparison.OrdinalIgnoreCase) && double.TryParse(p.Substring(8).Replace("kbits/s", "").Trim().Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var b)) br = b;
                 }
             }
             catch { }

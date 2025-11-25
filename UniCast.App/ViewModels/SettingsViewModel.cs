@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
-using UniCast.App.Services.Capture; // IDeviceService
+using UniCast.App.Services.Capture;
 using UniCast.Core.Settings;
-using UniCast.Core.Models; // CaptureDevice
+using UniCast.Core.Models;
 
 namespace UniCast.App.ViewModels
 {
@@ -24,11 +24,10 @@ namespace UniCast.App.ViewModels
             // Ayarları Yükle
             _defaultCamera = _settings.DefaultCamera ?? "";
             _defaultMicrophone = _settings.DefaultMicrophone ?? "";
-
             _encoder = string.IsNullOrWhiteSpace(_settings.Encoder) ? "auto" : _settings.Encoder!;
             _videoKbps = _settings.VideoKbps;
             _audioKbps = _settings.AudioKbps;
-            _audioDelayMs = _settings.AudioDelayMs; // YENİ
+            _audioDelayMs = _settings.AudioDelayMs;
             _fps = _settings.Fps;
             _width = _settings.Width;
             _height = _settings.Height;
@@ -50,7 +49,6 @@ namespace UniCast.App.ViewModels
             _ = RefreshDevicesAsync();
         }
 
-        // Cihaz Listeleri (Artık Nesne Tutuyor)
         public ObservableCollection<CaptureDevice> VideoDevices { get; } = new();
         public ObservableCollection<CaptureDevice> AudioDevices { get; } = new();
 
@@ -78,7 +76,6 @@ namespace UniCast.App.ViewModels
         private int _audioKbps;
         public int AudioKbps { get => _audioKbps; set { _audioKbps = value; OnPropertyChanged(); } }
 
-        // YENİ: Ses Gecikmesi
         private int _audioDelayMs;
         public int AudioDelayMs { get => _audioDelayMs; set { _audioDelayMs = value; OnPropertyChanged(); } }
 
@@ -113,7 +110,6 @@ namespace UniCast.App.ViewModels
         private string _facebookAccessToken;
         public string FacebookAccessToken { get => _facebookAccessToken; set { _facebookAccessToken = value; OnPropertyChanged(); } }
 
-        // Komutlar
         public ICommand SaveCommand { get; }
         public ICommand BrowseRecordFolderCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
@@ -128,7 +124,7 @@ namespace UniCast.App.ViewModels
             _settings.Encoder = string.IsNullOrWhiteSpace(Encoder) ? "auto" : Encoder.Trim();
             _settings.VideoKbps = VideoKbps;
             _settings.AudioKbps = AudioKbps;
-            _settings.AudioDelayMs = AudioDelayMs; // YENİ
+            _settings.AudioDelayMs = AudioDelayMs;
             _settings.Fps = Fps;
             _settings.Width = Width;
             _settings.Height = Height;
@@ -162,7 +158,6 @@ namespace UniCast.App.ViewModels
 
         private async Task RefreshDevicesAsync()
         {
-            // IDeviceService artık CaptureDevice listesi dönüyor (Phase 1)
             var videos = await _devices.GetVideoDevicesAsync();
             var audios = await _devices.GetAudioDevicesAsync();
 

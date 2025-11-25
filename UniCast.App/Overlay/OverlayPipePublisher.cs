@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Application = System.Windows.Application;
 
 namespace UniCast.App.Overlay
 {
@@ -22,12 +23,8 @@ namespace UniCast.App.Overlay
         private CancellationTokenSource? _cts;
         private Task? _runner;
 
-        // Durum Yönetimi
         private bool _isDirty = true;
         private RenderTargetBitmap? _bmp;
-
-        // UYARI DÜZELTME: '_encoder' alanı kullanılmıyordu, sildik.
-        // private PngBitmapEncoder? _encoder; 
 
         public bool IsRunning { get; private set; }
 
@@ -56,10 +53,7 @@ namespace UniCast.App.Overlay
         {
             if (!IsRunning) return;
             _cts?.Cancel();
-            if (_runner != null)
-            {
-                try { await _runner.ConfigureAwait(false); } catch { }
-            }
+            if (_runner != null) { try { await _runner.ConfigureAwait(false); } catch { } }
             IsRunning = false;
         }
 
@@ -67,21 +61,8 @@ namespace UniCast.App.Overlay
 
         private async Task LoopAsync(CancellationToken ct)
         {
-            using var server = new NamedPipeServerStream(
-                _pipeName,
-                PipeDirection.Out,
-                1,
-                PipeTransmissionMode.Byte,
-                PipeOptions.Asynchronous);
-
-            try
-            {
-                await server.WaitForConnectionAsync(ct);
-            }
-            catch
-            {
-                return;
-            }
+            using var server = new NamedPipeServerStream(_pipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+            try { await server.WaitForConnectionAsync(ct); } catch { return; }
 
             while (!ct.IsCancellationRequested && server.IsConnected)
             {
@@ -92,11 +73,7 @@ namespace UniCast.App.Overlay
                     if (_isDirty)
                     {
                         byte[]? frameData = null;
-
-                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                        {
-                            frameData = RenderFrame();
-                        });
+                        await Application.Current.Dispatcher.InvokeAsync(() => { frameData = RenderFrame(); });
 
                         if (frameData != null)
                         {
@@ -108,15 +85,9 @@ namespace UniCast.App.Overlay
 
                     var elapsed = DateTime.UtcNow - startTime;
                     var delay = _frameInterval - elapsed;
-                    if (delay > TimeSpan.Zero)
-                    {
-                        await Task.Delay(delay, ct);
-                    }
+                    if (delay > TimeSpan.Zero) await Task.Delay(delay, ct);
                 }
-                catch (Exception)
-                {
-                    break;
-                }
+                catch { break; }
             }
         }
 
@@ -124,26 +95,17 @@ namespace UniCast.App.Overlay
         {
             try
             {
-                if (_bmp == null)
-                {
-                    _bmp = new RenderTargetBitmap(_width, _height, 96, 96, PixelFormats.Pbgra32);
-                }
-
+                if (_bmp == null) _bmp = new RenderTargetBitmap(_width, _height, 96, 96, PixelFormats.Pbgra32);
                 _bmp.Clear();
                 _bmp.Render(_visual);
 
-                // Encoder'ı yerel olarak oluşturuyoruz
                 var encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(_bmp));
-
                 using var ms = new MemoryStream();
                 encoder.Save(ms);
                 return ms.ToArray();
             }
-            catch
-            {
-                return null;
-            }
+            catch { return null; }
         }
     }
 }
