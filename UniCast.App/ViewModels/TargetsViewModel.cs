@@ -1,12 +1,13 @@
-﻿using System.Collections.ObjectModel;
-using System.Collections.Specialized;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using System.Windows.Input;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
 using UniCast.Core.Models;
+using UniCast.Core.Streaming;
 
 namespace UniCast.App.ViewModels
 {
@@ -14,110 +15,98 @@ namespace UniCast.App.ViewModels
     {
         public ObservableCollection<TargetItem> Targets { get; } = new();
 
-        private string _warnings = string.Empty;
-        public string Warnings
+        // --- XAML'ın Aradığı Eksik Özellikler ---
+
+        // 1. Platform Seçenekleri (ComboBox için)
+        public ObservableCollection<StreamPlatform> PlatformOptions { get; } = new();
+
+        // 2. Seçili Platform
+        private StreamPlatform _selectedPlatform = StreamPlatform.Custom;
+        public StreamPlatform SelectedPlatform
         {
-            get => _warnings;
-            private set { _warnings = value; OnPropertyChanged(); }
+            get => _selectedPlatform;
+            set { _selectedPlatform = value; OnPropertyChanged(); }
         }
 
-        public ICommand AddTargetCommand { get; }
-        public ICommand RemoveTargetCommand { get; }
+        // 3. Alanlar (Fields)
+        private string _displayName = "";
+        public string DisplayName { get => _displayName; set { _displayName = value; OnPropertyChanged(); } }
+
+        private string _url = "";
+        public string Url { get => _url; set { _url = value; OnPropertyChanged(); } }
+
+        private string _streamKey = "";
+        public string StreamKey { get => _streamKey; set { _streamKey = value; OnPropertyChanged(); } }
+
+        // 4. Komutlar (Commands)
+        public ICommand AddCommand { get; }
+        public ICommand RemoveCommand { get; }
 
         public TargetsViewModel()
         {
-            AddTargetCommand = new RelayCommand(_ => AddTarget());
-            RemoveTargetCommand = new RelayCommand(item =>
+            // Platform Listesini Doldur
+            foreach (StreamPlatform p in Enum.GetValues(typeof(StreamPlatform)))
             {
-                if (item is TargetItem i && Targets.Contains(i))
-                {
-                    Targets.Remove(i);
-                }
+                PlatformOptions.Add(p);
+            }
+
+            // Mevcut hedefleri yükle
+            RefreshTargets();
+
+            // Komutları Bağla
+            AddCommand = new RelayCommand(_ => AddTarget());
+            RemoveCommand = new RelayCommand(obj =>
+            {
+                if (obj is TargetItem item) RemoveTarget(item);
             });
-
-            // Load persisted targets
-            var saved = TargetsStore.Load();
-            if (saved.Count == 0)
-            {
-                Targets.Add(new TargetItem { Url = "rtmp://example.com/live/stream", Enabled = true });
-            }
-            else
-            {
-                foreach (var t in saved) Targets.Add(t);
-            }
-
-            Targets.CollectionChanged += OnTargetsChanged;
-
-            // item-level change tracking for validation
-            foreach (var t in Targets) t.PropertyChanged += OnItemChanged;
-
-            RecomputeWarnings();
         }
 
-        private void OnTargetsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        private void RefreshTargets()
         {
-            if (e.NewItems != null)
-                foreach (var it in e.NewItems)
-                    if (it is TargetItem t) t.PropertyChanged += OnItemChanged;
-
-            if (e.OldItems != null)
-                foreach (var it in e.OldItems)
-                    if (it is TargetItem t) t.PropertyChanged -= OnItemChanged;
-
-            Persist();
-            RecomputeWarnings();
+            Targets.Clear();
+            var loaded = TargetsStore.Load();
+            foreach (var t in loaded) Targets.Add(t);
         }
-
-        private void OnItemChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            Persist();
-            if (e.PropertyName is nameof(TargetItem.Url) or nameof(TargetItem.Enabled))
-                RecomputeWarnings();
-        }
-
-        private void Persist() => TargetsStore.Save(Targets);
 
         private void AddTarget()
         {
-            var t = new TargetItem { Url = "", Enabled = true };
-            t.PropertyChanged += OnItemChanged;
-            Targets.Add(t);
-            Persist();
-            RecomputeWarnings();
+            if (string.IsNullOrWhiteSpace(DisplayName) || string.IsNullOrWhiteSpace(Url))
+                return; // Basit validasyon
+
+            // URL ve Key birleştirme mantığı (Platforma göre değişebilir)
+            string fullUrl = Url;
+            if (!string.IsNullOrWhiteSpace(StreamKey))
+            {
+                if (!fullUrl.EndsWith("/")) fullUrl += "/";
+                fullUrl += StreamKey;
+            }
+
+            var newItem = new TargetItem
+            {
+                Id = Guid.NewGuid().ToString(),
+                Platform = SelectedPlatform,
+                DisplayName = DisplayName,
+                Url = fullUrl,
+                StreamKey = StreamKey,
+                Enabled = true
+            };
+
+            Targets.Add(newItem);
+            TargetsStore.Save(Targets.ToList());
+
+            // Alanları temizle
+            DisplayName = "";
+            Url = "";
+            StreamKey = "";
+            OnPropertyChanged(nameof(DisplayName));
+            OnPropertyChanged(nameof(Url));
+            OnPropertyChanged(nameof(StreamKey));
         }
 
-        // Basit URL doğrulama: rtmp/rtmps ile başlamalı ve boş olmamalı
-        private static readonly Regex RtmpRegex = new(@"^rtmps?:\/\/.+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        private void RecomputeWarnings()
+        private void RemoveTarget(TargetItem item)
         {
-            int total = Targets.Count;
-            int active = 0, invalid = 0, empty = 0;
-
-            foreach (var t in Targets)
-            {
-                if (t.Enabled) active++;
-                var u = (t.Url ?? "").Trim();
-                if (string.IsNullOrWhiteSpace(u)) empty++;
-                else if (!RtmpRegex.IsMatch(u)) invalid++;
-            }
-
-            if (total == 0)
-            {
-                Warnings = "Henüz hedef eklenmedi. Yayın başlatmak için en az bir RTMP/RTMPS adresi ekleyin.";
-            }
-            else if (active == 0)
-            {
-                Warnings = "Etkin hedef yok. En az bir hedefi 'Enabled' yapın.";
-            }
-            else if (invalid > 0 || empty > 0)
-            {
-                Warnings = $"Uyarı: {empty} boş, {invalid} geçersiz URL var. RTMP/RTMPS formatında olmalı.";
-            }
-            else
-            {
-                Warnings = "";
-            }
+            Targets.Remove(item);
+            TargetsStore.Save(Targets.ToList());
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

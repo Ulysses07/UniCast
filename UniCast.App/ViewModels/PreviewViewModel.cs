@@ -11,14 +11,16 @@ namespace UniCast.App.ViewModels
     public sealed class PreviewViewModel : INotifyPropertyChanged
     {
         private readonly PreviewService _service = new();
-        private ImageSource? _image;
-        private bool _isStarting;
 
-        public ImageSource? Image
+        // DEĞİŞİKLİK: İsim 'Image' yerine 'PreviewImage' yapıldı (XAML ile uyumlu olması için)
+        private ImageSource? _previewImage;
+        public ImageSource? PreviewImage
         {
-            get => _image;
-            private set { _image = value; OnPropertyChanged(); }
+            get => _previewImage;
+            private set { _previewImage = value; OnPropertyChanged(); }
         }
+
+        private bool _isStarting;
 
         public ICommand StartPreviewCommand { get; }
         public ICommand StopPreviewCommand { get; }
@@ -27,7 +29,11 @@ namespace UniCast.App.ViewModels
         {
             // PreviewService, dondurulmuş (Freeze) BitmapSource döndürüyorsa
             // UI thread'e dispatch etmeye gerek yok.
-            _service.OnFrame += frame => { Image = frame; };
+            _service.OnFrame += frame =>
+            {
+                // DEĞİŞİKLİK: Burada da yeni ismi kullanıyoruz
+                PreviewImage = frame;
+            };
 
             StartPreviewCommand = new RelayCommand(async _ =>
             {
@@ -35,7 +41,7 @@ namespace UniCast.App.ViewModels
                 _isStarting = true;
                 try
                 {
-                    SettingsData  s = Services.SettingsStore.Load();
+                    SettingsData s = Services.SettingsStore.Load();
                     await _service.StartAsync(-1, s.Width, s.Height, s.Fps);
                 }
                 finally

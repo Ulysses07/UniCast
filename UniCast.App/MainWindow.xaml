@@ -1,24 +1,72 @@
 ﻿<Window x:Class="UniCast.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="UniCast" Height="720" Width="1100"
-        WindowStartupLocation="CenterScreen">
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="UniCast Studio" Height="650" Width="1100"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgDark}">
+
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="65"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Sol Menü -->
-        <StackPanel Background="#0F0F0F" Grid.Column="0" Margin="12">
-            <TextBlock Text="UniCast" Foreground="White" FontWeight="Bold" FontSize="18" Margin="4,0,0,16"/>
-            <Button x:Name="BtnControl"  Content="Kontrol"  Margin="0,4,0,0" Height="36"/>
-            <Button x:Name="BtnTargets"  Content="Hedefler" Margin="0,4,0,0" Height="36"/>
-            <Button x:Name="BtnSettings" Content="Ayarlar"  Margin="0,4,0,0" Height="36"/>
-            <Button x:Name="BtnPreview" Content="Preview" Margin="0,4,0,0" Height="36"/>
-        </StackPanel>
+        <Border Grid.Column="1" Margin="10" x:Name="ContentPanel">
+            <ContentControl x:Name="MainContent"/>
+        </Border>
 
-        <!-- İçerik -->
-        <ContentControl x:Name="MainContent" Grid.Column="1" />
+        <Border x:Name="Sidebar"
+                Grid.Column="0" Grid.ColumnSpan="2"
+                Background="{StaticResource BgLight}"
+                BorderBrush="{StaticResource BorderColor}"
+                BorderThickness="0,0,1,0"
+                HorizontalAlignment="Left"
+                Width="65"
+                ClipToBounds="True"
+                Panel.ZIndex="100">
+
+            <Border.Triggers>
+                <EventTrigger RoutedEvent="MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Width"
+                                             To="220" Duration="0:0:0.2"
+                                             AccelerationRatio="0.2" DecelerationRatio="0.8"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+
+                <EventTrigger RoutedEvent="MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Width"
+                                             To="65" Duration="0:0:0.2"
+                                             AccelerationRatio="0.2" DecelerationRatio="0.8"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Border.Triggers>
+
+            <StackPanel Margin="0,15,0,0">
+
+                <Grid Height="40" Margin="0,0,0,30">
+                    <TextBlock Text="U" FontSize="24" FontWeight="Bold" Foreground="{StaticResource Primary}"
+                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="23,0,0,0"/>
+
+                    <TextBlock Text="niCast" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextMain}" 
+                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="45,0,0,0"/>
+                </Grid>
+
+                <Button x:Name="BtnControl" Content="📡   Yayın Paneli" Style="{StaticResource NavButton}" Margin="0,0,15,0"/>
+                <Button x:Name="BtnPreview" Content="👁️   Önizleme"    Style="{StaticResource NavButton}" Margin="0,0,15,0"/>
+                <Button x:Name="BtnTargets" Content="🔗   Platformlar" Style="{StaticResource NavButton}" Margin="0,0,15,0"/>
+                <Button x:Name="BtnChat"    Content="💬   Sohbet Akışı" Style="{StaticResource NavButton}" Margin="0,0,15,0"/>
+                <Button x:Name="BtnSettings" Content="⚙️   Ayarlar"     Style="{StaticResource NavButton}" Margin="0,0,15,0"/>
+            </StackPanel>
+        </Border>
+
     </Grid>
 </Window>

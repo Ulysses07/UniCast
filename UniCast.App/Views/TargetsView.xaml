@@ -1,41 +1,64 @@
 <UserControl x:Class="UniCast.App.Views.TargetsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Margin="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600">
 
-        <!-- Header / Actions -->
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,8">
-            <Button Content="Hedef Ekle" Width="120" Command="{Binding AddTargetCommand}" />
-        </StackPanel>
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- Targets list -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" VerticalAlignment="Top">
+            <StackPanel>
+                <TextBlock Text="🔗 Yeni Hedef Ekle" FontSize="18" FontWeight="Bold" Foreground="{StaticResource Primary}" Margin="0,0,0,15"/>
+
+                <TextBlock Text="Platform" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
+                <ComboBox ItemsSource="{Binding PlatformOptions}" SelectedItem="{Binding SelectedPlatform}" Margin="0,0,0,15"/>
+
+                <TextBlock Text="İsim (Örn: Ana Kanal)" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
+                <TextBox Text="{Binding DisplayName}" Margin="0,0,0,15"/>
+
+                <TextBlock Text="RTMP URL" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
+                <TextBox Text="{Binding Url}" Margin="0,0,0,15"/>
+
+                <TextBlock Text="Yayın Anahtarı (Stream Key)" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
+                <TextBox Text="{Binding StreamKey}" Margin="0,0,0,20"/>
+
+                <Button Content="Listeye Ekle" Command="{Binding AddCommand}" 
+                        Background="{StaticResource Primary}" BorderThickness="0" Height="40"/>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Column="1" Margin="20,0,0,0" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Targets}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border BorderBrush="#333" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,8">
+                        <Border Background="{StaticResource BgLight}" CornerRadius="6" Margin="0,0,0,10" Padding="15">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="50"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <CheckBox Grid.Column="0" VerticalAlignment="Center"
-                                          IsChecked="{Binding Enabled, Mode=TwoWay}"/>
+                                <Border Background="{StaticResource BgDark}" CornerRadius="25" Width="50" Height="50">
+                                    <TextBlock Text="{Binding Platform}" FontSize="10" FontWeight="Bold" 
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Gray"/>
+                                </Border>
 
-                                <!-- URL -->
-                                <TextBox Grid.Column="1" Margin="8,0,8,0"
-                                         Text="{Binding Url, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                         ToolTip="rtmp:// veya rtmps:// ile başlamalı" />
+                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding DisplayName}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextMain}"/>
+                                    <TextBlock Text="{Binding Platform}" FontSize="12" Foreground="{StaticResource Primary}"/>
+                                    <TextBlock Text="{Binding Url}" FontSize="11" Foreground="{StaticResource TextMuted}" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
 
-                                <Button Grid.Column="2" Content="Sil" Width="72" Command="{Binding DataContext.RemoveTargetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                        CommandParameter="{Binding}" />
+                                <Button Grid.Column="2" Content="🗑️" 
+                                        Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        Background="Transparent" BorderThickness="0" Foreground="#FF5555" FontSize="16"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -43,11 +66,5 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <!-- Warnings -->
-        <TextBlock Grid.Row="2"
-                   Foreground="OrangeRed"
-                   Text="{Binding Warnings}"
-                   Margin="0,8,0,0"
-                   TextWrapping="Wrap"/>
     </Grid>
 </UserControl>

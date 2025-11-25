@@ -3,40 +3,61 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d">
+             mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800">
 
-    <Grid Margin="8">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+	<Grid Margin="20">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
 
-        <!-- Filters -->
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-            <CheckBox Content="YouTube"   IsChecked="{Binding ShowYouTube}"   Margin="0,0,8,0"/>
-            <CheckBox Content="TikTok"    IsChecked="{Binding ShowTikTok}"    Margin="0,0,8,0"/>
-            <CheckBox Content="Instagram" IsChecked="{Binding ShowInstagram}" Margin="0,0,8,0"/>
-            <CheckBox Content="Facebook"  IsChecked="{Binding ShowFacebook}" />
-        </StackPanel>
+		<Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="10" Margin="0,0,0,15">
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+				<CheckBox Content="YouTube" IsChecked="{Binding ShowYouTube}" Margin="10,0"/>
+				<CheckBox Content="TikTok" IsChecked="{Binding ShowTikTok}" Margin="10,0"/>
+				<CheckBox Content="Instagram" IsChecked="{Binding ShowInstagram}" Margin="10,0"/>
+				<CheckBox Content="Facebook" IsChecked="{Binding ShowFacebook}" Margin="10,0"/>
+			</StackPanel>
+		</Border>
 
-        <!-- Messages -->
-        <ListBox Grid.Row="1" ItemsSource="{Binding View}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Border Padding="8" Margin="0,0,0,6" CornerRadius="6" Background="#FF111111" Opacity="0.95">
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                <TextBlock Text="{Binding Source}" FontWeight="Bold" Foreground="#FFDDAA"/>
-                                <TextBlock Text=" - " />
-                                <TextBlock Text="{Binding Author}" FontWeight="SemiBold"/>
-                                <TextBlock Text=" - " />
-                                <TextBlock Text="{Binding Timestamp}" FontStyle="Italic" FontSize="11"/>
-                            </StackPanel>
-                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Border>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-    </Grid>
+		<ListView Grid.Row="1" ItemsSource="{Binding View}"
+                  Background="Transparent" BorderThickness="0"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+
+			<ListView.ItemTemplate>
+				<DataTemplate>
+					<Border Background="{StaticResource BgLight}" CornerRadius="8" Margin="0,2" Padding="10">
+						<Grid>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto"/>
+								<RowDefinition Height="Auto"/>
+							</Grid.RowDefinitions>
+
+							<StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+								<TextBlock Text="{Binding Author}" FontWeight="Bold" Foreground="{StaticResource Primary}"/>
+								<TextBlock Text=" • " Foreground="Gray"/>
+								<TextBlock Text="{Binding Source}" FontSize="10" Foreground="Gray" VerticalAlignment="Center"/>
+							</StackPanel>
+
+							<TextBlock Grid.Row="1" Text="{Binding Text}" TextWrapping="Wrap" Foreground="{StaticResource TextMain}"/>
+						</Grid>
+					</Border>
+				</DataTemplate>
+			</ListView.ItemTemplate>
+
+			<ListView.ItemContainerStyle>
+				<Style TargetType="ListViewItem">
+					<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+					<Setter Property="Background" Value="Transparent"/>
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="ListViewItem">
+								<ContentPresenter/>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</ListView.ItemContainerStyle>
+		</ListView>
+	</Grid>
 </UserControl>
