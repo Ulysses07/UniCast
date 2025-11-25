@@ -9,22 +9,23 @@ namespace UniCast.Core.Settings
 {
     /// <summary>
     /// Uygulamanın genel ayarları: cihaz seçimleri, encode, sosyal hedef bilgileri vb.
-    /// ViewModel’lerin beklediği tüm alanlar eklendi.
     /// </summary>
     public sealed class SettingsData
     {
         // --- Cihaz seçimleri ---
-        public string? DefaultCamera { get; set; }          // dshow: video="..."
-        public string? DefaultMicrophone { get; set; }      // dshow: audio="..."
+        public string? DefaultCamera { get; set; }
+        public string? DefaultMicrophone { get; set; }
         public CaptureSource CaptureSource { get; set; } = CaptureSource.Camera;
-        public string? SelectedVideoDevice { get; set; }  // örn: video="USB2.0 Camera"
-        public string? SelectedAudioDevice { get; set; }  // örn: audio="Mikrofon (USB Audio Device)"
+        public string? SelectedVideoDevice { get; set; }
+        public string? SelectedAudioDevice { get; set; }
 
         // --- Encoder & kalite ---
-        /// <summary>libx264 | h264_nvenc | hevc_nvenc | libx265 vb.</summary>
         public string Encoder { get; set; } = "libx264";
         public int VideoKbps { get; set; } = 2500;
         public int AudioKbps { get; set; } = 128;
+
+        // Ses Gecikmesi (Milisaniye)
+        public int AudioDelayMs { get; set; } = 0;
 
         // --- Çözünürlük & fps ---
         public int Width { get; set; } = 1280;
@@ -36,7 +37,7 @@ namespace UniCast.Core.Settings
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "UniCast");
         public bool EnableLocalRecord { get; set; } = false;
 
-        // --- Sosyal/Platform alanları (ViewModel’ler istiyor) ---
+        // --- Sosyal/Platform alanları ---
         public string? YouTubeApiKey { get; set; }
         public string? YouTubeChannelId { get; set; }
         public string? TikTokRoomId { get; set; }
@@ -45,11 +46,13 @@ namespace UniCast.Core.Settings
         public string? FacebookAccessToken { get; set; }
         public string? FacebookPageId { get; set; }
         public string? FacebookLiveVideoId { get; set; }
+
+        // --- Overlay ---
         public bool ShowOverlay { get; set; } = false;
-        public int OverlayX { get; set; } = 24;     // piksel, sol üst x
-        public int OverlayY { get; set; } = 24;     // piksel, sol üst y
-        public double OverlayOpacity { get; set; } = 0.85;  // 0.0 - 1.0
-        public int OverlayFontSize { get; set; } = 18;      // px / pt
+        public int OverlayX { get; set; } = 24;
+        public int OverlayY { get; set; } = 24;
+        public double OverlayOpacity { get; set; } = 0.85;
+        public int OverlayFontSize { get; set; } = 18;
         public string? TikTokSessionCookie { get; set; }
 
         // --- Profil yönetimi ---
@@ -58,25 +61,30 @@ namespace UniCast.Core.Settings
             Profile.Default()
         };
 
-        /// <summary>Seçili profilin adı (UI bu string’i saklıyor)</summary>
         public string? SelectedProfileName { get; set; } = Profile.Default().Name;
 
-        /// <summary>Seçili profili getir; yoksa varsayılanı döner.</summary>
         public Profile GetSelectedProfile()
         {
-            var p = Profiles.FirstOrDefault((Func<Profile, bool>)(x =>
+            var p = Profiles.FirstOrDefault(x =>
                 !string.IsNullOrWhiteSpace(SelectedProfileName) &&
-                string.Equals((string)x.Name, SelectedProfileName, StringComparison.OrdinalIgnoreCase)));
+                string.Equals(x.Name, SelectedProfileName, StringComparison.OrdinalIgnoreCase));
 
             return p ?? Profile.Default();
         }
+
+        // --- HATA DÜZELTME: Eksik olan Normalize metodu eklendi ---
         public void Normalize()
         {
-            // .NET 8'de Math.Clamp hazır.
+            // Değerleri mantıklı sınırlara çek (Clamp)
             OverlayOpacity = Math.Clamp(OverlayOpacity, 0.0, 1.0);
             OverlayFontSize = Math.Clamp(OverlayFontSize, 8, 96);
+
+            // Negatif koordinatları engelle
             if (OverlayX < 0) OverlayX = 0;
             if (OverlayY < 0) OverlayY = 0;
+
+            // Ses gecikmesini de negatif olmaktan koru
+            if (AudioDelayMs < 0) AudioDelayMs = 0;
         }
     }
 }

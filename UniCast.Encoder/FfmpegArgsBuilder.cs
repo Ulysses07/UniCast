@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UniCast.Core.Core; // Platform Enum'ı burada
+using UniCast.Core.Core;
 using UniCast.Core.Settings;
-using UniCast.Core.Streaming; // StreamPlatform ve StreamTarget burada
+using UniCast.Core.Streaming;
 
 namespace UniCast.Encoder
 {
@@ -15,42 +15,56 @@ namespace UniCast.Encoder
             List<StreamTarget> targets,
             string? videoDeviceName,
             string? audioDeviceName,
-            bool screenCapture)
+            bool screenCapture,
+            int audioDelayMs) // YENİ PARAMETRE
         {
             var sb = new StringBuilder();
 
-            // --- Girişler (Inputs) ---
+            // --- Giriş Ayarları ---
             sb.Append("-f dshow -rtbufsize 100M -thread_queue_size 1024 ");
 
+            // GİRİŞ 0: VİDEO
             if (screenCapture)
             {
                 sb.Clear();
+                sb.Append("-rtbufsize 100M -thread_queue_size 1024 ");
                 sb.Append("-f gdigrab -framerate 30 -i desktop ");
+            }
+            else if (!string.IsNullOrWhiteSpace(videoDeviceName))
+            {
+                sb.Append($"-i video=\"{videoDeviceName}\" ");
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(videoDeviceName))
-                {
-                    sb.Append($"-i video=\"{videoDeviceName}\"");
-                    if (!string.IsNullOrWhiteSpace(audioDeviceName))
-                        sb.Append($":audio=\"{audioDeviceName}\" ");
-                    else
-                        sb.Append(" ");
-                }
-                else
-                {
-                    sb.Clear();
-                    sb.Append("-f lavfi -i testsrc=size=1280x720:rate=30 -f lavfi -i sine=frequency=1000 ");
-                }
+                sb.Clear();
+                sb.Append("-f lavfi -i testsrc=size=1280x720:rate=30 ");
             }
 
-            // --- Filtre Mantığı (Düzeltildi) ---
+            // GİRİŞ 1: SES (Gecikme Ayarlı)
+            if (!string.IsNullOrWhiteSpace(audioDeviceName))
+            {
+                // Ses Gecikmesi Varsa Ekler
+                if (audioDelayMs > 0)
+                {
+                    // Milisaniyeyi saniyeye çevir (örn: 200ms -> 0.200s)
+                    sb.Append($"-itsoffset {audioDelayMs / 1000.0:0.000} ");
+                }
 
-            // HATA DÜZELTME: StreamPlatform -> Platform dönüşümü yapıyoruz
+                // -f dshow burada tekrar yazılmalı çünkü yukarıda screenCapture ile silinmiş olabilir
+                // veya -itsoffset'ten sonra yeni giriş başlıyor.
+                sb.Append($"-f dshow -i audio=\"{audioDeviceName}\" ");
+            }
+            else
+            {
+                // Ses yoksa sessizlik üret (Input 1)
+                sb.Append("-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 ");
+            }
+
+            // --- Filtreler (Smart Crop) ---
             bool hasHorizontal = targets.Any(t => IsHorizontal(MapPlatform(t.Platform)));
             bool hasVertical = targets.Any(t => IsVertical(MapPlatform(t.Platform)));
 
-            string mapHorizontal = "0:v";
+            string mapHorizontal = "0:v"; // Video her zaman Input 0
             string mapVertical = "0:v";
 
             if (hasVertical)
@@ -59,7 +73,7 @@ namespace UniCast.Encoder
 
                 if (hasHorizontal)
                 {
-                    // Hem Yatay Hem Dikey
+                    // Hem Yatay Hem Dikey -> Split & Crop
                     sb.Append("[0:v]split=2[v_hor][v_raw_vert];");
                     sb.Append("[v_raw_vert]crop=w=ih*(9/16):h=ih:x=(iw-ow)/2:y=0[v_vert]");
                     mapHorizontal = "[v_hor]";
@@ -67,7 +81,7 @@ namespace UniCast.Encoder
                 }
                 else
                 {
-                    // Sadece Dikey
+                    // Sadece Dikey -> Crop
                     sb.Append("[0:v]crop=w=ih*(9/16):h=ih:x=(iw-ow)/2:y=0[v_vert]");
                     mapVertical = "[v_vert]";
                 }
@@ -78,12 +92,11 @@ namespace UniCast.Encoder
             // --- Çıkışlar (Outputs) ---
             foreach (var target in targets)
             {
-                // HATA DÜZELTME: Burada da MapPlatform kullanıyoruz
                 Platform p = MapPlatform(target.Platform);
                 string videoSource = IsVertical(p) ? mapVertical : mapHorizontal;
 
                 sb.Append($"-map {videoSource} ");
-                sb.Append("-map 0:a? ");
+                sb.Append("-map 1:a "); // Ses her zaman Input 1
 
                 sb.Append("-c:v libx264 -preset ultrafast -tune zerolatency ");
                 sb.Append("-b:v 2500k -maxrate 2500k -bufsize 5000k ");
@@ -96,8 +109,6 @@ namespace UniCast.Encoder
         }
 
         // --- Yardımcı Metotlar ---
-
-        // YENİ EKLENEN: İki enum arası çeviri
         private static Platform MapPlatform(StreamPlatform sp)
         {
             return sp switch
@@ -111,14 +122,7 @@ namespace UniCast.Encoder
             };
         }
 
-        private static bool IsVertical(Platform p)
-        {
-            return p == Platform.TikTok || p == Platform.Instagram;
-        }
-
-        private static bool IsHorizontal(Platform p)
-        {
-            return !IsVertical(p);
-        }
+        private static bool IsVertical(Platform p) => p == Platform.TikTok || p == Platform.Instagram;
+        private static bool IsHorizontal(Platform p) => !IsVertical(p);
     }
 }

@@ -24,12 +24,10 @@ namespace UniCast.App.Services
         public IReadOnlyList<StreamTarget> Targets => _targets;
         public Profile CurrentProfile { get; private set; } = Profile.Default();
 
-        // --- Events ---
         public event EventHandler<string>? OnLog;
         public event EventHandler<StreamMetric>? OnMetric;
         public event EventHandler<int>? OnExit;
 
-        // --- Fields ---
         private readonly List<StreamTarget> _targets = new();
         private FfmpegProcess? _ffmpegProcess;
         private CancellationTokenSource? _procCts;
@@ -50,8 +48,6 @@ namespace UniCast.App.Services
             OnLog?.Invoke(this, $"[targets] Çıkarıldı: {target.DisplayName ?? target.Platform.ToString()}");
         }
 
-        // --- Interface Implementation (Legacy & New) ---
-
         public async Task StartAsync(Profile profile, CancellationToken ct = default)
         {
             var result = await StartWithResultAsync(profile, ct);
@@ -71,7 +67,6 @@ namespace UniCast.App.Services
             _targets.AddRange(mapped);
 
             var screenCapture = settings?.CaptureSource == CaptureSource.Screen;
-            // SettingsData now holds Device IDs or Names. We pass them to InternalAsync which resolves them.
             var videoDevice = settings?.CaptureSource == CaptureSource.Camera ? settings?.SelectedVideoDevice : null;
             var audioDevice = settings?.SelectedAudioDevice;
 
@@ -80,7 +75,7 @@ namespace UniCast.App.Services
             return await StartInternalAsync(profile, videoDevice, audioDevice, screenCapture, ct);
         }
 
-        // Legacy interface methods
+        // Legacy support
         async Task IStreamController.StartAsync(Profile profile, IEnumerable<StreamTarget> targets, CancellationToken ct)
         {
             _targets.Clear(); if (targets != null) _targets.AddRange(targets);
@@ -136,9 +131,7 @@ namespace UniCast.App.Services
             if (enabledTargets.Count == 0)
                 return StreamStartResult.Fail(StreamErrorCode.InvalidConfig, "Etkin yayın hedefi yok. Lütfen en az bir hedef (RTMP) ekleyin.");
 
-            // 1. Device ID -> Friendly Name Resolution
-            // FFmpeg needs friendly names (e.g. "Logitech C920"), but we might have IDs.
-            // We use DeviceService to bridge this gap.
+            // 1. Cihaz İsimlerini Çözümle
             var deviceService = new DeviceService();
             string? finalVideoName = videoDeviceId;
             string? finalAudioName = audioDeviceId;
@@ -155,19 +148,24 @@ namespace UniCast.App.Services
                 if (!string.IsNullOrEmpty(name)) finalAudioName = name;
             }
 
-            // 2. Build Arguments
+            // 2. Ses Gecikmesini Ayarlardan Oku
+            // Öncelik Profil'de, yoksa Genel Ayarlar'da
+            var globalSettings = SettingsStore.Load();
+            int delayMs = CurrentProfile.AudioDelayMs > 0 ? CurrentProfile.AudioDelayMs : globalSettings.AudioDelayMs;
+
+            // 3. Argümanları Oluştur (GÜNCELLENDİ: delayMs eklendi)
             var args = FfmpegArgsBuilder.BuildFfmpegArgs(
                 CurrentProfile,
                 enabledTargets,
                 finalVideoName,
                 finalAudioName,
-                screenCapture
+                screenCapture,
+                delayMs // 6. Parametre
             );
 
             _procCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             _ffmpegProcess = new FfmpegProcess();
 
-            // Event Wiring
             _ffmpegProcess.OnLog += (line) =>
             {
                 LastMessage = line;
