@@ -1,27 +1,30 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using UniCast.App.Services; // SettingsStore için
+using UniCast.App.Services;
 
 namespace UniCast.App.Views
 {
-    public partial class PreviewView : UserControl
+    // HATA DÜZELTME: WPF UserControl olduğunu belirtiyoruz
+    public partial class PreviewView : System.Windows.Controls.UserControl
     {
         private bool _isDragging = false;
-        private Point _startPoint;
+        private System.Windows.Point _startPoint; // System.Windows.Point (Using ekli olduğu için sorun yok ama aşağıda dikkat)
         private double _startX, _startY;
 
-        public PreviewView(object? viewModel = null) // Constructor Injection uyumu
+        public PreviewView(object? viewModel = null)
         {
             InitializeComponent();
             if (viewModel != null) DataContext = viewModel;
 
-            // Başlangıçta kayıtlı konumu yükle
             var s = SettingsStore.Load();
             Canvas.SetLeft(DraggableChatBox, s.OverlayX);
             Canvas.SetTop(DraggableChatBox, s.OverlayY);
         }
 
+        // HATA DÜZELTME: MouseButtonEventArgs zaten WPF'e özeldir ama MouseEventArgs çakışabilir.
+        // System.Windows.Input namespace'i yukarıda olduğu için genelde sorun olmaz ama
+        // garanti olsun diye parametreleri kontrol ediyoruz.
         private void ChatBox_MouseDown(object sender, MouseButtonEventArgs e)
         {
             _isDragging = true;
@@ -31,7 +34,8 @@ namespace UniCast.App.Views
             DraggableChatBox.CaptureMouse();
         }
 
-        private void ChatBox_MouseMove(object sender, MouseEventArgs e)
+        // HATA DÜZELTME: MouseEventArgs (WPF: System.Windows.Input)
+        private void ChatBox_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (_isDragging)
             {
@@ -42,7 +46,6 @@ namespace UniCast.App.Views
                 var newX = _startX + offsetX;
                 var newY = _startY + offsetY;
 
-                // Sınırların dışına çıkmayı engelle (Opsiyonel)
                 if (newX < 0) newX = 0;
                 if (newY < 0) newY = 0;
 
@@ -58,7 +61,6 @@ namespace UniCast.App.Views
                 _isDragging = false;
                 DraggableChatBox.ReleaseMouseCapture();
 
-                // 1. Yeni konumu kaydet
                 var newX = (int)Canvas.GetLeft(DraggableChatBox);
                 var newY = (int)Canvas.GetTop(DraggableChatBox);
 
@@ -67,8 +69,6 @@ namespace UniCast.App.Views
                 s.OverlayY = newY;
                 SettingsStore.Save(s);
 
-                // 2. Canlı Yayındaki Overlay'i güncelle (Erişim biraz dolaylı ama etkili)
-                // MainWindow üzerinden Overlay Controller'a ulaşıyoruz.
                 if (System.Windows.Application.Current.MainWindow is MainWindow mw)
                 {
                     mw.UpdateOverlayPosition(newX, newY);

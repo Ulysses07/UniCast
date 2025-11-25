@@ -3,14 +3,12 @@
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 
-		<!-- Windows 10 2004 yüzeyi -->
 		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<EnableWindowsTargeting>true</EnableWindowsTargeting>
 
-		<!-- En düşük destek sürümü TFM ile hizalı -->
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 
 		<Nullable>enable</Nullable>
@@ -19,26 +17,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Page Remove="Views\ChatOverlayView.xaml" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Compile Include="Views\ChatOverlayView.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Include="Views\ChatOverlayView.xaml" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="AForge" Version="2.2.5" />
-		<PackageReference Include="AForge.Video" Version="2.2.5" />
-		<PackageReference Include="AForge.Video.DirectShow" Version="2.2.5" />
 		<PackageReference Include="DirectShowLib" Version="1.0.0" />
-		<!-- İstersen bunu ŞİMDİLİK kaldır: 26100 TFM zorlamasın -->
-		<!-- <PackageReference Include="Microsoft.Windows.SDK.Contracts" Version="10.0.26100.6901" /> -->
+
 		<PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
 		<PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
 		<PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.0.20250507" />
@@ -48,7 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Unicast.Capture\UniCast.Capture.csproj" />
+		<ProjectReference Include="..\Unicast.Capture\Unicast.Capture.csproj" />
 		<ProjectReference Include="..\UniCast.Core\UniCast.Core.csproj" />
 		<ProjectReference Include="..\UniCast.Encoder\UniCast.Encoder.csproj" />
 	</ItemGroup>
