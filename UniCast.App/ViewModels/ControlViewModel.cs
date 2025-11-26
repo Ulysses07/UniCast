@@ -17,7 +17,11 @@ namespace UniCast.App.ViewModels
     {
         private readonly IStreamController _stream;
         private readonly Func<(ObservableCollection<TargetItem> targets, SettingsData settings)> _provider;
+
+        // Servisler
         private readonly PreviewService _preview = new();
+        private readonly AudioService _audioService = new(); // YENİ: Ses Servisi
+
         private CancellationTokenSource? _cts;
 
         public ControlViewModel(
@@ -27,22 +31,63 @@ namespace UniCast.App.ViewModels
             _stream = stream;
             _provider = provider;
 
+            // 1. Önizleme Bağlantısı
             _preview.OnFrame += bmp => PreviewImage = bmp;
 
+            // 2. Ses Servisi Bağlantıları (YENİ)
+            _audioService.OnLevelChange += level =>
+            {
+                // UI Thread'de güncelle (0.0 - 1.0 arasını 0-100 yapıyoruz)
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    AudioLevel = level * 100;
+                });
+            };
+
+            _audioService.OnMuteChange += muted =>
+            {
+                IsMuted = muted;
+            };
+
+            // 3. Komut Tanımları
             StartCommand = new RelayCommand(async _ => await StartAsync(), _ => !IsRunning);
             StopCommand = new RelayCommand(async _ => await StopAsync(), _ => IsRunning);
 
-            // HATA DÜZELTME: StartPreviewCommand burada tanımlanıyor
             StartPreviewCommand = new RelayCommand(async _ =>
             {
-                if (_preview.IsRunning)
-                    await StopPreviewAsync();
-                else
-                    await StartPreviewAsync();
+                if (_preview.IsRunning) await StopPreviewAsync();
+                else await StartPreviewAsync();
             });
+
+            // Mola Komutu
+            ToggleBreakCommand = new RelayCommand(_ =>
+            {
+                if (IsOnBreak)
+                {
+                    IsOnBreak = false;
+                    if (System.Windows.Application.Current.MainWindow is MainWindow mw) mw.StopBreak();
+                }
+                else
+                {
+                    IsOnBreak = true;
+                    if (System.Windows.Application.Current.MainWindow is MainWindow mw) mw.StartBreak(BreakDuration);
+                }
+            });
+
+            // Ses Susturma Komutu
+            ToggleMuteCommand = new RelayCommand(_ => _audioService.ToggleMute());
+
+            // Başlangıçta ses servisini hazırla
+            InitializeAudio();
         }
 
-        // --- Preview ---
+        private async void InitializeAudio()
+        {
+            var s = Services.SettingsStore.Load();
+            await _audioService.InitializeAsync(s.SelectedAudioDevice ?? "");
+        }
+
+        // --- PREVIEW ---
         private ImageSource? _previewImage;
         public ImageSource? PreviewImage
         {
@@ -54,15 +99,12 @@ namespace UniCast.App.ViewModels
         {
             var s = Services.SettingsStore.Load();
             if (!_preview.IsRunning)
-            {
-                // -1 varsayılan kamera demek
                 await _preview.StartAsync(-1, s.Width, s.Height, s.Fps);
-            }
         }
 
         public Task StopPreviewAsync() => _preview.StopAsync();
 
-        // --- Stream state ---
+        // --- YAYIN DURUMU ---
         private string _status = "Hazır";
         public string Status { get => _status; private set { _status = value; OnPropertyChanged(); } }
 
@@ -82,7 +124,6 @@ namespace UniCast.App.ViewModels
             }
         }
 
-        // --- Advisory: Kullanıcıya Hata/Uyarı Gösterilen Alan ---
         private string _advisory = "";
         public string Advisory
         {
@@ -90,51 +131,74 @@ namespace UniCast.App.ViewModels
             private set { _advisory = value; OnPropertyChanged(); }
         }
 
+        // --- MOLA MODU ---
+        private bool _isOnBreak;
+        public bool IsOnBreak
+        {
+            get => _isOnBreak;
+            set { _isOnBreak = value; OnPropertyChanged(); }
+        }
+
+        private int _breakDuration = 5; // Varsayılan 5 dk
+        public int BreakDuration
+        {
+            get => _breakDuration;
+            set { _breakDuration = value; OnPropertyChanged(); }
+        }
+
+        // --- SES MİKSERİ (YENİ) ---
+        private double _audioLevel;
+        public double AudioLevel
+        {
+            get => _audioLevel;
+            private set { _audioLevel = value; OnPropertyChanged(); }
+        }
+
+        private bool _isMuted;
+        public bool IsMuted
+        {
+            get => _isMuted;
+            private set { _isMuted = value; OnPropertyChanged(); }
+        }
+
+        // --- KOMUTLAR ---
         public ICommand StartCommand { get; }
         public ICommand StopCommand { get; }
-
-        // HATA DÜZELTME: Eksik olan Property buraya eklendi
         public ICommand StartPreviewCommand { get; }
+        public ICommand ToggleBreakCommand { get; }
+        public ICommand ToggleMuteCommand { get; } // YENİ
 
+        // --- YAYIN MANTIĞI ---
         private async Task StartAsync()
         {
             try
             {
-                // 1. Hazırlık
                 var (targets, settings) = _provider();
                 _cts = new CancellationTokenSource();
 
                 Status = "Başlatılıyor...";
                 Metric = "";
-                Advisory = ""; // Önceki hataları temizle
+                Advisory = "";
 
-                // 2. Başlatma İsteği (Result Pattern Kullanımı)
                 var result = await _stream.StartWithResultAsync(targets, settings, _cts.Token);
 
                 if (result.Success)
                 {
-                    // --- BAŞARILI ---
                     IsRunning = true;
                     Status = "Yayında";
-
-                    // Arka plan durum takipçisi (Status Updater)
                     _ = Task.Run(async () =>
                     {
                         while (IsRunning || _stream.IsReconnecting)
                         {
                             Status = _stream.LastMessage ?? "Yayında";
                             Metric = _stream.LastMetric ?? "";
-
-                            if (!string.IsNullOrEmpty(_stream.LastAdvisory))
-                                Advisory = _stream.LastAdvisory;
-
+                            if (!string.IsNullOrEmpty(_stream.LastAdvisory)) Advisory = _stream.LastAdvisory;
                             await Task.Delay(200);
                         }
                     });
                 }
                 else
                 {
-                    // --- BAŞARISIZ (Hata Yönetimi) ---
                     IsRunning = false;
                     Status = "Hata";
                     Advisory = result.UserMessage ?? "Bilinmeyen bir hata oluştu.";

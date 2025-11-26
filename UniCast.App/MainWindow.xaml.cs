@@ -140,6 +140,23 @@ namespace UniCast.App
             if (!string.IsNullOrWhiteSpace(s.InstagramUserId)) { _instagram = new InstagramChatIngestor(new HttpClient()); _instagram.OnMessage += OnMsg; _chatBus.Attach(_instagram); _ = _instagram.StartAsync(_chatCts!.Token); }
             if (!string.IsNullOrWhiteSpace(s.FacebookAccessToken)) { _facebook = new FacebookChatIngestor(new HttpClient()); _facebook.OnMessage += OnMsg; _chatBus.Attach(_facebook); _ = _facebook.StartAsync(_chatCts!.Token); }
         }
+        public void StartBreak(int minutes)
+        {
+            if (_overlay != null)
+            {
+                _overlay.StartBreakMode(minutes);
+                Log.Information($"Mola modu başlatıldı: {minutes} dakika");
+            }
+        }
+
+        public void StopBreak()
+        {
+            if (_overlay != null)
+            {
+                _overlay.StopBreakMode();
+                Log.Information("Mola modu sonlandırıldı.");
+            }
+        }
 
         private void OnMsg(ChatMessage msg) { try { _overlay?.Push(msg.Author, msg.Text); } catch { } }
 

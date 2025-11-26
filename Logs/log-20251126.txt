@@ -509,3 +509,425 @@
 2025-11-26 17:10:53.743 [INF] MainWindow yüklendi...
 2025-11-26 17:11:16.940 [INF] [Stream] [stop] Aktif yayın süreci yok.
 2025-11-26 17:11:16.944 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-26 17:14:07.334 [INF] ===================================================
+2025-11-26 17:14:07.354 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-26 17:14:07.354 [INF] ===================================================
+2025-11-26 17:14:07.763 [INF] MainWindow yüklendi...
+2025-11-26 17:14:09.737 [INF] [Stream] [start] Yayın başladı. Profil: Default
+2025-11-26 17:14:09.761 [INF] [Stream] ffmpeg version 2025-10-19-git-dc39a576ad-full_build-www.gyan.dev
+2025-11-26 17:14:09.762 [INF] [Stream]  Copyright (c) 2000-2025 the FFmpeg developers
+2025-11-26 17:14:09.763 [INF] [Stream]   built with gcc 15.2.0 (Rev8, Built by MSYS2 project)
+2025-11-26 17:14:09.763 [INF] [Stream]   configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper
+2025-11-26 17:14:09.764 [INF] [Stream]   libavutil      60. 13.100 / 60. 13.100
+2025-11-26 17:14:09.765 [INF] [Stream]   libavcodec     62. 16.100 / 62. 16.100
+2025-11-26 17:14:09.765 [INF] [Stream]   libavformat    62.  6.101 / 62.  6.101
+2025-11-26 17:14:09.766 [INF] [Stream]   libavdev
+2025-11-26 17:14:09.767 [INF] [Stream] ice    62.  2.100 / 62.  2.100
+2025-11-26 17:14:09.767 [INF] [Stream]   libavfilter    11.  9.100 / 11.  9.100
+2025-11-26 17:14:09.768 [INF] [Stream]   libswscale      9.  3.100 /  9.  3.100
+2025-11-26 17:14:09.769 [INF] [Stream]   libswresample   6.  2.100 /  6.  2.100
+2025-11-26 17:14:09.769 [INF] [Stream] Input #0, lavfi, from 'testsrc=size=1280x720:rate=30':
+2025-11-26 17:14:09.770 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: N/A
+2025-11-26 17:14:09.775 [INF] [Stream]   Stream #0:0: Video: wrapped_avframe, rgb24, 1280x720 [SAR 1:1 DAR 16:9], 30 fps, 30 tbr, 30 tbn
+2025-11-26 17:14:09.775 [INF] [Stream] [out @ 0000026167810c40] The "sample_fmts" option is deprecated: set the supported sample formats
+2025-11-26 17:14:09.776 [INF] [Stream] [out @ 0000026167810c40] The "all_channel_counts" option is deprecated: accept all channel counts
+2025-11-26 17:14:09.777 [INF] [Stream] Input #1, lavfi, from 'anullsrc=channel_layout=stereo:sample_rate=44100':
+2025-11-26 17:14:09.777 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: 705 kb/s
+2025-11-26 17:14:09.778 [INF] [Stream]   Stream #1:0: Audio: pcm_u8, 44100 Hz, stereo, u8, 705 kb/s
+2025-11-26 17:14:12.923 [INF] [Stream] Stream mapping:
+2025-11-26 17:14:12.924 [INF] [Stream]   Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (libx264))
+2025-11-26 17:14:12.925 [INF] [Stream]   Stream #1:0 -> #0:1 (pcm_u8 (native) -> aac (native))
+2025-11-26 17:14:12.926 [INF] [Stream]   Stream #0:0 -> #1:0 (wrapped_avframe (native) -> h264 (libx264))
+2025-11-26 17:14:12.926 [INF] [Stream]   Stream #1:0 -> #1:1 (pcm_u8 (native) -> aac (native))
+2025-11-26 17:14:12.927 [INF] [Stream] Press [q] to stop, [?] for help
+2025-11-26 17:14:12.931 [INF] [Stream] [libx264 @ 0000026167823280]
+2025-11-26 17:14:12.932 [INF] [Stream]  using SAR=1/1
+2025-11-26 17:14:12.932 [INF] [Stream] [libx264 @ 0000026167816040] using SAR=1/1
+2025-11-26 17:14:12.933 [INF] [Stream] [libx264 @ 0000026167816040] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-11-26 17:14:12.934 [INF] [Stream] [libx264 @ 0000026167823280] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-11-26 17:14:12.935 [INF] [Stream] [libx264 @ 0000026167823280] profile Constrained Baseline, level 3.1, 4:2:0, 8-bit
+2025-11-26 17:14:12.938 [INF] [Stream] [libx264 @ 0000026167816040] profile Constrained Baseline, level 3.1, 4:2:0, 8-bit
+2025-11-26 17:14:12.940 [INF] [Stream] Output #0, flv, to 'rtmps://a.rtmps.youtube.com/live2/e54v-pkzg-y2ss-wjff-6ghh':
+2025-11-26 17:14:12.942 [INF] [Stream]   Metadata:
+2025-11-26 17:14:12.943 [INF] [Stream]     encoder         : Lavf62.6.101
+2025-11-26 17:14:12.944 [INF] [Stream]   Stream #0:0: Video: h264 ([7][0][0][0] / 0x0007), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 2500 kb/s, 30 fps, 1k tbn
+2025-11-26 17:14:12.945 [INF] [Stream]     Metadata:
+2025-11-26 17:14:12.946 [INF] [Stream]       encoder         : Lavc62.16.100 libx264
+2025-11-26 17:14:12.947 [INF] [Stream]     Side data:
+2025-11-26 17:14:12.948 [INF] [Stream]       CPB properties: bitrate max/min/avg: 2500000/0/2500000 buffer size: 5000000 vbv_delay: N/A
+2025-11-26 17:14:12.949 [INF] [Stream]   Stream #0:1: Audio: aac (
+2025-11-26 17:14:12.950 [INF] [Stream] LC) ([10][0][0][0] / 0x000A), 44100 Hz, stereo, fltp, 128 kb/s
+2025-11-26 17:14:12.952 [INF] [Stream]     Metadata:
+2025-11-26 17:14:12.952 [INF] [Stream]       encoder         : Lavc62.16.100 aac
+2025-11-26 17:14:12.953 [INF] [Stream] Output #1, flv, to 'rtmps://live-api-s.facebook.com:443/rtmp/FB-1526913761827855-0-Ab2GXPRKntgJTLPWN8A08ZSR':
+2025-11-26 17:14:12.954 [INF] [Stream]   Metadata:
+2025-11-26 17:14:12.955 [INF] [Stream]     encoder         : Lavf62.6.101
+2025-11-26 17:14:12.956 [INF] [Stream]   Stream #1:0: Video: h264 ([7][0][0][0] / 0x0007), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 2500 kb/s, 30 fps, 1k tbn
+2025-11-26 17:14:12.957 [INF] [Stream]     Metadata:
+2025-11-26 17:14:12.958 [INF] [Stream]       encoder         : Lavc62.16.100 libx264
+2025-11-26 17:14:12.958 [INF] [Stream]     Side data:
+2025-11-26 17:14:12.959 [INF] [Stream]       CPB properties: bitrate max/min/avg: 2500000/0/2500000 buffer size: 5000000 vbv_delay: N/A
+2025-11-26 17:14:12.960 [INF] [Stream]   Stream #1:1: Audio: aac (LC) ([10][0][0][0] / 0x000A), 44100 Hz, stereo, fltp, 128 kb/s
+2025-11-26 17:14:12.960 [INF] [Stream]     Metadata:
+2025-11-26 17:14:12.961 [INF] [Stream]       encoder         : Lavc62.16.100 aac
+2025-11-26 17:14:13.877 [INF] [Stream] [stop] Yayın durduruluyor...
+2025-11-26 17:14:13.919 [INF] [Stream] stderr read error: A task was canceled.
+2025-11-26 17:14:13.921 [INF] [Stream] FFmpeg: Yayın hatası oluştu. RTMP adresini, stream key’i ve internet bağlantısını kontrol edin.
+2025-11-26 17:14:13.922 [WRN] [Stream] Exit Code: -1
+2025-11-26 17:14:13.923 [INF] [Stream] [ffmpeg] Çıkış kodu: -1
+2025-11-26 17:14:14.514 [INF] [Stream] [start] Yayın başladı. Profil: Default
+2025-11-26 17:14:14.541 [INF] [Stream] ffmpeg version 2025-10-19-git-dc39a576ad-full_build-www.gyan.dev
+2025-11-26 17:14:14.542 [INF] [Stream]  Copyright (c) 2000-2025 the FFmpeg developers
+2025-11-26 17:14:14.543 [INF] [Stream]   built with gcc 15.2.0 (Rev8, Built by MSYS2 project)
+2025-11-26 17:14:14.544 [INF] [Stream]   configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper
+2025-11-26 17:14:14.544 [INF] [Stream]   libavutil      60. 13.100 / 60. 13.100
+2025-11-26 17:14:14.545 [INF] [Stream]   libavcodec     62. 16.100 / 62. 16.100
+2025-11-26 17:14:14.546 [INF] [Stream]   libavformat    62.  6.101 / 62.  6.101
+2025-11-26 17:14:14.546 [INF] [Stream]   libavdev
+2025-11-26 17:14:14.547 [INF] [Stream] ice    62.  2.100 / 62.  2.100
+2025-11-26 17:14:14.548 [INF] [Stream]   libavfilter    11.  9.100 / 11.  9.100
+2025-11-26 17:14:14.549 [INF] [Stream]   libswscale      9.  3.100 /  9.  3.100
+2025-11-26 17:14:14.550 [INF] [Stream]   libswresample   6.  2.100 /  6.  2.100
+2025-11-26 17:14:14.551 [INF] [Stream] Input #0, lavfi, from 'testsrc=size=1280x720:rate=30':
+2025-11-26 17:14:14.551 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: N/A
+2025-11-26 17:14:14.552 [INF] [Stream]   Stream #0:0: Video: wrapped_avframe, rgb24, 1280x720 [SAR 1:1 DAR 16:9], 30 fps, 30 tbr, 30 tbn
+2025-11-26 17:14:14.553 [INF] [Stream] [out @ 0000024441c00c40] The "sample_fmts" option is deprecated: set the supported sample formats
+2025-11-26 17:14:14.553 [INF] [Stream] [out @ 0000024441c00c40] The "all_channel_counts" option is deprecated: accept all channel counts
+2025-11-26 17:14:14.554 [INF] [Stream] Input #1, lavfi, from 'anullsrc=channel_layout=stereo:sample_rate=44100':
+2025-11-26 17:14:14.555 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: 705 kb/s
+2025-11-26 17:14:14.555 [INF] [Stream]   Stream #1:0: Audio: pcm_u8, 44100 Hz, stereo, u8, 705 kb/s
+2025-11-26 17:14:15.152 [INF] [Stream] [stop] Yayın durduruluyor...
+2025-11-26 17:14:15.178 [INF] [Stream] FFmpeg: Yayın hatası oluştu. RTMP adresini, stream key’i ve internet bağlantısını kontrol edin.
+2025-11-26 17:14:15.209 [INF] [Stream] stderr read error: A task was canceled.
+2025-11-26 17:14:15.210 [WRN] [Stream] Exit Code: -1
+2025-11-26 17:14:15.211 [INF] [Stream] [ffmpeg] Çıkış kodu: -1
+2025-11-26 17:14:15.782 [INF] [Stream] [start] Yayın başladı. Profil: Default
+2025-11-26 17:14:15.805 [INF] [Stream] ffmpeg version 2025-10-19-git-dc39a576ad-full_build-www.gyan.dev
+2025-11-26 17:14:15.806 [INF] [Stream]  Copyright (c) 2000-2025 the FFmpeg developers
+2025-11-26 17:14:15.807 [INF] [Stream]   built with gcc 15.2.0 (Rev8, Built by MSYS2 project)
+2025-11-26 17:14:15.808 [INF] [Stream]   configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper
+2025-11-26 17:14:15.808 [INF] [Stream]   libavutil      60. 13.100 / 60. 13.100
+2025-11-26 17:14:15.809 [INF] [Stream]   libavcodec     62. 16.100 / 62. 16.100
+2025-11-26 17:14:15.809 [INF] [Stream]   libavformat    62.  6.101 / 62.  6.101
+2025-11-26 17:14:15.810 [INF] [Stream]   libavdev
+2025-11-26 17:14:15.811 [INF] [Stream] ice    62.  2.100 / 62.  2.100
+2025-11-26 17:14:15.811 [INF] [Stream]   libavfilter    11.  9.100 / 11.  9.100
+2025-11-26 17:14:15.812 [INF] [Stream]   libswscale      9.  3.100 /  9.  3.100
+2025-11-26 17:14:15.813 [INF] [Stream]   libswresample   6.  2.100 /  6.  2.100
+2025-11-26 17:14:15.814 [INF] [Stream] Input #0, lavfi, from 'testsrc=size=1280x720:rate=30':
+2025-11-26 17:14:15.814 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: N/A
+2025-11-26 17:14:15.815 [INF] [Stream]   Stream #0:0: Video: wrapped_avframe, rgb24, 1280x720 [SAR 1:1 DAR 16:9], 30 fps, 30 tbr, 30 tbn
+2025-11-26 17:14:15.815 [INF] [Stream] [out @ 000001ab13ee0c40] The "sample_fmts" option is deprecated: set the supported sample formats
+2025-11-26 17:14:15.816 [INF] [Stream] [out @ 000001ab13ee0c40] The "all_channel_counts" option is deprecated: accept all channel counts
+2025-11-26 17:14:15.817 [INF] [Stream] Input #1, lavfi, from 'anullsrc=channel_layout=stereo:sample_rate=44100':
+2025-11-26 17:14:15.817 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: 705 kb/s
+2025-11-26 17:14:15.818 [INF] [Stream]   Stream #1:0: Audio: pcm_u8, 44100 Hz, stereo, u8, 705 kb/s
+2025-11-26 17:14:16.276 [INF] [Stream] [stop] Yayın durduruluyor...
+2025-11-26 17:14:16.300 [INF] [Stream] FFmpeg: Yayın hatası oluştu. RTMP adresini, stream key’i ve internet bağlantısını kontrol edin.
+2025-11-26 17:14:16.304 [WRN] [Stream] Exit Code: -1
+2025-11-26 17:14:16.304 [INF] [Stream] stderr read error: A task was canceled.
+2025-11-26 17:14:16.305 [INF] [Stream] [ffmpeg] Çıkış kodu: -1
+2025-11-26 17:14:17.390 [INF] [Stream] [start] Yayın başladı. Profil: Default
+2025-11-26 17:14:17.414 [INF] [Stream] ffmpeg version 2025-10-19-git-dc39a576ad-full_build-www.gyan.dev
+2025-11-26 17:14:17.415 [INF] [Stream]  Copyright (c) 2000-2025 the FFmpeg developers
+2025-11-26 17:14:17.416 [INF] [Stream]   built with gcc 15.2.0 (Rev8, Built by MSYS2 project)
+2025-11-26 17:14:17.417 [INF] [Stream]   configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper
+2025-11-26 17:14:17.417 [INF] [Stream]   libavutil      60. 13.100 / 60. 13.100
+2025-11-26 17:14:17.418 [INF] [Stream]   libavcodec     62. 16.100 / 62. 16.100
+2025-11-26 17:14:17.419 [INF] [Stream]   libavformat    62.  6.101 / 62.  6.101
+2025-11-26 17:14:17.419 [INF] [Stream]   libavdev
+2025-11-26 17:14:17.420 [INF] [Stream] ice    62.  2.100 / 62.  2.100
+2025-11-26 17:14:17.421 [INF] [Stream]   libavfilter    11.  9.100 / 11.  9.100
+2025-11-26 17:14:17.421 [INF] [Stream]   libswscale      9.  3.100 /  9.  3.100
+2025-11-26 17:14:17.422 [INF] [Stream]   libswresample   6.  2.100 /  6.  2.100
+2025-11-26 17:14:17.423 [INF] [Stream] Input #0, lavfi, from 'testsrc=size=1280x720:rate=30':
+2025-11-26 17:14:17.423 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: N/A
+2025-11-26 17:14:17.424 [INF] [Stream]   Stream #0:0: Video: wrapped_avframe, rgb24, 1280x720 [SAR 1:1 DAR 16:9], 30 fps, 30 tbr, 30 tbn
+2025-11-26 17:14:17.425 [INF] [Stream] [out @ 000002700b930c40] The "sample_fmts" option is deprecated: set the supported sample formats
+2025-11-26 17:14:17.425 [INF] [Stream] [out @ 000002700b930c40] The "all_channel_counts" option is deprecated: accept all channel counts
+2025-11-26 17:14:17.426 [INF] [Stream] Input #1, lavfi, from 'anullsrc=channel_layout=stereo:sample_rate=44100':
+2025-11-26 17:14:17.426 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: 705 kb/s
+2025-11-26 17:14:17.427 [INF] [Stream]   Stream #1:0: Audio: pcm_u8, 44100 Hz, stereo, u8, 705 kb/s
+2025-11-26 17:14:19.770 [INF] [Stream] [tls @ 000002700b9585c0]
+2025-11-26 17:14:19.771 [INF] [Stream]  A TLS fatal alert has been received.
+2025-11-26 17:14:19.772 [ERR] [Stream] [out#1/flv @ 000002700b956280] Error opening output rtmps://live-api-s.facebook.com:443/rtmp/FB-1526913761827855-0-Ab2GXPRKntgJTLPWN8A08ZSR: I/O error
+2025-11-26 17:14:19.773 [ERR] [Stream] Error opening output file rtmps://live-api-s.facebook.com:443/rtmp/FB-1526913761827855-0-Ab2GXPRKntgJTLPWN8A08ZSR.
+2025-11-26 17:14:19.774 [ERR] [Stream] Error opening output files: I/O error
+2025-11-26 17:14:19.774 [INF] [Stream] FFmpeg: Yayın hatası oluştu. RTMP adresini, stream key’i ve internet bağlantısını kontrol edin.
+2025-11-26 17:14:19.775 [WRN] [Stream] Exit Code: -5
+2025-11-26 17:14:19.776 [INF] [Stream] [ffmpeg] Çıkış kodu: -5
+2025-11-26 17:14:50.253 [INF] [Stream] [stop] Yayın durduruluyor...
+2025-11-26 17:14:52.134 [INF] [Stream] [stop] Aktif yayın süreci yok.
+2025-11-26 17:14:52.137 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-26 17:33:23.009 [INF] ===================================================
+2025-11-26 17:33:23.029 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-26 17:33:23.030 [INF] ===================================================
+2025-11-26 17:33:23.445 [INF] MainWindow yüklendi...
+2025-11-26 17:33:25.244 [INF] [Stream] [stop] Aktif yayın süreci yok.
+2025-11-26 17:33:25.247 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-26 17:39:02.522 [INF] ===================================================
+2025-11-26 17:39:02.540 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-26 17:39:02.541 [INF] ===================================================
+2025-11-26 17:39:02.973 [INF] MainWindow yüklendi...
+2025-11-26 17:39:14.623 [INF] [Stream] [start] Yayın başladı. Profil: Default
+2025-11-26 17:39:14.647 [INF] [Stream] ffmpeg version 2025-10-19-git-dc39a576ad-full_build-www.gyan.dev
+2025-11-26 17:39:14.648 [INF] [Stream]  Copyright (c) 2000-2025 the FFmpeg developers
+2025-11-26 17:39:14.649 [INF] [Stream]   built with gcc 15.2.0 (Rev8, Built by MSYS2 project)
+2025-11-26 17:39:14.649 [INF] [Stream]   configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper
+2025-11-26 17:39:14.650 [INF] [Stream]   libavutil      60. 13.100 / 60. 13.100
+2025-11-26 17:39:14.651 [INF] [Stream]   libavcodec     62. 16.100 / 62. 16.100
+2025-11-26 17:39:14.651 [INF] [Stream]   libavformat    62.  6.101 / 62.  6.101
+2025-11-26 17:39:14.652 [INF] [Stream]   libavdev
+2025-11-26 17:39:14.652 [INF] [Stream] ice    62.  2.100 / 62.  2.100
+2025-11-26 17:39:14.653 [INF] [Stream]   libavfilter    11.  9.100 / 11.  9.100
+2025-11-26 17:39:14.654 [INF] [Stream]   libswscale      9.  3.100 /  9.  3.100
+2025-11-26 17:39:14.654 [INF] [Stream]   libswresample   6.  2.100 /  6.  2.100
+2025-11-26 17:39:14.655 [INF] [Stream] Input #0, lavfi, from 'testsrc=size=1280x720:rate=30':
+2025-11-26 17:39:14.655 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: N/A
+2025-11-26 17:39:14.660 [INF] [Stream]   Stream #0:0: Video: wrapped_avframe, rgb24, 1280x720 [SAR 1:1 DAR 16:9], 30 fps, 30 tbr, 30 tbn
+2025-11-26 17:39:14.661 [INF] [Stream] [out @ 000001d595bb0c40] The "sample_fmts" option is deprecated: set the supported sample formats
+2025-11-26 17:39:14.662 [INF] [Stream] [out @ 000001d595bb0c40] The "all_channel_counts" option is deprecated: accept all channel counts
+2025-11-26 17:39:14.662 [INF] [Stream] Input #1, lavfi, from 'anullsrc=channel_layout=stereo:sample_rate=44100':
+2025-11-26 17:39:14.663 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: 705 kb/s
+2025-11-26 17:39:14.664 [INF] [Stream]   Stream #1:0: Audio: pcm_u8, 44100 Hz, stereo, u8, 705 kb/s
+2025-11-26 17:39:18.226 [INF] [Stream] Stream mapping:
+2025-11-26 17:39:18.228 [INF] [Stream]   Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (libx264))
+2025-11-26 17:39:18.228 [INF] [Stream]   Stream #1:0 -> #0:1 (pcm_u8 (native) -> aac (native))
+2025-11-26 17:39:18.229 [INF] [Stream]   Stream #0:0 -> #1:0 (wrapped_avframe (native) -> h264 (libx264))
+2025-11-26 17:39:18.230 [INF] [Stream]   Stream #1:0 -> #1:1 (pcm_u8 (native) -> aac (native))
+2025-11-26 17:39:18.231 [INF] [Stream] Press [q] to stop, [?] for help
+2025-11-26 17:39:18.234 [INF] [Stream] [libx264 @ 000001d595bb6040]
+2025-11-26 17:39:18.235 [INF] [Stream]  using SAR=1/1
+2025-11-26 17:39:18.236 [INF] [Stream] [libx264 @ 000001d595bc3280] using SAR=1/1
+2025-11-26 17:39:18.237 [INF] [Stream] [libx264 @ 000001d595bb6040] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-11-26 17:39:18.237 [INF] [Stream] [libx264 @ 000001d595bc3280] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-11-26 17:39:18.238 [INF] [Stream] [libx264 @ 000001d595bc3280] profile Constrained Baseline, level 3.1, 4:2:0, 8-bit
+2025-11-26 17:39:18.239 [INF] [Stream] [libx264 @ 000001d595bb6040] profile Constrained Baseline, level 3.1, 4:2:0, 8-bit
+2025-11-26 17:39:18.241 [INF] [Stream] Output #1, flv, to 'rtmps://live-api-s.facebook.com:443/rtmp/FB-1526913761827855-0-Ab2GXPRKntgJTLPWN8A08ZSR':
+2025-11-26 17:39:18.243 [INF] [Stream]   Metadata:
+2025-11-26 17:39:18.244 [INF] [Stream]     encoder         : Lavf62.6.101
+2025-11-26 17:39:18.245 [INF] [Stream]   Stream #1:0: Video: h264 ([7][0][0][0] / 0x0007), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 2500 kb/s, 30 fps, 1k tbn
+2025-11-26 17:39:18.246 [INF] [Stream]     Metadata:
+2025-11-26 17:39:18.247 [INF] [Stream]       encoder         : Lavc62.16.100 libx264
+2025-11-26 17:39:18.248 [INF] [Stream]     Side data:
+2025-11-26 17:39:18.249 [INF] [Stream]       CPB properties: bitrate max/min/avg: 2500000/0/2500000 buffer size: 5000000 vbv_delay: N/A
+2025-11-26 17:39:18.250 [INF] [Stream]   Stream #1:1: Audio: aac (LC) ([10][0][0][0] / 0x000A), 44100 Hz, stereo, fltp, 128 kb/s
+2025-11-26 17:39:18.251 [INF] [Stream]     Metadata:
+2025-11-26 17:39:18.252 [INF] [Stream]       encoder         : Lavc62.16.100 aac
+2025-11-26 17:39:18.253 [INF] [Stream] Output #0, flv, to 'rtmps://a.rtmps.youtube.com/live2/e54v-pkzg-y2ss-wjff-6ghh':
+2025-11-26 17:39:18.254 [INF] [Stream]   Metadata:
+2025-11-26 17:39:18.256 [INF] [Stream]     encoder         : Lavf62.6.101
+2025-11-26 17:39:18.257 [INF] [Stream]   Stream #0:0: Video: h264 ([7][0][0][0] / 0x0007), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 2500 kb/s, 30 fps, 1k tbn
+2025-11-26 17:39:18.257 [INF] [Stream]     Metadata:
+2025-11-26 17:39:18.258 [INF] [Stream]       encoder         : Lavc62.16.100 libx264
+2025-11-26 17:39:18.259 [INF] [Stream]     Side data:
+2025-11-26 17:39:18.260 [INF] [Stream]       CPB properties: bitrate max/min/avg: 2500000/0/2500000 buffer size: 5000000 vbv_delay: N/A
+2025-11-26 17:39:18.261 [INF] [Stream]   Stream #0:1: Audio: aac (LC) ([10][0][0][0] / 0x000A), 44100 Hz, stereo, fltp, 128 kb/s
+2025-11-26 17:39:18.262 [INF] [Stream]     Metadata:
+2025-11-26 17:39:18.262 [INF] [Stream]       encoder         : Lavc62.16.100 aac
+2025-11-26 17:39:30.758 [INF] [Stream] [stop] Yayın durduruluyor...
+2025-11-26 17:39:30.792 [INF] [Stream] FFmpeg: Yayın hatası oluştu. RTMP adresini, stream key’i ve internet bağlantısını kontrol edin.
+2025-11-26 17:39:30.794 [WRN] [Stream] Exit Code: -1
+2025-11-26 17:39:30.794 [INF] [Stream] [ffmpeg] Çıkış kodu: -1
+2025-11-26 17:55:43.037 [INF] ===================================================
+2025-11-26 17:55:43.055 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-26 17:55:43.056 [INF] ===================================================
+2025-11-26 17:55:43.468 [FTL] Kritik UI Hatası (DispatcherUnhandledException)
+System.InvalidOperationException: 'UniCast.App.ViewModels.ControlViewModel' türünde 'AudioLevel' salt okunur özelliğinde TwoWay veya OneWayToSource bağlama çalışamaz.
+   at MS.Internal.Data.PropertyPathWorker.CheckReadOnly(Object item, Object info)
+   at MS.Internal.Data.PropertyPathWorker.ReplaceItem(Int32 k, Object newO, Object parent)
+   at MS.Internal.Data.PropertyPathWorker.UpdateSourceValueState(Int32 k, ICollectionView collectionView, Object newValue, Boolean isASubPropertyChange)
+   at MS.Internal.Data.ClrBindingWorker.AttachDataItem()
+   at System.Windows.Data.BindingExpression.Activate(Object item)
+   at System.Windows.Data.BindingExpression.AttachToContext(AttachAttempt attempt)
+   at System.Windows.Data.BindingExpression.MS.Internal.Data.IDataBindEngineClient.AttachToContext(Boolean lastChance)
+   at MS.Internal.Data.DataBindEngine.Task.Run(Boolean lastChance)
+   at MS.Internal.Data.DataBindEngine.Run(Object arg)
+   at MS.Internal.Data.DataBindEngine.OnLayoutUpdated(Object sender, EventArgs e)
+   at System.Windows.ContextLayoutManager.fireLayoutUpdateEvent()
+   at System.Windows.ContextLayoutManager.UpdateLayout()
+   at System.Windows.Interop.HwndSource.SetLayoutSize()
+   at System.Windows.Interop.HwndSource.set_RootVisualInternal(Visual value)
+   at System.Windows.Window.SetRootVisualAndUpdateSTC()
+   at System.Windows.Window.SetupInitialState(Double requestedTop, Double requestedLeft, Double requestedWidth, Double requestedHeight)
+   at System.Windows.Window.CreateSourceWindow(Boolean duringShow)
+   at System.Windows.Window.ShowHelper(Object booleanBox)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+2025-11-26 17:55:43.503 [FTL] Kritik Sistem Hatası (AppDomain.UnhandledException) - Uygulama Kapanıyor mu: true
+System.InvalidOperationException: 'UniCast.App.ViewModels.ControlViewModel' türünde 'AudioLevel' salt okunur özelliğinde TwoWay veya OneWayToSource bağlama çalışamaz.
+   at MS.Internal.Data.PropertyPathWorker.CheckReadOnly(Object item, Object info)
+   at MS.Internal.Data.PropertyPathWorker.ReplaceItem(Int32 k, Object newO, Object parent)
+   at MS.Internal.Data.PropertyPathWorker.UpdateSourceValueState(Int32 k, ICollectionView collectionView, Object newValue, Boolean isASubPropertyChange)
+   at MS.Internal.Data.ClrBindingWorker.AttachDataItem()
+   at System.Windows.Data.BindingExpression.Activate(Object item)
+   at System.Windows.Data.BindingExpression.AttachToContext(AttachAttempt attempt)
+   at System.Windows.Data.BindingExpression.MS.Internal.Data.IDataBindEngineClient.AttachToContext(Boolean lastChance)
+   at MS.Internal.Data.DataBindEngine.Task.Run(Boolean lastChance)
+   at MS.Internal.Data.DataBindEngine.Run(Object arg)
+   at MS.Internal.Data.DataBindEngine.OnLayoutUpdated(Object sender, EventArgs e)
+   at System.Windows.ContextLayoutManager.fireLayoutUpdateEvent()
+   at System.Windows.ContextLayoutManager.UpdateLayout()
+   at System.Windows.Interop.HwndSource.SetLayoutSize()
+   at System.Windows.Interop.HwndSource.set_RootVisualInternal(Visual value)
+   at System.Windows.Window.SetRootVisualAndUpdateSTC()
+   at System.Windows.Window.SetupInitialState(Double requestedTop, Double requestedLeft, Double requestedWidth, Double requestedHeight)
+   at System.Windows.Window.CreateSourceWindow(Boolean duringShow)
+   at System.Windows.Window.ShowHelper(Object booleanBox)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+   at System.Windows.Threading.DispatcherOperation.InvokeImpl()
+   at MS.Internal.CulturePreservingExecutionContext.CallbackWrapper(Object obj)
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+   at MS.Internal.CulturePreservingExecutionContext.Run(CulturePreservingExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Windows.Threading.DispatcherOperation.Invoke()
+   at System.Windows.Threading.Dispatcher.ProcessQueue()
+   at System.Windows.Threading.Dispatcher.WndProcHook(IntPtr hwnd, Int32 msg, IntPtr wParam, IntPtr lParam, Boolean& handled)
+   at MS.Win32.HwndWrapper.WndProc(IntPtr hwnd, Int32 msg, IntPtr wParam, IntPtr lParam, Boolean& handled)
+   at MS.Win32.HwndSubclass.DispatcherCallbackOperation(Object o)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+   at System.Windows.Threading.Dispatcher.LegacyInvokeImpl(DispatcherPriority priority, TimeSpan timeout, Delegate method, Object args, Int32 numArgs)
+   at MS.Win32.HwndSubclass.SubclassWndProc(IntPtr hwnd, Int32 msg, IntPtr wParam, IntPtr lParam)
+   at MS.Win32.UnsafeNativeMethods.DispatchMessage(MSG& msg)
+   at System.Windows.Threading.Dispatcher.PushFrameImpl(DispatcherFrame frame)
+   at System.Windows.Application.RunDispatcher(Object ignore)
+   at System.Windows.Application.RunInternal(Window window)
+   at UniCast.App.App.Main()
+2025-11-26 17:56:28.025 [INF] ===================================================
+2025-11-26 17:56:28.043 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-26 17:56:28.044 [INF] ===================================================
+2025-11-26 17:56:28.392 [FTL] Kritik UI Hatası (DispatcherUnhandledException)
+System.InvalidOperationException: 'UniCast.App.ViewModels.ControlViewModel' türünde 'AudioLevel' salt okunur özelliğinde TwoWay veya OneWayToSource bağlama çalışamaz.
+   at MS.Internal.Data.PropertyPathWorker.CheckReadOnly(Object item, Object info)
+   at MS.Internal.Data.PropertyPathWorker.ReplaceItem(Int32 k, Object newO, Object parent)
+   at MS.Internal.Data.PropertyPathWorker.UpdateSourceValueState(Int32 k, ICollectionView collectionView, Object newValue, Boolean isASubPropertyChange)
+   at MS.Internal.Data.ClrBindingWorker.AttachDataItem()
+   at System.Windows.Data.BindingExpression.Activate(Object item)
+   at System.Windows.Data.BindingExpression.AttachToContext(AttachAttempt attempt)
+   at System.Windows.Data.BindingExpression.MS.Internal.Data.IDataBindEngineClient.AttachToContext(Boolean lastChance)
+   at MS.Internal.Data.DataBindEngine.Task.Run(Boolean lastChance)
+   at MS.Internal.Data.DataBindEngine.Run(Object arg)
+   at MS.Internal.Data.DataBindEngine.OnLayoutUpdated(Object sender, EventArgs e)
+   at System.Windows.ContextLayoutManager.fireLayoutUpdateEvent()
+   at System.Windows.ContextLayoutManager.UpdateLayout()
+   at System.Windows.Interop.HwndSource.SetLayoutSize()
+   at System.Windows.Interop.HwndSource.set_RootVisualInternal(Visual value)
+   at System.Windows.Window.SetRootVisualAndUpdateSTC()
+   at System.Windows.Window.SetupInitialState(Double requestedTop, Double requestedLeft, Double requestedWidth, Double requestedHeight)
+   at System.Windows.Window.CreateSourceWindow(Boolean duringShow)
+   at System.Windows.Window.ShowHelper(Object booleanBox)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+2025-11-26 17:56:28.405 [FTL] Kritik Sistem Hatası (AppDomain.UnhandledException) - Uygulama Kapanıyor mu: true
+System.InvalidOperationException: 'UniCast.App.ViewModels.ControlViewModel' türünde 'AudioLevel' salt okunur özelliğinde TwoWay veya OneWayToSource bağlama çalışamaz.
+   at MS.Internal.Data.PropertyPathWorker.CheckReadOnly(Object item, Object info)
+   at MS.Internal.Data.PropertyPathWorker.ReplaceItem(Int32 k, Object newO, Object parent)
+   at MS.Internal.Data.PropertyPathWorker.UpdateSourceValueState(Int32 k, ICollectionView collectionView, Object newValue, Boolean isASubPropertyChange)
+   at MS.Internal.Data.ClrBindingWorker.AttachDataItem()
+   at System.Windows.Data.BindingExpression.Activate(Object item)
+   at System.Windows.Data.BindingExpression.AttachToContext(AttachAttempt attempt)
+   at System.Windows.Data.BindingExpression.MS.Internal.Data.IDataBindEngineClient.AttachToContext(Boolean lastChance)
+   at MS.Internal.Data.DataBindEngine.Task.Run(Boolean lastChance)
+   at MS.Internal.Data.DataBindEngine.Run(Object arg)
+   at MS.Internal.Data.DataBindEngine.OnLayoutUpdated(Object sender, EventArgs e)
+   at System.Windows.ContextLayoutManager.fireLayoutUpdateEvent()
+   at System.Windows.ContextLayoutManager.UpdateLayout()
+   at System.Windows.Interop.HwndSource.SetLayoutSize()
+   at System.Windows.Interop.HwndSource.set_RootVisualInternal(Visual value)
+   at System.Windows.Window.SetRootVisualAndUpdateSTC()
+   at System.Windows.Window.SetupInitialState(Double requestedTop, Double requestedLeft, Double requestedWidth, Double requestedHeight)
+   at System.Windows.Window.CreateSourceWindow(Boolean duringShow)
+   at System.Windows.Window.ShowHelper(Object booleanBox)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+   at System.Windows.Threading.DispatcherOperation.InvokeImpl()
+   at MS.Internal.CulturePreservingExecutionContext.CallbackWrapper(Object obj)
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+   at MS.Internal.CulturePreservingExecutionContext.Run(CulturePreservingExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Windows.Threading.DispatcherOperation.Invoke()
+   at System.Windows.Threading.Dispatcher.ProcessQueue()
+   at System.Windows.Threading.Dispatcher.WndProcHook(IntPtr hwnd, Int32 msg, IntPtr wParam, IntPtr lParam, Boolean& handled)
+   at MS.Win32.HwndWrapper.WndProc(IntPtr hwnd, Int32 msg, IntPtr wParam, IntPtr lParam, Boolean& handled)
+   at MS.Win32.HwndSubclass.DispatcherCallbackOperation(Object o)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+   at System.Windows.Threading.Dispatcher.LegacyInvokeImpl(DispatcherPriority priority, TimeSpan timeout, Delegate method, Object args, Int32 numArgs)
+   at MS.Win32.HwndSubclass.SubclassWndProc(IntPtr hwnd, Int32 msg, IntPtr wParam, IntPtr lParam)
+   at MS.Win32.UnsafeNativeMethods.DispatchMessage(MSG& msg)
+   at System.Windows.Threading.Dispatcher.PushFrameImpl(DispatcherFrame frame)
+   at System.Windows.Application.RunDispatcher(Object ignore)
+   at System.Windows.Application.RunInternal(Window window)
+   at UniCast.App.App.Main()
+2025-11-26 18:00:54.829 [INF] ===================================================
+2025-11-26 18:00:54.848 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-26 18:00:54.848 [INF] ===================================================
+2025-11-26 18:00:55.278 [INF] MainWindow yüklendi...
+2025-11-26 18:02:04.341 [INF] [Stream] [start] Yayın başladı. Profil: Default
+2025-11-26 18:02:04.365 [INF] [Stream] ffmpeg version 2025-10-19-git-dc39a576ad-full_build-www.gyan.dev
+2025-11-26 18:02:04.366 [INF] [Stream]  Copyright (c) 2000-2025 the FFmpeg developers
+2025-11-26 18:02:04.367 [INF] [Stream]   built with gcc 15.2.0 (Rev8, Built by MSYS2 project)
+2025-11-26 18:02:04.368 [INF] [Stream]   configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper
+2025-11-26 18:02:04.368 [INF] [Stream]   libavutil      60. 13.100 / 60. 13.100
+2025-11-26 18:02:04.369 [INF] [Stream]   libavcodec     62. 16.100 / 62. 16.100
+2025-11-26 18:02:04.370 [INF] [Stream]   libavformat    62.  6.101 / 62.  6.101
+2025-11-26 18:02:04.370 [INF] [Stream]   libavdev
+2025-11-26 18:02:04.371 [INF] [Stream] ice    62.  2.100 / 62.  2.100
+2025-11-26 18:02:04.372 [INF] [Stream]   libavfilter    11.  9.100 / 11.  9.100
+2025-11-26 18:02:04.372 [INF] [Stream]   libswscale      9.  3.100 /  9.  3.100
+2025-11-26 18:02:04.373 [INF] [Stream]   libswresample   6.  2.100 /  6.  2.100
+2025-11-26 18:02:04.374 [INF] [Stream] Input #0, lavfi, from 'testsrc=size=1280x720:rate=30':
+2025-11-26 18:02:04.374 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: N/A
+2025-11-26 18:02:04.379 [INF] [Stream]   Stream #0:0: Video: wrapped_avframe, rgb24, 1280x720 [SAR 1:1 DAR 16:9], 30 fps, 30 tbr, 30 tbn
+2025-11-26 18:02:04.380 [INF] [Stream] [out @ 00000187d44f0c40] The "sample_fmts" option is deprecated: set the supported sample formats
+2025-11-26 18:02:04.381 [INF] [Stream] [out @ 00000187d44f0c40] The "all_channel_counts" option is deprecated: accept all channel counts
+2025-11-26 18:02:04.381 [INF] [Stream] Input #1, lavfi, from 'anullsrc=channel_layout=stereo:sample_rate=44100':
+2025-11-26 18:02:04.382 [INF] [Stream]   Duration: N/A, start: 0.000000, bitrate: 705 kb/s
+2025-11-26 18:02:04.383 [INF] [Stream]   Stream #1:0: Audio: pcm_u8, 44100 Hz, stereo, u8, 705 kb/s
+2025-11-26 18:02:07.941 [INF] [Stream] Stream mapping:
+2025-11-26 18:02:07.942 [INF] [Stream]   Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (libx264))
+2025-11-26 18:02:07.943 [INF] [Stream]   Stream #1:0 -> #0:1 (pcm_u8 (native) -> aac (native))
+2025-11-26 18:02:07.943 [INF] [Stream]   Stream #0:0 -> #1:0 (wrapped_avframe (native) -> h264 (libx264))
+2025-11-26 18:02:07.944 [INF] [Stream]   Stream #1:0 -> #1:1 (pcm_u8 (native) -> aac (native))
+2025-11-26 18:02:07.945 [INF] [Stream] Press [q] to stop, [?] for help
+2025-11-26 18:02:07.948 [INF] [Stream] [libx264 @ 00000187d4503280]
+2025-11-26 18:02:07.949 [INF] [Stream]  using SAR=1/1
+2025-11-26 18:02:07.950 [INF] [Stream] [libx264 @ 00000187d44f6040] using SAR=1/1
+2025-11-26 18:02:07.951 [INF] [Stream] [libx264 @ 00000187d4503280] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-11-26 18:02:07.951 [INF] [Stream] [libx264 @ 00000187d44f6040] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-11-26 18:02:07.953 [INF] [Stream] [libx264 @ 00000187d4503280] profile Constrained Baseline, level 3.1, 4:2:0, 8-bit
+2025-11-26 18:02:07.955 [INF] [Stream] Output #1, flv, to 'rtmps://live-api-s.facebook.com:443/rtmp/FB-1526913761827855-0-Ab2GXPRKntgJTLPWN8A08ZSR':
+2025-11-26 18:02:07.957 [INF] [Stream]   Metadata:
+2025-11-26 18:02:07.958 [INF] [Stream]     encoder         : Lavf62.6.101
+2025-11-26 18:02:07.959 [INF] [Stream]   Stream #1:0: Video: h264 ([7][0][0][0] / 0x0007), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 2500 kb/s, 30 fps, 1k tbn
+2025-11-26 18:02:07.961 [INF] [Stream]     Metadata:
+2025-11-26 18:02:07.962 [INF] [Stream]       encoder         : Lavc62.16.100 libx264
+2025-11-26 18:02:07.963 [INF] [Stream]     Side data:
+2025-11-26 18:02:07.963 [INF] [Stream]       CPB properties: bitrate max/min/avg: 2500000/0/2500000 buffer size: 5000000 vbv_delay: N/A
+2025-11-26 18:02:07.965 [INF] [Stream]   Stream #1:1: Audio: aac (LC) ([10][0][0][0] / 0x000A), 44100 Hz, stereo, fltp, 128 kb/s
+2025-11-26 18:02:07.966 [INF] [Stream]     Metadata:
+2025-11-26 18:02:07.967 [INF] [Stream]       encoder         : Lavc62.16.100 aac
+2025-11-26 18:02:07.968 [INF] [Stream] [libx264 @ 00000187d44f6040] profile Constrained Baseline, level 3.1, 4:2:0, 8-bit
+2025-11-26 18:02:07.969 [INF] [Stream] [libx264 @ 00000187d44f6040] 264 - core 165 r3223 0480cb0 - H.264/MPEG-4 AVC codec - Copyleft 2003-2025 - http://www.videolan.org/x264.html - options: cabac=0 ref=1 deblock=0:0:0 analyse=0:0 me=dia subme=0 psy=1 psy_rd=1.00:0.00 mixed_ref=0 me_range=16 chroma_me=1 trellis=0 8x8dct=0 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=0 threads=11 lookahead_threads=11 sliced_threads=1 slices=11 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=0 weightp=0 keyint=250 keyint_min=25 scenecut=0 intra_refresh=0 rc_lookahead=0 rc=
+2025-11-26 18:02:07.970 [INF] [Stream] Output #0, flv, to 'rtmps://a.rtmps.youtube.com/live2/e54v-pkzg-y2ss-wjff-6ghh':
+2025-11-26 18:02:07.971 [INF] [Stream]   Metadata:
+2025-11-26 18:02:07.972 [INF] [Stream]     encoder         : Lavf62.6.101
+2025-11-26 18:02:07.973 [INF] [Stream]   Stream #0:0: Video: h264 ([7][0][0][0] / 0x0007), yuv420p(tv, progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 2500 kb/s, 30 fps, 1k tbn
+2025-11-26 18:02:07.974 [INF] [Stream]     Metadata:
+2025-11-26 18:02:07.975 [INF] [Stream]       encoder         : Lavc62.16.100 libx264
+2025-11-26 18:02:07.975 [INF] [Stream]     Side data:
+2025-11-26 18:02:07.976 [INF] [Stream]       CPB properties: bitrate max/min/avg: 2500000/0/2500000 buffer size: 5000000 vbv_delay: N/A
+2025-11-26 18:02:07.977 [INF] [Stream]   Stream #0:1: Audio: aac (LC) ([10][0][0][0] / 0x000A), 44100 Hz, stereo, fltp, 128 kb/s
+2025-11-26 18:02:07.977 [INF] [Stream]     Metadata:
+2025-11-26 18:02:07.978 [INF] [Stream]       encoder         : Lavc62.16.100 aac
+2025-11-26 18:02:21.715 [INF] [Stream] [stop] Yayın durduruluyor...
+2025-11-26 18:02:21.754 [INF] [Stream] stderr read error: A task was canceled.
+2025-11-26 18:02:21.756 [INF] [Stream] FFmpeg: Yayın hatası oluştu. RTMP adresini, stream key’i ve internet bağlantısını kontrol edin.
+2025-11-26 18:02:21.758 [WRN] [Stream] Exit Code: -1
+2025-11-26 18:02:21.759 [INF] [Stream] [ffmpeg] Çıkış kodu: -1
+2025-11-26 18:02:26.926 [INF] [Stream] [stop] Aktif yayın süreci yok.
+2025-11-26 18:02:26.930 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0

@@ -57,6 +57,23 @@ namespace UniCast.App.Overlay
             });
             _publisher.Invalidate();
         }
+        public void StartBreakMode(int minutes)
+        {
+            _view.Dispatcher.Invoke(() =>
+            {
+                _view.StartBreak(minutes);
+            });
+            _publisher.Invalidate(); // Ekran değişti, çizim yap
+        }
+
+        public void StopBreakMode()
+        {
+            _view.Dispatcher.Invoke(() =>
+            {
+                _view.StopBreak();
+            });
+            _publisher.Invalidate();
+        }
 
         // EKSİK OLAN METOT BU:
         public void UpdateSize(double width, double height)

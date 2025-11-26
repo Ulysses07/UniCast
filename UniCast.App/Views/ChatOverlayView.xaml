@@ -31,52 +31,70 @@
         </DataTemplate>
 
         <DataTemplate x:Key="VideoTemplate">
-            <MediaElement Source="{Binding Source}" 
-                          LoadedBehavior="Play" 
-                          UnloadedBehavior="Stop" 
-                          MediaEnded="MediaElement_MediaEnded" 
-                          Stretch="Uniform"/>
+            <MediaElement Source="{Binding Source}" LoadedBehavior="Play" UnloadedBehavior="Stop" MediaEnded="MediaElement_MediaEnded" Stretch="Uniform"/>
         </DataTemplate>
     </UserControl.Resources>
 
-    <ItemsControl Name="SceneItemsControl" ItemsSource="{Binding SceneItems, RelativeSource={RelativeSource AncestorType=UserControl}}">
-        <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-                <Canvas />
-            </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
+    <Grid>
+        <ItemsControl Name="SceneItemsControl" ItemsSource="{Binding SceneItems, RelativeSource={RelativeSource AncestorType=UserControl}}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
 
-        <ItemsControl.ItemContainerStyle>
-            <Style TargetType="ContentPresenter">
-                <Setter Property="Canvas.Left" Value="{Binding X}" />
-                <Setter Property="Canvas.Top" Value="{Binding Y}" />
-                <Setter Property="Width" Value="{Binding Width}" />
-                <Setter Property="Height" Value="{Binding Height}" />
-                <Setter Property="Opacity" Value="{Binding Opacity}" />
-                <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            </Style>
-        </ItemsControl.ItemContainerStyle>
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="Canvas.Left" Value="{Binding X}" />
+                    <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                    <Setter Property="Width" Value="{Binding Width}" />
+                    <Setter Property="Height" Value="{Binding Height}" />
+                    <Setter Property="Opacity" Value="{Binding Opacity}" />
+                    <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </Style>
+            </ItemsControl.ItemContainerStyle>
 
-        <ItemsControl.ItemTemplate>
-            <DataTemplate>
-                <ContentControl Content="{Binding}">
-                    <ContentControl.Style>
-                        <Style TargetType="ContentControl">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Type}" Value="Chat">
-                                    <Setter Property="ContentTemplate" Value="{StaticResource ChatTemplate}"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Type}" Value="Image">
-                                    <Setter Property="ContentTemplate" Value="{StaticResource ImageTemplate}"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Type}" Value="Video">
-                                    <Setter Property="ContentTemplate" Value="{StaticResource VideoTemplate}"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ContentControl.Style>
-                </ContentControl>
-            </DataTemplate>
-        </ItemsControl.ItemTemplate>
-    </ItemsControl>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <ContentControl Content="{Binding}">
+                        <ContentControl.Style>
+                            <Style TargetType="ContentControl">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Type}" Value="Chat">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource ChatTemplate}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Image">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource ImageTemplate}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Video">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource VideoTemplate}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Grid Name="BreakOverlay" Visibility="Collapsed" Background="#EE111111">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="☕" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                <TextBlock Text="KISA BİR ARA" 
+                           FontSize="48" FontWeight="Bold" Foreground="White" 
+                           HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                <TextBlock Name="BreakTimerText" 
+                           Text="05:00" 
+                           FontSize="120" FontWeight="Black" Foreground="#FFD700" 
+                           HorizontalAlignment="Center" 
+                           FontFamily="Consolas, Courier New, Monospace"/>
+
+                <TextBlock Text="Hemen döneceğiz..." 
+                           FontSize="24" Foreground="#AAAAAA" 
+                           HorizontalAlignment="Center" Margin="0,20,0,0"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
 </UserControl>
