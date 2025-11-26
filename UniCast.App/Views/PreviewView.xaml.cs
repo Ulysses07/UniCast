@@ -1,97 +1,181 @@
 ﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input; // MouseButtonEventArgs buradan gelir
+using System.Windows.Input;
+using Microsoft.Win32; // OpenFileDialog için
 using UniCast.App.Services;
+using UniCast.Core.Models;
+using UniCast.Core.Settings;
 using Application = System.Windows.Application;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Point = System.Windows.Point;
 
 namespace UniCast.App.Views
 {
-    // HATA DÜZELTME: WPF UserControl
     public partial class PreviewView : System.Windows.Controls.UserControl
     {
-        private bool _isDragging = false;
-        private Point _startPoint;
-        private double _startX, _startY;
+        // Sahne Listesi (Binding için)
+        public ObservableCollection<OverlayItem> SceneItems { get; private set; } = new();
 
+        // Sürükleme Durumu
+        private bool _isDragging = false;
         private bool _isResizing = false;
-        private Point _resizeStartPoint;
-        private double _startWidth;
+        private Point _startPoint;
+        private OverlayItem? _selectedItem; // O an düzenlenen öğe
 
         public PreviewView(object? viewModel = null)
         {
             InitializeComponent();
             if (viewModel != null) DataContext = viewModel;
 
+            // Öğeleri yükle
+            LoadItems();
+
+            // ItemsControl'e kaynağı bağla
+            EditorItemsControl.ItemsSource = SceneItems;
+        }
+
+        private void LoadItems()
+        {
             var s = SettingsStore.Load();
-            Canvas.SetLeft(DraggableChatBox, s.OverlayX);
-            Canvas.SetTop(DraggableChatBox, s.OverlayY);
-            DraggableChatBox.Width = s.OverlayWidth;
+            s.Normalize(); // Null listeleri oluşturur, varsayılan Chat'i ekler
+
+            SceneItems.Clear();
+            foreach (var item in s.SceneItems) SceneItems.Add(item);
         }
 
-        // --- TAŞIMA (DRAG) ---
-        private void ChatBox_MouseDown(object sender, MouseButtonEventArgs e)
+        private void SaveSettings()
         {
-            // HATA DÜZELTME: 'ResizeHandle' ismini kullanıyoruz
-            if (e.OriginalSource == ResizeHandle) return;
+            var s = SettingsStore.Load();
+            s.SceneItems = SceneItems.ToList();
+            SettingsStore.Save(s);
 
-            _isDragging = true;
-            _startPoint = e.GetPosition(OverlayCanvas);
-            _startX = Canvas.GetLeft(DraggableChatBox);
-            _startY = Canvas.GetTop(DraggableChatBox);
-            DraggableChatBox.CaptureMouse();
+            // Ana pencereyi uyar (Canlı yayındaki Overlay'i güncelle)
+            if (Application.Current.MainWindow is MainWindow mw)
+                mw.RefreshOverlay();
         }
 
-        // HATA DÜZELTME: System.Windows.Input.MouseEventArgs (Tam Ad)
-        private void ChatBox_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        // --- BUTON OLAYLARI ---
+
+        private void AddImage_Click(object sender, RoutedEventArgs e)
         {
-            if (_isDragging)
+            var dlg = new OpenFileDialog { Filter = "Resimler|*.png;*.jpg;*.jpeg;*.bmp;*.gif" };
+            if (dlg.ShowDialog() == true)
             {
-                var current = e.GetPosition(OverlayCanvas);
-                var offX = current.X - _startPoint.X;
-                var offY = current.Y - _startPoint.Y;
-
-                var newX = Math.Max(0, _startX + offX);
-                var newY = Math.Max(0, _startY + offY);
-
-                Canvas.SetLeft(DraggableChatBox, newX);
-                Canvas.SetTop(DraggableChatBox, newY);
+                var item = new OverlayItem
+                {
+                    Type = OverlayType.Image,
+                    Source = dlg.FileName,
+                    X = 50,
+                    Y = 50,
+                    Width = 200,
+                    Height = 200,
+                    IsVisible = true
+                };
+                SceneItems.Add(item);
+                SaveSettings();
             }
         }
 
-        private void ChatBox_MouseUp(object sender, MouseButtonEventArgs e)
+        private void AddVideo_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog { Filter = "Videolar|*.mp4;*.avi;*.mov;*.mkv" };
+            if (dlg.ShowDialog() == true)
+            {
+                var item = new OverlayItem
+                {
+                    Type = OverlayType.Video,
+                    Source = dlg.FileName,
+                    X = 50,
+                    Y = 50,
+                    Width = 300,
+                    Height = 170,
+                    IsVisible = true
+                };
+                SceneItems.Add(item);
+                SaveSettings();
+            }
+        }
+
+        private void RemoveItem_Click(object sender, RoutedEventArgs e)
+        {
+            // Son ekleneni veya seçili olanı sil (Basitlik için sonuncuyu siliyoruz)
+            // Gelişmiş versiyonda _selectedItem silinir.
+            var itemToRemove = SceneItems.LastOrDefault(x => x.Type != OverlayType.Chat); // Chat silinmesin
+            if (itemToRemove != null)
+            {
+                SceneItems.Remove(itemToRemove);
+                SaveSettings();
+            }
+        }
+
+        // --- SÜRÜKLEME MANTIĞI (Generic) ---
+
+        private void Item_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.Tag is OverlayItem item)
+            {
+                _selectedItem = item;
+                _isDragging = true;
+                _startPoint = e.GetPosition(EditorItemsControl);
+                fe.CaptureMouse();
+            }
+        }
+
+        private void Item_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (_isDragging && _selectedItem != null)
+            {
+                var current = e.GetPosition(EditorItemsControl);
+                var diffX = current.X - _startPoint.X;
+                var diffY = current.Y - _startPoint.Y;
+
+                _selectedItem.X += diffX;
+                _selectedItem.Y += diffY;
+
+                _startPoint = current; // Yeni referans noktası
+            }
+        }
+
+        private void Item_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if (_isDragging)
             {
                 _isDragging = false;
-                DraggableChatBox.ReleaseMouseCapture();
-                SavePosition();
+                (sender as FrameworkElement)?.ReleaseMouseCapture();
+                SaveSettings(); // Konum değişti, kaydet
             }
         }
 
-        // --- BOYUTLANDIRMA (RESIZE) ---
+        // --- BOYUTLANDIRMA MANTIĞI ---
+
         private void Resize_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            _isResizing = true;
-            _resizeStartPoint = e.GetPosition(OverlayCanvas);
-            _startWidth = DraggableChatBox.Width;
-
-            e.Handled = true;
-            // HATA DÜZELTME: 'ResizeHandle' ismini kullanıyoruz
-            ResizeHandle.CaptureMouse();
+            if (sender is FrameworkElement fe && fe.Tag is OverlayItem item)
+            {
+                _selectedItem = item;
+                _isResizing = true;
+                _startPoint = e.GetPosition(EditorItemsControl);
+                e.Handled = true; // Sürüklemeyi engelle
+                fe.CaptureMouse();
+            }
         }
 
-        // HATA DÜZELTME: System.Windows.Input.MouseEventArgs (Tam Ad)
-        private void Resize_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        private void Resize_MouseMove(object sender, MouseEventArgs e)
         {
-            if (_isResizing)
+            if (_isResizing && _selectedItem != null)
             {
-                var current = e.GetPosition(OverlayCanvas);
-                var diffX = current.X - _resizeStartPoint.X;
+                var current = e.GetPosition(EditorItemsControl);
+                var diffX = current.X - _startPoint.X;
+                var diffY = current.Y - _startPoint.Y;
 
-                // Min genişlik 200px
-                DraggableChatBox.Width = Math.Max(200, _startWidth + diffX);
+                _selectedItem.Width = Math.Max(50, _selectedItem.Width + diffX);
+                _selectedItem.Height = Math.Max(50, _selectedItem.Height + diffY);
+
+                _startPoint = current;
             }
         }
 
@@ -100,33 +184,9 @@ namespace UniCast.App.Views
             if (_isResizing)
             {
                 _isResizing = false;
-                // HATA DÜZELTME: 'ResizeHandle' ismini kullanıyoruz
-                ResizeHandle.ReleaseMouseCapture();
-                SaveSize();
+                (sender as FrameworkElement)?.ReleaseMouseCapture();
+                SaveSettings();
             }
-        }
-
-        // --- KAYIT ---
-        private void SavePosition()
-        {
-            var s = SettingsStore.Load();
-            s.OverlayX = (int)Canvas.GetLeft(DraggableChatBox);
-            s.OverlayY = (int)Canvas.GetTop(DraggableChatBox);
-            SettingsStore.Save(s);
-
-            if (Application.Current.MainWindow is MainWindow mw)
-                mw.UpdateOverlayPosition(s.OverlayX, s.OverlayY);
-        }
-
-        private void SaveSize()
-        {
-            var s = SettingsStore.Load();
-            s.OverlayWidth = DraggableChatBox.Width;
-            SettingsStore.Save(s);
-
-            // HATA DÜZELTME: MainWindow.cs içine UpdateOverlaySize metodunu ekleyeceğiz
-            if (Application.Current.MainWindow is MainWindow mw)
-                mw.UpdateOverlaySize(s.OverlayWidth);
         }
     }
 }

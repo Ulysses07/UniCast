@@ -29,6 +29,21 @@ namespace UniCast.App.Overlay
             _publisher.Start();
         }
 
+        // YENİ METOT: SettingsData'yı tekrar yükle ve View'u güncelle
+        public void ReloadSettings()
+        {
+            _view.Dispatcher.Invoke(() =>
+            {
+                // ChatOverlayView.xaml.cs içinde LoadFromSettings metodu var, onu public yapmalısın.
+                // Veya basitçe: View zaten SettingsStore kullanıyor, yeniden tetikleyelim.
+                // En temizi: ChatOverlayView.xaml.cs'deki 'LoadFromSettings' metodunu 'public void Refresh()' yap.
+
+                // Burada View üzerinde tanımlayacağımız metodu çağırıyoruz:
+                _view.RefreshScene();
+            });
+            _publisher.Invalidate();
+        }
+
         public async Task StopAsync()
         {
             await _publisher.StopAsync();

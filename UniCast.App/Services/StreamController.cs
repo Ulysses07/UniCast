@@ -30,7 +30,7 @@ namespace UniCast.App.Services
         public event EventHandler<int>? OnExit;
 
         // --- Fields ---
-        private readonly List<StreamTarget> _targets = new();
+        private readonly List<StreamTarget> _targets = [];
         private FfmpegProcess? _ffmpegProcess;
         private CancellationTokenSource? _procCts;
 

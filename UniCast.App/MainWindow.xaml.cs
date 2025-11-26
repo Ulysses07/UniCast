@@ -218,6 +218,17 @@ namespace UniCast.App
             }
         }
 
+        // YENİ: Tüm Overlay'i ayarlar dosyasından yeniden yükle
+        public void RefreshOverlay()
+        {
+            if (_overlay != null)
+            {
+                // Bu metodu Controller'a eklememiz gerekecek (Adım 4)
+                _overlay.ReloadSettings();
+                Log.Information("Overlay sahnesi güncellendi.");
+            }
+        }
+
         // --- Mesajları Overlay'e İlet ---
         private void OnIngestorMessageToOverlay(ChatMessage msg)
         {
