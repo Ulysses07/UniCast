@@ -48,6 +48,7 @@
                                 MouseLeftButtonUp="Item_MouseUp"
                                 MouseMove="Item_MouseMove"
                                 Tag="{Binding}">
+
                             <Grid>
                                 <TextBlock Text="{Binding Type}" Foreground="Orange" 
                                            VerticalAlignment="Center" HorizontalAlignment="Center" 
