@@ -182,6 +182,7 @@ namespace UniCast.App.Services
             }
 
             // 3. Argümanları Oluştur
+            var overlayPipeName = globalSettings.ShowOverlay ? "unicast_overlay" : null;
             var args = FfmpegArgsBuilder.BuildFfmpegArgs(
                 CurrentProfile,
                 enabledTargets,
@@ -189,7 +190,8 @@ namespace UniCast.App.Services
                 finalAudioName,
                 screenCapture,
                 delayMs,
-                recordPath
+                recordPath,
+                overlayPipeName
             );
 
             _procCts = CancellationTokenSource.CreateLinkedTokenSource(ct);

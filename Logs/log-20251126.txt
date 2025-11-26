@@ -931,3 +931,9 @@ System.InvalidOperationException: 'UniCast.App.ViewModels.ControlViewModel' tür
 2025-11-26 18:02:21.759 [INF] [Stream] [ffmpeg] Çıkış kodu: -1
 2025-11-26 18:02:26.926 [INF] [Stream] [stop] Aktif yayın süreci yok.
 2025-11-26 18:02:26.930 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-26 18:24:13.563 [INF] ===================================================
+2025-11-26 18:24:13.580 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-26 18:24:13.581 [INF] ===================================================
+2025-11-26 18:24:14.032 [INF] MainWindow yüklendi...
+2025-11-26 18:24:29.181 [INF] [Stream] [stop] Aktif yayın süreci yok.
+2025-11-26 18:24:29.184 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
