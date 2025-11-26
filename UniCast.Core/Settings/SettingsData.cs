@@ -52,6 +52,7 @@ namespace UniCast.Core.Settings
         public int OverlayX { get; set; } = 24;
         public int OverlayY { get; set; } = 24;
         public double OverlayWidth { get; set; } = 300; // Boyutlandırma için
+        public double OverlayHeight { get; set; } = 400;
         public double OverlayOpacity { get; set; } = 0.85;
         public int OverlayFontSize { get; set; } = 18;
 
@@ -78,6 +79,7 @@ namespace UniCast.Core.Settings
             OverlayOpacity = Math.Clamp(OverlayOpacity, 0.0, 1.0);
             OverlayFontSize = Math.Clamp(OverlayFontSize, 8, 96);
             OverlayWidth = Math.Clamp(OverlayWidth, 200, 1000);
+            OverlayHeight = Math.Clamp(OverlayHeight, 100, 1000);
 
             SceneItems ??= new List<OverlayItem>();
             if (OverlayX < 0) OverlayX = 0;

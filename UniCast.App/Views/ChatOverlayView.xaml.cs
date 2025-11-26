@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Collections.Generic; // List için eklendi
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq; // FirstOrDefault için gerekli
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -9,7 +10,6 @@ using UniCast.Core.Models;
 
 namespace UniCast.App.Views
 {
-    // Basit mesaj modeli (UI için)
     public class OverlayChatMessage
     {
         public string Author { get; set; } = "";
@@ -18,72 +18,71 @@ namespace UniCast.App.Views
 
     public partial class ChatOverlayView : System.Windows.Controls.UserControl
     {
-        // Sahnedeki Öğeler (Resim, Video, Chat Kutusu)
-        public ObservableCollection<OverlayItem> SceneItems { get; private set; } = [];
-
-        // Chat Kutusunun İçindeki Mesajlar
-        public ObservableCollection<OverlayChatMessage> ChatMessages { get; private set; } = [];
+        public ObservableCollection<OverlayItem> SceneItems { get; private set; } = new();
+        public ObservableCollection<OverlayChatMessage> ChatMessages { get; private set; } = new();
 
         public ChatOverlayView()
         {
             InitializeComponent();
+            LoadFromSettings();
+        }
 
-            // Başlangıçta ayarları yükle
+        public void RefreshScene()
+        {
             LoadFromSettings();
         }
 
         private void LoadFromSettings()
         {
             var s = SettingsStore.Load();
-
-            // SettingsData.SceneItems listesini buraya kopyalıyoruz
-            // Eğer settings boşsa varsayılan ekle
             if (s.SceneItems == null || s.SceneItems.Count == 0)
             {
-                s.Normalize(); // Varsayılan Chat kutusunu oluşturur ve listeyi başlatır
+                s.Normalize();
                 SettingsStore.Save(s);
             }
 
             SceneItems.Clear();
-
-            // UYARI DÜZELTME (CS8602):
-            // Derleyiciye 's.SceneItems'ın null olmadığını garanti ediyoruz.
-            // Eğer bir aksilik olur da null gelirse, boş bir liste vererek döngünün patlamasını önlüyoruz.
             var itemsToLoad = s.SceneItems ?? new List<OverlayItem>();
-
             foreach (var item in itemsToLoad)
             {
                 SceneItems.Add(item);
             }
         }
 
-        // Controller'ın çağırdığı metot
+        // HATA DÜZELTME: ChatContainer yok, listeden Chat öğesini bulup güncelliyoruz.
+        public void SetPosition(double x, double y)
+        {
+            var chatItem = SceneItems.FirstOrDefault(i => i.Type == OverlayType.Chat);
+            if (chatItem != null)
+            {
+                chatItem.X = x;
+                chatItem.Y = y;
+            }
+        }
+
+        // HATA DÜZELTME: SetWidth yerine SetSize (Yükseklik de geldi)
+        public void SetSize(double width, double height)
+        {
+            var chatItem = SceneItems.FirstOrDefault(i => i.Type == OverlayType.Chat);
+            if (chatItem != null)
+            {
+                chatItem.Width = width;
+                chatItem.Height = height;
+            }
+        }
+
         public void AddMessage(string author, string message)
         {
             ChatMessages.Add(new OverlayChatMessage { Author = author, Text = message });
-
-            // Listeyi temiz tut (Son 8 mesaj)
-            if (ChatMessages.Count > 8)
-            {
-                ChatMessages.RemoveAt(0);
-            }
-        }
-        public void RefreshScene()
-        {
-            LoadFromSettings();
+            if (ChatMessages.Count > 8) ChatMessages.RemoveAt(0);
         }
 
-        // Eski metotlar (Uyumluluk için tutuyoruz, ama artık SceneItems kullanılıyor)
-        public void SetPosition(double x, double y) { /* SceneItems üzerinden yönetiliyor */ }
-        public void SetWidth(double width) { /* SceneItems üzerinden yönetiliyor */ }
-
-        // VİDEO DÖNGÜSÜ (LOOP)
         private void MediaElement_MediaEnded(object sender, RoutedEventArgs e)
         {
             if (sender is MediaElement media)
             {
-                media.Position = TimeSpan.Zero; // Başa sar
-                media.Play(); // Tekrar oynat
+                media.Position = TimeSpan.Zero;
+                media.Play();
             }
         }
     }

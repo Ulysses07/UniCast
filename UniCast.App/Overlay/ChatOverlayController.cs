@@ -59,11 +59,11 @@ namespace UniCast.App.Overlay
         }
 
         // EKSİK OLAN METOT BU:
-        public void UpdateSize(double width)
+        public void UpdateSize(double width, double height)
         {
             _view.Dispatcher.Invoke(() =>
             {
-                _view.SetWidth(width);
+                _view.SetSize(width, height);
             });
             _publisher.Invalidate();
         }
