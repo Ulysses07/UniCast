@@ -17,6 +17,16 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="External\ffmpeg.exe" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="External\ffmpeg.exe">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="DirectShowLib" Version="1.0.0" />
 		<PackageReference Include="NAudio" Version="2.2.1" />
 

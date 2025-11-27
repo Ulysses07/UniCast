@@ -16,15 +16,24 @@ namespace UniCast.Encoder
         private Process? _proc;
         private string _lastErrorLine = "";
 
+        // --- 1. GÜNCEL PATH ÇÖZÜMLEME (External Klasörü Destekli) ---
         public static string ResolveFfmpegPath()
         {
-            var exeDir = AppDomain.CurrentDomain.BaseDirectory;
-            var local = Path.Combine(exeDir, "ffmpeg.exe");
-            if (File.Exists(local)) return local;
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-            var local2 = Path.Combine(exeDir, "ffmpeg", "bin", "ffmpeg.exe");
-            if (File.Exists(local2)) return local2;
+            // 1. Öncelik: 'External' klasörü (Dağıtım için)
+            var bundledPath = Path.Combine(baseDir, "External", "ffmpeg.exe");
+            if (File.Exists(bundledPath)) return bundledPath;
 
+            // 2. Öncelik: Ana Dizin
+            var localPath = Path.Combine(baseDir, "ffmpeg.exe");
+            if (File.Exists(localPath)) return localPath;
+
+            // 3. Öncelik: ffmpeg/bin alt klasörü (Geliştirme ortamı için)
+            var binPath = Path.Combine(baseDir, "ffmpeg", "bin", "ffmpeg.exe");
+            if (File.Exists(binPath)) return binPath;
+
+            // 4. Öncelik: Sistem PATH
             return "ffmpeg";
         }
 
@@ -33,24 +42,33 @@ namespace UniCast.Encoder
             if (_proc is not null)
                 throw new InvalidOperationException("FFmpeg already running.");
 
+            var ffmpegPath = ResolveFfmpegPath();
+
+            // Dosya kontrolü
+            if (ffmpegPath != "ffmpeg" && !File.Exists(ffmpegPath))
+                throw new FileNotFoundException("FFmpeg dosyası bulunamadı!", ffmpegPath);
+
             var psi = new ProcessStartInfo
             {
-                FileName = ResolveFfmpegPath(),
+                FileName = ffmpegPath,
                 Arguments = args,
                 CreateNoWindow = true,
                 UseShellExecute = false,
-                RedirectStandardError = true
+                RedirectStandardError = true, // Loglar buradan akar
+                RedirectStandardOutput = true // Bazen buraya da yazar
             };
 
             _proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
+            // --- 2. ÇIKIŞ OLAYI VE HATA TERCÜMESİ (ESKİ KODDAN GERİ GELDİ) ---
             _proc.Exited += (_, __) =>
             {
                 // İnsan okunabilir hata mesajı üret
                 if (!string.IsNullOrWhiteSpace(_lastErrorLine))
                 {
+                    // ErrorDictionary sınıfın projede mevcut olduğu için bunu kullanıyoruz
                     var meaning = ErrorDictionary.Translate(_lastErrorLine);
-                    OnLog?.Invoke("FFmpeg: " + meaning);
+                    OnLog?.Invoke("FFmpeg Hata Analizi: " + meaning);
                 }
 
                 OnExit?.Invoke(_proc?.ExitCode);
@@ -59,6 +77,7 @@ namespace UniCast.Encoder
             if (!_proc.Start())
                 throw new InvalidOperationException("FFmpeg failed to start.");
 
+            // --- 3. OKUMA DÖNGÜSÜ (STREAM READING - DAHA PERFORMANSLI) ---
             _ = Task.Run(async () =>
             {
                 try
@@ -73,14 +92,12 @@ namespace UniCast.Encoder
                         {
                             var chunk = new string(buffer, 0, n);
 
-                            foreach (var line in chunk.Split('\n'))
+                            foreach (var line in chunk.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
                             {
-                                var ln = line.TrimEnd();
+                                var ln = line.Trim();
+                                if (string.IsNullOrWhiteSpace(ln)) continue;
 
-                                if (string.IsNullOrWhiteSpace(ln))
-                                    continue;
-
-                                // Son error satırını tut
+                                // Son hatayı sakla (Çıkışta analiz etmek için)
                                 _lastErrorLine = ln;
 
                                 if (IsMetric(ln))
@@ -97,7 +114,7 @@ namespace UniCast.Encoder
                 }
                 catch (Exception ex)
                 {
-                    OnLog?.Invoke("stderr read error: " + ex.Message);
+                    OnLog?.Invoke("FFmpeg Okuma Hatası: " + ex.Message);
                 }
             }, ct);
 
@@ -112,17 +129,24 @@ namespace UniCast.Encoder
             {
                 if (!_proc.HasExited)
                 {
-                    try { _proc.Kill(true); } catch { }
+                    try
+                    {
+                        // Önce nazikçe 'q' gönderip kapatmayı deneyebiliriz ama 
+                        // şimdilik Kill en garantisi.
+                        _proc.Kill(true);
+                    }
+                    catch { }
                 }
             }
             finally
             {
-                await Task.Delay(120);
+                await Task.Delay(120); // Kaynakların salınması için kısa bekleme
                 _proc?.Dispose();
                 _proc = null;
             }
         }
 
+        // --- METRİK AYIKLAMA (REGEX) ---
         private static readonly Regex MetricRegex =
             new(@"frame=\s*\d+.*?fps=\s*([\d\.]+).*?bitrate=\s*([0-9\.kmbits\/]+).*?speed=\s*([0-9\.x]+)",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);

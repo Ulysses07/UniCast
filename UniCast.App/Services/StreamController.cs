@@ -30,7 +30,7 @@ namespace UniCast.App.Services
         public event EventHandler<int>? OnExit;
 
         // --- Fields ---
-        private readonly List<StreamTarget> _targets = [];
+        private readonly List<StreamTarget> _targets = new();
         private FfmpegProcess? _ffmpegProcess;
         private CancellationTokenSource? _procCts;
 
@@ -66,8 +66,9 @@ namespace UniCast.App.Services
 
         public async Task<StreamStartResult> StartWithResultAsync(IEnumerable<TargetItem> items, SettingsData settings, CancellationToken ct)
         {
-            // HATA DÜZELTME: 'items?.ToStreamTargets() ?? Array.Empty...' yerine sadece bu yeterli.
-            // MappingExtensions zaten null kontrolü yapıyor ve List döndürüyor.
+            // HATA DÜZELTME (CS0019):
+            // 'items?.ToStreamTargets() ?? Array.Empty...' şeklindeki kullanım tür uyuşmazlığı yaratıyordu.
+            // ToStreamTargets metodu zaten null kontrolü yapıp her zaman geçerli bir List döndürdüğü için sadeleştirdik.
             var mapped = items.ToStreamTargets();
 
             _targets.Clear();
@@ -79,6 +80,17 @@ namespace UniCast.App.Services
             var audioDevice = settings?.SelectedAudioDevice;
 
             var profile = settings?.GetSelectedProfile() ?? Profile.Default();
+
+            // Ayarlardaki değerleri Profile'e aktar (UI'da seçilenler geçerli olsun)
+            if (settings != null)
+            {
+                profile.Fps = settings.Fps > 0 ? settings.Fps : 30;
+                profile.Width = settings.Width > 0 ? settings.Width : 1280;
+                profile.Height = settings.Height > 0 ? settings.Height : 720;
+                profile.VideoBitrateKbps = settings.VideoKbps > 0 ? settings.VideoKbps : 2500;
+                profile.AudioBitrateKbps = settings.AudioKbps > 0 ? settings.AudioKbps : 128;
+                profile.AudioDelayMs = settings.AudioDelayMs;
+            }
 
             return await StartInternalAsync(profile, videoDevice, audioDevice, screenCapture, ct);
         }
@@ -181,8 +193,10 @@ namespace UniCast.App.Services
                 }
             }
 
-            // 3. Argümanları Oluştur
+            // Overlay Pipe Adı
             var overlayPipeName = globalSettings.ShowOverlay ? "unicast_overlay" : null;
+
+            // 3. Argümanları Oluştur
             var args = FfmpegArgsBuilder.BuildFfmpegArgs(
                 CurrentProfile,
                 enabledTargets,
@@ -191,7 +205,8 @@ namespace UniCast.App.Services
                 screenCapture,
                 delayMs,
                 recordPath,
-                overlayPipeName
+                overlayPipeName,
+                globalSettings.Encoder
             );
 
             _procCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
