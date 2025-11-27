@@ -8977,3 +8977,9 @@
 2025-11-27 14:14:27.498 [INF] [Stream] [ffmpeg] Çıkış kodu: -1
 2025-11-27 14:14:32.423 [INF] [Stream] [stop] Aktif yayın süreci yok.
 2025-11-27 14:14:32.426 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-27 16:23:17.655 [INF] ===================================================
+2025-11-27 16:23:17.674 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-27 16:23:17.675 [INF] ===================================================
+2025-11-27 16:23:18.158 [INF] MainWindow yüklendi...
+2025-11-27 16:23:20.333 [INF] [Stream] [stop] Aktif yayın süreci yok.
+2025-11-27 16:23:20.338 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
