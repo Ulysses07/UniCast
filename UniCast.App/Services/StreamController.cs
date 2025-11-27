@@ -4,12 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using UniCast.App.Services.Capture;
+using UniCast.App.Services.Capture; // DeviceService
 using UniCast.Core.Core;
 using UniCast.Core.Models;
 using UniCast.Core.Settings;
 using UniCast.Core.Streaming;
-using UniCast.Encoder;
+using UniCast.Encoder; // FfmpegProcess & ArgsBuilder
 
 namespace UniCast.App.Services
 {
@@ -66,16 +66,13 @@ namespace UniCast.App.Services
 
         public async Task<StreamStartResult> StartWithResultAsync(IEnumerable<TargetItem> items, SettingsData settings, CancellationToken ct)
         {
-            // HATA DÜZELTME (CS0019):
-            // 'items?.ToStreamTargets() ?? Array.Empty...' şeklindeki kullanım tür uyuşmazlığı yaratıyordu.
-            // ToStreamTargets metodu zaten null kontrolü yapıp her zaman geçerli bir List döndürdüğü için sadeleştirdik.
+            // Hata Düzeltme (CS0019): MappingExtensions zaten null-safe liste döner.
             var mapped = items.ToStreamTargets();
-
             _targets.Clear();
             _targets.AddRange(mapped);
 
             var screenCapture = settings?.CaptureSource == CaptureSource.Screen;
-            // SettingsData artık ID tutuyor, bunları Internal metoda paslıyoruz, o çözümleyecek.
+            // SettingsData içindeki ID'leri alıyoruz, InternalAsync içinde isme dönüşecekler.
             var videoDevice = settings?.CaptureSource == CaptureSource.Camera ? settings?.SelectedVideoDevice : null;
             var audioDevice = settings?.SelectedAudioDevice;
 
@@ -145,6 +142,7 @@ namespace UniCast.App.Services
         {
             if (IsRunning) return StreamStartResult.Fail(StreamErrorCode.InvalidConfig, "Yayın zaten çalışıyor.");
 
+            // Profilin null olmadığından emin oluyoruz
             CurrentProfile = profile ?? Profile.Default();
 
             var enabledTargets = _targets.Where(t => t?.Enabled == true && !string.IsNullOrWhiteSpace(t.Url)).ToList();
@@ -168,11 +166,13 @@ namespace UniCast.App.Services
                 if (!string.IsNullOrEmpty(name)) finalAudioName = name;
             }
 
-            // 2. Ses Gecikmesini ve Kayıt Yolunu Ayarlardan Oku
+            // 2. Ayarları Yükle
             var globalSettings = SettingsStore.Load();
+
+            // CS8602 DÜZELTME: 'profile' yerine yukarıda garantilediğimiz 'CurrentProfile' kullanıyoruz.
             int delayMs = CurrentProfile.AudioDelayMs > 0 ? CurrentProfile.AudioDelayMs : globalSettings.AudioDelayMs;
 
-            // Kayıt Klasörü Oluşturma
+            // 3. Kayıt Klasörü Hazırla
             string? recordPath = null;
             if (globalSettings.EnableLocalRecord && !string.IsNullOrWhiteSpace(globalSettings.RecordFolder))
             {
@@ -193,10 +193,10 @@ namespace UniCast.App.Services
                 }
             }
 
-            // Overlay Pipe Adı
+            // 4. Overlay Pipe Adı
             var overlayPipeName = globalSettings.ShowOverlay ? "unicast_overlay" : null;
 
-            // 3. Argümanları Oluştur
+            // 5. Argümanları Oluştur
             var args = FfmpegArgsBuilder.BuildFfmpegArgs(
                 CurrentProfile,
                 enabledTargets,
@@ -206,13 +206,13 @@ namespace UniCast.App.Services
                 delayMs,
                 recordPath,
                 overlayPipeName,
-                globalSettings.Encoder
+                globalSettings.Encoder // GPU Encoder Seçimi (Varsa)
             );
 
             _procCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             _ffmpegProcess = new FfmpegProcess();
 
-            // Event Wiring
+            // Event Bağlantıları
             _ffmpegProcess.OnLog += (line) =>
             {
                 LastMessage = line;
@@ -241,7 +241,7 @@ namespace UniCast.App.Services
             {
                 await _ffmpegProcess.StartAsync(args, _procCts.Token);
                 IsRunning = true;
-                OnLog?.Invoke(this, $"[start] Yayın başladı. Profil: {CurrentProfile.Name}");
+                OnLog?.Invoke(this, $"[start] Yayın başladı. Profil: {CurrentProfile.Name} Encoder: {globalSettings.Encoder}");
                 return StreamStartResult.Ok();
             }
             catch (Exception ex)
@@ -250,6 +250,14 @@ namespace UniCast.App.Services
                 _ffmpegProcess = null;
 
                 var msg = ex.Message.ToLowerInvariant();
+
+                // GPU Encoder hatası durumunda CPU'ya dönme (Fallback) mantığı
+                if (msg.Contains("error") && !globalSettings.Encoder.Contains("libx264"))
+                {
+                    // Burada otomatik fallback eklenebilir ama şimdilik kullanıcıya hatayı dönüyoruz.
+                    OnLog?.Invoke(this, $"[warn] Seçilen encoder ({globalSettings.Encoder}) ile başlatılamadı.");
+                }
+
                 if (msg.Contains("camera") || msg.Contains("video device") || msg.Contains("busy"))
                     return StreamStartResult.Fail(StreamErrorCode.CameraBusy, "Kamera başlatılamadı. Başka bir uygulama (Zoom, Teams vb.) kamerayı kullanıyor olabilir.", ex.Message);
 

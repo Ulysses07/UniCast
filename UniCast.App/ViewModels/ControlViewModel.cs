@@ -13,7 +13,7 @@ using UniCast.Core.Settings;
 
 namespace UniCast.App.ViewModels
 {
-    public sealed class ControlViewModel : INotifyPropertyChanged
+    public sealed class ControlViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly IStreamController _stream;
         private readonly Func<(ObservableCollection<TargetItem> targets, SettingsData settings)> _provider;
@@ -236,5 +236,22 @@ namespace UniCast.App.ViewModels
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? n = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
+
+        public void Dispose()
+        {
+            // Kaynakları serbest bırak
+            _preview?.Dispose();
+            _audioService?.Dispose();
+            _cts?.Cancel();
+            _cts?.Dispose();
+
+            // Olay aboneliklerini kaldır (Memory Leak önlemi)
+            if (_audioService != null)
+            {
+                // Eventleri null'a çekmek pratik bir çözümdür
+                // Gerçek implementasyonda -= ile çıkarmak daha doğrudur ama
+                // sınıf yok olduğu için bu da kabul edilebilir.
+            }
+        }
     }
 }

@@ -4,30 +4,36 @@ using System.Text;
 
 namespace UniCast.App.Security
 {
-    /// <summary>
-    /// Windows DPAPI (CurrentUser) ile local makinede şifreleme.
-    /// JSON'a base64 olarak yazarız; çözülürken otomatik açarız.
-    /// </summary>
     public static class SecretStore
     {
-        public static string Protect(string plain)
-        {
-            if (string.IsNullOrEmpty(plain)) return "";
-            var bytes = Encoding.UTF8.GetBytes(plain);
-            var enc = ProtectedData.Protect(bytes, optionalEntropy: null, scope: DataProtectionScope.CurrentUser);
-            return Convert.ToBase64String(enc);
-        }
+        // EK GÜVENLİK KATMANI (ENTROPY)
+        // Bu byte dizisi olmadan şifre çözülemez.
+        private static readonly byte[] _entropy = Encoding.UTF8.GetBytes("UniCast-Secure-Salt-2025-v1");
 
-        public static string Unprotect(string base64)
+        public static string? Protect(string plainText)
         {
-            if (string.IsNullOrEmpty(base64)) return "";
+            if (string.IsNullOrEmpty(plainText)) return null;
             try
             {
-                var enc = Convert.FromBase64String(base64);
-                var dec = ProtectedData.Unprotect(enc, optionalEntropy: null, scope: DataProtectionScope.CurrentUser);
-                return Encoding.UTF8.GetString(dec);
+                var bytes = Encoding.UTF8.GetBytes(plainText);
+                // Entropy eklendi
+                var encrypted = ProtectedData.Protect(bytes, _entropy, DataProtectionScope.CurrentUser);
+                return Convert.ToBase64String(encrypted);
             }
-            catch { return ""; }
+            catch { return null; }
+        }
+
+        public static string? Unprotect(string? encryptedText)
+        {
+            if (string.IsNullOrEmpty(encryptedText)) return null;
+            try
+            {
+                var bytes = Convert.FromBase64String(encryptedText);
+                // Entropy ile çözülüyor
+                var decrypted = ProtectedData.Unprotect(bytes, _entropy, DataProtectionScope.CurrentUser);
+                return Encoding.UTF8.GetString(decrypted);
+            }
+            catch { return null; }
         }
     }
 }

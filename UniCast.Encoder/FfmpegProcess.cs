@@ -21,7 +21,7 @@ namespace UniCast.Encoder
         {
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-            // 1. Öncelik: 'External' klasörü (Dağıtım için)
+            // 1. Öncelik: 'External' klasörü
             var bundledPath = Path.Combine(baseDir, "External", "ffmpeg.exe");
             if (File.Exists(bundledPath)) return bundledPath;
 
@@ -29,11 +29,19 @@ namespace UniCast.Encoder
             var localPath = Path.Combine(baseDir, "ffmpeg.exe");
             if (File.Exists(localPath)) return localPath;
 
-            // 3. Öncelik: ffmpeg/bin alt klasörü (Geliştirme ortamı için)
-            var binPath = Path.Combine(baseDir, "ffmpeg", "bin", "ffmpeg.exe");
-            if (File.Exists(binPath)) return binPath;
+            // 3. Öncelik: PATH Ortam Değişkenleri (YENİ EKLENDİ)
+            var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
+            foreach (var path in pathEnv.Split(Path.PathSeparator))
+            {
+                try
+                {
+                    var fullPath = Path.Combine(path.Trim(), "ffmpeg.exe");
+                    if (File.Exists(fullPath)) return fullPath;
+                }
+                catch { /* Erişim hatası vs. yut */ }
+            }
 
-            // 4. Öncelik: Sistem PATH
+            // 4. Hiçbiri yoksa sistem komutu olarak dene
             return "ffmpeg";
         }
 
