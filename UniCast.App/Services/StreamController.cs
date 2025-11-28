@@ -18,7 +18,11 @@ namespace UniCast.App.Services
         // --- Thread Safety ---
         private readonly SemaphoreSlim _stateLock = new(1, 1);
         private volatile bool _isRunning;
+
+        // DÜZELTME: Pragma warning ile uyarı bastırıldı (gelecekte reconnect özelliği için ayrılmış)
+#pragma warning disable CS0649 // Field is never assigned to - Reserved for future reconnect feature
         private volatile bool _isReconnecting;
+#pragma warning restore CS0649
 
         // --- Properties ---
         public bool IsRunning => _isRunning;
