@@ -2,6 +2,8 @@
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Extensions.DependencyInjection;
+using UniCast.App.Infrastructure;
 using UniCast.App.Overlay;
 using UniCast.App.Services;
 using UniCast.App.Services.Capture;
@@ -17,18 +19,24 @@ namespace UniCast.App
 {
     public partial class MainWindow : Window
     {
+        // DI'dan alınan servisler
         private readonly IDeviceService _deviceService;
         private readonly IStreamController _stream;
+        private readonly ChatBus _chatBus;
+
+        // ViewModels
         private readonly SettingsViewModel _settingsVm;
         private readonly TargetsViewModel _targetsVm;
         private readonly ControlViewModel _controlVm;
-        private readonly ChatBus _chatBus = new();
-        private readonly ChatViewModel _chatVm = new();
+        private readonly ChatViewModel _chatVm;
 
+        // Chat Ingestors
         private YouTubeChatIngestor? _ytIngestor;
         private TikTokChatIngestor? _tiktok;
         private InstagramChatIngestor? _instagram;
         private FacebookChatIngestor? _facebook;
+
+        // Overlay
         private ChatOverlayController? _overlay;
         private CancellationTokenSource? _chatCts;
 
@@ -36,18 +44,23 @@ namespace UniCast.App
         {
             InitializeComponent();
 
-            _deviceService = new DeviceService();
-            _stream = new StreamController();
+            // DI Container'dan servisleri al
+            var services = App.Services;
 
-            WireUpLogging();
+            _deviceService = services.GetRequiredService<IDeviceService>();
+            _stream = services.GetRequiredService<IStreamController>();
+            _chatBus = services.GetRequiredService<ChatBus>();
 
-            _settingsVm = new SettingsViewModel(_deviceService);
-            _targetsVm = new TargetsViewModel();
+            // ViewModels
+            _settingsVm = services.GetRequiredService<SettingsViewModel>();
+            _targetsVm = services.GetRequiredService<TargetsViewModel>();
+            _controlVm = services.GetRequiredService<ControlViewModel>();
+            _chatVm = services.GetRequiredService<ChatViewModel>();
 
+            // ChatViewModel'i ChatBus'a bağla
             _chatVm.Bind(_chatBus);
 
-            _controlVm = new ControlViewModel(_stream, () => (_targetsVm.Targets, Services.SettingsStore.Load()));
-
+            WireUpLogging();
             SetMainContent(new ControlView(_controlVm));
             WireNavigation();
 
@@ -56,8 +69,21 @@ namespace UniCast.App
 
         private void WireUpLogging()
         {
-            _stream.OnLog += (s, m) => { if (m.Contains("Error") || m.Contains("Failed")) Log.Error("[Stream] " + m); else Log.Information("[Stream] " + m); };
-            _stream.OnExit += (s, c) => { if (c != 0 && c != 255) Log.Warning($"[Stream] Exit Code: {c}"); else Log.Information($"[Stream] Exit Code: {c}"); };
+            _stream.OnLog += (s, m) =>
+            {
+                if (m.Contains("Error") || m.Contains("Failed"))
+                    Log.Error("[Stream] " + m);
+                else
+                    Log.Information("[Stream] " + m);
+            };
+
+            _stream.OnExit += (s, c) =>
+            {
+                if (c != 0 && c != 255)
+                    Log.Warning("[Stream] Exit Code: {ExitCode}", c);
+                else
+                    Log.Information("[Stream] Exit Code: {ExitCode}", c);
+            };
         }
 
         private void WireNavigation()
@@ -65,18 +91,20 @@ namespace UniCast.App
             WireNavButton("BtnControl", () => SetMainContent(new ControlView(_controlVm)));
             WireNavButton("BtnTargets", () => SetMainContent(new TargetsView(_targetsVm)));
             WireNavButton("BtnSettings", () => SetMainContent(new SettingsView { DataContext = _settingsVm }));
-            WireNavButton("BtnPreview", () => SetMainContent(new PreviewView(new PreviewViewModel())));
+            WireNavButton("BtnPreview", () => SetMainContent(new PreviewView(App.Services.GetRequiredService<PreviewViewModel>())));
             WireNavButton("BtnChat", () => SetMainContent(new ChatView { DataContext = _chatVm }));
         }
 
         private void WireNavButton(string name, Action onClick)
         {
-            if (FindName(name) is Button b) b.Click += (_, __) => onClick();
+            if (FindName(name) is Button b)
+                b.Click += (_, __) => onClick();
         }
 
         private void SetMainContent(object content)
         {
-            if (FindName("MainContent") is ContentControl cc) cc.Content = content;
+            if (FindName("MainContent") is ContentControl cc)
+                cc.Content = content;
         }
 
         private bool EnsureFfmpegExists()
@@ -116,66 +144,92 @@ namespace UniCast.App
                     Log.Fatal("FFmpeg yok.");
                 }
 
-                // DÜZELTME: Eski CTS'i dispose et
+                // CTS oluştur
                 _chatCts?.Cancel();
                 _chatCts?.Dispose();
                 _chatCts = new CancellationTokenSource();
 
-                var s = Services.SettingsStore.Load();
+                var s = SettingsStore.Load();
 
+                // Overlay başlat
                 if (s.ShowOverlay)
                 {
-                    var ow = Math.Max(200, (int)s.OverlayWidth);
-                    var oh = Math.Max(200, (int)s.OverlayHeight);
-                    try
-                    {
-                        _overlay = new ChatOverlayController(ow, oh, "unicast_overlay");
-                        _overlay.Start();
-                        Log.Information($"Overlay başlatıldı: {ow}x{oh}");
-                    }
-                    catch (Exception ex) { Log.Error(ex, "Overlay hatası"); }
+                    StartOverlay(s);
                 }
 
+                // Chat ingestors başlat
                 StartChatIngestors(s);
             }
-            catch (Exception ex) { Log.Error(ex, "Loaded hatası"); }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "MainWindow_Loaded hatası");
+            }
+        }
+
+        private void StartOverlay(Core.Settings.SettingsData s)
+        {
+            var ow = Math.Max(200, (int)s.OverlayWidth);
+            var oh = Math.Max(200, (int)s.OverlayHeight);
+
+            try
+            {
+                _overlay = new ChatOverlayController(ow, oh, "unicast_overlay");
+                _overlay.Start();
+                Log.Information("Overlay başlatıldı: {Width}x{Height}", ow, oh);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Overlay başlatma hatası");
+            }
         }
 
         private void StartChatIngestors(Core.Settings.SettingsData s)
         {
             var ct = _chatCts!.Token;
 
-            // DÜZELTME: HttpClient artık factory'den alınıyor (new HttpClient() YOK!)
+            // YouTube
             if (!string.IsNullOrWhiteSpace(s.YouTubeApiKey))
             {
-                _ytIngestor = new YouTubeChatIngestor(); // Factory kullanır
+                _ytIngestor = App.Services.GetRequiredService<YouTubeChatIngestor>();
                 _ytIngestor.OnMessage += OnMsg;
                 _chatBus.Attach(_ytIngestor);
-                _ = _ytIngestor.StartAsync(ct);
+
+                // DÜZELTME: SafeFireAndForget kullan
+                _ytIngestor.StartAsync(ct)
+                    .SafeFireAndForget("YouTube Chat", ex => Log.Error(ex, "YouTube Chat hatası"));
             }
 
+            // TikTok
             if (!string.IsNullOrWhiteSpace(s.TikTokRoomId))
             {
-                _tiktok = new TikTokChatIngestor(); // Factory kullanır
+                _tiktok = App.Services.GetRequiredService<TikTokChatIngestor>();
                 _tiktok.OnMessage += OnMsg;
                 _chatBus.Attach(_tiktok);
-                _ = _tiktok.StartAsync(ct);
+
+                _tiktok.StartAsync(ct)
+                    .SafeFireAndForget("TikTok Chat", ex => Log.Error(ex, "TikTok Chat hatası"));
             }
 
+            // Instagram
             if (!string.IsNullOrWhiteSpace(s.InstagramUserId))
             {
-                _instagram = new InstagramChatIngestor(); // Factory kullanır
+                _instagram = App.Services.GetRequiredService<InstagramChatIngestor>();
                 _instagram.OnMessage += OnMsg;
                 _chatBus.Attach(_instagram);
-                _ = _instagram.StartAsync(ct);
+
+                _instagram.StartAsync(ct)
+                    .SafeFireAndForget("Instagram Chat", ex => Log.Error(ex, "Instagram Chat hatası"));
             }
 
+            // Facebook
             if (!string.IsNullOrWhiteSpace(s.FacebookAccessToken))
             {
-                _facebook = new FacebookChatIngestor(); // Factory kullanır
+                _facebook = App.Services.GetRequiredService<FacebookChatIngestor>();
                 _facebook.OnMessage += OnMsg;
                 _chatBus.Attach(_facebook);
-                _ = _facebook.StartAsync(ct);
+
+                _facebook.StartAsync(ct)
+                    .SafeFireAndForget("Facebook Chat", ex => Log.Error(ex, "Facebook Chat hatası"));
             }
         }
 
@@ -184,7 +238,7 @@ namespace UniCast.App
             if (_overlay != null)
             {
                 _overlay.StartBreakMode(minutes);
-                Log.Information($"Mola modu başlatıldı: {minutes} dakika");
+                Log.Information("Mola modu başlatıldı: {Minutes} dakika", minutes);
             }
         }
 
@@ -199,7 +253,14 @@ namespace UniCast.App
 
         private void OnMsg(ChatMessage msg)
         {
-            try { _overlay?.Push(msg.Author, msg.Text); } catch { }
+            try
+            {
+                _overlay?.Push(msg.Author, msg.Text);
+            }
+            catch (Exception ex)
+            {
+                Log.Debug("Overlay push hatası: {Message}", ex.Message);
+            }
         }
 
         public void UpdateOverlaySize(double width, double height)
@@ -217,49 +278,69 @@ namespace UniCast.App
             _overlay?.ReloadSettings();
         }
 
-        protected override void OnClosed(EventArgs e)
+        protected override async void OnClosed(EventArgs e)
         {
-            // DÜZELTME: Düzgün cleanup
+            Log.Information("MainWindow kapatılıyor...");
+
+            // 1. CTS iptal
+            try { _chatCts?.Cancel(); } catch { }
+
+            // 2. Chat ingestors durdur
+            await StopIngestorSafe(_ytIngestor, "YouTube");
+            await StopIngestorSafe(_tiktok, "TikTok");
+            await StopIngestorSafe(_instagram, "Instagram");
+            await StopIngestorSafe(_facebook, "Facebook");
+
+            // 3. ChatBus'tan ayır
+            if (_ytIngestor != null) _chatBus.Detach(_ytIngestor);
+            if (_tiktok != null) _chatBus.Detach(_tiktok);
+            if (_instagram != null) _chatBus.Detach(_instagram);
+            if (_facebook != null) _chatBus.Detach(_facebook);
+
+            // 4. Overlay kapat
             try
             {
-                _chatCts?.Cancel();
+                if (_overlay != null)
+                    await _overlay.DisposeAsync();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Debug("Overlay dispose hatası: {Message}", ex.Message);
+            }
 
-            // Chat ingestor'ları durdur
-            try { _ytIngestor?.StopAsync().GetAwaiter().GetResult(); } catch { }
-            try { _tiktok?.StopAsync().GetAwaiter().GetResult(); } catch { }
-            try { _instagram?.StopAsync().GetAwaiter().GetResult(); } catch { }
-            try { _facebook?.StopAsync().GetAwaiter().GetResult(); } catch { }
-
-            // Overlay'i kapat
+            // 5. Stream controller kapat
             try
             {
-                _overlay?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                if (_stream is IAsyncDisposable asyncDisposable)
+                    await asyncDisposable.DisposeAsync();
             }
-            catch { }
-
-            // ChatBus'ı dispose et
-            _chatBus.Dispose();
-
-            // Stream controller'ı dispose et
-            try
+            catch (Exception ex)
             {
-                (_stream as IAsyncDisposable)?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                Log.Debug("Stream dispose hatası: {Message}", ex.Message);
             }
-            catch { }
 
-            // ControlViewModel'i dispose et
+            // 6. ControlViewModel dispose
             _controlVm.Dispose();
 
-            // CTS'i dispose et
-            try
-            {
-                _chatCts?.Dispose();
-            }
-            catch { }
+            // 7. CTS dispose
+            try { _chatCts?.Dispose(); } catch { }
 
             base.OnClosed(e);
+        }
+
+        private async System.Threading.Tasks.Task StopIngestorSafe(IChatIngestor? ingestor, string name)
+        {
+            if (ingestor == null) return;
+
+            try
+            {
+                await ingestor.StopAsync();
+                Log.Debug("{Name} ingestor durduruldu", name);
+            }
+            catch (Exception ex)
+            {
+                Log.Debug("{Name} ingestor durdurma hatası: {Message}", name, ex.Message);
+            }
         }
     }
 }

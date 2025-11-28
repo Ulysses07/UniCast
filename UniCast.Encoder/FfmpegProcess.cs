@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,21 +16,41 @@ namespace UniCast.Encoder
 
         private Process? _proc;
         private string _lastErrorLine = "";
+        private bool _disposed;
 
-        // --- 1. GÜNCEL PATH ÇÖZÜMLEME (External Klasörü Destekli) ---
+        // Graceful shutdown için
+        private const int GRACEFUL_TIMEOUT_MS = 3000;
+        private const int KILL_TIMEOUT_MS = 2000;
+
+        // Native console control için
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool AttachConsole(int dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool FreeConsole();
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetConsoleCtrlHandler(ConsoleCtrlDelegate? handler, bool add);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GenerateConsoleCtrlEvent(int dwCtrlEvent, int dwProcessGroupId);
+
+        private delegate bool ConsoleCtrlDelegate(int ctrlType);
+        private const int CTRL_C_EVENT = 0;
+
         public static string ResolveFfmpegPath()
         {
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-            // 1. Öncelik: 'External' klasörü
+            // 1. External klasörü
             var bundledPath = Path.Combine(baseDir, "External", "ffmpeg.exe");
             if (File.Exists(bundledPath)) return bundledPath;
 
-            // 2. Öncelik: Ana Dizin
+            // 2. Ana dizin
             var localPath = Path.Combine(baseDir, "ffmpeg.exe");
             if (File.Exists(localPath)) return localPath;
 
-            // 3. Öncelik: PATH Ortam Değişkenleri (YENİ EKLENDİ)
+            // 3. PATH
             var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
             foreach (var path in pathEnv.Split(Path.PathSeparator))
             {
@@ -38,21 +59,19 @@ namespace UniCast.Encoder
                     var fullPath = Path.Combine(path.Trim(), "ffmpeg.exe");
                     if (File.Exists(fullPath)) return fullPath;
                 }
-                catch { /* Erişim hatası vs. yut */ }
+                catch { }
             }
 
-            // 4. Hiçbiri yoksa sistem komutu olarak dene
             return "ffmpeg";
         }
 
         public Task StartAsync(string args, CancellationToken ct)
         {
             if (_proc is not null)
-                throw new InvalidOperationException("FFmpeg already running.");
+                throw new InvalidOperationException("FFmpeg zaten çalışıyor.");
 
             var ffmpegPath = ResolveFfmpegPath();
 
-            // Dosya kontrolü
             if (ffmpegPath != "ffmpeg" && !File.Exists(ffmpegPath))
                 throw new FileNotFoundException("FFmpeg dosyası bulunamadı!", ffmpegPath);
 
@@ -62,19 +81,17 @@ namespace UniCast.Encoder
                 Arguments = args,
                 CreateNoWindow = true,
                 UseShellExecute = false,
-                RedirectStandardError = true, // Loglar buradan akar
-                RedirectStandardOutput = true // Bazen buraya da yazar
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                RedirectStandardInput = true // DÜZELTME: 'q' göndermek için
             };
 
             _proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
-            // --- 2. ÇIKIŞ OLAYI VE HATA TERCÜMESİ (ESKİ KODDAN GERİ GELDİ) ---
             _proc.Exited += (_, __) =>
             {
-                // İnsan okunabilir hata mesajı üret
                 if (!string.IsNullOrWhiteSpace(_lastErrorLine))
                 {
-                    // ErrorDictionary sınıfın projede mevcut olduğu için bunu kullanıyoruz
                     var meaning = ErrorDictionary.Translate(_lastErrorLine);
                     OnLog?.Invoke("FFmpeg Hata Analizi: " + meaning);
                 }
@@ -83,9 +100,9 @@ namespace UniCast.Encoder
             };
 
             if (!_proc.Start())
-                throw new InvalidOperationException("FFmpeg failed to start.");
+                throw new InvalidOperationException("FFmpeg başlatılamadı.");
 
-            // --- 3. OKUMA DÖNGÜSÜ (STREAM READING - DAHA PERFORMANSLI) ---
+            // Log okuma task'ı
             _ = Task.Run(async () =>
             {
                 try
@@ -105,7 +122,6 @@ namespace UniCast.Encoder
                                 var ln = line.Trim();
                                 if (string.IsNullOrWhiteSpace(ln)) continue;
 
-                                // Son hatayı sakla (Çıkışta analiz etmek için)
                                 _lastErrorLine = ln;
 
                                 if (IsMetric(ln))
@@ -120,6 +136,7 @@ namespace UniCast.Encoder
                         }
                     }
                 }
+                catch (OperationCanceledException) { }
                 catch (Exception ex)
                 {
                     OnLog?.Invoke("FFmpeg Okuma Hatası: " + ex.Message);
@@ -129,32 +146,132 @@ namespace UniCast.Encoder
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// FFmpeg'i düzgünce kapatır.
+        /// DÜZELTME: Önce 'q' tuşu, sonra CTRL+C, en son Kill
+        /// </summary>
         public async Task StopAsync()
         {
-            if (_proc is null) return;
+            if (_proc is null || _disposed) return;
 
             try
             {
                 if (!_proc.HasExited)
                 {
-                    try
+                    OnLog?.Invoke("[FFmpeg] Graceful shutdown başlatılıyor...");
+
+                    // 1. AŞAMA: 'q' tuşu gönder (FFmpeg'in standart kapatma komutu)
+                    if (await TrySendQuitCommandAsync())
                     {
-                        // Önce nazikçe 'q' gönderip kapatmayı deneyebiliriz ama 
-                        // şimdilik Kill en garantisi.
-                        _proc.Kill(true);
+                        OnLog?.Invoke("[FFmpeg] 'q' komutu ile kapatıldı.");
+                        return;
                     }
-                    catch { }
+
+                    // 2. AŞAMA: CTRL+C sinyali gönder
+                    if (await TrySendCtrlCAsync())
+                    {
+                        OnLog?.Invoke("[FFmpeg] CTRL+C ile kapatıldı.");
+                        return;
+                    }
+
+                    // 3. AŞAMA: Zorla kapat (son çare)
+                    OnLog?.Invoke("[FFmpeg] Graceful shutdown başarısız, Kill uygulanıyor...");
+                    _proc.Kill(entireProcessTree: true);
+                    await WaitForExitAsync(KILL_TIMEOUT_MS);
                 }
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[FFmpeg] Stop hatası: {ex.Message}");
             }
             finally
             {
-                await Task.Delay(120); // Kaynakların salınması için kısa bekleme
+                await Task.Delay(100);
                 _proc?.Dispose();
                 _proc = null;
             }
         }
 
-        // --- METRİK AYIKLAMA (REGEX) ---
+        /// <summary>
+        /// FFmpeg stdin'e 'q' karakteri gönderir.
+        /// </summary>
+        private async Task<bool> TrySendQuitCommandAsync()
+        {
+            try
+            {
+                if (_proc == null || _proc.HasExited) return true;
+
+                // 'q' tuşunu stdin'e gönder
+                await _proc.StandardInput.WriteAsync('q');
+                await _proc.StandardInput.FlushAsync();
+
+                // Kapamasını bekle
+                return await WaitForExitAsync(GRACEFUL_TIMEOUT_MS);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Process'e CTRL+C sinyali gönderir.
+        /// </summary>
+        private async Task<bool> TrySendCtrlCAsync()
+        {
+            try
+            {
+                if (_proc == null || _proc.HasExited) return true;
+
+                // Windows'ta CTRL+C göndermek karmaşık
+                // Kendi console'umuzdan ayır
+                FreeConsole();
+
+                // FFmpeg'in console'una bağlan
+                if (AttachConsole(_proc.Id))
+                {
+                    // Kendi handler'ımızı devre dışı bırak
+                    SetConsoleCtrlHandler(null, true);
+
+                    // CTRL+C gönder
+                    GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+
+                    // Handler'ı geri aç
+                    SetConsoleCtrlHandler(null, false);
+
+                    // Console'dan ayrıl
+                    FreeConsole();
+
+                    return await WaitForExitAsync(GRACEFUL_TIMEOUT_MS);
+                }
+            }
+            catch
+            {
+                // CTRL+C başarısız olursa devam et
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Process'in kapanmasını bekler.
+        /// </summary>
+        private async Task<bool> WaitForExitAsync(int timeoutMs)
+        {
+            if (_proc == null) return true;
+
+            try
+            {
+                using var cts = new CancellationTokenSource(timeoutMs);
+                await _proc.WaitForExitAsync(cts.Token);
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
+        }
+
         private static readonly Regex MetricRegex =
             new(@"frame=\s*\d+.*?fps=\s*([\d\.]+).*?bitrate=\s*([0-9\.kmbits\/]+).*?speed=\s*([0-9\.x]+)",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -165,6 +282,22 @@ namespace UniCast.Encoder
                 line.Contains("bitrate=") ||
                 line.Contains("fps="));
 
-        public void Dispose() => _ = StopAsync();
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+
+            try
+            {
+                if (_proc != null && !_proc.HasExited)
+                {
+                    _proc.Kill(entireProcessTree: true);
+                }
+            }
+            catch { }
+
+            _proc?.Dispose();
+            _proc = null;
+        }
     }
 }

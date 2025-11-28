@@ -3,21 +3,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:models="clr-namespace:UniCast.Core.Models;assembly=UniCast.Core"
+             xmlns:local="clr-namespace:UniCast.App.Views"
              mc:Ignorable="d" 
              d:DesignHeight="720" d:DesignWidth="1280"
-             Background="{x:Null}">
+             Background="{x:Null}"
+             x:Name="OverlayRoot">
 
     <UserControl.Resources>
+        <!-- DÜZELTME: ChatMessages binding'i düzeltildi -->
         <DataTemplate x:Key="ChatTemplate">
             <Border Background="#66000000" CornerRadius="8" Padding="5">
-                <ItemsControl ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ChatMessages}">
+                <ItemsControl ItemsSource="{Binding ChatMessages, ElementName=OverlayRoot}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Background="#CC000000" CornerRadius="4" Margin="0,2" Padding="5">
                                 <TextBlock TextWrapping="Wrap" FontSize="14" Foreground="White">
-                                    <Run Text="{Binding Author}" FontWeight="Bold" Foreground="Gold"/>: 
-                                    <Run Text="{Binding Text}"/>
+                                    <Run Text="{Binding Author, Mode=OneWay}" FontWeight="Bold" Foreground="Gold"/>
+                                    <Run Text=": "/>
+                                    <Run Text="{Binding Text, Mode=OneWay}"/>
                                 </TextBlock>
                             </Border>
                         </DataTemplate>
@@ -31,12 +34,26 @@
         </DataTemplate>
 
         <DataTemplate x:Key="VideoTemplate">
-            <MediaElement Source="{Binding Source}" LoadedBehavior="Play" UnloadedBehavior="Stop" MediaEnded="MediaElement_MediaEnded" Stretch="Uniform"/>
+            <MediaElement Source="{Binding Source}" 
+                          LoadedBehavior="Play" 
+                          UnloadedBehavior="Stop" 
+                          MediaEnded="MediaElement_MediaEnded" 
+                          Stretch="Uniform"/>
+        </DataTemplate>
+
+        <DataTemplate x:Key="TextTemplate">
+            <TextBlock Text="{Binding Source}" 
+                       FontSize="24" 
+                       FontWeight="Bold" 
+                       Foreground="White"
+                       TextWrapping="Wrap"/>
         </DataTemplate>
     </UserControl.Resources>
 
     <Grid>
-        <ItemsControl Name="SceneItemsControl" ItemsSource="{Binding SceneItems, RelativeSource={RelativeSource AncestorType=UserControl}}">
+        <!-- DÜZELTME: SceneItems binding'i ElementName ile yapıldı -->
+        <ItemsControl Name="SceneItemsControl" 
+                      ItemsSource="{Binding SceneItems, ElementName=OverlayRoot}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Canvas />
@@ -69,6 +86,9 @@
                                     <DataTrigger Binding="{Binding Type}" Value="Video">
                                         <Setter Property="ContentTemplate" Value="{StaticResource VideoTemplate}"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Text">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource TextTemplate}"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </ContentControl.Style>
@@ -77,6 +97,7 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
+        <!-- Mola Overlay'i -->
         <Grid Name="BreakOverlay" Visibility="Collapsed" Background="#EE111111">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="☕" FontSize="72" HorizontalAlignment="Center" Margin="0,0,0,20"/>
