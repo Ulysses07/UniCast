@@ -78,10 +78,10 @@ namespace UniCast.App.ViewModels
             ToggleMuteCommand = new RelayCommand(_ => _audioService.ToggleMute());
 
             // Başlangıçta ses servisini hazırla
-            InitializeAudio();
+            _ = InitializeAudio(); // CS4014 hatasını önlemek için 'await' veya discard kullanılır
         }
 
-        private async void InitializeAudio()
+        private async Task InitializeAudio()
         {
             var s = Services.SettingsStore.Load();
             await _audioService.InitializeAsync(s.SelectedAudioDevice ?? "");

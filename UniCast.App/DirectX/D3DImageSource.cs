@@ -20,9 +20,22 @@ namespace UniCast.App.DirectX
         public void Invalidate()
         {
             if (_surface == IntPtr.Zero) return;
-            Lock();
-            AddDirtyRect(new Int32Rect(0, 0, PixelWidth, PixelHeight));
-            Unlock();
+
+            try
+            {
+                Lock();
+                if (PixelWidth > 0 && PixelHeight > 0)
+                    AddDirtyRect(new Int32Rect(0, 0, PixelWidth, PixelHeight));
+            }
+            catch (Exception ex)
+            {
+                // Hata olursa yut ama logla (veya debug'a yaz)
+                System.Diagnostics.Debug.WriteLine($"D3D Invalidate Error: {ex.Message}");
+            }
+            finally
+            {
+                try { Unlock(); } catch { }
+            }
         }
 
         public void Dispose()

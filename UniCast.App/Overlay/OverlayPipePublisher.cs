@@ -17,14 +17,15 @@ namespace UniCast.App.Overlay
         private readonly int _width;
         private readonly int _height;
 
-        private const int TargetFps = 30;
-        private readonly TimeSpan _frameInterval = TimeSpan.FromMilliseconds(1000.0 / TargetFps);
-
         private CancellationTokenSource? _cts;
         private Task? _runner;
 
         private bool _isDirty = true;
         private RenderTargetBitmap? _bmp;
+
+        // --- PERFORMANS AYARLARI (YENİ EKLENDİ) ---
+        private DateTime _lastRender = DateTime.MinValue;
+        private const int MIN_RENDER_INTERVAL_MS = 33; // ~30 FPS sınırı
 
         public bool IsRunning { get; private set; }
 
@@ -53,7 +54,10 @@ namespace UniCast.App.Overlay
         {
             if (!IsRunning) return;
             _cts?.Cancel();
-            if (_runner != null) { try { await _runner.ConfigureAwait(false); } catch { } }
+            if (_runner != null)
+            {
+                try { await _runner.ConfigureAwait(false); } catch { }
+            }
             IsRunning = false;
         }
 
@@ -61,33 +65,58 @@ namespace UniCast.App.Overlay
 
         private async Task LoopAsync(CancellationToken ct)
         {
-            using var server = new NamedPipeServerStream(_pipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-            try { await server.WaitForConnectionAsync(ct); } catch { return; }
+            using var server = new NamedPipeServerStream(
+                _pipeName,
+                PipeDirection.Out,
+                1,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous);
+
+            try
+            {
+                await server.WaitForConnectionAsync(ct);
+            }
+            catch
+            {
+                return;
+            }
 
             while (!ct.IsCancellationRequested && server.IsConnected)
             {
                 try
                 {
-                    var startTime = DateTime.UtcNow;
+                    var now = DateTime.UtcNow;
+                    var elapsed = (now - _lastRender).TotalMilliseconds;
 
-                    if (_isDirty)
+                    // --- PERFORMANS OPTİMİZASYONU ---
+                    // Sadece değişiklik varsa (isDirty) VE yeterli zaman geçtiyse (33ms) çizim yap.
+                    if (_isDirty && elapsed >= MIN_RENDER_INTERVAL_MS)
                     {
                         byte[]? frameData = null;
-                        await Application.Current.Dispatcher.InvokeAsync(() => { frameData = RenderFrame(); });
+
+                        // UI Thread üzerinde render al
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            frameData = RenderFrame();
+                        });
 
                         if (frameData != null)
                         {
                             await server.WriteAsync(frameData, 0, frameData.Length, ct);
                             await server.FlushAsync(ct);
+
                             _isDirty = false;
+                            _lastRender = now; // Son çizim zamanını güncelle
                         }
                     }
 
-                    var elapsed = DateTime.UtcNow - startTime;
-                    var delay = _frameInterval - elapsed;
-                    if (delay > TimeSpan.Zero) await Task.Delay(delay, ct);
+                    // İşlemciyi yormamak için kısa bir bekleme
+                    await Task.Delay(10, ct);
                 }
-                catch { break; }
+                catch
+                {
+                    break;
+                }
             }
         }
 
@@ -95,12 +124,15 @@ namespace UniCast.App.Overlay
         {
             try
             {
-                if (_bmp == null) _bmp = new RenderTargetBitmap(_width, _height, 96, 96, PixelFormats.Pbgra32);
+                if (_bmp == null)
+                    _bmp = new RenderTargetBitmap(_width, _height, 96, 96, PixelFormats.Pbgra32);
+
                 _bmp.Clear();
                 _bmp.Render(_visual);
 
                 var encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(_bmp));
+
                 using var ms = new MemoryStream();
                 encoder.Save(ms);
                 return ms.ToArray();
