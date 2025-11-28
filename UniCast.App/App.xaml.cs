@@ -1,9 +1,15 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using UniCast.App.Infrastructure;
+using UniCast.App.Services;
+using UniCast.App.Services.Capture;
+using UniCast.App.Services.Chat;
+using UniCast.App.ViewModels;
+using UniCast.Core.Chat;
 using Application = System.Windows.Application;
 
 namespace UniCast.App
