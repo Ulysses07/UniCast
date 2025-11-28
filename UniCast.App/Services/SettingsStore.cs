@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
 using UniCast.Core.Settings;
 using UniCast.App.Security;
 
@@ -12,6 +13,14 @@ namespace UniCast.App.Services
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UniCast");
 
         private static readonly string FilePath = Path.Combine(Dir, "settings.json");
+
+        // Thread-safety için ReaderWriterLock kullanıyoruz
+        // Çoklu okuma izni verir, yazma sırasında tüm erişimi bloklar
+        private static readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.SupportsRecursion);
+
+        // Yazma işlemleri için retry mekanizması
+        private const int MAX_RETRY_ATTEMPTS = 3;
+        private const int RETRY_DELAY_MS = 100;
 
         private sealed class PersistModel
         {
@@ -32,10 +41,11 @@ namespace UniCast.App.Services
             public string FacebookLiveVideoId { get; set; } = "";
             public string FacebookAccessTokenEnc { get; set; } = ""; // encrypted
 
-            // Eski alanlarınız buradaysa ekleyin (VideoKbps, Fps, Encoder, DefaultCamera/Mic vs.)
+            // Encoder/Quality alanları
             public string Encoder { get; set; } = "auto";
             public int VideoKbps { get; set; } = 3500;
             public int AudioKbps { get; set; } = 160;
+            public int AudioDelayMs { get; set; } = 0;
             public int Fps { get; set; } = 30;
             public int Width { get; set; } = 1280;
             public int Height { get; set; } = 720;
@@ -45,72 +55,245 @@ namespace UniCast.App.Services
             public bool EnableLocalRecord { get; set; } = false;
 
             // Instagram
-            public string InstagramUserId { get; set; } = "";      // plain
-            public string InstagramSessionIdEnc { get; set; } = ""; // encrypted (base64)
+            public string InstagramUserId { get; set; } = "";
+            public string InstagramSessionIdEnc { get; set; } = "";
         }
 
+        /// <summary>
+        /// Thread-safe ayar okuma
+        /// </summary>
         public static SettingsData Load()
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return LoadInternal();
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+
+        /// <summary>
+        /// Thread-safe ayar yazma (retry mekanizması ile)
+        /// </summary>
+        public static void Save(SettingsData s)
+        {
+            if (s == null) throw new ArgumentNullException(nameof(s));
+
+            _lock.EnterWriteLock();
+            try
+            {
+                SaveInternalWithRetry(s);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+        /// <summary>
+        /// Atomic read-modify-write işlemi için
+        /// </summary>
+        public static void Update(Action<SettingsData> modifier)
+        {
+            if (modifier == null) throw new ArgumentNullException(nameof(modifier));
+
+            _lock.EnterWriteLock();
+            try
+            {
+                var data = LoadInternal();
+                modifier(data);
+                SaveInternalWithRetry(data);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+        private static SettingsData LoadInternal()
         {
             try
             {
                 if (!File.Exists(FilePath))
-                    return new SettingsData();
+                    return CreateDefaultSettings();
 
-                var json = File.ReadAllText(FilePath);
-                var p = JsonSerializer.Deserialize<PersistModel>(json) ?? new PersistModel();
-
-                var s = new SettingsData
+                // Dosyayı okurken geçici bir kopya kullan (corruption koruması)
+                string json;
+                using (var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (var reader = new StreamReader(fs))
                 {
-                    // Chat & Overlay
-                    ShowOverlay = p.ShowOverlay,
-                    OverlayX = p.OverlayX,
-                    OverlayY = p.OverlayY,
-                    OverlayOpacity = p.OverlayOpacity,
-                    OverlayFontSize = p.OverlayFontSize,
+                    json = reader.ReadToEnd();
+                }
 
-                    YouTubeChannelId = p.YouTubeChannelId ?? "",
-                    TikTokRoomId = p.TikTokRoomId ?? "",
+                if (string.IsNullOrWhiteSpace(json))
+                    return CreateDefaultSettings();
 
-                    // Secrets (unprotect) – null gelebilirse "" yap
-                    YouTubeApiKey = SecretStore.Unprotect(p.YouTubeApiKeyEnc) ?? "",
-                    TikTokSessionCookie = SecretStore.Unprotect(p.TikTokSessionCookieEnc) ?? "",
-                    FacebookPageId = p.FacebookPageId ?? "",
-                    FacebookLiveVideoId = p.FacebookLiveVideoId ?? "",
-                    FacebookAccessToken = SecretStore.Unprotect(p.FacebookAccessTokenEnc) ?? "",
+                var p = JsonSerializer.Deserialize<PersistModel>(json);
+                if (p == null)
+                    return CreateDefaultSettings();
 
-                    // Encoding / General
-                    Encoder = p.Encoder ?? "auto",
-                    VideoKbps = p.VideoKbps,
-                    AudioKbps = p.AudioKbps,
-                    Fps = p.Fps,
-                    Width = p.Width,
-                    Height = p.Height,
-                    DefaultCamera = p.DefaultCamera ?? "",
-                    DefaultMicrophone = p.DefaultMicrophone ?? "",
-                    RecordFolder = p.RecordFolder ?? "",
-                    EnableLocalRecord = p.EnableLocalRecord,
-
-                    // Instagram
-                    InstagramUserId = p.InstagramUserId ?? "",
-                    InstagramSessionId = SecretStore.Unprotect(p.InstagramSessionIdEnc) ?? ""
-                };
-
-                // Yükleme sonrası güvenli aralıklar
+                var s = MapToSettingsData(p);
                 s.Normalize();
-
                 return s;
             }
-            catch
+            catch (JsonException ex)
             {
-                return new SettingsData();
+                System.Diagnostics.Debug.WriteLine($"[Settings] JSON parse hatası: {ex.Message}");
+                // Bozuk dosyayı yedekle
+                BackupCorruptedFile();
+                return CreateDefaultSettings();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Settings] Yükleme hatası: {ex.Message}");
+                return CreateDefaultSettings();
             }
         }
 
-        public static void Save(SettingsData s)
+        private static void SaveInternalWithRetry(SettingsData s)
         {
-            Directory.CreateDirectory(Dir);
+            Exception? lastException = null;
 
-            var p = new PersistModel
+            for (int attempt = 0; attempt < MAX_RETRY_ATTEMPTS; attempt++)
+            {
+                try
+                {
+                    SaveInternal(s);
+                    return; // Başarılı
+                }
+                catch (IOException ex)
+                {
+                    lastException = ex;
+                    System.Diagnostics.Debug.WriteLine($"[Settings] Yazma hatası (deneme {attempt + 1}): {ex.Message}");
+
+                    if (attempt < MAX_RETRY_ATTEMPTS - 1)
+                    {
+                        Thread.Sleep(RETRY_DELAY_MS * (attempt + 1));
+                    }
+                }
+            }
+
+            // Tüm denemeler başarısız
+            throw new IOException($"Ayarlar kaydedilemedi ({MAX_RETRY_ATTEMPTS} deneme sonrası)", lastException);
+        }
+
+        private static void SaveInternal(SettingsData s)
+        {
+            // Dizini oluştur
+            if (!Directory.Exists(Dir))
+                Directory.CreateDirectory(Dir);
+
+            var p = MapToPersistModel(s);
+
+            var json = JsonSerializer.Serialize(p, new JsonSerializerOptions { WriteIndented = true });
+
+            // Atomic write: önce geçici dosyaya yaz, sonra rename
+            var tempPath = FilePath + ".tmp";
+            var backupPath = FilePath + ".bak";
+
+            try
+            {
+                // 1. Geçici dosyaya yaz
+                using (var fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var writer = new StreamWriter(fs))
+                {
+                    writer.Write(json);
+                    writer.Flush();
+                    fs.Flush(true); // Diske yazmayı zorla
+                }
+
+                // 2. Mevcut dosyayı yedekle
+                if (File.Exists(FilePath))
+                {
+                    if (File.Exists(backupPath))
+                        File.Delete(backupPath);
+                    File.Move(FilePath, backupPath);
+                }
+
+                // 3. Geçici dosyayı ana dosya yap
+                File.Move(tempPath, FilePath);
+
+                // 4. Yedek dosyayı sil (opsiyonel, güvenlik için tutulabilir)
+                // if (File.Exists(backupPath)) File.Delete(backupPath);
+            }
+            catch
+            {
+                // Hata durumunda geçici dosyayı temizle
+                if (File.Exists(tempPath))
+                {
+                    try { File.Delete(tempPath); } catch { }
+                }
+                throw;
+            }
+        }
+
+        private static void BackupCorruptedFile()
+        {
+            try
+            {
+                if (File.Exists(FilePath))
+                {
+                    var corruptPath = FilePath + $".corrupt_{DateTime.Now:yyyyMMdd_HHmmss}";
+                    File.Move(FilePath, corruptPath);
+                    System.Diagnostics.Debug.WriteLine($"[Settings] Bozuk dosya yedeklendi: {corruptPath}");
+                }
+            }
+            catch { }
+        }
+
+        private static SettingsData CreateDefaultSettings()
+        {
+            var s = new SettingsData();
+            s.Normalize();
+            return s;
+        }
+
+        private static SettingsData MapToSettingsData(PersistModel p)
+        {
+            return new SettingsData
+            {
+                // Chat & Overlay
+                ShowOverlay = p.ShowOverlay,
+                OverlayX = p.OverlayX,
+                OverlayY = p.OverlayY,
+                OverlayOpacity = p.OverlayOpacity,
+                OverlayFontSize = p.OverlayFontSize,
+
+                YouTubeChannelId = p.YouTubeChannelId ?? "",
+                TikTokRoomId = p.TikTokRoomId ?? "",
+
+                // Secrets (unprotect)
+                YouTubeApiKey = SecretStore.Unprotect(p.YouTubeApiKeyEnc) ?? "",
+                TikTokSessionCookie = SecretStore.Unprotect(p.TikTokSessionCookieEnc) ?? "",
+                FacebookPageId = p.FacebookPageId ?? "",
+                FacebookLiveVideoId = p.FacebookLiveVideoId ?? "",
+                FacebookAccessToken = SecretStore.Unprotect(p.FacebookAccessTokenEnc) ?? "",
+
+                // Encoding / General
+                Encoder = p.Encoder ?? "auto",
+                VideoKbps = p.VideoKbps,
+                AudioKbps = p.AudioKbps,
+                AudioDelayMs = p.AudioDelayMs,
+                Fps = p.Fps,
+                Width = p.Width,
+                Height = p.Height,
+                DefaultCamera = p.DefaultCamera ?? "",
+                DefaultMicrophone = p.DefaultMicrophone ?? "",
+                RecordFolder = p.RecordFolder ?? "",
+                EnableLocalRecord = p.EnableLocalRecord,
+
+                // Instagram
+                InstagramUserId = p.InstagramUserId ?? "",
+                InstagramSessionId = SecretStore.Unprotect(p.InstagramSessionIdEnc) ?? ""
+            };
+        }
+
+        private static PersistModel MapToPersistModel(SettingsData s)
+        {
+            return new PersistModel
             {
                 // Chat & Overlay
                 ShowOverlay = s.ShowOverlay,
@@ -122,19 +305,20 @@ namespace UniCast.App.Services
                 YouTubeChannelId = s.YouTubeChannelId ?? "",
                 TikTokRoomId = s.TikTokRoomId ?? "",
 
-                // Secrets (protect) – null ise "" ver ki CS8604 çıkmasın
-                YouTubeApiKeyEnc = SecretStore.Protect(s.YouTubeApiKey ?? ""),
-                TikTokSessionCookieEnc = SecretStore.Protect(s.TikTokSessionCookie ?? ""),
+                // Secrets (protect)
+                YouTubeApiKeyEnc = SecretStore.Protect(s.YouTubeApiKey ?? "") ?? "",
+                TikTokSessionCookieEnc = SecretStore.Protect(s.TikTokSessionCookie ?? "") ?? "",
                 InstagramUserId = s.InstagramUserId ?? "",
-                InstagramSessionIdEnc = SecretStore.Protect(s.InstagramSessionId ?? ""),
+                InstagramSessionIdEnc = SecretStore.Protect(s.InstagramSessionId ?? "") ?? "",
                 FacebookPageId = s.FacebookPageId ?? "",
                 FacebookLiveVideoId = s.FacebookLiveVideoId ?? "",
-                FacebookAccessTokenEnc = SecretStore.Protect(s.FacebookAccessToken ?? ""),
+                FacebookAccessTokenEnc = SecretStore.Protect(s.FacebookAccessToken ?? "") ?? "",
 
                 // Encoding / General
                 Encoder = s.Encoder ?? "auto",
                 VideoKbps = s.VideoKbps,
                 AudioKbps = s.AudioKbps,
+                AudioDelayMs = s.AudioDelayMs,
                 Fps = s.Fps,
                 Width = s.Width,
                 Height = s.Height,
@@ -143,9 +327,6 @@ namespace UniCast.App.Services
                 RecordFolder = s.RecordFolder ?? "",
                 EnableLocalRecord = s.EnableLocalRecord
             };
-
-            var json = JsonSerializer.Serialize(p, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(FilePath, json);
         }
     }
 }

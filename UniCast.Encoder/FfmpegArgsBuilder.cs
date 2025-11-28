@@ -10,6 +10,10 @@ namespace UniCast.Encoder
 {
     public static class FfmpegArgsBuilder
     {
+        // Screen capture method cache (bir kez tespit et)
+        private static string? _screenCaptureMethod;
+        private static readonly object _probeLock = new();
+
         public static string BuildFfmpegArgs(
             Profile profile,
             List<StreamTarget> targets,
@@ -29,7 +33,6 @@ namespace UniCast.Encoder
 
             if (encoder.Contains("nvenc")) // NVIDIA
             {
-                // p1: En hızlı (Lowest Latency)
                 encParams = "-c:v h264_nvenc -preset p1 -tune zerolatency -rc cbr";
             }
             else if (encoder.Contains("amf")) // AMD
@@ -54,9 +57,9 @@ namespace UniCast.Encoder
                 sb.Clear();
                 sb.Append("-rtbufsize 500M -thread_queue_size 2048 ");
 
-                // PERFORMANS GÜNCELLEMESİ: gdigrab yerine ddagrab (DirectX)
-                // Bu, ekran yakalamayı GPU üzerinden yapar, CPU'yu rahatlatır.
-                sb.Append($"-f ddagrab -framerate {profile.Fps} -i desktop ");
+                // DÜZELTME: ddagrab/gdigrab fallback mekanizması
+                var screenInput = GetScreenCaptureInput(profile.Fps);
+                sb.Append(screenInput);
             }
             else if (!string.IsNullOrWhiteSpace(videoDeviceName))
             {
@@ -164,6 +167,87 @@ namespace UniCast.Encoder
             }
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Ekran yakalama için en uygun yöntemi belirler.
+        /// ddagrab (DirectX, daha performanslı) öncelikli, yoksa gdigrab'a düşer.
+        /// </summary>
+        private static string GetScreenCaptureInput(int fps)
+        {
+            // Cache mekanizması - her seferinde probe yapma
+            if (_screenCaptureMethod == null)
+            {
+                lock (_probeLock)
+                {
+                    if (_screenCaptureMethod == null)
+                    {
+                        _screenCaptureMethod = DetectScreenCaptureMethod();
+                    }
+                }
+            }
+
+            return _screenCaptureMethod switch
+            {
+                "ddagrab" => $"-f ddagrab -framerate {fps} -i desktop ",
+                "gdigrab" => $"-f gdigrab -framerate {fps} -i desktop ",
+                _ => $"-f gdigrab -framerate {fps} -i desktop " // Fallback
+            };
+        }
+
+        /// <summary>
+        /// FFmpeg'in ddagrab desteği olup olmadığını tespit eder.
+        /// </summary>
+        private static string DetectScreenCaptureMethod()
+        {
+            try
+            {
+                var ffmpegPath = FfmpegProcess.ResolveFfmpegPath();
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = ffmpegPath,
+                    Arguments = "-hide_banner -devices",
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardErrorEncoding = System.Text.Encoding.UTF8,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+
+                using var process = System.Diagnostics.Process.Start(psi);
+                if (process == null) return "gdigrab";
+
+                var output = process.StandardOutput.ReadToEnd();
+                var error = process.StandardError.ReadToEnd();
+                process.WaitForExit(5000);
+
+                var combined = (output + error).ToLowerInvariant();
+
+                // ddagrab FFmpeg 5.0+ ve Windows 10+ gerektirir
+                if (combined.Contains("ddagrab"))
+                {
+                    return "ddagrab";
+                }
+
+                return "gdigrab";
+            }
+            catch
+            {
+                // Hata durumunda güvenli seçenek
+                return "gdigrab";
+            }
+        }
+
+        /// <summary>
+        /// Screen capture cache'ini temizler (test veya ayar değişikliği için)
+        /// </summary>
+        public static void ResetScreenCaptureCache()
+        {
+            lock (_probeLock)
+            {
+                _screenCaptureMethod = null;
+            }
         }
 
         private static Platform MapPlatform(StreamPlatform sp)
