@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.Http;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -69,12 +68,17 @@ namespace UniCast.App
             WireNavButton("BtnPreview", () => SetMainContent(new PreviewView(new PreviewViewModel())));
             WireNavButton("BtnChat", () => SetMainContent(new ChatView { DataContext = _chatVm }));
         }
-        private void WireNavButton(string name, Action onClick) { if (FindName(name) is Button b) b.Click += (_, __) => onClick(); }
-        private void SetMainContent(object content) { if (FindName("MainContent") is ContentControl cc) cc.Content = content; }
 
-        // --- EKSİK ÖZELLİKLER EKLENDİ ---
+        private void WireNavButton(string name, Action onClick)
+        {
+            if (FindName(name) is Button b) b.Click += (_, __) => onClick();
+        }
 
-        // 1. FFmpeg Kontrolü
+        private void SetMainContent(object content)
+        {
+            if (FindName("MainContent") is ContentControl cc) cc.Content = content;
+        }
+
         private bool EnsureFfmpegExists()
         {
             try
@@ -88,7 +92,11 @@ namespace UniCast.App
 
                     if (result == MessageBoxResult.Yes)
                     {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "https://www.gyan.dev/ffmpeg/builds/", UseShellExecute = true });
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = "https://www.gyan.dev/ffmpeg/builds/",
+                            UseShellExecute = true
+                        });
                     }
                     return false;
                 }
@@ -103,13 +111,14 @@ namespace UniCast.App
             {
                 Log.Information("MainWindow yüklendi...");
 
-                // BAŞLANGIÇ KONTROLÜ
                 if (!EnsureFfmpegExists())
                 {
                     Log.Fatal("FFmpeg yok.");
                 }
 
+                // DÜZELTME: Eski CTS'i dispose et
                 _chatCts?.Cancel();
+                _chatCts?.Dispose();
                 _chatCts = new CancellationTokenSource();
 
                 var s = Services.SettingsStore.Load();
@@ -117,7 +126,7 @@ namespace UniCast.App
                 if (s.ShowOverlay)
                 {
                     var ow = Math.Max(200, (int)s.OverlayWidth);
-                    var oh = Math.Max(200, (int)s.OverlayHeight); // Yükseklik ayarı
+                    var oh = Math.Max(200, (int)s.OverlayHeight);
                     try
                     {
                         _overlay = new ChatOverlayController(ow, oh, "unicast_overlay");
@@ -127,7 +136,6 @@ namespace UniCast.App
                     catch (Exception ex) { Log.Error(ex, "Overlay hatası"); }
                 }
 
-                // Chat başlatma (Basitlik için kısaltıldı, önceki mantıkla aynı)
                 StartChatIngestors(s);
             }
             catch (Exception ex) { Log.Error(ex, "Loaded hatası"); }
@@ -135,11 +143,42 @@ namespace UniCast.App
 
         private void StartChatIngestors(Core.Settings.SettingsData s)
         {
-            if (!string.IsNullOrWhiteSpace(s.YouTubeApiKey)) { _ytIngestor = new YouTubeChatIngestor(new HttpClient()); _ytIngestor.OnMessage += OnMsg; _chatBus.Attach(_ytIngestor); _ = _ytIngestor.StartAsync(_chatCts!.Token); }
-            if (!string.IsNullOrWhiteSpace(s.TikTokRoomId)) { _tiktok = new TikTokChatIngestor(new HttpClient()); _tiktok.OnMessage += OnMsg; _chatBus.Attach(_tiktok); _ = _tiktok.StartAsync(_chatCts!.Token); }
-            if (!string.IsNullOrWhiteSpace(s.InstagramUserId)) { _instagram = new InstagramChatIngestor(new HttpClient()); _instagram.OnMessage += OnMsg; _chatBus.Attach(_instagram); _ = _instagram.StartAsync(_chatCts!.Token); }
-            if (!string.IsNullOrWhiteSpace(s.FacebookAccessToken)) { _facebook = new FacebookChatIngestor(new HttpClient()); _facebook.OnMessage += OnMsg; _chatBus.Attach(_facebook); _ = _facebook.StartAsync(_chatCts!.Token); }
+            var ct = _chatCts!.Token;
+
+            // DÜZELTME: HttpClient artık factory'den alınıyor (new HttpClient() YOK!)
+            if (!string.IsNullOrWhiteSpace(s.YouTubeApiKey))
+            {
+                _ytIngestor = new YouTubeChatIngestor(); // Factory kullanır
+                _ytIngestor.OnMessage += OnMsg;
+                _chatBus.Attach(_ytIngestor);
+                _ = _ytIngestor.StartAsync(ct);
+            }
+
+            if (!string.IsNullOrWhiteSpace(s.TikTokRoomId))
+            {
+                _tiktok = new TikTokChatIngestor(); // Factory kullanır
+                _tiktok.OnMessage += OnMsg;
+                _chatBus.Attach(_tiktok);
+                _ = _tiktok.StartAsync(ct);
+            }
+
+            if (!string.IsNullOrWhiteSpace(s.InstagramUserId))
+            {
+                _instagram = new InstagramChatIngestor(); // Factory kullanır
+                _instagram.OnMessage += OnMsg;
+                _chatBus.Attach(_instagram);
+                _ = _instagram.StartAsync(ct);
+            }
+
+            if (!string.IsNullOrWhiteSpace(s.FacebookAccessToken))
+            {
+                _facebook = new FacebookChatIngestor(); // Factory kullanır
+                _facebook.OnMessage += OnMsg;
+                _chatBus.Attach(_facebook);
+                _ = _facebook.StartAsync(ct);
+            }
         }
+
         public void StartBreak(int minutes)
         {
             if (_overlay != null)
@@ -158,30 +197,68 @@ namespace UniCast.App
             }
         }
 
-        private void OnMsg(ChatMessage msg) { try { _overlay?.Push(msg.Author, msg.Text); } catch { } }
+        private void OnMsg(ChatMessage msg)
+        {
+            try { _overlay?.Push(msg.Author, msg.Text); } catch { }
+        }
 
-        // 2. Boyut Güncelleme (Genişlik + Yükseklik)
         public void UpdateOverlaySize(double width, double height)
         {
-            if (_overlay != null)
-            {
-                _overlay.UpdateSize(width, height);
-            }
+            _overlay?.UpdateSize(width, height);
         }
 
         public void UpdateOverlayPosition(int x, int y)
         {
-            if (_overlay != null) _overlay.UpdatePosition(x, y);
+            _overlay?.UpdatePosition(x, y);
         }
 
-        public void RefreshOverlay() { if (_overlay != null) _overlay.ReloadSettings(); }
+        public void RefreshOverlay()
+        {
+            _overlay?.ReloadSettings();
+        }
 
         protected override void OnClosed(EventArgs e)
         {
-            _chatCts?.Cancel();
-            try { if (_overlay != null) _overlay.DisposeAsync().AsTask().GetAwaiter().GetResult(); } catch { }
+            // DÜZELTME: Düzgün cleanup
+            try
+            {
+                _chatCts?.Cancel();
+            }
+            catch { }
+
+            // Chat ingestor'ları durdur
+            try { _ytIngestor?.StopAsync().GetAwaiter().GetResult(); } catch { }
+            try { _tiktok?.StopAsync().GetAwaiter().GetResult(); } catch { }
+            try { _instagram?.StopAsync().GetAwaiter().GetResult(); } catch { }
+            try { _facebook?.StopAsync().GetAwaiter().GetResult(); } catch { }
+
+            // Overlay'i kapat
+            try
+            {
+                _overlay?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            }
+            catch { }
+
+            // ChatBus'ı dispose et
             _chatBus.Dispose();
-            try { (_stream as IAsyncDisposable)?.DisposeAsync().AsTask().GetAwaiter().GetResult(); } catch { }
+
+            // Stream controller'ı dispose et
+            try
+            {
+                (_stream as IAsyncDisposable)?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            }
+            catch { }
+
+            // ControlViewModel'i dispose et
+            _controlVm.Dispose();
+
+            // CTS'i dispose et
+            try
+            {
+                _chatCts?.Dispose();
+            }
+            catch { }
+
             base.OnClosed(e);
         }
     }

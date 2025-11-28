@@ -3,33 +3,32 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using OpenCvSharp; // AForge yerine bunu kullanıyoruz
-using OpenCvSharp.WpfExtensions; // Bitmap dönüşümü için
+using OpenCvSharp;
+using OpenCvSharp.WpfExtensions;
 
 namespace UniCast.App.Services
 {
     public sealed class PreviewService : IDisposable
     {
-        // Olaylar
         public event Action<ImageSource>? OnFrame;
         public bool IsRunning { get; private set; }
 
-        // OpenCV Değişkenleri
         private VideoCapture? _capture;
         private Task? _previewTask;
         private CancellationTokenSource? _cts;
+        private bool _disposed;
+
+        // DÜZELTME: Mat'i bir kez oluştur, her karede yeniden kullanma
+        private Mat? _frame;
 
         public async Task StartAsync(int cameraIndex, int width, int height, int fps)
         {
-            if (IsRunning) return;
+            if (IsRunning || _disposed) return;
 
-            // Eğer kamera indeksi verilmemişse varsayılanı (0) dene
             if (cameraIndex < 0) cameraIndex = 0;
 
             try
             {
-                // 1. Kamerayı Başlat (OpenCV)
-                // CAP_DSHOW: Windows DirectShow backend'ini zorlar (Daha hızlı açılır)
                 _capture = new VideoCapture(cameraIndex, VideoCaptureAPIs.DSHOW);
 
                 if (!_capture.IsOpened())
@@ -38,14 +37,17 @@ namespace UniCast.App.Services
                     return;
                 }
 
-                // 2. Ayarları Uygula
                 _capture.Set(VideoCaptureProperties.FrameWidth, width);
                 _capture.Set(VideoCaptureProperties.FrameHeight, height);
                 _capture.Set(VideoCaptureProperties.Fps, fps);
 
-                // 3. Döngüyü Başlat
+                // DÜZELTME: Eski CTS'i dispose et
+                _cts?.Dispose();
                 _cts = new CancellationTokenSource();
                 IsRunning = true;
+
+                // DÜZELTME: Mat'i önceden oluştur
+                _frame = new Mat();
 
                 _previewTask = Task.Run(() => CaptureLoop(_cts.Token), _cts.Token);
             }
@@ -58,64 +60,122 @@ namespace UniCast.App.Services
 
         private void CaptureLoop(CancellationToken ct)
         {
-            // Bellek sızıntısını önlemek için Mat nesnesini using ile yönetemeyiz (döngüdeyiz),
-            // ama her karede yeniden oluşturmak yerine bir tane kullanıp doldurabiliriz.
-            using var frame = new Mat();
+            // DÜZELTME: Mat artık field olarak tutulduğu için using kullanmıyoruz
+            // Döngü dışında dispose edilecek
 
-            while (!ct.IsCancellationRequested && _capture != null && _capture.IsOpened())
+            while (!ct.IsCancellationRequested && _capture != null && _capture.IsOpened() && _frame != null)
             {
                 try
                 {
-                    // Kare oku
-                    if (!_capture.Read(frame) || frame.Empty())
+                    if (!_capture.Read(_frame) || _frame.Empty())
                     {
                         Thread.Sleep(10);
                         continue;
                     }
 
-                    // OpenCV Mat -> WPF WriteableBitmap dönüşümü
-                    // OpenCvSharp.WpfExtensions paketi bu işi çok hızlı yapar.
-                    var bmp = frame.ToWriteableBitmap();
+                    // DÜZELTME: WriteableBitmap oluştur ve hemen freeze et
+                    // ToWriteableBitmap() her seferinde yeni nesne oluşturur
+                    // Bu kaçınılmaz, ama frame'i reuse ediyoruz
+                    WriteableBitmap? bmp = null;
+                    try
+                    {
+                        bmp = _frame.ToWriteableBitmap();
+                        bmp.Freeze(); // Thread-safe yapar
+                        OnFrame?.Invoke(bmp);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Preview Frame Error: {ex.Message}");
+                    }
+                    // NOT: WriteableBitmap IDisposable değil, GC tarafından temizlenir
+                    // Freeze() çağrıldıktan sonra immutable olduğu için güvenlidir
 
-                    // UI thread dışında oluşturulduğu için dondurmalıyız
-                    bmp.Freeze();
-
-                    // UI'a gönder
-                    OnFrame?.Invoke(bmp);
-
-                    // FPS kontrolü (kabaca)
-                    Thread.Sleep(33);
+                    // FPS kontrolü
+                    Thread.Sleep(33); // ~30 FPS
                 }
-                catch
+                catch (OperationCanceledException)
                 {
-                    // Hata olursa döngüden çıkma, bir sonraki kareyi dene
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Preview Loop Error: {ex.Message}");
+                    // Döngüden çıkma, bir sonraki kareyi dene
                 }
             }
         }
 
         public async Task StopAsync()
         {
-            if (!IsRunning) return;
-
-            _cts?.Cancel();
-
-            if (_previewTask != null)
-            {
-                try { await _previewTask.ConfigureAwait(false); } catch { }
-            }
-
-            // Kaynakları temizle
-            _capture?.Release();
-            _capture?.Dispose();
-            _capture = null;
+            if (!IsRunning && _capture == null) return;
 
             IsRunning = false;
+
+            // CTS'i iptal et
+            if (_cts != null)
+            {
+                try
+                {
+                    _cts.Cancel();
+                }
+                catch { }
+            }
+
+            // Task'ın bitmesini bekle
+            if (_previewTask != null)
+            {
+                try
+                {
+                    await _previewTask.ConfigureAwait(false);
+                }
+                catch { }
+                _previewTask = null;
+            }
+
+            // DÜZELTME: Mat'i dispose et
+            if (_frame != null)
+            {
+                try
+                {
+                    _frame.Dispose();
+                }
+                catch { }
+                _frame = null;
+            }
+
+            // Capture'ı temizle
+            if (_capture != null)
+            {
+                try
+                {
+                    _capture.Release();
+                    _capture.Dispose();
+                }
+                catch { }
+                _capture = null;
+            }
+
+            // DÜZELTME: CTS'i dispose et
+            if (_cts != null)
+            {
+                try
+                {
+                    _cts.Dispose();
+                }
+                catch { }
+                _cts = null;
+            }
         }
 
         public void Dispose()
         {
+            if (_disposed) return;
+            _disposed = true;
+
+            // Event'i temizle
+            OnFrame = null;
+
             StopAsync().GetAwaiter().GetResult();
-            _cts?.Dispose();
         }
     }
 }

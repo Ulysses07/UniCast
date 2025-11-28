@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using NAudio.CoreAudioApi; // NAudio kütüphanesi
+using NAudio.CoreAudioApi;
 using UniCast.App.Services.Capture;
 
 namespace UniCast.App.Services
@@ -12,9 +12,11 @@ namespace UniCast.App.Services
         private MMDevice? _selectedDevice;
         private readonly MMDeviceEnumerator _enumerator;
         private CancellationTokenSource? _cts;
+        private Task? _monitorTask;  // DÜZELTME: Task'ı takip et
+        private bool _disposed;      // DÜZELTME: Dispose flag
 
-        public event Action<float>? OnLevelChange; // 0.0 ile 1.0 arası ses seviyesi
-        public event Action<bool>? OnMuteChange;   // Mute durumu değişince
+        public event Action<float>? OnLevelChange;
+        public event Action<bool>? OnMuteChange;
 
         public AudioService()
         {
@@ -23,24 +25,21 @@ namespace UniCast.App.Services
 
         public async Task InitializeAsync(string deviceId)
         {
-            StopMonitoring();
+            // DÜZELTME: Önce mevcut monitoring'i düzgün durdur
+            await StopMonitoringAsync();
 
             await Task.Run(() =>
             {
                 try
                 {
-                    // NAudio ile sistemdeki mikrofonları tara
                     var devices = _enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
 
-                    // ID eşleştirmesi (WinRT ID'si NAudio ID'sini içerir mi?)
-                    // Eğer deviceId boşsa varsayılanı al.
                     if (string.IsNullOrEmpty(deviceId))
                     {
                         _selectedDevice = _enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Multimedia);
                     }
                     else
                     {
-                        // Eşleşen cihazı bulmaya çalış
                         _selectedDevice = devices.FirstOrDefault(d => deviceId.Contains(d.ID, StringComparison.OrdinalIgnoreCase))
                                           ?? _enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Multimedia);
                     }
@@ -49,62 +48,112 @@ namespace UniCast.App.Services
                 }
                 catch
                 {
-                    // Hata olursa (örn: mikrofon yok) sessizce geç 
+                    // Mikrofon yoksa sessizce geç
                 }
             });
         }
 
         private void StartMonitoring()
         {
-            if (_selectedDevice == null) return;
+            if (_selectedDevice == null || _disposed) return;
 
+            // DÜZELTME: Eski CTS'i dispose et
+            _cts?.Dispose();
             _cts = new CancellationTokenSource();
 
-            // Mute durumunu ilk başta bildir
             OnMuteChange?.Invoke(_selectedDevice.AudioEndpointVolume.Mute);
 
-            // Arka planda sürekli ses seviyesini oku
-            Task.Run(async () =>
+            var token = _cts.Token;
+            _monitorTask = Task.Run(async () =>
             {
-                while (!_cts.Token.IsCancellationRequested)
+                while (!token.IsCancellationRequested)
                 {
                     try
                     {
-                        // Anlık ses seviyesi (0.0 - 1.0)
+                        if (_selectedDevice == null) break;
+
                         var level = _selectedDevice.AudioMeterInformation.MasterPeakValue;
                         OnLevelChange?.Invoke(level);
-
-                        // Mute durumu dışarıdan (Windows ayarlarından) değişirse yakala
-                        // (Basitlik için burada event trigger etmiyoruz, sadece UI update için level yeterli)
                     }
-                    catch { break; }
+                    catch
+                    {
+                        break;
+                    }
 
-                    await Task.Delay(50, _cts.Token); // 20 FPS yenileme hızı
+                    try
+                    {
+                        await Task.Delay(50, token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
                 }
-            }, _cts.Token);
+            }, token);
         }
 
         public void ToggleMute()
         {
-            if (_selectedDevice != null)
+            if (_selectedDevice != null && !_disposed)
             {
-                // Windows üzerinden cihazı sustur (Bu FFmpeg'e giden sesi de keser)
                 bool newState = !_selectedDevice.AudioEndpointVolume.Mute;
                 _selectedDevice.AudioEndpointVolume.Mute = newState;
                 OnMuteChange?.Invoke(newState);
             }
         }
 
+        // DÜZELTME: Async stop metodu eklendi
+        private async Task StopMonitoringAsync()
+        {
+            if (_cts != null)
+            {
+                try
+                {
+                    _cts.Cancel();
+                }
+                catch { }
+
+                // Task'ın bitmesini bekle
+                if (_monitorTask != null)
+                {
+                    try
+                    {
+                        await _monitorTask.ConfigureAwait(false);
+                    }
+                    catch { }
+                }
+
+                // DÜZELTME: CTS dispose ediliyordu mu? Şimdi ediliyor!
+                _cts.Dispose();
+                _cts = null;
+            }
+
+            _monitorTask = null;
+            _selectedDevice = null;
+        }
+
         public void StopMonitoring()
         {
-            _cts?.Cancel();
-            _selectedDevice = null;
+            // Senkron wrapper (geriye uyumluluk için)
+            StopMonitoringAsync().GetAwaiter().GetResult();
         }
 
         public void Dispose()
         {
+            if (_disposed) return;
+            _disposed = true;
+
+            // Event'leri temizle
+            OnLevelChange = null;
+            OnMuteChange = null;
+
             StopMonitoring();
-            _enumerator.Dispose();
+
+            try
+            {
+                _enumerator.Dispose();
+            }
+            catch { }
         }
     }
 }

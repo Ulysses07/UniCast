@@ -12,6 +12,7 @@ namespace UniCast.App.Services.Chat
 {
     public sealed class InstagramChatIngestor : PollingChatIngestorBase
     {
+        // DÜZELTME: HttpClient artık factory'den alınıyor
         private readonly HttpClient _http;
 
         private string _sessionId = "";
@@ -23,8 +24,8 @@ namespace UniCast.App.Services.Chat
 
         public InstagramChatIngestor(HttpClient? http = null)
         {
-            _http = http ?? new HttpClient();
-            _http.Timeout = TimeSpan.FromSeconds(15);
+            // DÜZELTME: Factory pattern - Instagram özel header'ları factory'de ayarlandı
+            _http = http ?? HttpClientFactory.Instagram;
         }
 
         protected override void ValidateSettings()
@@ -35,15 +36,10 @@ namespace UniCast.App.Services.Chat
 
             if (string.IsNullOrWhiteSpace(_sessionId) || string.IsNullOrWhiteSpace(_userId))
                 throw new InvalidOperationException("Instagram SessionID veya UserID eksik.");
-
-            InitHeaders();
         }
 
         protected override async Task InitializeAsync(CancellationToken ct)
         {
-            // DÜZELTME BURADA:
-            // ResolveLiveBroadcastId null dönerse boş string'e çeviriyoruz (?? string.Empty).
-            // Böylece 'Olası null ataması' uyarısı kalkıyor.
             _broadcastId = await ResolveLiveBroadcastId(ct) ?? string.Empty;
 
             if (string.IsNullOrEmpty(_broadcastId))
@@ -59,7 +55,14 @@ namespace UniCast.App.Services.Chat
             var url = $"https://i.instagram.com/api/v1/live/{_broadcastId}/get_comment/";
             if (!string.IsNullOrWhiteSpace(_cursor)) url += $"?max_id={_cursor}";
 
-            var resp = await _http.GetStringAsync(url, ct);
+            // DÜZELTME: Session cookie'yi request'e ekle
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("Cookie", $"sessionid={_sessionId}");
+
+            using var response = await _http.SendAsync(request, ct);
+            response.EnsureSuccessStatusCode();
+
+            var resp = await response.Content.ReadAsStringAsync(ct);
             using var json = JsonDocument.Parse(resp);
 
             if (json.RootElement.TryGetProperty("comments", out var comments))
@@ -89,20 +92,19 @@ namespace UniCast.App.Services.Chat
             return (list, 2000);
         }
 
-        private void InitHeaders()
-        {
-            _http.DefaultRequestHeaders.Clear();
-            _http.DefaultRequestHeaders.Add("User-Agent", "Instagram 287.0.0.27.109 Android");
-            _http.DefaultRequestHeaders.Add("Cookie", $"sessionid={_sessionId}");
-            _http.DefaultRequestHeaders.Add("X-IG-App-ID", "567067343352427");
-        }
-
         private async Task<string?> ResolveLiveBroadcastId(CancellationToken ct)
         {
             try
             {
                 var url = $"https://i.instagram.com/api/v1/live/get_user_live_status/?user_ids={_userId}";
-                var resp = await _http.GetStringAsync(url, ct);
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Cookie", $"sessionid={_sessionId}");
+
+                using var response = await _http.SendAsync(request, ct);
+                response.EnsureSuccessStatusCode();
+
+                var resp = await response.Content.ReadAsStringAsync(ct);
                 using var json = JsonDocument.Parse(resp);
 
                 if (!json.RootElement.TryGetProperty("statuses", out var arr) || arr.GetArrayLength() == 0)
@@ -115,10 +117,7 @@ namespace UniCast.App.Services.Chat
                 if (st.TryGetProperty("live_video_id", out var vid))
                     return vid.GetString();
             }
-            catch
-            {
-                // Hata durumunda null dön
-            }
+            catch { }
             return null;
         }
     }

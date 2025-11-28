@@ -13,8 +13,8 @@ using UniCast.Core.Settings;
 namespace UniCast.App.Services.Chat
 {
     /// <summary>
-    /// TikTok WebSocket ingestörü. Polling yapısına adapte edilmiştir.
-    /// Bağlantı koparsa Base Class otomatik reconnect yapar.
+    /// TikTok WebSocket ingestörü.
+    /// DÜZELTME: HttpClient factory + WebSocket reconnect mekanizması
     /// </summary>
     public sealed class TikTokChatIngestor : PollingChatIngestorBase
     {
@@ -22,19 +22,18 @@ namespace UniCast.App.Services.Chat
         private ClientWebSocket? _ws;
         private string _roomId = "";
 
-        // Buffer
         private readonly byte[] _buffer = new byte[64 * 1024];
+
+        // DÜZELTME: Reconnect sayacı
+        private int _reconnectAttempts = 0;
+        private const int MAX_RECONNECT_ATTEMPTS = 5;
 
         public override string Name => "TikTokChat";
 
         public TikTokChatIngestor(HttpClient? http = null)
         {
-            _http = http ?? new HttpClient();
-            _http.Timeout = TimeSpan.FromSeconds(15);
-            if (!_http.DefaultRequestHeaders.UserAgent.ToString().Contains("Mozilla"))
-            {
-                _http.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-            }
+            // DÜZELTME: Factory pattern
+            _http = http ?? HttpClientFactory.TikTok;
         }
 
         protected override void ValidateSettings()
@@ -49,7 +48,6 @@ namespace UniCast.App.Services.Chat
             var s = SettingsStore.Load();
             var ident = (s.TikTokRoomId ?? "").Trim();
 
-            // Oda ID Çözümleme
             if (IsNumeric(ident))
             {
                 _roomId = ident;
@@ -60,53 +58,115 @@ namespace UniCast.App.Services.Chat
                     ?? throw new Exception("TikTok: Kullanıcı adından RoomID çözülemedi (Yayın kapalı olabilir).");
             }
 
-            // WebSocket Bağlantısı
-            _ws?.Dispose();
+            await ConnectWebSocketAsync(ct);
+        }
+
+        // DÜZELTME: WebSocket bağlantısını ayrı metoda aldık (reconnect için)
+        private async Task ConnectWebSocketAsync(CancellationToken ct)
+        {
+            // Eski bağlantıyı temizle
+            if (_ws != null)
+            {
+                try
+                {
+                    if (_ws.State == WebSocketState.Open)
+                        await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Reconnecting", ct);
+                }
+                catch { }
+                finally
+                {
+                    _ws.Dispose();
+                    _ws = null;
+                }
+            }
+
             _ws = new ClientWebSocket();
             _ws.Options.SetRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
 
             var wsUrl = new Uri($"wss://webcast5.tiktok.com/ws/room/{_roomId}/?aid=1988&app_language=en&device_platform=web");
-            await _ws.ConnectAsync(wsUrl, ct);
+
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(15));
+
+            await _ws.ConnectAsync(wsUrl, timeoutCts.Token);
+            _reconnectAttempts = 0; // Başarılı bağlantıda sıfırla
         }
 
         protected override async Task<(IEnumerable<ChatMessage> messages, int? nextDelayMs)> FetchMessagesAsync(CancellationToken ct)
         {
-            // WebSocket kapalıysa hata fırlat (Base class yakalayıp reconnect yapacak)
+            // DÜZELTME: WebSocket kapalıysa reconnect dene
             if (_ws == null || _ws.State != WebSocketState.Open)
-                throw new Exception("WebSocket bağlantısı koptu.");
+            {
+                if (_reconnectAttempts >= MAX_RECONNECT_ATTEMPTS)
+                    throw new Exception($"TikTok: Maksimum yeniden bağlanma denemesi aşıldı ({MAX_RECONNECT_ATTEMPTS})");
+
+                _reconnectAttempts++;
+                var delay = Math.Min(1000 * _reconnectAttempts, 5000);
+
+                System.Diagnostics.Debug.WriteLine($"[TikTok] WebSocket reconnect deneme {_reconnectAttempts}/{MAX_RECONNECT_ATTEMPTS}");
+
+                await Task.Delay(delay, ct);
+                await ConnectWebSocketAsync(ct);
+            }
 
             var list = new List<ChatMessage>();
             var sb = new StringBuilder();
             WebSocketReceiveResult result;
 
-            // Tek bir mesaj paketini oku
-            do
+            // Timeout ile okuma
+            using var readCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            readCts.CancelAfter(TimeSpan.FromSeconds(10));
+
+            try
             {
-                result = await _ws.ReceiveAsync(new ArraySegment<byte>(_buffer), ct);
-                if (result.MessageType == WebSocketMessageType.Close)
-                    throw new Exception("TikTok sunucusu bağlantıyı kapattı.");
+                do
+                {
+                    result = await _ws!.ReceiveAsync(new ArraySegment<byte>(_buffer), readCts.Token);
 
-                sb.Append(Encoding.UTF8.GetString(_buffer, 0, result.Count));
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[TikTok] Sunucu bağlantıyı kapattı");
+                        throw new Exception("TikTok sunucusu bağlantıyı kapattı.");
+                    }
+
+                    sb.Append(Encoding.UTF8.GetString(_buffer, 0, result.Count));
+                }
+                while (!result.EndOfMessage);
+
+                var json = sb.ToString();
+                ParseTikTokJson(json, list);
             }
-            while (!result.EndOfMessage);
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                // Read timeout - boş liste dön, bir sonraki iterasyonda tekrar dene
+                System.Diagnostics.Debug.WriteLine("[TikTok] Okuma timeout");
+            }
 
-            // Parse Et
-            var json = sb.ToString();
-            ParseTikTokJson(json, list);
-
-            // TikTok canlı akış olduğu için "bekleme süresi" (NextDelay) düşük olabilir
-            // Ancak Base Class mesaj varsa 1sn bekliyor, bu da stabilite için iyidir.
             return (list, 1000);
         }
 
         public override async Task StopAsync()
         {
             await base.StopAsync();
-            _ws?.Dispose();
-            _ws = null;
-        }
 
-        // --- Helpers ---
+            if (_ws != null)
+            {
+                try
+                {
+                    if (_ws.State == WebSocketState.Open)
+                    {
+                        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                        await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Stopping", cts.Token);
+                    }
+                }
+                catch { }
+                finally
+                {
+                    _ws.Dispose();
+                    _ws = null;
+                }
+            }
+        }
 
         private void ParseTikTokJson(string json, List<ChatMessage> list)
         {
@@ -115,18 +175,16 @@ namespace UniCast.App.Services.Chat
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 
-                // Format 1: data.messages[]
                 if (root.TryGetProperty("data", out var data) && data.TryGetProperty("messages", out var arr))
                 {
                     foreach (var m in arr.EnumerateArray()) ExtractMessage(m, list);
                 }
-                // Format 2: messages[] (root)
                 else if (root.TryGetProperty("messages", out var messages))
                 {
                     foreach (var m in messages.EnumerateArray()) ExtractMessage(m, list);
                 }
             }
-            catch { /* Parse hatası önemsiz */ }
+            catch { }
         }
 
         private void ExtractMessage(JsonElement m, List<ChatMessage> list)
@@ -134,14 +192,13 @@ namespace UniCast.App.Services.Chat
             string text = "";
             string author = "TikTok User";
 
-            // Farklı JSON yapıları olabiliyor, en yaygın ikisini deniyoruz
-            if (m.TryGetProperty("content", out var c)) // İç içe yapı
+            if (m.TryGetProperty("content", out var c))
             {
                 text = c.TryGetProperty("content", out var cc) ? (cc.GetString() ?? "") : "";
                 if (c.TryGetProperty("user", out var u) && u.TryGetProperty("nickname", out var nn))
                     author = nn.GetString() ?? author;
             }
-            else // Düz yapı
+            else
             {
                 text = m.TryGetProperty("text", out var t) ? (t.GetString() ?? "") : "";
                 if (m.TryGetProperty("user", out var u2) && u2.TryGetProperty("nickname", out var nn2))
@@ -169,7 +226,7 @@ namespace UniCast.App.Services.Chat
                 if (idx < 0) return null;
 
                 var colon = html.IndexOf(':', idx);
-                var end = html.IndexOfAny(new[] { ',', '}', '"' }, colon + 2); // Basit parse
+                var end = html.IndexOfAny(new[] { ',', '}', '"' }, colon + 2);
 
                 if (colon > 0 && end > colon)
                 {

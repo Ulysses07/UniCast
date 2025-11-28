@@ -8,7 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
-using UniCast.Core.Models;   // StreamStartResult için
+using UniCast.Core.Models;
 using UniCast.Core.Settings;
 
 namespace UniCast.App.ViewModels
@@ -18,11 +18,16 @@ namespace UniCast.App.ViewModels
         private readonly IStreamController _stream;
         private readonly Func<(ObservableCollection<TargetItem> targets, SettingsData settings)> _provider;
 
-        // Servisler
         private readonly PreviewService _preview = new();
-        private readonly AudioService _audioService = new(); // YENİ: Ses Servisi
+        private readonly AudioService _audioService = new();
 
         private CancellationTokenSource? _cts;
+        private bool _disposed;
+
+        // DÜZELTME: Event handler'ları field olarak tut (unsubscribe için)
+        private readonly Action<ImageSource> _onFrameHandler;
+        private readonly Action<float> _onLevelChangeHandler;
+        private readonly Action<bool> _onMuteChangeHandler;
 
         public ControlViewModel(
             IStreamController stream,
@@ -31,25 +36,23 @@ namespace UniCast.App.ViewModels
             _stream = stream;
             _provider = provider;
 
-            // 1. Önizleme Bağlantısı
-            _preview.OnFrame += bmp => PreviewImage = bmp;
-
-            // 2. Ses Servisi Bağlantıları (YENİ)
-            _audioService.OnLevelChange += level =>
+            // DÜZELTME: Handler'ları field'lara ata
+            _onFrameHandler = bmp => PreviewImage = bmp;
+            _onLevelChangeHandler = level =>
             {
-                // UI Thread'de güncelle (0.0 - 1.0 arasını 0-100 yapıyoruz)
                 System.Windows.Application.Current?.Dispatcher.Invoke(() =>
                 {
                     AudioLevel = level * 100;
                 });
             };
+            _onMuteChangeHandler = muted => IsMuted = muted;
 
-            _audioService.OnMuteChange += muted =>
-            {
-                IsMuted = muted;
-            };
+            // Event'lere subscribe ol
+            _preview.OnFrame += _onFrameHandler;
+            _audioService.OnLevelChange += _onLevelChangeHandler;
+            _audioService.OnMuteChange += _onMuteChangeHandler;
 
-            // 3. Komut Tanımları
+            // Komut Tanımları
             StartCommand = new RelayCommand(async _ => await StartAsync(), _ => !IsRunning);
             StopCommand = new RelayCommand(async _ => await StopAsync(), _ => IsRunning);
 
@@ -59,7 +62,6 @@ namespace UniCast.App.ViewModels
                 else await StartPreviewAsync();
             });
 
-            // Mola Komutu
             ToggleBreakCommand = new RelayCommand(_ =>
             {
                 if (IsOnBreak)
@@ -74,11 +76,9 @@ namespace UniCast.App.ViewModels
                 }
             });
 
-            // Ses Susturma Komutu
             ToggleMuteCommand = new RelayCommand(_ => _audioService.ToggleMute());
 
-            // Başlangıçta ses servisini hazırla
-            _ = InitializeAudio(); // CS4014 hatasını önlemek için 'await' veya discard kullanılır
+            _ = InitializeAudio();
         }
 
         private async Task InitializeAudio()
@@ -139,14 +139,14 @@ namespace UniCast.App.ViewModels
             set { _isOnBreak = value; OnPropertyChanged(); }
         }
 
-        private int _breakDuration = 5; // Varsayılan 5 dk
+        private int _breakDuration = 5;
         public int BreakDuration
         {
             get => _breakDuration;
             set { _breakDuration = value; OnPropertyChanged(); }
         }
 
-        // --- SES MİKSERİ (YENİ) ---
+        // --- SES MİKSERİ ---
         private double _audioLevel;
         public double AudioLevel
         {
@@ -166,14 +166,19 @@ namespace UniCast.App.ViewModels
         public ICommand StopCommand { get; }
         public ICommand StartPreviewCommand { get; }
         public ICommand ToggleBreakCommand { get; }
-        public ICommand ToggleMuteCommand { get; } // YENİ
+        public ICommand ToggleMuteCommand { get; }
 
         // --- YAYIN MANTIĞI ---
         private async Task StartAsync()
         {
+            if (_disposed) return;
+
             try
             {
                 var (targets, settings) = _provider();
+
+                // DÜZELTME: Eski CTS'i dispose et
+                _cts?.Dispose();
                 _cts = new CancellationTokenSource();
 
                 Status = "Başlatılıyor...";
@@ -186,16 +191,23 @@ namespace UniCast.App.ViewModels
                 {
                     IsRunning = true;
                     Status = "Yayında";
+
+                    // DÜZELTME: Token'ı kullan ve task'ı takip etme (fire-and-forget ama kontrollü)
+                    var token = _cts.Token;
                     _ = Task.Run(async () =>
                     {
-                        while (IsRunning || _stream.IsReconnecting)
+                        try
                         {
-                            Status = _stream.LastMessage ?? "Yayında";
-                            Metric = _stream.LastMetric ?? "";
-                            if (!string.IsNullOrEmpty(_stream.LastAdvisory)) Advisory = _stream.LastAdvisory;
-                            await Task.Delay(200);
+                            while ((IsRunning || _stream.IsReconnecting) && !token.IsCancellationRequested)
+                            {
+                                Status = _stream.LastMessage ?? "Yayında";
+                                Metric = _stream.LastMetric ?? "";
+                                if (!string.IsNullOrEmpty(_stream.LastAdvisory)) Advisory = _stream.LastAdvisory;
+                                await Task.Delay(200, token);
+                            }
                         }
-                    });
+                        catch (OperationCanceledException) { }
+                    }, token);
                 }
                 else
                 {
@@ -214,10 +226,19 @@ namespace UniCast.App.ViewModels
 
         private async Task StopAsync()
         {
+            if (_disposed) return;
+
             try
             {
                 Status = "Durduruluyor...";
-                _cts?.Cancel();
+
+                // DÜZELTME: CTS'i iptal et
+                try
+                {
+                    _cts?.Cancel();
+                }
+                catch { }
+
                 await _stream.StopAsync();
             }
             catch (Exception ex)
@@ -239,19 +260,29 @@ namespace UniCast.App.ViewModels
 
         public void Dispose()
         {
-            // Kaynakları serbest bırak
-            _preview?.Dispose();
-            _audioService?.Dispose();
-            _cts?.Cancel();
-            _cts?.Dispose();
+            if (_disposed) return;
+            _disposed = true;
 
-            // Olay aboneliklerini kaldır (Memory Leak önlemi)
-            if (_audioService != null)
+            // DÜZELTME: Event handler'ları unsubscribe et
+            _preview.OnFrame -= _onFrameHandler;
+            _audioService.OnLevelChange -= _onLevelChangeHandler;
+            _audioService.OnMuteChange -= _onMuteChangeHandler;
+
+            // Servisleri dispose et
+            _preview.Dispose();
+            _audioService.Dispose();
+
+            // CTS'i temizle
+            try
             {
-                // Eventleri null'a çekmek pratik bir çözümdür
-                // Gerçek implementasyonda -= ile çıkarmak daha doğrudur ama
-                // sınıf yok olduğu için bu da kabul edilebilir.
+                _cts?.Cancel();
+                _cts?.Dispose();
             }
+            catch { }
+            _cts = null;
+
+            // PropertyChanged'i temizle
+            PropertyChanged = null;
         }
     }
 }

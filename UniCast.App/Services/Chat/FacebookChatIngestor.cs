@@ -12,10 +12,10 @@ namespace UniCast.App.Services.Chat
 {
     public sealed class FacebookChatIngestor : PollingChatIngestorBase
     {
+        // DÜZELTME: HttpClient factory kullanımı
         private readonly HttpClient _http;
         private const string GraphBase = "https://graph.facebook.com/v19.0";
 
-        // State
         private string _accessToken = "";
         private string _liveVideoId = "";
         private string _cursorAfter = "";
@@ -24,10 +24,8 @@ namespace UniCast.App.Services.Chat
 
         public FacebookChatIngestor(HttpClient? http = null)
         {
-            _http = http ?? new HttpClient();
-            _http.Timeout = TimeSpan.FromSeconds(15);
-            if (!_http.DefaultRequestHeaders.Contains("User-Agent"))
-                _http.DefaultRequestHeaders.Add("User-Agent", "UniCast-FacebookChat/1.0");
+            // DÜZELTME: Factory pattern
+            _http = http ?? HttpClientFactory.Default;
         }
 
         protected override void ValidateSettings()
@@ -35,7 +33,6 @@ namespace UniCast.App.Services.Chat
             var s = SettingsStore.Load();
             _accessToken = (s.FacebookAccessToken ?? "").Trim();
 
-            // PageId veya LiveVideoId'den en az biri olmalı
             if (string.IsNullOrWhiteSpace(_accessToken))
                 throw new InvalidOperationException("Facebook Access Token eksik.");
 
@@ -59,7 +56,7 @@ namespace UniCast.App.Services.Chat
                                ?? throw new Exception("Facebook: Sayfada aktif canlı yayın bulunamadı.");
             }
 
-            _cursorAfter = ""; // Cursor sıfırla
+            _cursorAfter = "";
         }
 
         protected override async Task<(IEnumerable<ChatMessage> messages, int? nextDelayMs)> FetchMessagesAsync(CancellationToken ct)
@@ -107,7 +104,7 @@ namespace UniCast.App.Services.Chat
                 _cursorAfter = after.GetString() ?? "";
             }
 
-            return (list, 1500); // 1.5 sn bekleme
+            return (list, 1500);
         }
 
         private async Task<string?> ResolveLiveVideoIdFromPageAsync(string pageId, CancellationToken ct)
