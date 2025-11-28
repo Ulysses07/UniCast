@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading; // Timer için
+using System.Windows.Threading;
 using UniCast.App.Services;
 using UniCast.Core.Models;
 
@@ -28,6 +28,10 @@ namespace UniCast.App.Views
         public ChatOverlayView()
         {
             InitializeComponent();
+
+            // DÜZELTME: DataContext'i kendisi olarak ayarla (binding için gerekli)
+            DataContext = this;
+
             LoadFromSettings();
         }
 
@@ -47,15 +51,13 @@ namespace UniCast.App.Views
             foreach (var item in itemsToLoad) SceneItems.Add(item);
         }
 
-        // --- MOLA MODU YÖNETİMİ (YENİ) ---
+        // --- MOLA MODU YÖNETİMİ ---
 
         public void StartBreak(int minutes)
         {
-            // 1. Geri Sayım Süresini Ayarla
             _remainingBreakTime = TimeSpan.FromMinutes(minutes);
             UpdateBreakText();
 
-            // 2. Timer Başlat (Saniyede 1 kez çalışır)
             if (_breakTimer == null)
             {
                 _breakTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -63,7 +65,6 @@ namespace UniCast.App.Views
             }
             _breakTimer.Start();
 
-            // 3. Ekranı Göster
             BreakOverlay.Visibility = Visibility.Visible;
         }
 
@@ -79,7 +80,6 @@ namespace UniCast.App.Views
 
             if (_remainingBreakTime.TotalSeconds <= 0)
             {
-                // Süre bitti ama ekranı kapatmıyoruz, 00:00'da kalsın
                 _remainingBreakTime = TimeSpan.Zero;
                 _breakTimer?.Stop();
             }
@@ -92,7 +92,7 @@ namespace UniCast.App.Views
             BreakTimerText.Text = _remainingBreakTime.ToString(@"mm\:ss");
         }
 
-        // --- DİĞER METOTLAR (AYNI) ---
+        // --- DİĞER METOTLAR ---
 
         public void SetPosition(double x, double y)
         {
@@ -106,10 +106,20 @@ namespace UniCast.App.Views
             if (chatItem != null) { chatItem.Width = width; chatItem.Height = height; }
         }
 
-        public void AddMessage(string author, string message)
+        // DÜZELTME: Null check eklendi
+        public void AddMessage(string? author, string? message)
         {
-            ChatMessages.Add(new OverlayChatMessage { Author = author, Text = message });
-            if (ChatMessages.Count > 8) ChatMessages.RemoveAt(0);
+            if (string.IsNullOrWhiteSpace(message))
+                return;
+
+            ChatMessages.Add(new OverlayChatMessage
+            {
+                Author = author ?? "Kullanıcı",
+                Text = message
+            });
+
+            if (ChatMessages.Count > 8)
+                ChatMessages.RemoveAt(0);
         }
 
         private void MediaElement_MediaEnded(object sender, RoutedEventArgs e)

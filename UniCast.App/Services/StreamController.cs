@@ -15,36 +15,46 @@ namespace UniCast.App.Services
 {
     public sealed class StreamController : IStreamController, IAsyncDisposable
     {
-        // --- Thread Safety ---
+        // DÜZELTME: Thread-safe state yönetimi
         private readonly SemaphoreSlim _stateLock = new(1, 1);
-        private volatile bool _isRunning;
+        private bool _isRunning;
+        private bool _isReconnecting;
 
-        // DÜZELTME: Pragma warning ile uyarı bastırıldı (gelecekte reconnect özelliği için ayrılmış)
-#pragma warning disable CS0649 // Field is never assigned to - Reserved for future reconnect feature
-        private volatile bool _isReconnecting;
-#pragma warning restore CS0649
+        // DÜZELTME: Thread-safe property'ler
+        public bool IsRunning
+        {
+            get
+            {
+                _stateLock.Wait();
+                try { return _isRunning; }
+                finally { _stateLock.Release(); }
+            }
+        }
 
-        // --- Properties ---
-        public bool IsRunning => _isRunning;
-        public bool IsReconnecting => _isReconnecting;
+        public bool IsReconnecting
+        {
+            get
+            {
+                _stateLock.Wait();
+                try { return _isReconnecting; }
+                finally { _stateLock.Release(); }
+            }
+        }
+
         public string? LastAdvisory { get; private set; }
         public string? LastMessage { get; private set; }
         public string? LastMetric { get; private set; }
         public IReadOnlyList<StreamTarget> Targets => _targets;
         public Profile CurrentProfile { get; private set; } = Profile.Default();
 
-        // --- Events ---
         public event EventHandler<string>? OnLog;
         public event EventHandler<StreamMetric>? OnMetric;
         public event EventHandler<int>? OnExit;
 
-        // --- Fields ---
         private readonly List<StreamTarget> _targets = new();
         private FfmpegProcess? _ffmpegProcess;
         private CancellationTokenSource? _procCts;
         private bool _disposed;
-
-        // ----------------- Public API -----------------
 
         public void AddTarget(StreamTarget target)
         {
@@ -65,8 +75,6 @@ namespace UniCast.App.Services
             }
             OnLog?.Invoke(this, $"[targets] Çıkarıldı: {target.DisplayName ?? target.Platform.ToString()}");
         }
-
-        // --- Interface Implementation (Legacy & New) ---
 
         public async Task StartAsync(Profile profile, CancellationToken ct = default)
         {
@@ -128,7 +136,6 @@ namespace UniCast.App.Services
 
         public async Task StopAsync(CancellationToken ct = default)
         {
-            // Thread-safe state check and update
             await _stateLock.WaitAsync(ct).ConfigureAwait(false);
             try
             {
@@ -169,8 +176,6 @@ namespace UniCast.App.Services
             _procCts?.Dispose();
         }
 
-        // ----------------- Internal Logic -----------------
-
         private async Task<StreamStartResult> StartInternalAsync(
             Profile profile,
             string? videoDeviceId,
@@ -178,7 +183,6 @@ namespace UniCast.App.Services
             bool screenCapture,
             CancellationToken ct)
         {
-            // Thread-safe state check
             await _stateLock.WaitAsync(ct).ConfigureAwait(false);
             try
             {
@@ -256,7 +260,6 @@ namespace UniCast.App.Services
                     globalSettings.Encoder
                 );
 
-                // Eski CTS'i temizle
                 _procCts?.Cancel();
                 _procCts?.Dispose();
                 _procCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -301,7 +304,6 @@ namespace UniCast.App.Services
 
                     var msg = ex.Message.ToLowerInvariant();
 
-                    // HATA ANALİZİ VE YEDEK ENCODER
                     if ((msg.Contains("encoder") || msg.Contains("codec") || msg.Contains("device")) &&
                        !globalSettings.Encoder.Contains("libx264") &&
                        (globalSettings.Encoder != "auto"))
@@ -318,7 +320,8 @@ namespace UniCast.App.Services
                             _ffmpegProcess = new FfmpegProcess();
 
                             _ffmpegProcess.OnLog += (l) => { LastMessage = l; OnLog?.Invoke(this, l); };
-                            _ffmpegProcess.OnMetric += (line) => {
+                            _ffmpegProcess.OnMetric += (line) =>
+                            {
                                 var metric = TryParseMetric(line, DateTime.UtcNow);
                                 if (metric != null)
                                 {

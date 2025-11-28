@@ -12,8 +12,8 @@ namespace UniCast.App.Services
         private MMDevice? _selectedDevice;
         private readonly MMDeviceEnumerator _enumerator;
         private CancellationTokenSource? _cts;
-        private Task? _monitorTask;  // DÜZELTME: Task'ı takip et
-        private bool _disposed;      // DÜZELTME: Dispose flag
+        private Task? _monitorTask;
+        private bool _disposed;
 
         public event Action<float>? OnLevelChange;
         public event Action<bool>? OnMuteChange;
@@ -25,7 +25,7 @@ namespace UniCast.App.Services
 
         public async Task InitializeAsync(string deviceId)
         {
-            // DÜZELTME: Önce mevcut monitoring'i düzgün durdur
+            // Önce mevcut monitoring'i düzgün durdur
             await StopMonitoringAsync();
 
             await Task.Run(() =>
@@ -57,7 +57,6 @@ namespace UniCast.App.Services
         {
             if (_selectedDevice == null || _disposed) return;
 
-            // DÜZELTME: Eski CTS'i dispose et
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
 
@@ -102,7 +101,6 @@ namespace UniCast.App.Services
             }
         }
 
-        // DÜZELTME: Async stop metodu eklendi
         private async Task StopMonitoringAsync()
         {
             if (_cts != null)
@@ -113,7 +111,6 @@ namespace UniCast.App.Services
                 }
                 catch { }
 
-                // Task'ın bitmesini bekle
                 if (_monitorTask != null)
                 {
                     try
@@ -123,7 +120,6 @@ namespace UniCast.App.Services
                     catch { }
                 }
 
-                // DÜZELTME: CTS dispose ediliyordu mu? Şimdi ediliyor!
                 _cts.Dispose();
                 _cts = null;
             }
@@ -132,10 +128,26 @@ namespace UniCast.App.Services
             _selectedDevice = null;
         }
 
+        // DÜZELTME: Senkron versiyonu güvenli hale getirildi
         public void StopMonitoring()
         {
-            // Senkron wrapper (geriye uyumluluk için)
-            StopMonitoringAsync().GetAwaiter().GetResult();
+            if (_cts == null) return;
+
+            try
+            {
+                _cts.Cancel();
+
+                // Task'ın bitmesini kısa süre bekle - deadlock önleme
+                _monitorTask?.Wait(TimeSpan.FromMilliseconds(500));
+            }
+            catch { }
+            finally
+            {
+                try { _cts?.Dispose(); } catch { }
+                _cts = null;
+                _monitorTask = null;
+                _selectedDevice = null;
+            }
         }
 
         public void Dispose()
@@ -147,7 +159,18 @@ namespace UniCast.App.Services
             OnLevelChange = null;
             OnMuteChange = null;
 
-            StopMonitoring();
+            // Senkron dispose için güvenli yol
+            try
+            {
+                _cts?.Cancel();
+                _monitorTask?.Wait(TimeSpan.FromMilliseconds(500));
+            }
+            catch { }
+
+            try { _cts?.Dispose(); } catch { }
+            _cts = null;
+            _monitorTask = null;
+            _selectedDevice = null;
 
             try
             {

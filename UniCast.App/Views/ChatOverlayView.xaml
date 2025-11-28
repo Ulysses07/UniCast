@@ -10,10 +10,11 @@
              x:Name="OverlayRoot">
 
     <UserControl.Resources>
-        <!-- DÜZELTME: ChatMessages binding'i düzeltildi -->
+        <!-- DÜZELTME: ChatTemplate düzeltildi - RelativeSource kullanımı -->
         <DataTemplate x:Key="ChatTemplate">
             <Border Background="#66000000" CornerRadius="8" Padding="5">
-                <ItemsControl ItemsSource="{Binding ChatMessages, ElementName=OverlayRoot}">
+                <ItemsControl ItemsSource="{Binding DataContext.ChatMessages, 
+                              RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Background="#CC000000" CornerRadius="4" Margin="0,2" Padding="5">
@@ -51,9 +52,8 @@
     </UserControl.Resources>
 
     <Grid>
-        <!-- DÜZELTME: SceneItems binding'i ElementName ile yapıldı -->
         <ItemsControl Name="SceneItemsControl" 
-                      ItemsSource="{Binding SceneItems, ElementName=OverlayRoot}">
+                      ItemsSource="{Binding SceneItems}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Canvas />

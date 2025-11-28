@@ -10,9 +10,12 @@ namespace UniCast.Encoder
 {
     public static class FfmpegArgsBuilder
     {
-        // Screen capture method cache (bir kez tespit et)
         private static string? _screenCaptureMethod;
         private static readonly object _probeLock = new();
+
+        // DÜZELTME: Yapılandırılabilir buffer boyutları
+        private const string DEFAULT_RTBUF_SIZE = "500M";
+        private const int DEFAULT_THREAD_QUEUE_SIZE = 2048;
 
         public static string BuildFfmpegArgs(
             Profile profile,
@@ -23,41 +26,46 @@ namespace UniCast.Encoder
             int audioDelayMs,
             string? localRecordPath,
             string? overlayPipeName,
-            string? encoderName)
+            string? encoderName,
+            string? rtbufSize = null,
+            int? threadQueueSize = null)
         {
             var sb = new StringBuilder();
+
+            // DÜZELTME: Yapılandırılabilir buffer
+            var bufSize = rtbufSize ?? DEFAULT_RTBUF_SIZE;
+            var queueSize = threadQueueSize ?? DEFAULT_THREAD_QUEUE_SIZE;
 
             // Encoder Ayarları
             string encoder = string.IsNullOrWhiteSpace(encoderName) || encoderName == "auto" ? "libx264" : encoderName;
             string encParams = "";
 
-            if (encoder.Contains("nvenc")) // NVIDIA
+            if (encoder.Contains("nvenc"))
             {
                 encParams = "-c:v h264_nvenc -preset p1 -tune zerolatency -rc cbr";
             }
-            else if (encoder.Contains("amf")) // AMD
+            else if (encoder.Contains("amf"))
             {
                 encParams = "-c:v h264_amf -usage ultralowlatency -quality speed";
             }
-            else if (encoder.Contains("qsv")) // INTEL
+            else if (encoder.Contains("qsv"))
             {
                 encParams = "-c:v h264_qsv -preset veryfast";
             }
-            else // CPU
+            else
             {
                 encParams = "-c:v libx264 -preset ultrafast -tune zerolatency";
             }
 
             // --- 1. GİRİŞLER ---
-            sb.Append("-f dshow -rtbufsize 500M -thread_queue_size 2048 ");
+            sb.Append($"-f dshow -rtbufsize {bufSize} -thread_queue_size {queueSize} ");
 
             // INPUT 0: VİDEO
             if (screenCapture)
             {
                 sb.Clear();
-                sb.Append("-rtbufsize 500M -thread_queue_size 2048 ");
+                sb.Append($"-rtbufsize {bufSize} -thread_queue_size {queueSize} ");
 
-                // DÜZELTME: ddagrab/gdigrab fallback mekanizması
                 var screenInput = GetScreenCaptureInput(profile.Fps);
                 sb.Append(screenInput);
             }
@@ -169,13 +177,8 @@ namespace UniCast.Encoder
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Ekran yakalama için en uygun yöntemi belirler.
-        /// ddagrab (DirectX, daha performanslı) öncelikli, yoksa gdigrab'a düşer.
-        /// </summary>
         private static string GetScreenCaptureInput(int fps)
         {
-            // Cache mekanizması - her seferinde probe yapma
             if (_screenCaptureMethod == null)
             {
                 lock (_probeLock)
@@ -191,13 +194,10 @@ namespace UniCast.Encoder
             {
                 "ddagrab" => $"-f ddagrab -framerate {fps} -i desktop ",
                 "gdigrab" => $"-f gdigrab -framerate {fps} -i desktop ",
-                _ => $"-f gdigrab -framerate {fps} -i desktop " // Fallback
+                _ => $"-f gdigrab -framerate {fps} -i desktop "
             };
         }
 
-        /// <summary>
-        /// FFmpeg'in ddagrab desteği olup olmadığını tespit eder.
-        /// </summary>
         private static string DetectScreenCaptureMethod()
         {
             try
@@ -224,7 +224,6 @@ namespace UniCast.Encoder
 
                 var combined = (output + error).ToLowerInvariant();
 
-                // ddagrab FFmpeg 5.0+ ve Windows 10+ gerektirir
                 if (combined.Contains("ddagrab"))
                 {
                     return "ddagrab";
@@ -234,14 +233,10 @@ namespace UniCast.Encoder
             }
             catch
             {
-                // Hata durumunda güvenli seçenek
                 return "gdigrab";
             }
         }
 
-        /// <summary>
-        /// Screen capture cache'ini temizler (test veya ayar değişikliği için)
-        /// </summary>
         public static void ResetScreenCaptureCache()
         {
             lock (_probeLock)

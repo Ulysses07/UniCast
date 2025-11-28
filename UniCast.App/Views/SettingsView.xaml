@@ -50,6 +50,23 @@
                 <StackPanel>
                     <TextBlock Text="Yayın Kalitesi" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
 
+                    <!-- DÜZELTME: Encoder Seçimi Eklendi -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Video Encoder" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                        <ComboBox Grid.Column="1" SelectedValue="{Binding Encoder, Mode=TwoWay}" 
+                                  SelectedValuePath="Tag" Height="35">
+                            <ComboBoxItem Content="Otomatik (Önerilen)" Tag="auto"/>
+                            <ComboBoxItem Content="NVIDIA NVENC (GPU)" Tag="h264_nvenc"/>
+                            <ComboBoxItem Content="AMD AMF (GPU)" Tag="h264_amf"/>
+                            <ComboBoxItem Content="Intel QuickSync (GPU)" Tag="h264_qsv"/>
+                            <ComboBoxItem Content="CPU (libx264)" Tag="libx264"/>
+                        </ComboBox>
+                    </Grid>
+
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>

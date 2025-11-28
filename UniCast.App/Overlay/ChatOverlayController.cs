@@ -29,16 +29,10 @@ namespace UniCast.App.Overlay
             _publisher.Start();
         }
 
-        // YENİ METOT: SettingsData'yı tekrar yükle ve View'u güncelle
         public void ReloadSettings()
         {
             _view.Dispatcher.Invoke(() =>
             {
-                // ChatOverlayView.xaml.cs içinde LoadFromSettings metodu var, onu public yapmalısın.
-                // Veya basitçe: View zaten SettingsStore kullanıyor, yeniden tetikleyelim.
-                // En temizi: ChatOverlayView.xaml.cs'deki 'LoadFromSettings' metodunu 'public void Refresh()' yap.
-
-                // Burada View üzerinde tanımlayacağımız metodu çağırıyoruz:
                 _view.RefreshScene();
             });
             _publisher.Invalidate();
@@ -57,13 +51,14 @@ namespace UniCast.App.Overlay
             });
             _publisher.Invalidate();
         }
+
         public void StartBreakMode(int minutes)
         {
             _view.Dispatcher.Invoke(() =>
             {
                 _view.StartBreak(minutes);
             });
-            _publisher.Invalidate(); // Ekran değişti, çizim yap
+            _publisher.Invalidate();
         }
 
         public void StopBreakMode()
@@ -75,7 +70,6 @@ namespace UniCast.App.Overlay
             _publisher.Invalidate();
         }
 
-        // EKSİK OLAN METOT BU:
         public void UpdateSize(double width, double height)
         {
             _view.Dispatcher.Invoke(() =>
@@ -85,11 +79,15 @@ namespace UniCast.App.Overlay
             _publisher.Invalidate();
         }
 
-        public void Push(string author, string message)
+        // DÜZELTME: Null check eklendi
+        public void Push(string? author, string? message)
         {
+            if (string.IsNullOrWhiteSpace(author) && string.IsNullOrWhiteSpace(message))
+                return;
+
             _view.Dispatcher.Invoke(() =>
             {
-                _view.AddMessage(author, message);
+                _view.AddMessage(author ?? "Anonim", message ?? "");
             });
             _publisher.Invalidate();
         }

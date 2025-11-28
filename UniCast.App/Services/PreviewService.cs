@@ -18,7 +18,6 @@ namespace UniCast.App.Services
         private CancellationTokenSource? _cts;
         private bool _disposed;
 
-        // DÜZELTME: Mat'i bir kez oluştur, her karede yeniden kullanma
         private Mat? _frame;
 
         public async Task StartAsync(int cameraIndex, int width, int height, int fps)
@@ -41,12 +40,10 @@ namespace UniCast.App.Services
                 _capture.Set(VideoCaptureProperties.FrameHeight, height);
                 _capture.Set(VideoCaptureProperties.Fps, fps);
 
-                // DÜZELTME: Eski CTS'i dispose et
                 _cts?.Dispose();
                 _cts = new CancellationTokenSource();
                 IsRunning = true;
 
-                // DÜZELTME: Mat'i önceden oluştur
                 _frame = new Mat();
 
                 _previewTask = Task.Run(() => CaptureLoop(_cts.Token), _cts.Token);
@@ -60,9 +57,6 @@ namespace UniCast.App.Services
 
         private void CaptureLoop(CancellationToken ct)
         {
-            // DÜZELTME: Mat artık field olarak tutulduğu için using kullanmıyoruz
-            // Döngü dışında dispose edilecek
-
             while (!ct.IsCancellationRequested && _capture != null && _capture.IsOpened() && _frame != null)
             {
                 try
@@ -73,24 +67,18 @@ namespace UniCast.App.Services
                         continue;
                     }
 
-                    // DÜZELTME: WriteableBitmap oluştur ve hemen freeze et
-                    // ToWriteableBitmap() her seferinde yeni nesne oluşturur
-                    // Bu kaçınılmaz, ama frame'i reuse ediyoruz
                     WriteableBitmap? bmp = null;
                     try
                     {
                         bmp = _frame.ToWriteableBitmap();
-                        bmp.Freeze(); // Thread-safe yapar
+                        bmp.Freeze();
                         OnFrame?.Invoke(bmp);
                     }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Preview Frame Error: {ex.Message}");
                     }
-                    // NOT: WriteableBitmap IDisposable değil, GC tarafından temizlenir
-                    // Freeze() çağrıldıktan sonra immutable olduğu için güvenlidir
 
-                    // FPS kontrolü
                     Thread.Sleep(33); // ~30 FPS
                 }
                 catch (OperationCanceledException)
@@ -100,7 +88,6 @@ namespace UniCast.App.Services
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Preview Loop Error: {ex.Message}");
-                    // Döngüden çıkma, bir sonraki kareyi dene
                 }
             }
         }
@@ -111,7 +98,6 @@ namespace UniCast.App.Services
 
             IsRunning = false;
 
-            // CTS'i iptal et
             if (_cts != null)
             {
                 try
@@ -121,7 +107,6 @@ namespace UniCast.App.Services
                 catch { }
             }
 
-            // Task'ın bitmesini bekle
             if (_previewTask != null)
             {
                 try
@@ -132,7 +117,6 @@ namespace UniCast.App.Services
                 _previewTask = null;
             }
 
-            // DÜZELTME: Mat'i dispose et
             if (_frame != null)
             {
                 try
@@ -143,7 +127,6 @@ namespace UniCast.App.Services
                 _frame = null;
             }
 
-            // Capture'ı temizle
             if (_capture != null)
             {
                 try
@@ -155,7 +138,6 @@ namespace UniCast.App.Services
                 _capture = null;
             }
 
-            // DÜZELTME: CTS'i dispose et
             if (_cts != null)
             {
                 try
@@ -167,6 +149,7 @@ namespace UniCast.App.Services
             }
         }
 
+        // DÜZELTME: Deadlock-safe dispose
         public void Dispose()
         {
             if (_disposed) return;
@@ -175,7 +158,23 @@ namespace UniCast.App.Services
             // Event'i temizle
             OnFrame = null;
 
-            StopAsync().GetAwaiter().GetResult();
+            // Güvenli senkron temizlik
+            try
+            {
+                _cts?.Cancel();
+                _previewTask?.Wait(TimeSpan.FromSeconds(1));
+            }
+            catch { }
+
+            // Kaynakları temizle
+            try { _frame?.Dispose(); } catch { }
+            try { _capture?.Release(); _capture?.Dispose(); } catch { }
+            try { _cts?.Dispose(); } catch { }
+
+            _frame = null;
+            _capture = null;
+            _cts = null;
+            _previewTask = null;
         }
     }
 }

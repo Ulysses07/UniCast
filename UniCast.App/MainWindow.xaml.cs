@@ -194,7 +194,6 @@ namespace UniCast.App
                 _ytIngestor.OnMessage += OnMsg;
                 _chatBus.Attach(_ytIngestor);
 
-                // DÜZELTME: SafeFireAndForget kullan
                 _ytIngestor.StartAsync(ct)
                     .SafeFireAndForget("YouTube Chat", ex => Log.Error(ex, "YouTube Chat hatası"));
             }
@@ -285,19 +284,25 @@ namespace UniCast.App
             // 1. CTS iptal
             try { _chatCts?.Cancel(); } catch { }
 
-            // 2. Chat ingestors durdur
+            // 2. DÜZELTME: Event handler'ları ÖNCE kaldır (Memory Leak Fix)
+            if (_ytIngestor != null) _ytIngestor.OnMessage -= OnMsg;
+            if (_tiktok != null) _tiktok.OnMessage -= OnMsg;
+            if (_instagram != null) _instagram.OnMessage -= OnMsg;
+            if (_facebook != null) _facebook.OnMessage -= OnMsg;
+
+            // 3. Chat ingestors durdur
             await StopIngestorSafe(_ytIngestor, "YouTube");
             await StopIngestorSafe(_tiktok, "TikTok");
             await StopIngestorSafe(_instagram, "Instagram");
             await StopIngestorSafe(_facebook, "Facebook");
 
-            // 3. ChatBus'tan ayır
+            // 4. ChatBus'tan ayır
             if (_ytIngestor != null) _chatBus.Detach(_ytIngestor);
             if (_tiktok != null) _chatBus.Detach(_tiktok);
             if (_instagram != null) _chatBus.Detach(_instagram);
             if (_facebook != null) _chatBus.Detach(_facebook);
 
-            // 4. Overlay kapat
+            // 5. Overlay kapat
             try
             {
                 if (_overlay != null)
@@ -308,7 +313,7 @@ namespace UniCast.App
                 Log.Debug("Overlay dispose hatası: {Message}", ex.Message);
             }
 
-            // 5. Stream controller kapat
+            // 6. Stream controller kapat
             try
             {
                 if (_stream is IAsyncDisposable asyncDisposable)
@@ -319,10 +324,10 @@ namespace UniCast.App
                 Log.Debug("Stream dispose hatası: {Message}", ex.Message);
             }
 
-            // 6. ControlViewModel dispose
+            // 7. ControlViewModel dispose
             _controlVm.Dispose();
 
-            // 7. CTS dispose
+            // 8. CTS dispose
             try { _chatCts?.Dispose(); } catch { }
 
             base.OnClosed(e);

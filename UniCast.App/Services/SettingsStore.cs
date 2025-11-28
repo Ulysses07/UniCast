@@ -14,11 +14,8 @@ namespace UniCast.App.Services
 
         private static readonly string FilePath = Path.Combine(Dir, "settings.json");
 
-        // Thread-safety için ReaderWriterLock kullanıyoruz
-        // Çoklu okuma izni verir, yazma sırasında tüm erişimi bloklar
         private static readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.SupportsRecursion);
 
-        // Yazma işlemleri için retry mekanizması
         private const int MAX_RETRY_ATTEMPTS = 3;
         private const int RETRY_DELAY_MS = 100;
 
@@ -31,6 +28,10 @@ namespace UniCast.App.Services
             public double OverlayOpacity { get; set; }
             public int OverlayFontSize { get; set; }
 
+            // DÜZELTME: Eksik olan OverlayWidth ve OverlayHeight eklendi
+            public double OverlayWidth { get; set; } = 300;
+            public double OverlayHeight { get; set; } = 400;
+
             public string YouTubeChannelId { get; set; } = "";
             public string TikTokRoomId { get; set; } = "";
 
@@ -39,7 +40,7 @@ namespace UniCast.App.Services
             public string TikTokSessionCookieEnc { get; set; } = "";
             public string FacebookPageId { get; set; } = "";
             public string FacebookLiveVideoId { get; set; } = "";
-            public string FacebookAccessTokenEnc { get; set; } = ""; // encrypted
+            public string FacebookAccessTokenEnc { get; set; } = "";
 
             // Encoder/Quality alanları
             public string Encoder { get; set; } = "auto";
@@ -59,9 +60,6 @@ namespace UniCast.App.Services
             public string InstagramSessionIdEnc { get; set; } = "";
         }
 
-        /// <summary>
-        /// Thread-safe ayar okuma
-        /// </summary>
         public static SettingsData Load()
         {
             _lock.EnterReadLock();
@@ -75,9 +73,6 @@ namespace UniCast.App.Services
             }
         }
 
-        /// <summary>
-        /// Thread-safe ayar yazma (retry mekanizması ile)
-        /// </summary>
         public static void Save(SettingsData s)
         {
             if (s == null) throw new ArgumentNullException(nameof(s));
@@ -93,9 +88,6 @@ namespace UniCast.App.Services
             }
         }
 
-        /// <summary>
-        /// Atomic read-modify-write işlemi için
-        /// </summary>
         public static void Update(Action<SettingsData> modifier)
         {
             if (modifier == null) throw new ArgumentNullException(nameof(modifier));
@@ -120,7 +112,6 @@ namespace UniCast.App.Services
                 if (!File.Exists(FilePath))
                     return CreateDefaultSettings();
 
-                // Dosyayı okurken geçici bir kopya kullan (corruption koruması)
                 string json;
                 using (var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 using (var reader = new StreamReader(fs))
@@ -142,7 +133,6 @@ namespace UniCast.App.Services
             catch (JsonException ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[Settings] JSON parse hatası: {ex.Message}");
-                // Bozuk dosyayı yedekle
                 BackupCorruptedFile();
                 return CreateDefaultSettings();
             }
@@ -162,7 +152,7 @@ namespace UniCast.App.Services
                 try
                 {
                     SaveInternal(s);
-                    return; // Başarılı
+                    return;
                 }
                 catch (IOException ex)
                 {
@@ -176,13 +166,11 @@ namespace UniCast.App.Services
                 }
             }
 
-            // Tüm denemeler başarısız
             throw new IOException($"Ayarlar kaydedilemedi ({MAX_RETRY_ATTEMPTS} deneme sonrası)", lastException);
         }
 
         private static void SaveInternal(SettingsData s)
         {
-            // Dizini oluştur
             if (!Directory.Exists(Dir))
                 Directory.CreateDirectory(Dir);
 
@@ -190,22 +178,19 @@ namespace UniCast.App.Services
 
             var json = JsonSerializer.Serialize(p, new JsonSerializerOptions { WriteIndented = true });
 
-            // Atomic write: önce geçici dosyaya yaz, sonra rename
             var tempPath = FilePath + ".tmp";
             var backupPath = FilePath + ".bak";
 
             try
             {
-                // 1. Geçici dosyaya yaz
                 using (var fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
                 using (var writer = new StreamWriter(fs))
                 {
                     writer.Write(json);
                     writer.Flush();
-                    fs.Flush(true); // Diske yazmayı zorla
+                    fs.Flush(true);
                 }
 
-                // 2. Mevcut dosyayı yedekle
                 if (File.Exists(FilePath))
                 {
                     if (File.Exists(backupPath))
@@ -213,15 +198,10 @@ namespace UniCast.App.Services
                     File.Move(FilePath, backupPath);
                 }
 
-                // 3. Geçici dosyayı ana dosya yap
                 File.Move(tempPath, FilePath);
-
-                // 4. Yedek dosyayı sil (opsiyonel, güvenlik için tutulabilir)
-                // if (File.Exists(backupPath)) File.Delete(backupPath);
             }
             catch
             {
-                // Hata durumunda geçici dosyayı temizle
                 if (File.Exists(tempPath))
                 {
                     try { File.Delete(tempPath); } catch { }
@@ -262,6 +242,10 @@ namespace UniCast.App.Services
                 OverlayOpacity = p.OverlayOpacity,
                 OverlayFontSize = p.OverlayFontSize,
 
+                // DÜZELTME: OverlayWidth ve OverlayHeight mapping eklendi
+                OverlayWidth = p.OverlayWidth,
+                OverlayHeight = p.OverlayHeight,
+
                 YouTubeChannelId = p.YouTubeChannelId ?? "",
                 TikTokRoomId = p.TikTokRoomId ?? "",
 
@@ -301,6 +285,10 @@ namespace UniCast.App.Services
                 OverlayY = s.OverlayY,
                 OverlayOpacity = s.OverlayOpacity,
                 OverlayFontSize = s.OverlayFontSize,
+
+                // DÜZELTME: OverlayWidth ve OverlayHeight mapping eklendi
+                OverlayWidth = s.OverlayWidth,
+                OverlayHeight = s.OverlayHeight,
 
                 YouTubeChannelId = s.YouTubeChannelId ?? "",
                 TikTokRoomId = s.TikTokRoomId ?? "",
