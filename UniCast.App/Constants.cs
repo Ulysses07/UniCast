@@ -172,7 +172,7 @@ namespace UniCast.App
         public static class Timeouts
         {
             public static readonly TimeSpan HttpDefault = TimeSpan.FromSeconds(Http.DefaultTimeoutSeconds);
-            //public static readonly TimeSpan Reconnect = TimeSpan.FromSeconds(Reconnect.TimeoutSeconds);
+            public static readonly TimeSpan Reconnect = TimeSpan.FromSeconds(Reconnect.TimeoutSeconds);
             public static readonly TimeSpan GracefulShutdown = TimeSpan.FromMilliseconds(FFmpeg.GracefulTimeoutMs);
         }
     }
