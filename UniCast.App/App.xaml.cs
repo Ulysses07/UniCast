@@ -68,7 +68,6 @@ namespace UniCast.App
             {
                 if (Services is IAsyncDisposable asyncDisposable)
                 {
-                    // Async dispose'u senkron olarak bekle
                     asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
                 }
                 else if (Services is IDisposable disposable)
@@ -79,6 +78,16 @@ namespace UniCast.App
             catch (Exception ex)
             {
                 Log.Error(ex, "DI Container dispose hatası");
+            }
+
+            // DÜZELTME: SettingsStore static lock'u temizle
+            try
+            {
+                SettingsStore.Cleanup();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "SettingsStore cleanup hatası");
             }
 
             Log.CloseAndFlush();

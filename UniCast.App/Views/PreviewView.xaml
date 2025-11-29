@@ -22,8 +22,10 @@
         </Border>
 
         <Grid Grid.Row="1">
-            <Image Source="{Binding PreviewImage}" Stretch="Uniform"/>
+            <!-- DÜZELTME: PreviewViewModel.PreviewImage binding -->
+            <Image Source="{Binding PreviewViewModel.PreviewImage}" Stretch="Uniform"/>
 
+            <!-- DÜZELTME: SceneItems binding -->
             <ItemsControl Name="EditorItemsControl" ItemsSource="{Binding SceneItems}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>

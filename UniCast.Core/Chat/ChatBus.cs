@@ -7,19 +7,17 @@ namespace UniCast.Core.Chat
 {
     /// <summary>
     /// Çoklu kaynaktan gelen mesajları tek akışta birleştirir, dedupe eder ve rate-limit uygular.
-    /// DÜZELTME: LRU cache ile verimli bellek yönetimi.
+    /// DÜZELTME: Hardcoded değerler yerine Constants kullanımı.
     /// </summary>
     public sealed class ChatBus : IDisposable
     {
         private readonly List<IChatIngestor> _ingestors = new();
-
-        // DÜZELTME: LRU Cache - En eski mesajlar otomatik silinir
         private readonly LruCache<string> _seenMessages;
-
         private readonly Timer _statsTimer;
         private readonly int _maxPerSecond;
         private long _tickSecond = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         private int _countThisSecond = 0;
+        private bool _disposed;
 
         // İstatistikler
         private long _totalReceived = 0;
@@ -28,15 +26,21 @@ namespace UniCast.Core.Chat
 
         public event Action<ChatMessage>? OnMerged;
 
-        /// <param name="maxPerSecond">Saniyede maksimum mesaj (varsayılan 20)</param>
-        /// <param name="cacheCapacity">Dedupe cache kapasitesi (varsayılan 10000)</param>
-        public ChatBus(int maxPerSecond = 20, int cacheCapacity = 10000)
+        /// <summary>
+        /// ChatBus oluşturur.
+        /// </summary>
+        /// <param name="maxPerSecond">Saniyede maksimum mesaj (varsayılan: ChatConstants.MaxMessagesPerSecond)</param>
+        /// <param name="cacheCapacity">Dedupe cache kapasitesi (varsayılan: ChatConstants.CacheCapacity)</param>
+        public ChatBus(int maxPerSecond = 0, int cacheCapacity = 0)
         {
-            _maxPerSecond = Math.Max(5, maxPerSecond);
-            _seenMessages = new LruCache<string>(cacheCapacity);
+            // DÜZELTME: Constants kullanımı - 0 veya negatif ise varsayılan değerleri kullan
+            _maxPerSecond = maxPerSecond > 0 ? maxPerSecond : ChatConstants.MaxMessagesPerSecond;
+            var capacity = cacheCapacity > 0 ? cacheCapacity : ChatConstants.CacheCapacity;
 
-            // Her dakika istatistik logla
-            _statsTimer = new Timer(_ => LogStats(), null, 60_000, 60_000);
+            _seenMessages = new LruCache<string>(capacity);
+
+            // İstatistik loglama aralığı Constants'tan
+            _statsTimer = new Timer(_ => LogStats(), null, ChatConstants.StatsIntervalMs, ChatConstants.StatsIntervalMs);
         }
 
         public void Attach(IChatIngestor ingestor)
@@ -69,6 +73,8 @@ namespace UniCast.Core.Chat
 
         private void HandleIncoming(ChatMessage m)
         {
+            if (_disposed) return;
+
             Interlocked.Increment(ref _totalReceived);
 
             // Dedupe: Source + Id kombinasyonu
@@ -77,10 +83,10 @@ namespace UniCast.Core.Chat
             if (!_seenMessages.TryAdd(key))
             {
                 Interlocked.Increment(ref _totalDuplicate);
-                return; // Zaten gördük
+                return;
             }
 
-            // Rate limiting: Saniyede max mesaj
+            // Rate limiting
             var nowSec = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (nowSec != Interlocked.Read(ref _tickSecond))
             {
@@ -92,7 +98,7 @@ namespace UniCast.Core.Chat
             if (count > _maxPerSecond)
             {
                 Interlocked.Increment(ref _totalRateLimited);
-                return; // Rate limit aşıldı
+                return;
             }
 
             // Mesajı ilet
@@ -108,6 +114,8 @@ namespace UniCast.Core.Chat
 
         private void LogStats()
         {
+            if (_disposed) return;
+
             var received = Interlocked.Read(ref _totalReceived);
             var duplicate = Interlocked.Read(ref _totalDuplicate);
             var limited = Interlocked.Read(ref _totalRateLimited);
@@ -123,6 +131,9 @@ namespace UniCast.Core.Chat
 
         public void Dispose()
         {
+            if (_disposed) return;
+            _disposed = true;
+
             _statsTimer.Dispose();
 
             lock (_ingestors)
@@ -137,6 +148,28 @@ namespace UniCast.Core.Chat
             _seenMessages.Clear();
             OnMerged = null;
         }
+    }
+
+    /// <summary>
+    /// Chat sistemi sabitleri.
+    /// DÜZELTME: Hardcoded değerler yerine merkezi sabitler.
+    /// </summary>
+    public static class ChatConstants
+    {
+        /// <summary>Saniyede maksimum mesaj (rate limit)</summary>
+        public const int MaxMessagesPerSecond = 20;
+
+        /// <summary>Dedupe cache kapasitesi</summary>
+        public const int CacheCapacity = 10000;
+
+        /// <summary>Overlay'de gösterilecek maksimum mesaj</summary>
+        public const int MaxOverlayMessages = 8;
+
+        /// <summary>UI'da gösterilecek maksimum mesaj</summary>
+        public const int MaxUiMessages = 1000;
+
+        /// <summary>İstatistik loglama aralığı (ms)</summary>
+        public const int StatsIntervalMs = 60000;
     }
 
     /// <summary>
@@ -169,13 +202,11 @@ namespace UniCast.Core.Chat
         {
             lock (_lock)
             {
-                // Zaten var mı?
                 if (_map.ContainsKey(item))
                 {
                     return false;
                 }
 
-                // Kapasite dolmuşsa en eskiyi sil (LRU)
                 while (_map.Count >= _capacity)
                 {
                     var oldest = _list.Last;
@@ -186,7 +217,6 @@ namespace UniCast.Core.Chat
                     }
                 }
 
-                // Yeni öğeyi başa ekle (en yeni)
                 var node = _list.AddFirst(item);
                 _map[item] = node;
 
@@ -196,7 +226,6 @@ namespace UniCast.Core.Chat
 
         /// <summary>
         /// Öğenin cache'te olup olmadığını kontrol eder.
-        /// Varsa öğeyi "en yeni" konumuna taşır.
         /// </summary>
         public bool Contains(T item)
         {
@@ -204,7 +233,6 @@ namespace UniCast.Core.Chat
             {
                 if (_map.TryGetValue(item, out var node))
                 {
-                    // En yeni konumuna taşı
                     _list.Remove(node);
                     _list.AddFirst(node);
                     return true;

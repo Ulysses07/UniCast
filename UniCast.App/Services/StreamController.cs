@@ -22,6 +22,8 @@ namespace UniCast.App.Services
         private readonly SemaphoreSlim _stateLock = new(1, 1);
         private bool _isRunning;
         private bool _isReconnecting;
+
+        // DÜZELTME: Event handler'ları field olarak tut (memory leak önleme)
         private Action<string>? _currentLogHandler;
         private Action<string>? _currentMetricHandler;
         private Action<int?>? _currentExitHandler;
@@ -175,7 +177,6 @@ namespace UniCast.App.Services
             if (_disposed) return;
             _disposed = true;
 
-            // Async işlemleri senkron olarak bekle
             try
             {
                 StopAsync().GetAwaiter().GetResult();
@@ -187,7 +188,6 @@ namespace UniCast.App.Services
             try { _procCts?.Cancel(); } catch { }
             _procCts?.Dispose();
 
-            // Event'leri temizle
             OnLog = null;
             OnMetric = null;
             OnExit = null;
@@ -205,7 +205,6 @@ namespace UniCast.App.Services
             _stateLock.Dispose();
             _procCts?.Dispose();
 
-            // Event'leri temizle
             OnLog = null;
             OnMetric = null;
             OnExit = null;
@@ -283,7 +282,6 @@ namespace UniCast.App.Services
                     }
                 }
 
-                // DÜZELTME: Constants kullanımı
                 var overlayPipeName = globalSettings.ShowOverlay ? Constants.Overlay.PipeName : null;
 
                 var args = FfmpegArgsBuilder.BuildFfmpegArgs(
@@ -304,7 +302,8 @@ namespace UniCast.App.Services
 
                 _ffmpegProcess = new FfmpegProcess();
 
-                _ffmpegProcess.OnLog += (line) =>
+                // DÜZELTME: Handler'ları field'lara ata (memory leak önleme)
+                _currentLogHandler = (line) =>
                 {
                     LastMessage = line;
                     OnLog?.Invoke(this, line);
@@ -312,7 +311,7 @@ namespace UniCast.App.Services
                         LastAdvisory = line;
                 };
 
-                _ffmpegProcess.OnMetric += (line) =>
+                _currentMetricHandler = (line) =>
                 {
                     var metric = TryParseMetric(line, DateTime.UtcNow);
                     if (metric != null)
@@ -322,12 +321,17 @@ namespace UniCast.App.Services
                     }
                 };
 
-                _ffmpegProcess.OnExit += (code) =>
+                _currentExitHandler = (code) =>
                 {
                     _isRunning = false;
                     OnExit?.Invoke(this, code ?? -1);
                     OnLog?.Invoke(this, $"[ffmpeg] Çıkış kodu: {code}");
                 };
+
+                // Field'lardan subscribe ol
+                _ffmpegProcess.OnLog += _currentLogHandler;
+                _ffmpegProcess.OnMetric += _currentMetricHandler;
+                _ffmpegProcess.OnExit += _currentExitHandler;
 
                 try
                 {
@@ -357,8 +361,9 @@ namespace UniCast.App.Services
                             _procCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                             _ffmpegProcess = new FfmpegProcess();
 
-                            _ffmpegProcess.OnLog += (l) => { LastMessage = l; OnLog?.Invoke(this, l); };
-                            _ffmpegProcess.OnMetric += (line) =>
+                            // DÜZELTME: Fallback için de handler'ları field'lara ata
+                            _currentLogHandler = (l) => { LastMessage = l; OnLog?.Invoke(this, l); };
+                            _currentMetricHandler = (line) =>
                             {
                                 var metric = TryParseMetric(line, DateTime.UtcNow);
                                 if (metric != null)
@@ -367,7 +372,11 @@ namespace UniCast.App.Services
                                     OnMetric?.Invoke(this, metric);
                                 }
                             };
-                            _ffmpegProcess.OnExit += (c) => { _isRunning = false; OnExit?.Invoke(this, c ?? -1); };
+                            _currentExitHandler = (c) => { _isRunning = false; OnExit?.Invoke(this, c ?? -1); };
+
+                            _ffmpegProcess.OnLog += _currentLogHandler;
+                            _ffmpegProcess.OnMetric += _currentMetricHandler;
+                            _ffmpegProcess.OnExit += _currentExitHandler;
 
                             await _ffmpegProcess.StartAsync(cpuArgs, _procCts.Token);
                             _isRunning = true;
@@ -377,34 +386,6 @@ namespace UniCast.App.Services
                         {
                             CleanupProcess();
                         }
-                        _currentLogHandler = (line) =>
-                        {
-                            LastMessage = line;
-                            OnLog?.Invoke(this, line);
-                            if (line.Contains("Connection") || line.Contains("Reconnect"))
-                                LastAdvisory = line;
-                        };
-
-                        _currentMetricHandler = (line) =>
-                        {
-                            var metric = TryParseMetric(line, DateTime.UtcNow);
-                            if (metric != null)
-                            {
-                                LastMetric = $"fps={metric.Fps:0.#} bitrate={metric.BitrateKbps:0.#}k";
-                                OnMetric?.Invoke(this, metric);
-                            }
-                        };
-
-                        _currentExitHandler = (code) =>
-                        {
-                            _isRunning = false;
-                            OnExit?.Invoke(this, code ?? -1);
-                            OnLog?.Invoke(this, $"[ffmpeg] Çıkış kodu: {code}");
-                        };
-
-                        _ffmpegProcess.OnLog += _currentLogHandler;
-                        _ffmpegProcess.OnMetric += _currentMetricHandler;
-                        _ffmpegProcess.OnExit += _currentExitHandler;
                     }
 
                     if (msg.Contains("camera") || msg.Contains("video device") || msg.Contains("busy"))
@@ -423,20 +404,24 @@ namespace UniCast.App.Services
         {
             _isRunning = false;
 
-            // DÜZELTME: Event handler'ları önce kaldır
+            // DÜZELTME: Event handler'ları ÖNCE kaldır (memory leak önleme)
             if (_ffmpegProcess != null)
             {
-                if (_currentLogHandler != null) _ffmpegProcess.OnLog -= _currentLogHandler;
-                if (_currentMetricHandler != null) _ffmpegProcess.OnMetric -= _currentMetricHandler;
-                if (_currentExitHandler != null) _ffmpegProcess.OnExit -= _currentExitHandler;
+                if (_currentLogHandler != null)
+                    _ffmpegProcess.OnLog -= _currentLogHandler;
+                if (_currentMetricHandler != null)
+                    _ffmpegProcess.OnMetric -= _currentMetricHandler;
+                if (_currentExitHandler != null)
+                    _ffmpegProcess.OnExit -= _currentExitHandler;
             }
 
-            _ffmpegProcess?.Dispose();
-            _ffmpegProcess = null;
-
+            // Handler referanslarını temizle
             _currentLogHandler = null;
             _currentMetricHandler = null;
             _currentExitHandler = null;
+
+            _ffmpegProcess?.Dispose();
+            _ffmpegProcess = null;
 
             try { _procCts?.Cancel(); } catch { }
             _procCts?.Dispose();

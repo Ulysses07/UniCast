@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -8,6 +9,10 @@ using System.Threading.Tasks;
 
 namespace UniCast.Encoder
 {
+    /// <summary>
+    /// FFmpeg process yönetimi.
+    /// DÜZELTME: Native interop hata yönetimi iyileştirildi.
+    /// </summary>
     public sealed class FfmpegProcess : IDisposable
     {
         public event Action<string>? OnLog;
@@ -18,11 +23,11 @@ namespace UniCast.Encoder
         private string _lastErrorLine = "";
         private bool _disposed;
 
-        // Graceful shutdown için
         private const int GRACEFUL_TIMEOUT_MS = 3000;
         private const int KILL_TIMEOUT_MS = 2000;
 
-        // Native console control için
+        #region Native Interop
+
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool AttachConsole(int dwProcessId);
 
@@ -35,22 +40,24 @@ namespace UniCast.Encoder
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool GenerateConsoleCtrlEvent(int dwCtrlEvent, int dwProcessGroupId);
 
+        [DllImport("kernel32.dll")]
+        private static extern int GetLastError();
+
         private delegate bool ConsoleCtrlDelegate(int ctrlType);
         private const int CTRL_C_EVENT = 0;
+
+        #endregion
 
         public static string ResolveFfmpegPath()
         {
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-            // 1. External klasörü
             var bundledPath = Path.Combine(baseDir, "External", "ffmpeg.exe");
             if (File.Exists(bundledPath)) return bundledPath;
 
-            // 2. Ana dizin
             var localPath = Path.Combine(baseDir, "ffmpeg.exe");
             if (File.Exists(localPath)) return localPath;
 
-            // 3. PATH
             var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
             foreach (var path in pathEnv.Split(Path.PathSeparator))
             {
@@ -83,7 +90,7 @@ namespace UniCast.Encoder
                 UseShellExecute = false,
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
-                RedirectStandardInput = true // DÜZELTME: 'q' göndermek için
+                RedirectStandardInput = true
             };
 
             _proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
@@ -102,7 +109,6 @@ namespace UniCast.Encoder
             if (!_proc.Start())
                 throw new InvalidOperationException("FFmpeg başlatılamadı.");
 
-            // Log okuma task'ı
             _ = Task.Run(async () =>
             {
                 try
@@ -148,7 +154,7 @@ namespace UniCast.Encoder
 
         /// <summary>
         /// FFmpeg'i düzgünce kapatır.
-        /// DÜZELTME: Önce 'q' tuşu, sonra CTRL+C, en son Kill
+        /// DÜZELTME: Native interop hataları düzgün yönetiliyor.
         /// </summary>
         public async Task StopAsync()
         {
@@ -160,7 +166,7 @@ namespace UniCast.Encoder
                 {
                     OnLog?.Invoke("[FFmpeg] Graceful shutdown başlatılıyor...");
 
-                    // 1. AŞAMA: 'q' tuşu gönder (FFmpeg'in standart kapatma komutu)
+                    // 1. AŞAMA: 'q' tuşu gönder
                     if (await TrySendQuitCommandAsync())
                     {
                         OnLog?.Invoke("[FFmpeg] 'q' komutu ile kapatıldı.");
@@ -174,9 +180,23 @@ namespace UniCast.Encoder
                         return;
                     }
 
-                    // 3. AŞAMA: Zorla kapat (son çare)
+                    // 3. AŞAMA: Zorla kapat
                     OnLog?.Invoke("[FFmpeg] Graceful shutdown başarısız, Kill uygulanıyor...");
-                    _proc.Kill(entireProcessTree: true);
+
+                    try
+                    {
+                        _proc.Kill(entireProcessTree: true);
+                    }
+                    catch (Win32Exception ex)
+                    {
+                        // DÜZELTME: Access denied veya process zaten kapanmış olabilir
+                        OnLog?.Invoke($"[FFmpeg] Kill hatası (muhtemelen zaten kapandı): {ex.Message}");
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // Process zaten kapanmış
+                    }
+
                     await WaitForExitAsync(KILL_TIMEOUT_MS);
                 }
             }
@@ -187,26 +207,36 @@ namespace UniCast.Encoder
             finally
             {
                 await Task.Delay(100);
-                _proc?.Dispose();
+
+                try
+                {
+                    _proc?.Dispose();
+                }
+                catch { }
+
                 _proc = null;
             }
         }
 
-        /// <summary>
-        /// FFmpeg stdin'e 'q' karakteri gönderir.
-        /// </summary>
         private async Task<bool> TrySendQuitCommandAsync()
         {
             try
             {
                 if (_proc == null || _proc.HasExited) return true;
 
-                // 'q' tuşunu stdin'e gönder
                 await _proc.StandardInput.WriteAsync('q');
                 await _proc.StandardInput.FlushAsync();
 
-                // Kapamasını bekle
                 return await WaitForExitAsync(GRACEFUL_TIMEOUT_MS);
+            }
+            catch (IOException)
+            {
+                // Stdin kapalı olabilir
+                return false;
+            }
+            catch (ObjectDisposedException)
+            {
+                return true;
             }
             catch
             {
@@ -215,47 +245,65 @@ namespace UniCast.Encoder
         }
 
         /// <summary>
-        /// Process'e CTRL+C sinyali gönderir.
+        /// DÜZELTME: CTRL+C gönderme - hata yönetimi iyileştirildi.
         /// </summary>
         private async Task<bool> TrySendCtrlCAsync()
         {
+            if (_proc == null || _proc.HasExited) return true;
+
             try
             {
-                if (_proc == null || _proc.HasExited) return true;
-
-                // Windows'ta CTRL+C göndermek karmaşık
                 // Kendi console'umuzdan ayır
-                FreeConsole();
+                if (!FreeConsole())
+                {
+                    // DÜZELTME: GetLastError ile hata nedenini al
+                    var error = GetLastError();
+                    System.Diagnostics.Debug.WriteLine($"[FFmpeg] FreeConsole failed: {error}");
+                }
 
                 // FFmpeg'in console'una bağlan
-                if (AttachConsole(_proc.Id))
+                if (!AttachConsole(_proc.Id))
+                {
+                    var error = GetLastError();
+                    System.Diagnostics.Debug.WriteLine($"[FFmpeg] AttachConsole failed: {error}");
+                    return false;
+                }
+
+                try
                 {
                     // Kendi handler'ımızı devre dışı bırak
-                    SetConsoleCtrlHandler(null, true);
+                    if (!SetConsoleCtrlHandler(null, true))
+                    {
+                        var error = GetLastError();
+                        System.Diagnostics.Debug.WriteLine($"[FFmpeg] SetConsoleCtrlHandler(disable) failed: {error}");
+                    }
 
                     // CTRL+C gönder
-                    GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+                    if (!GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0))
+                    {
+                        var error = GetLastError();
+                        System.Diagnostics.Debug.WriteLine($"[FFmpeg] GenerateConsoleCtrlEvent failed: {error}");
+                        return false;
+                    }
 
                     // Handler'ı geri aç
                     SetConsoleCtrlHandler(null, false);
-
+                }
+                finally
+                {
                     // Console'dan ayrıl
                     FreeConsole();
-
-                    return await WaitForExitAsync(GRACEFUL_TIMEOUT_MS);
                 }
-            }
-            catch
-            {
-                // CTRL+C başarısız olursa devam et
-            }
 
-            return false;
+                return await WaitForExitAsync(GRACEFUL_TIMEOUT_MS);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FFmpeg] CTRL+C exception: {ex.Message}");
+                return false;
+            }
         }
 
-        /// <summary>
-        /// Process'in kapanmasını bekler.
-        /// </summary>
         private async Task<bool> WaitForExitAsync(int timeoutMs)
         {
             if (_proc == null) return true;
@@ -269,6 +317,11 @@ namespace UniCast.Encoder
             catch (OperationCanceledException)
             {
                 return false;
+            }
+            catch (InvalidOperationException)
+            {
+                // Process zaten kapanmış
+                return true;
             }
         }
 
@@ -291,13 +344,27 @@ namespace UniCast.Encoder
             {
                 if (_proc != null && !_proc.HasExited)
                 {
-                    _proc.Kill(entireProcessTree: true);
+                    try
+                    {
+                        _proc.Kill(entireProcessTree: true);
+                    }
+                    catch { }
                 }
             }
             catch { }
 
-            _proc?.Dispose();
+            try
+            {
+                _proc?.Dispose();
+            }
+            catch { }
+
             _proc = null;
+
+            // DÜZELTME: Event'leri temizle
+            OnLog = null;
+            OnMetric = null;
+            OnExit = null;
         }
     }
 }

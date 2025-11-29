@@ -6,18 +6,28 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using Microsoft.Win32;
 using UniCast.App.Services;
+using UniCast.App.ViewModels;
 using UniCast.Core.Models;
 using UniCast.Core.Settings;
 using Application = System.Windows.Application;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Point = System.Windows.Point;
 using UserControl = System.Windows.Controls.UserControl;
 
 namespace UniCast.App.Views
 {
+    /// <summary>
+    /// Preview View - Sahne editörü.
+    /// DÜZELTME: MVVM uyumlu hale getirildi, SceneItems ViewModel'den yönetiliyor.
+    /// </summary>
     public partial class PreviewView : UserControl
     {
-        public ObservableCollection<OverlayItem> SceneItems { get; private set; } = new();
+        private readonly PreviewViewModel? _viewModel;
+
+        // DÜZELTME: SceneItems artık yerel bir ObservableCollection
+        // ViewModel'den bağımsız, sadece sahne editörü için
+        private readonly ObservableCollection<OverlayItem> _sceneItems = new();
 
         // Durum Değişkenleri
         private bool _isDragging = false;
@@ -25,46 +35,60 @@ namespace UniCast.App.Views
         private Point _startPoint;
         private OverlayItem? _selectedItem;
 
-        // Resize Değişkenleri (HATA DÜZELTME: Eksik tanımlar eklendi)
+        // Resize Değişkenleri
         private double _startWidth;
         private double _startHeight;
 
         public PreviewView(object? viewModel = null)
         {
             InitializeComponent();
-            if (viewModel != null) DataContext = viewModel;
+
+            _viewModel = viewModel as PreviewViewModel;
+
+            // DÜZELTME: Composite DataContext - hem preview hem scene items için
+            DataContext = new PreviewViewDataContext
+            {
+                PreviewViewModel = _viewModel,
+                SceneItems = _sceneItems
+            };
 
             LoadItems();
-
-            // XAML'daki ItemsControl ismine bağlıyoruz
-            EditorItemsControl.ItemsSource = SceneItems;
+            EditorItemsControl.ItemsSource = _sceneItems;
         }
 
         private void LoadItems()
         {
             var s = SettingsStore.Load();
             s.Normalize();
-            SceneItems.Clear();
-            foreach (var item in s.SceneItems) SceneItems.Add(item);
+            _sceneItems.Clear();
+            foreach (var item in s.SceneItems)
+                _sceneItems.Add(item);
         }
 
         private void SaveSettings()
         {
             var s = SettingsStore.Load();
-            s.SceneItems = SceneItems.ToList();
+            s.SceneItems = _sceneItems.ToList();
             SettingsStore.Save(s);
 
             if (Application.Current.MainWindow is MainWindow mw)
                 mw.RefreshOverlay();
         }
 
-        // --- BUTONLAR ---
+        #region Butonlar
+
         private void AddImage_Click(object sender, RoutedEventArgs e)
         {
             var dlg = new OpenFileDialog { Filter = "Resimler|*.png;*.jpg;*.jpeg;*.bmp;*.gif" };
             if (dlg.ShowDialog() == true)
             {
-                SceneItems.Add(new OverlayItem { Type = OverlayType.Image, Source = dlg.FileName, Width = 200, Height = 200 });
+                _sceneItems.Add(new OverlayItem
+                {
+                    Type = OverlayType.Image,
+                    Source = dlg.FileName,
+                    Width = 200,
+                    Height = 200
+                });
                 SaveSettings();
             }
         }
@@ -74,31 +98,43 @@ namespace UniCast.App.Views
             var dlg = new OpenFileDialog { Filter = "Videolar|*.mp4;*.avi;*.mov" };
             if (dlg.ShowDialog() == true)
             {
-                SceneItems.Add(new OverlayItem { Type = OverlayType.Video, Source = dlg.FileName, Width = 300, Height = 170 });
+                _sceneItems.Add(new OverlayItem
+                {
+                    Type = OverlayType.Video,
+                    Source = dlg.FileName,
+                    Width = 300,
+                    Height = 170
+                });
                 SaveSettings();
             }
         }
 
         private void RemoveItem_Click(object sender, RoutedEventArgs e)
         {
-            var item = SceneItems.LastOrDefault(x => x.Type != OverlayType.Chat);
-            if (item != null) { SceneItems.Remove(item); SaveSettings(); }
+            var item = _sceneItems.LastOrDefault(x => x.Type != OverlayType.Chat);
+            if (item != null)
+            {
+                _sceneItems.Remove(item);
+                SaveSettings();
+            }
         }
 
-        // --- SÜRÜKLEME (DRAG) ---
+        #endregion
+
+        #region Sürükleme (Drag)
+
         private void Item_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (sender is FrameworkElement fe && fe.Tag is OverlayItem item)
             {
                 _selectedItem = item;
                 _isDragging = true;
-                // HATA DÜZELTME: OverlayCanvas yerine EditorItemsControl referans alınıyor
                 _startPoint = e.GetPosition(EditorItemsControl);
                 fe.CaptureMouse();
             }
         }
 
-        private void Item_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        private void Item_MouseMove(object sender, MouseEventArgs e)
         {
             if (_isDragging && _selectedItem != null)
             {
@@ -123,7 +159,10 @@ namespace UniCast.App.Views
             }
         }
 
-        // --- BOYUTLANDIRMA (RESIZE) ---
+        #endregion
+
+        #region Boyutlandırma (Resize)
+
         private void Resize_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (sender is FrameworkElement fe && fe.Tag is OverlayItem item)
@@ -131,8 +170,6 @@ namespace UniCast.App.Views
                 _selectedItem = item;
                 _isResizing = true;
                 _startPoint = e.GetPosition(EditorItemsControl);
-
-                // HATA DÜZELTME: Başlangıç boyutlarını kaydediyoruz
                 _startWidth = item.Width;
                 _startHeight = item.Height;
 
@@ -141,7 +178,7 @@ namespace UniCast.App.Views
             }
         }
 
-        private void Resize_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        private void Resize_MouseMove(object sender, MouseEventArgs e)
         {
             if (_isResizing && _selectedItem != null)
             {
@@ -163,5 +200,17 @@ namespace UniCast.App.Views
                 SaveSettings();
             }
         }
+
+        #endregion
+    }
+
+    /// <summary>
+    /// DÜZELTME: PreviewView için composite DataContext.
+    /// Hem PreviewViewModel hem de SceneItems'ı içerir.
+    /// </summary>
+    public class PreviewViewDataContext
+    {
+        public PreviewViewModel? PreviewViewModel { get; set; }
+        public ObservableCollection<OverlayItem>? SceneItems { get; set; }
     }
 }

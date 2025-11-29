@@ -7,6 +7,10 @@ using UniCast.App.Security;
 
 namespace UniCast.App.Services
 {
+    /// <summary>
+    /// Ayarları dosyadan okuyup yazan servis.
+    /// DÜZELTME: Static lock için dispose mekanizması eklendi.
+    /// </summary>
     public static class SettingsStore
     {
         private static readonly string Dir =
@@ -14,7 +18,11 @@ namespace UniCast.App.Services
 
         private static readonly string FilePath = Path.Combine(Dir, "settings.json");
 
-        private static readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.SupportsRecursion);
+        // DÜZELTME: Lazy initialization ile dispose edilebilir lock
+        private static readonly Lazy<ReaderWriterLockSlim> _lockLazy =
+            new(() => new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion));
+
+        private static ReaderWriterLockSlim Lock => _lockLazy.Value;
 
         private const int MAX_RETRY_ATTEMPTS = 3;
         private const int RETRY_DELAY_MS = 100;
@@ -27,8 +35,6 @@ namespace UniCast.App.Services
             public int OverlayY { get; set; }
             public double OverlayOpacity { get; set; }
             public int OverlayFontSize { get; set; }
-
-            // DÜZELTME: Eksik olan OverlayWidth ve OverlayHeight eklendi
             public double OverlayWidth { get; set; } = 300;
             public double OverlayHeight { get; set; } = 400;
 
@@ -62,14 +68,14 @@ namespace UniCast.App.Services
 
         public static SettingsData Load()
         {
-            _lock.EnterReadLock();
+            Lock.EnterReadLock();
             try
             {
                 return LoadInternal();
             }
             finally
             {
-                _lock.ExitReadLock();
+                Lock.ExitReadLock();
             }
         }
 
@@ -77,14 +83,14 @@ namespace UniCast.App.Services
         {
             if (s == null) throw new ArgumentNullException(nameof(s));
 
-            _lock.EnterWriteLock();
+            Lock.EnterWriteLock();
             try
             {
                 SaveInternalWithRetry(s);
             }
             finally
             {
-                _lock.ExitWriteLock();
+                Lock.ExitWriteLock();
             }
         }
 
@@ -92,7 +98,7 @@ namespace UniCast.App.Services
         {
             if (modifier == null) throw new ArgumentNullException(nameof(modifier));
 
-            _lock.EnterWriteLock();
+            Lock.EnterWriteLock();
             try
             {
                 var data = LoadInternal();
@@ -101,7 +107,23 @@ namespace UniCast.App.Services
             }
             finally
             {
-                _lock.ExitWriteLock();
+                Lock.ExitWriteLock();
+            }
+        }
+
+        /// <summary>
+        /// DÜZELTME: Uygulama kapanırken lock'u dispose etmek için.
+        /// App.OnExit'te çağrılmalı.
+        /// </summary>
+        public static void Cleanup()
+        {
+            if (_lockLazy.IsValueCreated)
+            {
+                try
+                {
+                    _lockLazy.Value.Dispose();
+                }
+                catch { }
             }
         }
 
@@ -235,28 +257,23 @@ namespace UniCast.App.Services
         {
             return new SettingsData
             {
-                // Chat & Overlay
                 ShowOverlay = p.ShowOverlay,
                 OverlayX = p.OverlayX,
                 OverlayY = p.OverlayY,
                 OverlayOpacity = p.OverlayOpacity,
                 OverlayFontSize = p.OverlayFontSize,
-
-                // DÜZELTME: OverlayWidth ve OverlayHeight mapping eklendi
                 OverlayWidth = p.OverlayWidth,
                 OverlayHeight = p.OverlayHeight,
 
                 YouTubeChannelId = p.YouTubeChannelId ?? "",
                 TikTokRoomId = p.TikTokRoomId ?? "",
 
-                // Secrets (unprotect)
                 YouTubeApiKey = SecretStore.Unprotect(p.YouTubeApiKeyEnc) ?? "",
                 TikTokSessionCookie = SecretStore.Unprotect(p.TikTokSessionCookieEnc) ?? "",
                 FacebookPageId = p.FacebookPageId ?? "",
                 FacebookLiveVideoId = p.FacebookLiveVideoId ?? "",
                 FacebookAccessToken = SecretStore.Unprotect(p.FacebookAccessTokenEnc) ?? "",
 
-                // Encoding / General
                 Encoder = p.Encoder ?? "auto",
                 VideoKbps = p.VideoKbps,
                 AudioKbps = p.AudioKbps,
@@ -269,7 +286,6 @@ namespace UniCast.App.Services
                 RecordFolder = p.RecordFolder ?? "",
                 EnableLocalRecord = p.EnableLocalRecord,
 
-                // Instagram
                 InstagramUserId = p.InstagramUserId ?? "",
                 InstagramSessionId = SecretStore.Unprotect(p.InstagramSessionIdEnc) ?? ""
             };
@@ -279,21 +295,17 @@ namespace UniCast.App.Services
         {
             return new PersistModel
             {
-                // Chat & Overlay
                 ShowOverlay = s.ShowOverlay,
                 OverlayX = s.OverlayX,
                 OverlayY = s.OverlayY,
                 OverlayOpacity = s.OverlayOpacity,
                 OverlayFontSize = s.OverlayFontSize,
-
-                // DÜZELTME: OverlayWidth ve OverlayHeight mapping eklendi
                 OverlayWidth = s.OverlayWidth,
                 OverlayHeight = s.OverlayHeight,
 
                 YouTubeChannelId = s.YouTubeChannelId ?? "",
                 TikTokRoomId = s.TikTokRoomId ?? "",
 
-                // Secrets (protect)
                 YouTubeApiKeyEnc = SecretStore.Protect(s.YouTubeApiKey ?? "") ?? "",
                 TikTokSessionCookieEnc = SecretStore.Protect(s.TikTokSessionCookie ?? "") ?? "",
                 InstagramUserId = s.InstagramUserId ?? "",
@@ -302,7 +314,6 @@ namespace UniCast.App.Services
                 FacebookLiveVideoId = s.FacebookLiveVideoId ?? "",
                 FacebookAccessTokenEnc = SecretStore.Protect(s.FacebookAccessToken ?? "") ?? "",
 
-                // Encoding / General
                 Encoder = s.Encoder ?? "auto",
                 VideoKbps = s.VideoKbps,
                 AudioKbps = s.AudioKbps,

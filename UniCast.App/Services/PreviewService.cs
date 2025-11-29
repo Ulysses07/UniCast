@@ -11,6 +11,7 @@ namespace UniCast.App.Services
     /// <summary>
     /// Kamera önizleme servisi.
     /// OpenCV kullanarak kameradan frame alır ve WPF'e aktarır.
+    /// DÜZELTME: Thread.Sleep yerine async-friendly Task.Delay kullanımı.
     /// </summary>
     public sealed class PreviewService : IDisposable
     {
@@ -50,7 +51,7 @@ namespace UniCast.App.Services
 
                 _frame = new Mat();
 
-                _previewTask = Task.Run(() => CaptureLoop(_cts.Token), _cts.Token);
+                _previewTask = CaptureLoopAsync(_cts.Token);
             }
             catch (Exception ex)
             {
@@ -59,15 +60,30 @@ namespace UniCast.App.Services
             }
         }
 
-        private void CaptureLoop(CancellationToken ct)
+        /// <summary>
+        /// DÜZELTME: Async capture loop - Thread.Sleep yerine Task.Delay
+        /// </summary>
+        private async Task CaptureLoopAsync(CancellationToken ct)
         {
             while (!ct.IsCancellationRequested && _capture != null && _capture.IsOpened() && _frame != null)
             {
                 try
                 {
-                    if (!_capture.Read(_frame) || _frame.Empty())
+                    // Frame okuma (senkron - OpenCV kısıtlaması)
+                    bool readSuccess = false;
+                    try
                     {
-                        Thread.Sleep(10);
+                        readSuccess = _capture.Read(_frame);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Preview Read Error: {ex.Message}");
+                    }
+
+                    if (!readSuccess || _frame.Empty())
+                    {
+                        // DÜZELTME: Thread.Sleep yerine Task.Delay
+                        await Task.Delay(10, ct);
                         continue;
                     }
 
@@ -83,8 +99,8 @@ namespace UniCast.App.Services
                         System.Diagnostics.Debug.WriteLine($"Preview Frame Error: {ex.Message}");
                     }
 
-                    // DÜZELTME: Constants kullanımı
-                    Thread.Sleep(Constants.Preview.FrameIntervalMs);
+                    // DÜZELTME: Thread.Sleep yerine Task.Delay (async-friendly)
+                    await Task.Delay(Constants.Preview.FrameIntervalMs, ct);
                 }
                 catch (OperationCanceledException)
                 {
@@ -93,6 +109,16 @@ namespace UniCast.App.Services
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Preview Loop Error: {ex.Message}");
+
+                    // Hata durumunda kısa bekle
+                    try
+                    {
+                        await Task.Delay(100, ct);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
                 }
             }
         }

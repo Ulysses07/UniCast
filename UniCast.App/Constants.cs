@@ -37,7 +37,8 @@ namespace UniCast.App
         }
 
         /// <summary>
-        /// Chat sistemi ayarları
+        /// Chat sistemi ayarları.
+        /// NOT: Core.Chat.ChatConstants ile senkronize tutulmalı.
         /// </summary>
         public static class Chat
         {
@@ -121,6 +122,12 @@ namespace UniCast.App
 
             /// <summary>Log okuma buffer boyutu</summary>
             public const int LogBufferSize = 2048;
+
+            /// <summary>RTMP buffer boyutu</summary>
+            public const string RtbufSize = "500M";
+
+            /// <summary>Thread queue boyutu</summary>
+            public const int ThreadQueueSize = 2048;
         }
 
         /// <summary>

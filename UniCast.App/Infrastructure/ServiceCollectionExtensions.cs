@@ -24,10 +24,10 @@ namespace UniCast.App.Infrastructure
             services.AddSingleton<IDeviceService, DeviceService>();
 
             // Chat Bus - Tüm chat kaynaklarını birleştirir
-            // DÜZELTME: Constants değerlerini kullan
+            // DÜZELTME: ChatConstants kullanımı
             services.AddSingleton<ChatBus>(sp => new ChatBus(
-                maxPerSecond: Constants.Chat.MaxMessagesPerSecond,
-                cacheCapacity: Constants.Chat.CacheCapacity
+                maxPerSecond: ChatConstants.MaxMessagesPerSecond,
+                cacheCapacity: ChatConstants.CacheCapacity
             ));
 
             // Audio Service - Ses seviyesi izleme
@@ -55,7 +55,7 @@ namespace UniCast.App.Infrastructure
             // ChatViewModel - Sohbet akışı
             services.AddTransient<ChatViewModel>();
 
-            // DÜZELTME: PreviewViewModel - DI'dan PreviewService alıyor
+            // PreviewViewModel - DI'dan PreviewService alıyor
             services.AddTransient<PreviewViewModel>(sp =>
             {
                 var previewService = sp.GetRequiredService<PreviewService>();

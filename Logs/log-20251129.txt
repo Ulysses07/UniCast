@@ -406,3 +406,115 @@
 2025-11-29 15:50:19.073 [INF] MainWindow kapatılıyor...
 2025-11-29 15:50:19.585 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
 2025-11-29 15:50:19.589 [INF] [Stream] [stop] Aktif yayın süreci yok.
+2025-11-29 15:53:04.737 [INF] DI Container başlatıldı.
+2025-11-29 15:53:04.754 [INF] ===================================================
+2025-11-29 15:53:04.755 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-29 15:53:04.755 [INF] ===================================================
+2025-11-29 15:53:05.234 [INF] MainWindow yüklendi...
+2025-11-29 15:53:07.604 [INF] MainWindow kapatılıyor...
+2025-11-29 15:53:08.118 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-29 15:53:08.122 [INF] [Stream] [stop] Aktif yayın süreci yok.
+2025-11-29 16:19:23.910 [INF] DI Container başlatıldı.
+2025-11-29 16:19:23.928 [INF] ===================================================
+2025-11-29 16:19:23.930 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-29 16:19:23.930 [INF] ===================================================
+2025-11-29 16:19:24.422 [INF] MainWindow yüklendi...
+2025-11-29 16:19:29.595 [INF] [Stream] [start] Yayın başladı. Profil: Default Encoder: auto
+2025-11-29 16:19:29.639 [INF] [Stream] ffmpeg version 2025-10-19-git-dc39a576ad-full_build-www.gyan.dev
+2025-11-29 16:19:29.640 [INF] [Stream] Copyright (c) 2000-2025 the FFmpeg developers
+2025-11-29 16:19:29.641 [INF] [Stream] built with gcc 15.2.0 (Rev8, Built by MSYS2 project)
+2025-11-29 16:19:29.642 [INF] [Stream] configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper
+2025-11-29 16:19:29.643 [INF] [Stream] libavutil      60. 13.100 / 60. 13.100
+2025-11-29 16:19:29.643 [INF] [Stream] libavcodec     62. 16.100 / 62. 16.100
+2025-11-29 16:19:29.644 [INF] [Stream] libavformat    62.  6.101 / 62.  6.101
+2025-11-29 16:19:29.645 [INF] [Stream] libavdev
+2025-11-29 16:19:29.646 [INF] [Stream] ice    62.  2.100 / 62.  2.100
+2025-11-29 16:19:29.647 [INF] [Stream] libavfilter    11.  9.100 / 11.  9.100
+2025-11-29 16:19:29.647 [INF] [Stream] libswscale      9.  3.100 /  9.  3.100
+2025-11-29 16:19:29.648 [INF] [Stream] libswresample   6.  2.100 /  6.  2.100
+2025-11-29 16:19:29.649 [INF] [Stream] Input #0, lavfi, from 'testsrc=size=1080x720:rate=60':
+2025-11-29 16:19:29.650 [INF] [Stream] Duration: N/A, start: 0.000000, bitrate: N/A
+2025-11-29 16:19:29.655 [INF] [Stream] Stream #0:0: Video: wrapped_avframe, rgb24, 1080x720 [SAR 1:1 DAR 3:2], 60 fps, 60 tbr, 60 tbn
+2025-11-29 16:19:29.656 [INF] [Stream] [out @ 00000208f23808c0] The "sample_fmts" option is deprecated: set the supported sample formats
+2025-11-29 16:19:29.657 [INF] [Stream] [out @ 00000208f23808c0] The "all_channel_counts" option is deprecated: accept all channel counts
+2025-11-29 16:19:29.658 [INF] [Stream] Input #1, lavfi, from 'anullsrc=channel_layout=stereo:sample_rate=44100':
+2025-11-29 16:19:29.658 [INF] [Stream] Duration: N/A, start: 0.000000, bitrate: 705 kb/s
+2025-11-29 16:19:29.659 [INF] [Stream] Stream #1:0: Audio: pcm_u8, 44100 Hz, stereo, u8, 705 kb/s
+2025-11-29 16:19:30.234 [INF] [Stream] Stream mapping:
+2025-11-29 16:19:30.235 [INF] [Stream] Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (libx264))
+2025-11-29 16:19:30.236 [INF] [Stream] Stream #1:0 -> #0:1 (pcm_u8 (native) -> aac (native))
+2025-11-29 16:19:30.237 [INF] [Stream] Press [q] to stop, [?] for help
+2025-11-29 16:19:30.238 [INF] [Stream] [vist#0:0/wrapped_avframe @ 00000208f2372280] Resumed reading at pts 0.000 with rate 1.050 after a lag of 0.500s
+2025-11-29 16:19:30.240 [INF] [Stream] [libx264 @ 00000208f2384c00]
+2025-11-29 16:19:30.242 [INF] [Stream] using SAR=1/1
+2025-11-29 16:19:30.243 [INF] [Stream] [libx264 @ 00000208f2384c00] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-11-29 16:19:30.244 [INF] [Stream] [libx264 @ 00000208f2384c00] profile Constrained Baseline, level 3.2, 4:2:0, 8-bit
+2025-11-29 16:19:30.246 [INF] [Stream] Output #0, flv, to 'rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4':
+2025-11-29 16:19:30.247 [INF] [Stream] Metadata:
+2025-11-29 16:19:30.248 [INF] [Stream] encoder         : Lavf62.6.101
+2025-11-29 16:19:30.249 [INF] [Stream] Stream #0:0: Video: h264 ([7][0][0][0] / 0x0007), yuv420p(tv, progressive), 1080x720 [SAR 1:1 DAR 3:2], q=2-31, 3500 kb/s, 60 fps, 1k tbn
+2025-11-29 16:19:30.249 [INF] [Stream] Metadata:
+2025-11-29 16:19:30.250 [INF] [Stream] encoder         : Lavc62.16.100 libx264
+2025-11-29 16:19:30.251 [INF] [Stream] Side data:
+2025-11-29 16:19:30.252 [INF] [Stream] CPB properties: bitrate max/min/avg: 3500000/0/3500000 buffer size: 7000000 vbv_delay: N/A
+2025-11-29 16:19:30.252 [INF] [Stream] Stream #0:1: Audio: aac (LC) ([10][0][0][0] / 0x000A), 44100 Hz, stereo, fltp, 160 kb/s
+2025-11-29 16:19:30.253 [INF] [Stream] Metadata:
+2025-11-29 16:19:30.254 [INF] [Stream] encoder         : Lavc62.16.100 aac
+2025-11-29 16:19:32.316 [INF] [Stream] [stop] Yayın durduruluyor...
+2025-11-29 16:19:32.317 [INF] [Stream] [FFmpeg] Graceful shutdown başlatılıyor...
+2025-11-29 16:19:32.826 [INF] [Stream] [q] command received. Exiting.
+2025-11-29 16:19:32.855 [INF] [Stream] FFmpeg Hata Analizi: Yayın hatası oluştu. RTMP adresini, stream key’i ve internet bağlantısını kontrol edin.
+2025-11-29 16:19:32.857 [INF] [Stream] Exit Code: 0
+2025-11-29 16:19:32.859 [INF] [Stream] [ffmpeg] Çıkış kodu: 0
+2025-11-29 16:19:32.861 [INF] [Stream] [FFmpeg] 'q' komutu ile kapatıldı.
+2025-11-29 16:19:33.526 [INF] [Stream] [start] Yayın başladı. Profil: Default Encoder: auto
+2025-11-29 16:19:33.550 [INF] [Stream] ffmpeg version 2025-10-19-git-dc39a576ad-full_build-www.gyan.dev
+2025-11-29 16:19:33.552 [INF] [Stream] Copyright (c) 2000-2025 the FFmpeg developers
+2025-11-29 16:19:33.553 [INF] [Stream] built with gcc 15.2.0 (Rev8, Built by MSYS2 project)
+2025-11-29 16:19:33.554 [INF] [Stream] configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper
+2025-11-29 16:19:33.555 [INF] [Stream] libavutil      60. 13.100 / 60. 13.100
+2025-11-29 16:19:33.555 [INF] [Stream] libavcodec     62. 16.100 / 62. 16.100
+2025-11-29 16:19:33.556 [INF] [Stream] libavformat    62.  6.101 / 62.  6.101
+2025-11-29 16:19:33.557 [INF] [Stream] libavdev
+2025-11-29 16:19:33.558 [INF] [Stream] ice    62.  2.100 / 62.  2.100
+2025-11-29 16:19:33.559 [INF] [Stream] libavfilter    11.  9.100 / 11.  9.100
+2025-11-29 16:19:33.559 [INF] [Stream] libswscale      9.  3.100 /  9.  3.100
+2025-11-29 16:19:33.560 [INF] [Stream] libswresample   6.  2.100 /  6.  2.100
+2025-11-29 16:19:33.561 [INF] [Stream] Input #0, lavfi, from 'testsrc=size=1080x720:rate=60':
+2025-11-29 16:19:33.562 [INF] [Stream] Duration: N/A, start: 0.000000, bitrate: N/A
+2025-11-29 16:19:33.562 [INF] [Stream] Stream #0:0: Video: wrapped_avframe, rgb24, 1080x720 [SAR 1:1 DAR 3:2], 60 fps, 60 tbr, 60 tbn
+2025-11-29 16:19:33.563 [INF] [Stream] [out @ 00000186ef6f08c0] The "sample_fmts" option is deprecated: set the supported sample formats
+2025-11-29 16:19:33.564 [INF] [Stream] [out @ 00000186ef6f08c0] The "all_channel_counts" option is deprecated: accept all channel counts
+2025-11-29 16:19:33.565 [INF] [Stream] Input #1, lavfi, from 'anullsrc=channel_layout=stereo:sample_rate=44100':
+2025-11-29 16:19:33.566 [INF] [Stream] Duration: N/A, start: 0.000000, bitrate: 705 kb/s
+2025-11-29 16:19:33.566 [INF] [Stream] Stream #1:0: Audio: pcm_u8, 44100 Hz, stereo, u8, 705 kb/s
+2025-11-29 16:19:34.157 [INF] [Stream] Stream mapping:
+2025-11-29 16:19:34.158 [INF] [Stream] Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (libx264))
+2025-11-29 16:19:34.159 [INF] [Stream] Stream #1:0 -> #0:1 (pcm_u8 (native) -> aac (native))
+2025-11-29 16:19:34.160 [INF] [Stream] Press [q] to stop, [?] for help
+2025-11-29 16:19:34.161 [INF] [Stream] [vist#0:0/wrapped_avframe @ 00000186ef6e2280] Resumed reading at pts 0.000 with rate 1.050 after a lag of 0.500s
+2025-11-29 16:19:34.163 [INF] [Stream] [libx264 @ 00000186ef6f4c00]
+2025-11-29 16:19:34.165 [INF] [Stream] using SAR=1/1
+2025-11-29 16:19:34.166 [INF] [Stream] [libx264 @ 00000186ef6f4c00] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-11-29 16:19:34.167 [INF] [Stream] [libx264 @ 00000186ef6f4c00] profile Constrained Baseline, level 3.2, 4:2:0, 8-bit
+2025-11-29 16:19:34.168 [INF] [Stream] Output #0, flv, to 'rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4':
+2025-11-29 16:19:34.169 [INF] [Stream] Metadata:
+2025-11-29 16:19:34.170 [INF] [Stream] encoder         : Lavf62.6.101
+2025-11-29 16:19:34.171 [INF] [Stream] Stream #0:0: Video: h264 ([7][0][0][0] / 0x0007), yuv420p(tv, progressive), 1080x720 [SAR 1:1 DAR 3:2], q=2-31, 3500 kb/s, 60 fps, 1k tbn
+2025-11-29 16:19:34.172 [INF] [Stream] Metadata:
+2025-11-29 16:19:34.172 [INF] [Stream] encoder         : Lavc62.16.100 libx264
+2025-11-29 16:19:34.173 [INF] [Stream] Side data:
+2025-11-29 16:19:34.174 [INF] [Stream] CPB properties: bitrate max/min/avg: 3500000/0/3500000 buffer size: 7000000 vbv_delay: N/A
+2025-11-29 16:19:34.175 [INF] [Stream] Stream #0:1: Audio: aac (LC) ([10][0][0][0] / 0x000A), 44100 Hz, stereo, fltp, 160 kb/s
+2025-11-29 16:19:34.176 [INF] [Stream] Metadata:
+2025-11-29 16:19:34.176 [INF] [Stream] encoder         : Lavc62.16.100 aac
+2025-11-29 16:19:36.817 [INF] [Stream] [stop] Yayın durduruluyor...
+2025-11-29 16:19:36.824 [INF] [Stream] [FFmpeg] Graceful shutdown başlatılıyor...
+2025-11-29 16:19:37.253 [INF] [Stream] [q] command received. Exiting.
+2025-11-29 16:19:37.260 [INF] [Stream] FFmpeg Hata Analizi: Yayın hatası oluştu. RTMP adresini, stream key’i ve internet bağlantısını kontrol edin.
+2025-11-29 16:19:37.261 [INF] [Stream] Exit Code: 0
+2025-11-29 16:19:37.262 [INF] [Stream] [ffmpeg] Çıkış kodu: 0
+2025-11-29 16:19:37.263 [INF] [Stream] [FFmpeg] 'q' komutu ile kapatıldı.
+2025-11-29 16:19:42.939 [INF] MainWindow kapatılıyor...
+2025-11-29 16:19:43.450 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-29 16:19:43.452 [INF] [Stream] [stop] Aktif yayın süreci yok.
