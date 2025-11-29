@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 
 namespace UniCast.App.Infrastructure
 {
@@ -15,10 +14,17 @@ namespace UniCast.App.Infrastructure
         }
 
         public bool CanExecute(object? parameter) => _canExecute?.Invoke(parameter) ?? true;
-
         public void Execute(object? parameter) => _execute(parameter);
 
-        public event EventHandler? CanExecuteChanged;
-        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        // DÜZELTME: CommandManager entegrasyonu
+        public event EventHandler? CanExecuteChanged
+        {
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
+        }
+
+        // Manuel tetikleme için (opsiyonel)
+        public void RaiseCanExecuteChanged()
+            => CommandManager.InvalidateRequerySuggested();
     }
 }

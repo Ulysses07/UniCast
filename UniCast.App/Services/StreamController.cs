@@ -22,6 +22,9 @@ namespace UniCast.App.Services
         private readonly SemaphoreSlim _stateLock = new(1, 1);
         private bool _isRunning;
         private bool _isReconnecting;
+        private Action<string>? _currentLogHandler;
+        private Action<string>? _currentMetricHandler;
+        private Action<int?>? _currentExitHandler;
 
         public bool IsRunning
         {
@@ -374,6 +377,34 @@ namespace UniCast.App.Services
                         {
                             CleanupProcess();
                         }
+                        _currentLogHandler = (line) =>
+                        {
+                            LastMessage = line;
+                            OnLog?.Invoke(this, line);
+                            if (line.Contains("Connection") || line.Contains("Reconnect"))
+                                LastAdvisory = line;
+                        };
+
+                        _currentMetricHandler = (line) =>
+                        {
+                            var metric = TryParseMetric(line, DateTime.UtcNow);
+                            if (metric != null)
+                            {
+                                LastMetric = $"fps={metric.Fps:0.#} bitrate={metric.BitrateKbps:0.#}k";
+                                OnMetric?.Invoke(this, metric);
+                            }
+                        };
+
+                        _currentExitHandler = (code) =>
+                        {
+                            _isRunning = false;
+                            OnExit?.Invoke(this, code ?? -1);
+                            OnLog?.Invoke(this, $"[ffmpeg] Çıkış kodu: {code}");
+                        };
+
+                        _ffmpegProcess.OnLog += _currentLogHandler;
+                        _ffmpegProcess.OnMetric += _currentMetricHandler;
+                        _ffmpegProcess.OnExit += _currentExitHandler;
                     }
 
                     if (msg.Contains("camera") || msg.Contains("video device") || msg.Contains("busy"))
@@ -391,8 +422,21 @@ namespace UniCast.App.Services
         private void CleanupProcess()
         {
             _isRunning = false;
+
+            // DÜZELTME: Event handler'ları önce kaldır
+            if (_ffmpegProcess != null)
+            {
+                if (_currentLogHandler != null) _ffmpegProcess.OnLog -= _currentLogHandler;
+                if (_currentMetricHandler != null) _ffmpegProcess.OnMetric -= _currentMetricHandler;
+                if (_currentExitHandler != null) _ffmpegProcess.OnExit -= _currentExitHandler;
+            }
+
             _ffmpegProcess?.Dispose();
             _ffmpegProcess = null;
+
+            _currentLogHandler = null;
+            _currentMetricHandler = null;
+            _currentExitHandler = null;
 
             try { _procCts?.Cancel(); } catch { }
             _procCts?.Dispose();
