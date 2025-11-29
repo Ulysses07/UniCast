@@ -8,6 +8,10 @@ using OpenCvSharp.WpfExtensions;
 
 namespace UniCast.App.Services
 {
+    /// <summary>
+    /// Kamera önizleme servisi.
+    /// OpenCV kullanarak kameradan frame alır ve WPF'e aktarır.
+    /// </summary>
     public sealed class PreviewService : IDisposable
     {
         public event Action<ImageSource>? OnFrame;
@@ -79,7 +83,8 @@ namespace UniCast.App.Services
                         System.Diagnostics.Debug.WriteLine($"Preview Frame Error: {ex.Message}");
                     }
 
-                    Thread.Sleep(33); // ~30 FPS
+                    // DÜZELTME: Constants kullanımı
+                    Thread.Sleep(Constants.Preview.FrameIntervalMs);
                 }
                 catch (OperationCanceledException)
                 {
@@ -149,7 +154,6 @@ namespace UniCast.App.Services
             }
         }
 
-        // DÜZELTME: Deadlock-safe dispose
         public void Dispose()
         {
             if (_disposed) return;
@@ -175,6 +179,8 @@ namespace UniCast.App.Services
             _capture = null;
             _cts = null;
             _previewTask = null;
+
+            GC.SuppressFinalize(this);
         }
     }
 }

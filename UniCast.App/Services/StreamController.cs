@@ -13,7 +13,10 @@ using UniCast.Encoder;
 
 namespace UniCast.App.Services
 {
-    // DÜZELTME: Hem IDisposable hem IAsyncDisposable implement ediliyor
+    /// <summary>
+    /// FFmpeg tabanlı yayın yöneticisi.
+    /// Çoklu platform desteği, otomatik encoder fallback ve graceful shutdown sağlar.
+    /// </summary>
     public sealed class StreamController : IStreamController, IAsyncDisposable, IDisposable
     {
         private readonly SemaphoreSlim _stateLock = new(1, 1);
@@ -105,11 +108,11 @@ namespace UniCast.App.Services
 
             if (settings != null)
             {
-                profile.Fps = settings.Fps > 0 ? settings.Fps : 30;
-                profile.Width = settings.Width > 0 ? settings.Width : 1280;
-                profile.Height = settings.Height > 0 ? settings.Height : 720;
-                profile.VideoBitrateKbps = settings.VideoKbps > 0 ? settings.VideoKbps : 2500;
-                profile.AudioBitrateKbps = settings.AudioKbps > 0 ? settings.AudioKbps : 128;
+                profile.Fps = settings.Fps > 0 ? settings.Fps : Constants.Preview.DefaultFps;
+                profile.Width = settings.Width > 0 ? settings.Width : Constants.Preview.DefaultWidth;
+                profile.Height = settings.Height > 0 ? settings.Height : Constants.Preview.DefaultHeight;
+                profile.VideoBitrateKbps = settings.VideoKbps > 0 ? settings.VideoKbps : Constants.StreamQuality.DefaultVideoBitrateKbps;
+                profile.AudioBitrateKbps = settings.AudioKbps > 0 ? settings.AudioKbps : Constants.StreamQuality.DefaultAudioBitrateKbps;
                 profile.AudioDelayMs = settings.AudioDelayMs;
             }
 
@@ -164,7 +167,6 @@ namespace UniCast.App.Services
             }
         }
 
-        // DÜZELTME: IDisposable.Dispose - Senkron dispose
         public void Dispose()
         {
             if (_disposed) return;
@@ -186,9 +188,10 @@ namespace UniCast.App.Services
             OnLog = null;
             OnMetric = null;
             OnExit = null;
+
+            GC.SuppressFinalize(this);
         }
 
-        // IAsyncDisposable.DisposeAsync
         public async ValueTask DisposeAsync()
         {
             if (_disposed) return;
@@ -203,6 +206,8 @@ namespace UniCast.App.Services
             OnLog = null;
             OnMetric = null;
             OnExit = null;
+
+            GC.SuppressFinalize(this);
         }
 
         private async Task<StreamStartResult> StartInternalAsync(
@@ -275,7 +280,8 @@ namespace UniCast.App.Services
                     }
                 }
 
-                var overlayPipeName = globalSettings.ShowOverlay ? "unicast_overlay" : null;
+                // DÜZELTME: Constants kullanımı
+                var overlayPipeName = globalSettings.ShowOverlay ? Constants.Overlay.PipeName : null;
 
                 var args = FfmpegArgsBuilder.BuildFfmpegArgs(
                     CurrentProfile,

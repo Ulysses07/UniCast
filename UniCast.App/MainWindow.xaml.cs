@@ -40,6 +40,9 @@ namespace UniCast.App
         private ChatOverlayController? _overlay;
         private CancellationTokenSource? _chatCts;
 
+        // DÜZELTME: Çift yükleme önleme
+        private bool _isLoaded = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -135,6 +138,10 @@ namespace UniCast.App
 
         private void MainWindow_Loaded(object? sender, RoutedEventArgs e)
         {
+            // DÜZELTME: Çift yükleme önleme
+            if (_isLoaded) return;
+            _isLoaded = true;
+
             try
             {
                 Log.Information("MainWindow yüklendi...");
@@ -173,7 +180,8 @@ namespace UniCast.App
 
             try
             {
-                _overlay = new ChatOverlayController(ow, oh, "unicast_overlay");
+                // DÜZELTME: Constants kullanımı
+                _overlay = new ChatOverlayController(ow, oh, "unicast-chat-overlay");
                 _overlay.Start();
                 Log.Information("Overlay başlatıldı: {Width}x{Height}", ow, oh);
             }
@@ -313,21 +321,13 @@ namespace UniCast.App
                 Log.Debug("Overlay dispose hatası: {Message}", ex.Message);
             }
 
-            // 6. Stream controller kapat
-            try
-            {
-                if (_stream is IAsyncDisposable asyncDisposable)
-                    await asyncDisposable.DisposeAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Debug("Stream dispose hatası: {Message}", ex.Message);
-            }
+            // 6. DÜZELTME: StreamController'ı DISPOSE ETMİYORUZ
+            // DI Container App.OnExit'te halledecek - çift dispose önleme
 
             // 7. ControlViewModel dispose
             _controlVm.Dispose();
 
-            // 8. DÜZELTME: ChatViewModel dispose
+            // 8. ChatViewModel dispose
             _chatVm.Dispose();
 
             // 9. CTS dispose
