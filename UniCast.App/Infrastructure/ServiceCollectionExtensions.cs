@@ -24,12 +24,16 @@ namespace UniCast.App.Infrastructure
             services.AddSingleton<IDeviceService, DeviceService>();
 
             // Chat Bus - Tüm chat kaynaklarını birleştirir
-            services.AddSingleton<ChatBus>();
+            // DÜZELTME: Constants değerlerini kullan
+            services.AddSingleton<ChatBus>(sp => new ChatBus(
+                maxPerSecond: Constants.Chat.MaxMessagesPerSecond,
+                cacheCapacity: Constants.Chat.CacheCapacity
+            ));
 
             // Audio Service - Ses seviyesi izleme
             services.AddSingleton<AudioService>();
 
-            // Preview Service - Kamera önizleme
+            // Preview Service - Kamera önizleme (Singleton - tek kamera kaynağı)
             services.AddSingleton<PreviewService>();
 
             // --- Transient Servisler (Her istekte yeni instance) ---
@@ -51,10 +55,14 @@ namespace UniCast.App.Infrastructure
             // ChatViewModel - Sohbet akışı
             services.AddTransient<ChatViewModel>();
 
-            // PreviewViewModel - Önizleme
-            services.AddTransient<PreviewViewModel>();
+            // DÜZELTME: PreviewViewModel - DI'dan PreviewService alıyor
+            services.AddTransient<PreviewViewModel>(sp =>
+            {
+                var previewService = sp.GetRequiredService<PreviewService>();
+                return new PreviewViewModel(previewService);
+            });
 
-            // ControlViewModel - Ana kontrol paneli (özel factory gerekli)
+            // ControlViewModel - Ana kontrol paneli
             services.AddTransient<ControlViewModel>(sp =>
             {
                 var stream = sp.GetRequiredService<IStreamController>();

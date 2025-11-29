@@ -52,19 +52,32 @@ namespace UniCast.App.ViewModels
         public ObservableCollection<CaptureDevice> VideoDevices { get; } = new();
         public ObservableCollection<CaptureDevice> AudioDevices { get; } = new();
 
-        // Alanlar
+        // DÜZELTME: DefaultCamera - hem DefaultCamera hem SelectedVideoDevice güncelleniyor
         private string _defaultCamera;
         public string DefaultCamera
         {
             get => _defaultCamera;
-            set { _defaultCamera = value; _settings.SelectedVideoDevice = value; OnPropertyChanged(); }
+            set
+            {
+                _defaultCamera = value;
+                _settings.DefaultCamera = value;         // DÜZELTME: Bu satır eklendi
+                _settings.SelectedVideoDevice = value;
+                OnPropertyChanged();
+            }
         }
 
+        // DÜZELTME: DefaultMicrophone - hem DefaultMicrophone hem SelectedAudioDevice güncelleniyor
         private string _defaultMicrophone;
         public string DefaultMicrophone
         {
             get => _defaultMicrophone;
-            set { _defaultMicrophone = value; _settings.SelectedAudioDevice = value; OnPropertyChanged(); }
+            set
+            {
+                _defaultMicrophone = value;
+                _settings.DefaultMicrophone = value;     // DÜZELTME: Bu satır eklendi
+                _settings.SelectedAudioDevice = value;
+                OnPropertyChanged();
+            }
         }
 
         private string _encoder;

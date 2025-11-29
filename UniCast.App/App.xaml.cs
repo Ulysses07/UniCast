@@ -63,10 +63,22 @@ namespace UniCast.App
         {
             Log.Information("Uygulama kapatılıyor. Çıkış Kodu: {ExitCode}", e.ApplicationExitCode);
 
-            // DI Container'ı dispose et
-            if (Services is IDisposable disposable)
+            // DÜZELTME: DI Container'ı async dispose et
+            try
             {
-                disposable.Dispose();
+                if (Services is IAsyncDisposable asyncDisposable)
+                {
+                    // Async dispose'u senkron olarak bekle
+                    asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                }
+                else if (Services is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "DI Container dispose hatası");
             }
 
             Log.CloseAndFlush();

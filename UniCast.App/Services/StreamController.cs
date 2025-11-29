@@ -13,14 +13,13 @@ using UniCast.Encoder;
 
 namespace UniCast.App.Services
 {
-    public sealed class StreamController : IStreamController, IAsyncDisposable
+    // DÜZELTME: Hem IDisposable hem IAsyncDisposable implement ediliyor
+    public sealed class StreamController : IStreamController, IAsyncDisposable, IDisposable
     {
-        // DÜZELTME: Thread-safe state yönetimi
         private readonly SemaphoreSlim _stateLock = new(1, 1);
         private bool _isRunning;
         private bool _isReconnecting;
 
-        // DÜZELTME: Thread-safe property'ler
         public bool IsRunning
         {
             get
@@ -165,6 +164,31 @@ namespace UniCast.App.Services
             }
         }
 
+        // DÜZELTME: IDisposable.Dispose - Senkron dispose
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+
+            // Async işlemleri senkron olarak bekle
+            try
+            {
+                StopAsync().GetAwaiter().GetResult();
+            }
+            catch { }
+
+            _stateLock.Dispose();
+
+            try { _procCts?.Cancel(); } catch { }
+            _procCts?.Dispose();
+
+            // Event'leri temizle
+            OnLog = null;
+            OnMetric = null;
+            OnExit = null;
+        }
+
+        // IAsyncDisposable.DisposeAsync
         public async ValueTask DisposeAsync()
         {
             if (_disposed) return;
@@ -174,6 +198,11 @@ namespace UniCast.App.Services
 
             _stateLock.Dispose();
             _procCts?.Dispose();
+
+            // Event'leri temizle
+            OnLog = null;
+            OnMetric = null;
+            OnExit = null;
         }
 
         private async Task<StreamStartResult> StartInternalAsync(

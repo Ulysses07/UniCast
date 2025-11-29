@@ -15,12 +15,10 @@ namespace UniCast.App.ViewModels
     {
         public ObservableCollection<TargetItem> Targets { get; } = new();
 
-        // --- XAML'ın Aradığı Eksik Özellikler ---
-
-        // 1. Platform Seçenekleri (ComboBox için)
+        // Platform Seçenekleri (ComboBox için)
         public ObservableCollection<StreamPlatform> PlatformOptions { get; } = new();
 
-        // 2. Seçili Platform
+        // Seçili Platform
         private StreamPlatform _selectedPlatform = StreamPlatform.Custom;
         public StreamPlatform SelectedPlatform
         {
@@ -28,7 +26,7 @@ namespace UniCast.App.ViewModels
             set { _selectedPlatform = value; OnPropertyChanged(); }
         }
 
-        // 3. Alanlar (Fields)
+        // Alanlar
         private string _displayName = "";
         public string DisplayName { get => _displayName; set { _displayName = value; OnPropertyChanged(); } }
 
@@ -38,7 +36,7 @@ namespace UniCast.App.ViewModels
         private string _streamKey = "";
         public string StreamKey { get => _streamKey; set { _streamKey = value; OnPropertyChanged(); } }
 
-        // 4. Komutlar (Commands)
+        // Komutlar
         public ICommand AddCommand { get; }
         public ICommand RemoveCommand { get; }
 
@@ -71,9 +69,9 @@ namespace UniCast.App.ViewModels
         private void AddTarget()
         {
             if (string.IsNullOrWhiteSpace(DisplayName) || string.IsNullOrWhiteSpace(Url))
-                return; // Basit validasyon
+                return;
 
-            // URL ve Key birleştirme mantığı (Platforma göre değişebilir)
+            // URL ve Key birleştirme mantığı
             string fullUrl = Url;
             if (!string.IsNullOrWhiteSpace(StreamKey))
             {
@@ -94,13 +92,10 @@ namespace UniCast.App.ViewModels
             Targets.Add(newItem);
             TargetsStore.Save(Targets.ToList());
 
-            // Alanları temizle
+            // DÜZELTME: Setter zaten OnPropertyChanged çağırıyor, tekrar çağırmaya gerek yok
             DisplayName = "";
             Url = "";
             StreamKey = "";
-            OnPropertyChanged(nameof(DisplayName));
-            OnPropertyChanged(nameof(Url));
-            OnPropertyChanged(nameof(StreamKey));
         }
 
         private void RemoveTarget(TargetItem item)

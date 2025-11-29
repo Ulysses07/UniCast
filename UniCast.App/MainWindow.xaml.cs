@@ -168,8 +168,8 @@ namespace UniCast.App
 
         private void StartOverlay(Core.Settings.SettingsData s)
         {
-            var ow = Math.Max(200, (int)s.OverlayWidth);
-            var oh = Math.Max(200, (int)s.OverlayHeight);
+            var ow = Math.Max(Constants.Overlay.MinWidth, (int)s.OverlayWidth);
+            var oh = Math.Max(Constants.Overlay.MinHeight, (int)s.OverlayHeight);
 
             try
             {
@@ -284,7 +284,7 @@ namespace UniCast.App
             // 1. CTS iptal
             try { _chatCts?.Cancel(); } catch { }
 
-            // 2. DÜZELTME: Event handler'ları ÖNCE kaldır (Memory Leak Fix)
+            // 2. Event handler'ları ÖNCE kaldır (Memory Leak Fix)
             if (_ytIngestor != null) _ytIngestor.OnMessage -= OnMsg;
             if (_tiktok != null) _tiktok.OnMessage -= OnMsg;
             if (_instagram != null) _instagram.OnMessage -= OnMsg;
@@ -327,7 +327,10 @@ namespace UniCast.App
             // 7. ControlViewModel dispose
             _controlVm.Dispose();
 
-            // 8. CTS dispose
+            // 8. DÜZELTME: ChatViewModel dispose
+            _chatVm.Dispose();
+
+            // 9. CTS dispose
             try { _chatCts?.Dispose(); } catch { }
 
             base.OnClosed(e);

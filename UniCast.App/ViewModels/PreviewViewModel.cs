@@ -10,13 +10,11 @@ using Serilog;
 
 namespace UniCast.App.ViewModels
 {
-    // DÜZELTME: IDisposable eklendi
     public sealed class PreviewViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly PreviewService _service;
         private bool _disposed;
 
-        // DÜZELTME: Event handler'ı field olarak tut (unsubscribe için)
         private readonly Action<ImageSource> _onFrameHandler;
 
         private ImageSource? _previewImage;
@@ -31,11 +29,11 @@ namespace UniCast.App.ViewModels
         public ICommand StartPreviewCommand { get; }
         public ICommand StopPreviewCommand { get; }
 
-        public PreviewViewModel()
+        // DÜZELTME: DI Constructor
+        public PreviewViewModel(PreviewService service)
         {
-            _service = new PreviewService();
+            _service = service ?? throw new ArgumentNullException(nameof(service));
 
-            // Handler'ı field'a ata
             _onFrameHandler = frame => PreviewImage = frame;
             _service.OnFrame += _onFrameHandler;
 
@@ -45,7 +43,7 @@ namespace UniCast.App.ViewModels
                 _isStarting = true;
                 try
                 {
-                    SettingsData s = Services.SettingsStore.Load();
+                    SettingsData s = SettingsStore.Load();
                     await _service.StartAsync(-1, s.Width, s.Height, s.Fps);
                 }
                 catch (Exception ex)
@@ -71,19 +69,14 @@ namespace UniCast.App.ViewModels
             });
         }
 
-        // DÜZELTME: Dispose metodu eklendi
         public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
 
-            // Event handler'ı kaldır
             _service.OnFrame -= _onFrameHandler;
+            // Service'i dispose etmiyoruz - DI container yönetecek
 
-            // Servisi dispose et
-            _service.Dispose();
-
-            // PropertyChanged'i temizle
             PropertyChanged = null;
         }
 
