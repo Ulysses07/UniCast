@@ -390,3 +390,19 @@
 2025-11-29 11:40:58.629 [INF] MainWindow kapatılıyor...
 2025-11-29 11:40:59.130 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
 2025-11-29 11:40:59.132 [INF] [Stream] [stop] Aktif yayın süreci yok.
+2025-11-29 12:09:20.498 [INF] DI Container başlatıldı.
+2025-11-29 12:09:20.514 [INF] ===================================================
+2025-11-29 12:09:20.515 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-29 12:09:20.516 [INF] ===================================================
+2025-11-29 12:09:21.142 [INF] MainWindow yüklendi...
+2025-11-29 12:09:23.421 [INF] MainWindow kapatılıyor...
+2025-11-29 12:09:23.929 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-29 12:09:23.933 [INF] [Stream] [stop] Aktif yayın süreci yok.
+2025-11-29 15:50:16.015 [INF] DI Container başlatıldı.
+2025-11-29 15:50:16.031 [INF] ===================================================
+2025-11-29 15:50:16.032 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-11-29 15:50:16.033 [INF] ===================================================
+2025-11-29 15:50:16.575 [INF] MainWindow yüklendi...
+2025-11-29 15:50:19.073 [INF] MainWindow kapatılıyor...
+2025-11-29 15:50:19.585 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-11-29 15:50:19.589 [INF] [Stream] [stop] Aktif yayın süreci yok.
