@@ -1,6 +1,9 @@
 ﻿using System;
-using System.Windows.Interop;
+using System.IO;
+using System.Security.Cryptography;
 using System.Windows;
+using System.Windows.Interop;
+using UniCast.App;
 
 namespace UniCast.App.DirectX
 {
@@ -42,15 +45,31 @@ namespace UniCast.App.DirectX
             }
         }
 
+        // DÜZELTME: Finalizer eklendi
+        ~D3DImageSource()
+        {
+            Dispose(false);
+        }
+
         public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
         {
             if (_disposed) return;
             _disposed = true;
 
-            _surface = IntPtr.Zero;
+            // Managed kaynakları temizle (disposing == true ise)
+            if (disposing)
+            {
+                // Managed kaynaklar varsa burada temizlenir
+            }
 
-            // DÜZELTME: GC.SuppressFinalize eklendi
-            GC.SuppressFinalize(this);
+            // Unmanaged kaynakları temizle
+            _surface = IntPtr.Zero;
         }
     }
 }

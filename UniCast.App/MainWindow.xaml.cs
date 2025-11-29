@@ -43,6 +43,9 @@ namespace UniCast.App
         // DÜZELTME: Çift yükleme önleme
         private bool _isLoaded = false;
 
+        // DÜZELTME: Çift kapatma önleme
+        private bool _isClosed = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -180,8 +183,8 @@ namespace UniCast.App
 
             try
             {
-                // DÜZELTME: Constants kullanımı
-                _overlay = new ChatOverlayController(ow, oh, "unicast-chat-overlay");
+                // DÜZELTME: Constants.Overlay.PipeName kullanımı (tutarlılık için)
+                _overlay = new ChatOverlayController(ow, oh, Constants.Overlay.PipeName);
                 _overlay.Start();
                 Log.Information("Overlay başlatıldı: {Width}x{Height}", ow, oh);
             }
@@ -287,6 +290,10 @@ namespace UniCast.App
 
         protected override async void OnClosed(EventArgs e)
         {
+            // DÜZELTME: Çift kapatma önleme
+            if (_isClosed) return;
+            _isClosed = true;
+
             Log.Information("MainWindow kapatılıyor...");
 
             // 1. CTS iptal
