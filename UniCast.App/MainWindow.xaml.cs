@@ -1,177 +1,706 @@
-﻿using System;
-using System.Threading;
+﻿using Serilog;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using UniCast.App.Overlay;
 using UniCast.App.Services;
-using UniCast.App.Services.Capture;
 using UniCast.App.Services.Chat;
 using UniCast.App.ViewModels;
 using UniCast.App.Views;
 using UniCast.Core.Chat;
-using Serilog;
-using Button = System.Windows.Controls.Button;
 using MessageBox = System.Windows.MessageBox;
 
 namespace UniCast.App
 {
-    public partial class MainWindow : Window
+    /// <summary>
+    /// Ana pencere - Tab yönetimi, overlay kontrolü ve kaynak koordinasyonu.
+    /// Proper dispose pattern uygulanmış.
+    /// </summary>
+    public partial class MainWindow : Window, IDisposable
     {
-        private readonly IDeviceService _deviceService;
-        private readonly IStreamController _stream;
-        private readonly SettingsViewModel _settingsVm;
-        private readonly TargetsViewModel _targetsVm;
-        private readonly ControlViewModel _controlVm;
+        #region Fields
 
-        private readonly ChatBus _chatBus = new();
-        private readonly ChatViewModel _chatVm = new();
+        private OverlayWindow? _overlay;
+        private CancellationTokenSource? _cts;
+        private bool _isDisposed;
+        private readonly object _disposeLock = new();
 
+        // Chat Ingestors
         private YouTubeChatIngestor? _ytIngestor;
-        private TikTokChatIngestor? _tiktok;
-        private InstagramChatIngestor? _instagram;
-        private FacebookChatIngestor? _facebook;
+        private TikTokChatIngestor? _tikTokIngestor;
+        private InstagramChatIngestor? _instagramIngestor;
+        private FacebookChatIngestor? _facebookIngestor;
 
-        private ChatOverlayController? _overlay;
-        private CancellationTokenSource? _chatCts;
+        // ViewModels (IDisposable olanlar)
+        private PreviewViewModel? _previewViewModel;
+        private ControlViewModel? _controlViewModel;
+        private ChatViewModel? _chatViewModel;
+        private SettingsViewModel? _settingsViewModel;
+        private LicenseViewModel? _licenseViewModel;
+
+        // Tab Views
+        private PreviewView? _previewView;
+        private ControlView? _controlView;
+        private ChatView? _chatView;
+        private SettingsView? _settingsView;
+        private LicenseView? _licenseView;
+
+        #endregion
+
+        #region Constructor
 
         public MainWindow()
         {
             InitializeComponent();
 
-            _deviceService = new DeviceService();
-            _stream = new StreamController();
+            _cts = new CancellationTokenSource();
 
+            // Loglama bağlantıları kur
             WireUpLogging();
 
-            _settingsVm = new SettingsViewModel(_deviceService);
-            _targetsVm = new TargetsViewModel();
+            // FFmpeg kontrolü
+            EnsureFfmpegExists();
 
-            _chatVm.Bind(_chatBus);
+            // UI başlat
+            InitializeUI();
 
-            _controlVm = new ControlViewModel(_stream, () => (_targetsVm.Targets, Services.SettingsStore.Load()));
+            // Overlay başlat
+            InitializeOverlay();
 
-            SetMainContent(new ControlView(_controlVm));
-            WireNavigation();
+            // Chat sistemini başlat
+            InitializeChatSystem();
 
-            Loaded += MainWindow_Loaded;
+            Log.Information("[MainWindow] Başlatıldı");
+        }
+
+        #endregion
+
+        #region Initialization
+
+        private void InitializeUI()
+        {
+            try
+            {
+                // Tab değişikliği event'i
+                MainTabControl.SelectionChanged += OnTabSelectionChanged;
+
+                // İlk tab'ı yükle (genellikle Preview)
+                LoadTabContent(0);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] UI başlatma hatası");
+            }
+        }
+
+        private void InitializeOverlay()
+        {
+            try
+            {
+                _overlay = new OverlayWindow();
+                _overlay.Show();
+
+                // Overlay pozisyonu ayarla (varsayılan: sağ alt köşe)
+                var workArea = SystemParameters.WorkArea;
+                _overlay.Left = workArea.Right - _overlay.Width - 20;
+                _overlay.Top = workArea.Bottom - _overlay.Height - 20;
+
+                Log.Debug("[MainWindow] Overlay başlatıldı");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Overlay başlatma hatası");
+            }
+        }
+
+        private void InitializeChatSystem()
+        {
+            try
+            {
+                // ChatBus event'lerini logla
+                ChatBus.Instance.MessageReceived += OnChatMessageReceived;
+
+                // Ingestor'ları başlat
+                StartChatIngestors();
+
+                Log.Debug("[MainWindow] Chat sistemi başlatıldı");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Chat sistemi başlatma hatası");
+            }
+        }
+
+        private void StartChatIngestors()
+        {
+            var settings = SettingsStore.Data;
+            var ct = _cts?.Token ?? CancellationToken.None;
+
+            try
+            {
+                // YouTube
+                if (!string.IsNullOrWhiteSpace(settings.YouTubeVideoId))
+                {
+                    _ytIngestor = new YouTubeChatIngestor(settings.YouTubeVideoId);
+                    _ = StartIngestorSafeAsync(_ytIngestor, "YouTube", ct);
+                }
+
+                // TikTok
+                if (!string.IsNullOrWhiteSpace(settings.TikTokUsername))
+                {
+                    _tikTokIngestor = new TikTokChatIngestor(settings.TikTokUsername);
+                    _ = StartIngestorSafeAsync(_tikTokIngestor, "TikTok", ct);
+                }
+
+                // Instagram
+                if (!string.IsNullOrWhiteSpace(settings.InstagramUsername))
+                {
+                    _instagramIngestor = new InstagramChatIngestor(settings.InstagramUsername);
+                    _ = StartIngestorSafeAsync(_instagramIngestor, "Instagram", ct);
+                }
+
+                // Facebook
+                if (!string.IsNullOrWhiteSpace(settings.FacebookPageId))
+                {
+                    _facebookIngestor = new FacebookChatIngestor(settings.FacebookPageId);
+                    _ = StartIngestorSafeAsync(_facebookIngestor, "Facebook", ct);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Chat ingestor başlatma hatası");
+            }
+        }
+
+        private async Task StartIngestorSafeAsync(IChatIngestor ingestor, string name, CancellationToken ct)
+        {
+            try
+            {
+                Log.Debug("[MainWindow] {Name} chat ingestor başlatılıyor...", name);
+                await ingestor.StartAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                Log.Debug("[MainWindow] {Name} chat ingestor iptal edildi", name);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] {Name} chat ingestor hatası", name);
+            }
         }
 
         private void WireUpLogging()
         {
-            _stream.OnLog += (s, m) => { if (m.Contains("Error") || m.Contains("Failed")) Log.Error("[Stream] " + m); else Log.Information("[Stream] " + m); };
-            _stream.OnExit += (s, c) => { if (c != 0 && c != 255) Log.Warning($"[Stream] Exit Code: {c}"); else Log.Information($"[Stream] Exit Code: {c}"); };
-        }
-
-        private void WireNavigation()
-        {
-            WireNavButton("BtnControl", () => SetMainContent(new ControlView(_controlVm)));
-            WireNavButton("BtnTargets", () => SetMainContent(new TargetsView(_targetsVm)));
-            WireNavButton("BtnSettings", () => SetMainContent(new SettingsView { DataContext = _settingsVm }));
-            WireNavButton("BtnPreview", () => SetMainContent(new PreviewView(new PreviewViewModel(new PreviewService()))));
-            WireNavButton("BtnChat", () => SetMainContent(new ChatView { DataContext = _chatVm }));
-        }
-
-        private void WireNavButton(string name, Action onClick)
-        {
-            if (FindName(name) is Button b) b.Click += (_, __) => onClick();
-        }
-
-        private void SetMainContent(object content)
-        {
-            if (FindName("MainContent") is ContentControl cc) cc.Content = content;
-        }
-
-        private bool EnsureFfmpegExists()
-        {
             try
             {
-                var ffmpegPath = UniCast.Encoder.FfmpegProcess.ResolveFfmpegPath();
-                if (string.IsNullOrEmpty(ffmpegPath) || !System.IO.File.Exists(ffmpegPath))
+                // Stream controller log'larını Serilog'a yönlendir
+                StreamController.Instance.LogMessage += (level, message) =>
                 {
-                    MessageBox.Show("FFmpeg bulunamadı. Lütfen 'External' klasörünü kontrol edin.", "Eksik Bileşen", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return false;
-                }
-                return true;
-            }
-            catch { return false; }
-        }
-
-        private void MainWindow_Loaded(object? sender, RoutedEventArgs e)
-        {
-            try
-            {
-                Log.Information("MainWindow yüklendi...");
-                if (!EnsureFfmpegExists()) Log.Fatal("FFmpeg yok.");
-
-                _chatCts?.Cancel();
-                _chatCts = new CancellationTokenSource();
-                var s = Services.SettingsStore.Load();
-
-                if (s.ShowOverlay)
-                {
-                    var ow = Math.Max(200, (int)s.OverlayWidth);
-                    var oh = Math.Max(200, (int)s.OverlayHeight);
-                    try
+                    switch (level.ToLowerInvariant())
                     {
-                        _overlay = new ChatOverlayController(ow, oh, "unicast_overlay");
-                        _overlay.Start();
+                        case "error":
+                            Log.Error("[StreamController] {Message}", message);
+                            break;
+                        case "warning":
+                            Log.Warning("[StreamController] {Message}", message);
+                            break;
+                        case "debug":
+                            Log.Debug("[StreamController] {Message}", message);
+                            break;
+                        default:
+                            Log.Information("[StreamController] {Message}", message);
+                            break;
                     }
-                    catch (Exception ex) { Log.Error(ex, "Overlay hatası"); }
-                }
-
-                StartChatIngestors(s);
+                };
             }
-            catch (Exception ex) { Log.Error(ex, "Loaded hatası"); }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Log bağlantısı kurulamadı");
+            }
         }
 
-        private void StartChatIngestors(Core.Settings.SettingsData s)
+        private void EnsureFfmpegExists()
         {
-            var ct = _chatCts!.Token;
-            if (!string.IsNullOrWhiteSpace(s.YouTubeApiKey)) { _ytIngestor = new YouTubeChatIngestor(); _ytIngestor.OnMessage += OnMsg; _chatBus.Attach(_ytIngestor); _ = _ytIngestor.StartAsync(ct); }
-            if (!string.IsNullOrWhiteSpace(s.TikTokRoomId)) { _tiktok = new TikTokChatIngestor(); _tiktok.OnMessage += OnMsg; _chatBus.Attach(_tiktok); _ = _tiktok.StartAsync(ct); }
-            if (!string.IsNullOrWhiteSpace(s.InstagramUserId)) { _instagram = new InstagramChatIngestor(); _instagram.OnMessage += OnMsg; _chatBus.Attach(_instagram); _ = _instagram.StartAsync(ct); }
-            if (!string.IsNullOrWhiteSpace(s.FacebookAccessToken)) { _facebook = new FacebookChatIngestor(); _facebook.OnMessage += OnMsg; _chatBus.Attach(_facebook); _ = _facebook.StartAsync(ct); }
+            try
+            {
+                var ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe");
+
+                if (!File.Exists(ffmpegPath))
+                {
+                    // PATH'de ara
+                    var pathDirs = Environment.GetEnvironmentVariable("PATH")?.Split(';') ?? Array.Empty<string>();
+                    var found = pathDirs.Any(dir =>
+                    {
+                        try
+                        {
+                            return File.Exists(Path.Combine(dir, "ffmpeg.exe"));
+                        }
+                        catch
+                        {
+                            return false;
+                        }
+                    });
+
+                    if (!found)
+                    {
+                        Log.Warning("[MainWindow] FFmpeg bulunamadı! Stream özellikleri çalışmayabilir.");
+
+                        Dispatcher.InvokeAsync(() =>
+                        {
+                            MessageBox.Show(
+                                "FFmpeg bulunamadı!\n\n" +
+                                "Stream özellikleri çalışmayabilir.\n" +
+                                "FFmpeg'i indirip uygulama klasörüne veya PATH'e ekleyin.",
+                                "Uyarı",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] FFmpeg kontrolü hatası");
+            }
         }
 
-        private void OnMsg(ChatMessage msg) { try { _overlay?.Push(msg.Author, msg.Text); } catch { } }
+        #endregion
 
-        // ========== EKSİK METOTLAR ==========
+        #region Tab Management
 
-        public void UpdateOverlaySize(double width, double height) { _overlay?.UpdateSize(width, height); }
-        public void UpdateOverlayPosition(int x, int y) { _overlay?.UpdatePosition(x, y); }
+        private void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.Source != MainTabControl)
+                return;
+
+            var selectedIndex = MainTabControl.SelectedIndex;
+            LoadTabContent(selectedIndex);
+        }
+
+        private void LoadTabContent(int tabIndex)
+        {
+            try
+            {
+                switch (tabIndex)
+                {
+                    case 0: // Preview
+                        LoadPreviewTab();
+                        break;
+                    case 1: // Control
+                        LoadControlTab();
+                        break;
+                    case 2: // Chat
+                        LoadChatTab();
+                        break;
+                    case 3: // Settings
+                        LoadSettingsTab();
+                        break;
+                    case 4: // License
+                        LoadLicenseTab();
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Tab {Index} yükleme hatası", tabIndex);
+            }
+        }
+
+        private void LoadPreviewTab()
+        {
+            if (_previewView != null)
+                return;
+
+            _previewViewModel = new PreviewViewModel();
+            _previewView = new PreviewView { DataContext = _previewViewModel };
+
+            if (PreviewTabContent != null)
+                PreviewTabContent.Content = _previewView;
+        }
+
+        private void LoadControlTab()
+        {
+            if (_controlView != null)
+                return;
+
+            _controlViewModel = new ControlViewModel();
+            _controlView = new ControlView { DataContext = _controlViewModel };
+
+            if (ControlTabContent != null)
+                ControlTabContent.Content = _controlView;
+        }
+
+        private void LoadChatTab()
+        {
+            if (_chatView != null)
+                return;
+
+            _chatViewModel = new ChatViewModel();
+            _chatView = new ChatView { DataContext = _chatViewModel };
+
+            if (ChatTabContent != null)
+                ChatTabContent.Content = _chatView;
+        }
+
+        private void LoadSettingsTab()
+        {
+            if (_settingsView != null)
+                return;
+
+            _settingsViewModel = new SettingsViewModel();
+            _settingsView = new SettingsView { DataContext = _settingsViewModel };
+
+            if (SettingsTabContent != null)
+                SettingsTabContent.Content = _settingsView;
+        }
+
+        private void LoadLicenseTab()
+        {
+            if (_licenseView != null)
+                return;
+
+            _licenseViewModel = new LicenseViewModel();
+            _licenseView = new LicenseView { DataContext = _licenseViewModel };
+
+            if (LicenseTabContent != null)
+                LicenseTabContent.Content = _licenseView;
+        }
+
+        #endregion
+
+        #region Overlay Control Methods (PreviewView ve ControlViewModel tarafından çağrılır)
 
         /// <summary>
-        /// Overlay'i yeniden yükler - PreviewView tarafından çağrılır.
+        /// Overlay boyutunu günceller.
         /// </summary>
-        public void RefreshOverlay() { _overlay?.ReloadSettings(); }
+        public void UpdateOverlaySize(double width, double height)
+        {
+            if (_overlay == null)
+                return;
+
+            try
+            {
+                _overlay.UpdateSize(width, height);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Overlay boyut güncelleme hatası");
+            }
+        }
 
         /// <summary>
-        /// Mola modunu başlatır - ControlViewModel tarafından çağrılır.
+        /// Overlay pozisyonunu günceller.
         /// </summary>
-        public void StartBreak(int minutes) { _overlay?.StartBreakMode(minutes); }
+        public void UpdateOverlayPosition(int x, int y)
+        {
+            if (_overlay == null)
+                return;
+
+            try
+            {
+                _overlay.UpdatePosition(x, y);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Overlay pozisyon güncelleme hatası");
+            }
+        }
 
         /// <summary>
-        /// Mola modunu durdurur - ControlViewModel tarafından çağrılır.
+        /// Overlay ayarlarını yeniden yükler.
+        /// PreviewView.RefreshOverlayButton_Click tarafından çağrılır.
         /// </summary>
-        public void StopBreak() { _overlay?.StopBreakMode(); }
+        public void RefreshOverlay()
+        {
+            if (_overlay == null)
+                return;
 
-        // =====================================
+            try
+            {
+                _overlay.ReloadSettings();
+                Log.Debug("[MainWindow] Overlay yenilendi");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Overlay yenileme hatası");
+            }
+        }
+
+        /// <summary>
+        /// Mola modunu başlatır.
+        /// ControlViewModel.StartBreakCommand tarafından çağrılır.
+        /// </summary>
+        public void StartBreak(int minutes)
+        {
+            if (_overlay == null)
+                return;
+
+            try
+            {
+                _overlay.StartBreakMode(minutes);
+                Log.Information("[MainWindow] Mola başlatıldı: {Minutes} dakika", minutes);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Mola başlatma hatası");
+            }
+        }
+
+        /// <summary>
+        /// Mola modunu durdurur.
+        /// ControlViewModel.StopBreakCommand tarafından çağrılır.
+        /// </summary>
+        public void StopBreak()
+        {
+            if (_overlay == null)
+                return;
+
+            try
+            {
+                _overlay.StopBreakMode();
+                Log.Information("[MainWindow] Mola durduruldu");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Mola durdurma hatası");
+            }
+        }
+
+        /// <summary>
+        /// Overlay görünürlüğünü değiştirir.
+        /// </summary>
+        public void ToggleOverlayVisibility()
+        {
+            if (_overlay == null)
+                return;
+
+            try
+            {
+                if (_overlay.IsVisible)
+                    _overlay.Hide();
+                else
+                    _overlay.Show();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Overlay görünürlük değiştirme hatası");
+            }
+        }
+
+        /// <summary>
+        /// Overlay'e mesaj gönderir.
+        /// </summary>
+        public void SendMessageToOverlay(string message, string? sender = null)
+        {
+            if (_overlay == null)
+                return;
+
+            try
+            {
+                _overlay.ShowMessage(message, sender);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Overlay mesaj gönderme hatası");
+            }
+        }
+
+        #endregion
+
+        #region Event Handlers
+
+        private void OnChatMessageReceived(object? sender, ChatMessageEventArgs e)
+        {
+            try
+            {
+                // Overlay'e mesajı gönder
+                _overlay?.ShowChatMessage(e.Message);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Chat mesajı işleme hatası");
+            }
+        }
 
         protected override void OnClosed(EventArgs e)
         {
-            try { _chatCts?.Cancel(); } catch { }
-
-            try { _ytIngestor?.StopAsync().GetAwaiter().GetResult(); } catch { }
-            try { _tiktok?.StopAsync().GetAwaiter().GetResult(); } catch { }
-            try { _instagram?.StopAsync().GetAwaiter().GetResult(); } catch { }
-            try { _facebook?.StopAsync().GetAwaiter().GetResult(); } catch { }
-
-            try { if (_overlay != null) _overlay.DisposeAsync().AsTask().GetAwaiter().GetResult(); } catch { }
-            _chatBus.Dispose();
-            try { (_stream as IAsyncDisposable)?.DisposeAsync().AsTask().GetAwaiter().GetResult(); } catch { }
-
-            _controlVm.Dispose();
+            Dispose();
             base.OnClosed(e);
         }
+
+        #endregion
+
+        #region IDisposable
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed)
+                return;
+
+            lock (_disposeLock)
+            {
+                if (_isDisposed)
+                    return;
+
+                if (disposing)
+                {
+                    Log.Debug("[MainWindow] Dispose başlatılıyor...");
+
+                    // 1. CancellationTokenSource iptal et
+                    try
+                    {
+                        _cts?.Cancel();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "[MainWindow] CTS iptal hatası");
+                    }
+
+                    // 2. Chat event'lerini temizle
+                    try
+                    {
+                        ChatBus.Instance.MessageReceived -= OnChatMessageReceived;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "[MainWindow] ChatBus event temizleme hatası");
+                    }
+
+                    // 3. Tab event'ini temizle
+                    try
+                    {
+                        MainTabControl.SelectionChanged -= OnTabSelectionChanged;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "[MainWindow] Tab event temizleme hatası");
+                    }
+
+                    // 4. Chat Ingestors'ı durdur
+                    DisposeIngestors();
+
+                    // 5. ViewModels'i dispose et
+                    DisposeViewModels();
+
+                    // 6. Overlay'i kapat
+                    try
+                    {
+                        _overlay?.Close();
+                        _overlay = null;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "[MainWindow] Overlay kapatma hatası");
+                    }
+
+                    // 7. Stream controller'ı durdur
+                    try
+                    {
+                        if (StreamController.Instance.IsRunning)
+                        {
+                            StreamController.Instance.Stop();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "[MainWindow] StreamController durdurma hatası");
+                    }
+
+                    // 8. CTS dispose et
+                    try
+                    {
+                        _cts?.Dispose();
+                        _cts = null;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "[MainWindow] CTS dispose hatası");
+                    }
+
+                    Log.Debug("[MainWindow] Dispose tamamlandı");
+                }
+
+                _isDisposed = true;
+            }
+        }
+
+        private void DisposeIngestors()
+        {
+            var ingestors = new List<(IChatIngestor? Ingestor, string Name)>
+            {
+                (_ytIngestor, "YouTube"),
+                (_tikTokIngestor, "TikTok"),
+                (_instagramIngestor, "Instagram"),
+                (_facebookIngestor, "Facebook")
+            };
+
+            foreach (var (ingestor, name) in ingestors)
+            {
+                if (ingestor == null)
+                    continue;
+
+                try
+                {
+                    ingestor.StopAsync().Wait(TimeSpan.FromSeconds(2));
+                    (ingestor as IDisposable)?.Dispose();
+                    Log.Debug("[MainWindow] {Name} ingestor disposed", name);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "[MainWindow] {Name} ingestor dispose hatası", name);
+                }
+            }
+
+            _ytIngestor = null;
+            _tikTokIngestor = null;
+            _instagramIngestor = null;
+            _facebookIngestor = null;
+        }
+
+        private void DisposeViewModels()
+        {
+            var viewModels = new List<(IDisposable? ViewModel, string Name)>
+            {
+                (_previewViewModel as IDisposable, "PreviewViewModel"),
+                (_controlViewModel as IDisposable, "ControlViewModel"),
+                (_chatViewModel as IDisposable, "ChatViewModel"),
+                (_settingsViewModel as IDisposable, "SettingsViewModel"),
+                (_licenseViewModel as IDisposable, "LicenseViewModel")
+            };
+
+            foreach (var (viewModel, name) in viewModels)
+            {
+                if (viewModel == null)
+                    continue;
+
+                try
+                {
+                    viewModel.Dispose();
+                    Log.Debug("[MainWindow] {Name} disposed", name);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "[MainWindow] {Name} dispose hatası", name);
+                }
+            }
+
+            _previewViewModel = null;
+            _controlViewModel = null;
+            _chatViewModel = null;
+            _settingsViewModel = null;
+            _licenseViewModel = null;
+        }
+
+        ~MainWindow()
+        {
+            Dispose(false);
+        }
+
+        #endregion
     }
 }

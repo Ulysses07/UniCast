@@ -4,21 +4,21 @@ using System.IO;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace UniCast.Licensing.Protection
 {
     /// <summary>
     /// KATMAN 3: Runtime koruma - debugger, VM ve bellek manipülasyonu tespiti.
+    /// DEBUG modunda tüm kontroller atlanır.
     /// </summary>
     public static class RuntimeProtection
     {
         private static volatile bool _isInitialized;
         private static volatile bool _threatDetected;
         private static Timer? _heartbeatTimer;
+        private static readonly object _initLock = new();
 
         public static event EventHandler<ThreatDetectedEventArgs>? ThreatDetected;
 
@@ -41,9 +41,6 @@ namespace UniCast.Licensing.Protection
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool CloseHandle(IntPtr hObject);
-
         #endregion
 
         /// <summary>
@@ -56,17 +53,36 @@ namespace UniCast.Licensing.Protection
             if (_isInitialized)
                 return;
 
-            _isInitialized = true;
+            lock (_initLock)
+            {
+                if (_isInitialized)
+                    return;
 
-            // İlk kontrol
-            PerformSecurityChecks();
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("[RuntimeProtection] DEBUG modu - Koruma atlanıyor");
+                _isInitialized = true;
+                return;
+#else
+                // İlk kontrol
+                PerformSecurityChecks();
 
-            // Periyodik heartbeat
-            _heartbeatTimer = new Timer(
-                _ => PerformSecurityChecks(),
-                null,
-                heartbeatIntervalMs,
-                heartbeatIntervalMs);
+                // Periyodik heartbeat
+                _heartbeatTimer = new Timer(
+                    _ => 
+                    {
+                        try { PerformSecurityChecks(); }
+                        catch (Exception ex) 
+                        { 
+                            System.Diagnostics.Debug.WriteLine($"[RuntimeProtection] Heartbeat hatası: {ex.Message}");
+                        }
+                    },
+                    null,
+                    heartbeatIntervalMs,
+                    heartbeatIntervalMs);
+
+                _isInitialized = true;
+#endif
+            }
         }
 
         /// <summary>
@@ -75,11 +91,15 @@ namespace UniCast.Licensing.Protection
         [SupportedOSPlatform("windows")]
         public static bool IsSecure()
         {
+#if DEBUG
+            return true; // DEBUG modunda her zaman güvenli
+#else
             if (!_isInitialized)
                 Initialize();
 
             PerformSecurityChecks();
             return !_threatDetected;
+#endif
         }
 
         /// <summary>
@@ -90,7 +110,7 @@ namespace UniCast.Licensing.Protection
         {
             var result = new SecurityCheckResult();
 
-        #if DEBUG
+#if DEBUG
             // DEBUG modunda tüm kontrolleri atla
             result.IsSecure = true;
             result.DebuggerAttached = false;
@@ -99,104 +119,130 @@ namespace UniCast.Licensing.Protection
             result.TimingAnomaly = false;
             result.CrackToolDetected = false;
             return result;
-        #else
-            // 1. Debugger kontrolü
-            result.DebuggerAttached = CheckDebugger();
-            if (result.DebuggerAttached)
+#else
+            try
             {
-                RaiseThreat(ThreatType.DebuggerDetected, "Debugger algılandı");
+                // 1. Debugger kontrolü
+                result.DebuggerAttached = CheckDebugger();
+                if (result.DebuggerAttached)
+                {
+                    RaiseThreat(ThreatType.DebuggerDetected, "Debugger algılandı");
+                }
+
+                // 2. VM/Sandbox kontrolü
+                result.VirtualMachine = CheckVirtualMachine();
+                // VM'de çalışmaya izin ver ama logla
+                if (result.VirtualMachine)
+                {
+                    System.Diagnostics.Debug.WriteLine("[RuntimeProtection] VM ortamı tespit edildi");
+                }
+
+                // 3. Sandbox kontrolü
+                result.Sandbox = CheckSandbox();
+                if (result.Sandbox)
+                {
+                    RaiseThreat(ThreatType.SandboxDetected, "Sandbox ortamı algılandı");
+                }
+
+                // 4. Zamanlama anomalisi
+                result.TimingAnomaly = CheckTimingAnomaly();
+                if (result.TimingAnomaly)
+                {
+                    RaiseThreat(ThreatType.TimingAnomaly, "Zamanlama anomalisi");
+                }
+
+                // 5. Crack araçları
+                result.CrackToolDetected = CheckCrackTools();
+                if (result.CrackToolDetected)
+                {
+                    RaiseThreat(ThreatType.CrackToolDetected, "Crack aracı tespit edildi");
+                }
+
+                result.IsSecure = !result.DebuggerAttached &&
+                                  !result.Sandbox &&
+                                  !result.TimingAnomaly &&
+                                  !result.CrackToolDetected;
+
+                _threatDetected = !result.IsSecure;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RuntimeProtection] Güvenlik kontrolü hatası: {ex.Message}");
+                // Hata durumunda güvenli kabul et (false positive önleme)
+                result.IsSecure = true;
             }
 
-            // 2. VM/Sandbox kontrolü
-            result.VirtualMachine = CheckVirtualMachine();
-
-            // 3. Sandbox kontrolü
-            result.Sandbox = CheckSandbox();
-            if (result.Sandbox)
-            {
-                RaiseThreat(ThreatType.SandboxDetected, "Sandbox ortamı algılandı");
-            }
-
-            // 4. Zamanlama anomalisi
-            result.TimingAnomaly = CheckTimingAnomaly();
-            if (result.TimingAnomaly)
-            {
-                RaiseThreat(ThreatType.TimingAnomaly, "Zamanlama anomalisi");
-            }
-
-            // 5. Crack araçları
-            result.CrackToolDetected = CheckCrackTools();
-            if (result.CrackToolDetected)
-            {
-                RaiseThreat(ThreatType.CrackToolDetected, "Crack aracı tespit edildi");
-            }
-
-            result.IsSecure = !result.DebuggerAttached &&
-                            !result.Sandbox &&
-                            !result.TimingAnomaly &&
-                            !result.CrackToolDetected;
-
-            _threatDetected = !result.IsSecure;
             return result;
-        #endif
+#endif
         }
 
         #region Security Checks
 
         private static bool CheckDebugger()
         {
-            // Yöntem 1: Managed debugger
-            if (Debugger.IsAttached)
-                return true;
-
-            // Yöntem 2: Windows API - yerel debugger
-            if (IsDebuggerPresent())
-                return true;
-
-            // Yöntem 3: Remote debugger
             try
             {
-                bool isRemoteDebugger = false;
-                CheckRemoteDebuggerPresent(Process.GetCurrentProcess().Handle, ref isRemoteDebugger);
-                if (isRemoteDebugger)
+                // Yöntem 1: Managed debugger
+                if (Debugger.IsAttached)
                     return true;
-            }
-            catch { }
 
-            // Yöntem 4: NtQueryInformationProcess (ProcessDebugPort)
-            try
+                // Yöntem 2: Windows API - yerel debugger
+                if (IsDebuggerPresent())
+                    return true;
+
+                // Yöntem 3: Remote debugger
+                try
+                {
+                    bool isRemoteDebugger = false;
+                    using var currentProcess = Process.GetCurrentProcess();
+                    CheckRemoteDebuggerPresent(currentProcess.Handle, ref isRemoteDebugger);
+                    if (isRemoteDebugger)
+                        return true;
+                }
+                catch { }
+
+                // Yöntem 4: NtQueryInformationProcess (ProcessDebugPort)
+                try
+                {
+                    IntPtr debugPort = IntPtr.Zero;
+                    int returnLength = 0;
+                    using var currentProcess = Process.GetCurrentProcess();
+                    var status = NtQueryInformationProcess(
+                        currentProcess.Handle,
+                        7, // ProcessDebugPort
+                        ref debugPort,
+                        IntPtr.Size,
+                        ref returnLength);
+
+                    if (status == 0 && debugPort != IntPtr.Zero)
+                        return true;
+                }
+                catch { }
+
+                return false;
+            }
+            catch
             {
-                IntPtr debugPort = IntPtr.Zero;
-                int returnLength = 0;
-                var status = NtQueryInformationProcess(
-                    Process.GetCurrentProcess().Handle,
-                    7, // ProcessDebugPort
-                    ref debugPort,
-                    IntPtr.Size,
-                    ref returnLength);
-
-                if (status == 0 && debugPort != IntPtr.Zero)
-                    return true;
+                return false; // Hata durumunda false positive önleme
             }
-            catch { }
-
-            return false;
         }
+
         [SupportedOSPlatform("windows")]
         private static bool CheckVirtualMachine()
         {
-            // VM üreticilerinin WMI değerleri
-            string[] vmIndicators =
-            {
-                "VMware", "VirtualBox", "Virtual", "VBOX",
-                "Hyper-V", "Xen", "QEMU", "KVM", "Parallels"
-            };
-
             try
             {
+                // VM üreticilerinin WMI değerleri
+                string[] vmIndicators =
+                {
+                    "VMware", "VirtualBox", "Virtual", "VBOX",
+                    "Hyper-V", "Xen", "QEMU", "KVM", "Parallels"
+                };
+
                 // BIOS kontrolü
                 using var biosSearcher = new ManagementObjectSearcher(
-                    "SELECT * FROM Win32_BIOS");
+                    "SELECT Manufacturer, Version FROM Win32_BIOS");
+
                 foreach (ManagementObject obj in biosSearcher.Get())
                 {
                     var manufacturer = obj["Manufacturer"]?.ToString() ?? "";
@@ -212,7 +258,8 @@ namespace UniCast.Licensing.Protection
 
                 // Bilgisayar sistemi kontrolü
                 using var systemSearcher = new ManagementObjectSearcher(
-                    "SELECT * FROM Win32_ComputerSystem");
+                    "SELECT Manufacturer, Model FROM Win32_ComputerSystem");
+
                 foreach (ManagementObject obj in systemSearcher.Get())
                 {
                     var manufacturer = obj["Manufacturer"]?.ToString() ?? "";
@@ -226,62 +273,19 @@ namespace UniCast.Licensing.Protection
                     }
                 }
 
-                // Disk kontrolü
-                using var diskSearcher = new ManagementObjectSearcher(
-                    "SELECT * FROM Win32_DiskDrive");
-                foreach (ManagementObject obj in diskSearcher.Get())
-                {
-                    var model = obj["Model"]?.ToString() ?? "";
-                    foreach (var indicator in vmIndicators)
-                    {
-                        if (model.Contains(indicator, StringComparison.OrdinalIgnoreCase))
-                            return true;
-                    }
-                }
+                return false;
             }
-            catch { }
-
-            // Registry kontrolü (VMware tools, VBox Guest Additions)
-            try
+            catch
             {
-                var vmwareKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
-                    @"SOFTWARE\VMware, Inc.\VMware Tools");
-                if (vmwareKey != null)
-                {
-                    vmwareKey.Dispose();
-                    return true;
-                }
-
-                var vboxKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
-                    @"SOFTWARE\Oracle\VirtualBox Guest Additions");
-                if (vboxKey != null)
-                {
-                    vboxKey.Dispose();
-                    return true;
-                }
+                return false;
             }
-            catch { }
-
-            return false;
         }
 
         private static bool CheckSandbox()
         {
-            // Sandbox belirtileri
             try
             {
-                // 1. Çok az dosya (sandbox genelde temiz)
-                var desktopFiles = Directory.GetFiles(
-                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
-                if (desktopFiles.Length < 3)
-                    return true; // Şüpheli
-
-                // 2. Kısa uptime (sandbox yeni başlatılmış)
-                var uptime = TimeSpan.FromMilliseconds(Environment.TickCount64);
-                if (uptime.TotalMinutes < 10)
-                    return true; // Şüpheli
-
-                // 3. Bilinen sandbox process'leri
+                // 1. Bilinen sandbox process'leri
                 var sandboxProcesses = new[]
                 {
                     "sandboxie", "sbiectrl", "sbiesvc",
@@ -297,56 +301,80 @@ namespace UniCast.Licensing.Protection
                         foreach (var sandboxProc in sandboxProcesses)
                         {
                             if (name.Contains(sandboxProc))
+                            {
+                                proc.Dispose();
                                 return true;
+                            }
                         }
+                        proc.Dispose();
                     }
-                    catch { }
+                    catch
+                    {
+                        try { proc.Dispose(); } catch { }
+                    }
                 }
 
-                // 4. DLL kontrolü
+                // 2. DLL kontrolü
                 var sbiedll = GetModuleHandle("SbieDll.dll");
                 if (sbiedll != IntPtr.Zero)
                     return true;
-            }
-            catch { }
 
-            return false;
+                // 3. Sandboxie registry kontrolü
+                try
+                {
+                    using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Sandboxie");
+                    if (key != null)
+                        return true;
+                }
+                catch { }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static bool CheckTimingAnomaly()
         {
-            // Debug altında bu işlem çok uzun sürer
-            const int iterations = 100;
-            const int maxExpectedMs = 50; // Normal: < 5ms
-
-            var sw = Stopwatch.StartNew();
-
-            for (int i = 0; i < iterations; i++)
+            try
             {
-                // Basit işlem
-                _ = Math.Sin(i) * Math.Cos(i);
+                // Debug altında bu işlem çok uzun sürer
+                const int iterations = 100;
+                const int maxExpectedMs = 100; // Normal: < 10ms, toleranslı
+
+                var sw = Stopwatch.StartNew();
+
+                for (int i = 0; i < iterations; i++)
+                {
+                    // Basit işlem
+                    _ = Math.Sin(i) * Math.Cos(i);
+                }
+
+                sw.Stop();
+
+                return sw.ElapsedMilliseconds > maxExpectedMs;
             }
-
-            sw.Stop();
-
-            return sw.ElapsedMilliseconds > maxExpectedMs;
+            catch
+            {
+                return false;
+            }
         }
 
         private static bool CheckCrackTools()
         {
-            // Bilinen crack/keygen araçları
-            string[] crackTools =
-            {
-                "ollydbg", "x64dbg", "x32dbg", "ida", "ida64",
-                "immunitydebugger", "wireshark", "fiddler",
-                "charles", "procmon", "procexp", "regmon",
-                "apimonitor", "rohitab", "httpanalyzer",
-                "dnspy", "ilspy", "jetbrains.dotpeek",
-                "cheatengine", "artmoney", "tsearch"
-            };
-
             try
             {
+                // Bilinen crack/keygen araçları
+                string[] crackTools =
+                {
+                    "ollydbg", "x64dbg", "x32dbg", "ida", "ida64",
+                    "immunitydebugger", "procmon", "procexp",
+                    "apimonitor", "dnspy", "ilspy", "dotpeek",
+                    "cheatengine", "artmoney"
+                };
+
                 foreach (var proc in Process.GetProcesses())
                 {
                     try
@@ -355,15 +383,25 @@ namespace UniCast.Licensing.Protection
                         foreach (var tool in crackTools)
                         {
                             if (name.Contains(tool))
+                            {
+                                proc.Dispose();
                                 return true;
+                            }
                         }
+                        proc.Dispose();
                     }
-                    catch { }
+                    catch
+                    {
+                        try { proc.Dispose(); } catch { }
+                    }
                 }
-            }
-            catch { }
 
-            return false;
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         #endregion
@@ -371,7 +409,15 @@ namespace UniCast.Licensing.Protection
         private static void RaiseThreat(ThreatType type, string message)
         {
             _threatDetected = true;
-            ThreatDetected?.Invoke(null, new ThreatDetectedEventArgs(type, message));
+
+            try
+            {
+                ThreatDetected?.Invoke(null, new ThreatDetectedEventArgs(type, message));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RuntimeProtection] ThreatDetected event hatası: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -379,9 +425,14 @@ namespace UniCast.Licensing.Protection
         /// </summary>
         public static void Shutdown()
         {
-            _heartbeatTimer?.Dispose();
-            _heartbeatTimer = null;
-            _isInitialized = false;
+            lock (_initLock)
+            {
+                _heartbeatTimer?.Dispose();
+                _heartbeatTimer = null;
+                _isInitialized = false;
+                _threatDetected = false;
+                ThreatDetected = null;
+            }
         }
     }
 

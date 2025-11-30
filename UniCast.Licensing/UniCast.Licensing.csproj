@@ -4,7 +4,7 @@
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<LangVersion>latest</LangVersion>
+		<LangVersion>12.0</LangVersion>
 
 		<!-- Assembly bilgileri -->
 		<AssemblyName>UniCast.Licensing</AssemblyName>
@@ -14,31 +14,76 @@
 		<Product>UniCast Licensing</Product>
 		<Copyright>Copyright © 2025 UniCast</Copyright>
 
-		<!-- Strong naming (production'da aktif edilmeli) -->
+		<!-- Strong Name İmzası (Production için etkinleştirin) -->
+		<!-- NOT: Önce 'sn -k UniCast.snk' ile key oluşturun -->
 		<!-- <SignAssembly>true</SignAssembly> -->
 		<!-- <AssemblyOriginatorKeyFile>UniCast.snk</AssemblyOriginatorKeyFile> -->
+		<!-- <DelaySign>false</DelaySign> -->
 
-		<!-- Trimming ayarları (daha küçük çıktı) -->
-		<PublishTrimmed>false</PublishTrimmed>
-		<TrimMode>link</TrimMode>
+		<!-- Optimizasyon -->
+		<Optimize>true</Optimize>
+		<DebugType>embedded</DebugType>
+
+		<!-- Platform -->
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<PlatformTarget>x64</PlatformTarget>
+
+		<!-- Security -->
+		<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+
+		<!-- Deterministic build (tutarlı hash'ler için) -->
+		<Deterministic>true</Deterministic>
+		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
-	<!-- WMI için gerekli referans -->
+	<!-- Release konfigürasyonu -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<Optimize>true</Optimize>
+		<DebugSymbols>false</DebugSymbols>
+		<DebugType>none</DebugType>
+
+		<!-- IL Trimming (kullanılmayan kodu kaldır) -->
+		<!-- <PublishTrimmed>true</PublishTrimmed> -->
+		<!-- <TrimMode>link</TrimMode> -->
+	</PropertyGroup>
+
+	<!-- Debug konfigürasyonu -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+		<Optimize>false</Optimize>
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>full</DebugType>
+		<DefineConstants>DEBUG;TRACE</DefineConstants>
+	</PropertyGroup>
+
+	<!-- NuGet paketleri -->
 	<ItemGroup>
-		<PackageReference Include="System.Management" Version="10.0.0" />
-		<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
+		<!-- Logging -->
+		<PackageReference Include="Serilog" Version="3.1.1" />
+
+		<!-- WMI erişimi (System.Management) -->
+		<PackageReference Include="System.Management" Version="8.0.0" />
+
+		<!-- HTTP Client -->
+		<PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
 	</ItemGroup>
 
-	<!-- Windows-only API'ler -->
+	<!-- Windows özel API'ler -->
 	<ItemGroup>
-		<Using Include="System.Management" />
+		<!-- DPAPI için -->
+		<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
 	</ItemGroup>
 
-	<!-- Obfuscation post-build task (isteğe bağlı) -->
-	<!-- 
-  <Target Name="Obfuscate" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="&quot;$(SolutionDir)tools\ConfuserEx\Confuser.CLI.exe&quot; &quot;$(ProjectDir)confuser.crproj&quot;" />
-  </Target>
-  -->
+	<!-- Keys klasörünü output'a kopyala -->
+	<ItemGroup>
+		<None Update="Keys\*.pem">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<!-- Embedded Resource'lar -->
+	<ItemGroup>
+		<!-- Public key'i embedded resource olarak göm (opsiyonel) -->
+		<!-- <EmbeddedResource Include="Keys\license_public.pem" /> -->
+	</ItemGroup>
 
 </Project>

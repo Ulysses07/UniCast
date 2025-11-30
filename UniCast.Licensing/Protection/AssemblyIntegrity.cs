@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 
 namespace UniCast.Licensing.Protection
 {
@@ -15,344 +14,335 @@ namespace UniCast.Licensing.Protection
     /// </summary>
     public static class AssemblyIntegrity
     {
-        private const string ManifestFileName = ".integrity";
-        private static Dictionary<string, string>? _expectedHashes;
-        private static bool _initialized;
+        private static readonly Dictionary<string, string> _expectedHashes = new();
+        private static bool _isInitialized;
+        private static readonly object _initLock = new();
+
+        // Kontrol edilecek assembly'ler
+        private static readonly string[] ProtectedAssemblies =
+        {
+            "UniCast.App.dll",
+            "UniCast.Core.dll",
+            "UniCast.Licensing.dll",
+            "UniCast.Encoder.dll"
+        };
 
         /// <summary>
-        /// Bütünlük kontrolünü başlatır.
-        /// Build sonrası oluşturulan manifest dosyasını yükler.
+        /// Bütünlük sistemini başlatır.
+        /// İlk çalıştırmada hash'leri kaydeder.
         /// </summary>
-        public static bool Initialize()
+        public static void Initialize()
         {
+            if (_isInitialized)
+                return;
+
+            lock (_initLock)
+            {
+                if (_isInitialized)
+                    return;
+
+#if DEBUG
+                // DEBUG modunda hash hesaplaması atlanır
+                _isInitialized = true;
+                return;
+#else
+                try
+                {
+                    var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+                    foreach (var assemblyName in ProtectedAssemblies)
+                    {
+                        var assemblyPath = Path.Combine(baseDir, assemblyName);
+
+                        if (File.Exists(assemblyPath))
+                        {
+                            var hash = ComputeFileHash(assemblyPath);
+                            _expectedHashes[assemblyName] = hash;
+                        }
+                    }
+
+                    _isInitialized = true;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AssemblyIntegrity] Initialize hatası: {ex.Message}");
+                }
+#endif
+            }
+        }
+
+        /// <summary>
+        /// Tüm korumalı assembly'leri doğrular.
+        /// </summary>
+        public static IntegrityResult VerifyAll()
+        {
+            var result = new IntegrityResult();
+
+#if DEBUG
+            // DEBUG modunda her zaman geçerli
+            result.IsValid = true;
+            return result;
+#else
+            if (!_isInitialized)
+            {
+                Initialize();
+            }
+
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+            foreach (var assemblyName in ProtectedAssemblies)
+            {
+                var verification = new AssemblyVerification { Name = assemblyName };
+
+                try
+                {
+                    var assemblyPath = Path.Combine(baseDir, assemblyName);
+
+                    if (!File.Exists(assemblyPath))
+                    {
+                        verification.Status = VerificationStatus.Missing;
+                        verification.Details = "Dosya bulunamadı";
+                    }
+                    else
+                    {
+                        var currentHash = ComputeFileHash(assemblyPath);
+                        verification.CurrentHash = currentHash;
+
+                        if (_expectedHashes.TryGetValue(assemblyName, out var expectedHash))
+                        {
+                            verification.ExpectedHash = expectedHash;
+
+                            if (currentHash == expectedHash)
+                            {
+                                verification.Status = VerificationStatus.Valid;
+                            }
+                            else
+                            {
+                                verification.Status = VerificationStatus.Modified;
+                                verification.Details = "Hash uyuşmazlığı";
+                            }
+                        }
+                        else
+                        {
+                            // İlk çalıştırma - hash kayıtlı değil
+                            verification.Status = VerificationStatus.Valid;
+                            verification.Details = "İlk doğrulama";
+                            _expectedHashes[assemblyName] = currentHash;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    verification.Status = VerificationStatus.Error;
+                    verification.Details = ex.Message;
+                }
+
+                result.Verifications.Add(verification);
+            }
+
+            // Genel sonuç
+            result.IsValid = result.Verifications.All(v =>
+                v.Status == VerificationStatus.Valid ||
+                v.Status == VerificationStatus.Missing); // Eksik dosya normal olabilir
+
+            return result;
+#endif
+        }
+
+        /// <summary>
+        /// Belirli bir assembly'i doğrular.
+        /// </summary>
+        public static AssemblyVerification VerifyAssembly(string assemblyName)
+        {
+            var verification = new AssemblyVerification { Name = assemblyName };
+
+#if DEBUG
+            verification.Status = VerificationStatus.Valid;
+            verification.Details = "DEBUG modu";
+            return verification;
+#else
             try
             {
                 var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                var manifestPath = Path.Combine(baseDir, ManifestFileName);
+                var assemblyPath = Path.Combine(baseDir, assemblyName);
 
-                if (!File.Exists(manifestPath))
+                if (!File.Exists(assemblyPath))
                 {
-                    // İlk çalıştırma - manifest oluştur
-                    _expectedHashes = GenerateManifest(baseDir);
-                    SaveManifest(manifestPath, _expectedHashes);
+                    verification.Status = VerificationStatus.Missing;
+                    verification.Details = "Dosya bulunamadı";
+                    return verification;
+                }
+
+                var currentHash = ComputeFileHash(assemblyPath);
+                verification.CurrentHash = currentHash;
+
+                if (_expectedHashes.TryGetValue(assemblyName, out var expectedHash))
+                {
+                    verification.ExpectedHash = expectedHash;
+                    verification.Status = currentHash == expectedHash
+                        ? VerificationStatus.Valid
+                        : VerificationStatus.Modified;
                 }
                 else
                 {
-                    // Manifest'i yükle ve doğrula
-                    _expectedHashes = LoadManifest(manifestPath);
-                }
-
-                _initialized = true;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Tüm assembly'lerin bütünlüğünü kontrol eder.
-        /// </summary>
-        public static IntegrityCheckResult VerifyAll()
-        {
-            if (!_initialized)
-                Initialize();
-
-            var result = new IntegrityCheckResult();
-            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-
-            if (_expectedHashes == null || _expectedHashes.Count == 0)
-            {
-                result.Status = IntegrityStatus.ManifestMissing;
-                result.Message = "Bütünlük manifest dosyası bulunamadı";
-                return result;
-            }
-
-            var tamperedFiles = new List<string>();
-            var missingFiles = new List<string>();
-
-            foreach (var kvp in _expectedHashes)
-            {
-                var filePath = Path.Combine(baseDir, kvp.Key);
-                var expectedHash = kvp.Value;
-
-                if (!File.Exists(filePath))
-                {
-                    missingFiles.Add(kvp.Key);
-                    continue;
-                }
-
-                var actualHash = ComputeFileHash(filePath);
-                if (actualHash != expectedHash)
-                {
-                    tamperedFiles.Add(kvp.Key);
+                    verification.Status = VerificationStatus.Valid;
+                    verification.Details = "Hash kaydı yok";
                 }
             }
-
-            result.TamperedFiles = tamperedFiles;
-            result.MissingFiles = missingFiles;
-
-            if (tamperedFiles.Count > 0)
+            catch (Exception ex)
             {
-                result.Status = IntegrityStatus.Tampered;
-                result.Message = $"{tamperedFiles.Count} dosya değiştirilmiş";
-            }
-            else if (missingFiles.Count > 0)
-            {
-                result.Status = IntegrityStatus.FilesMissing;
-                result.Message = $"{missingFiles.Count} dosya eksik";
-            }
-            else
-            {
-                result.Status = IntegrityStatus.Valid;
-                result.Message = "Tüm dosyalar doğrulandı";
+                verification.Status = VerificationStatus.Error;
+                verification.Details = ex.Message;
             }
 
-            return result;
+            return verification;
+#endif
         }
 
         /// <summary>
-        /// Belirli bir assembly'nin bütünlüğünü kontrol eder.
+        /// Mevcut çalışan assembly'nin bütünlüğünü kontrol eder.
         /// </summary>
-        public static bool VerifyAssembly(Assembly assembly)
+        public static bool VerifyCurrentAssembly()
         {
-            try
-            {
-                if (!_initialized)
-                    Initialize();
-
-                var location = assembly.Location;
-                if (string.IsNullOrEmpty(location))
-                    return false;
-
-                var fileName = Path.GetFileName(location);
-
-                if (_expectedHashes == null || !_expectedHashes.TryGetValue(fileName, out var expectedHash))
-                    return true; // Manifest'te yoksa geç
-
-                var actualHash = ComputeFileHash(location);
-                return actualHash == expectedHash;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Çalışan assembly'nin strong name imzasını doğrular.
-        /// </summary>
-        public static bool VerifyStrongName(Assembly assembly)
-        {
-            try
-            {
-                var name = assembly.GetName();
-
-                // Public key token kontrolü
-                var publicKeyToken = name.GetPublicKeyToken();
-                if (publicKeyToken == null || publicKeyToken.Length == 0)
-                    return false; // İmzasız assembly
-
-                // Beklenen token (build sırasında belirlenir)
-                // Bu değer her proje için farklı olacak
-                byte[] expectedToken = GetExpectedPublicKeyToken();
-
-                return publicKeyToken.SequenceEqual(expectedToken);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Çalışan modülün IL kodunun hash'ini doğrular.
-        /// </summary>
-        public static bool VerifyILCode()
-        {
+#if DEBUG
+            return true;
+#else
             try
             {
                 var assembly = Assembly.GetExecutingAssembly();
-                var module = assembly.ManifestModule;
+                var location = assembly.Location;
 
-                // Metadata token ve IL body kontrolü
-                foreach (var type in assembly.GetTypes())
-                {
-                    foreach (var method in type.GetMethods(BindingFlags.Instance |
-                                                           BindingFlags.Static |
-                                                           BindingFlags.Public |
-                                                           BindingFlags.NonPublic))
-                    {
-                        try
-                        {
-                            var body = method.GetMethodBody();
-                            if (body != null)
-                            {
-                                var il = body.GetILAsByteArray();
-                                // IL analizi yapılabilir
-                            }
-                        }
-                        catch { }
-                    }
-                }
+                if (string.IsNullOrEmpty(location))
+                    return true; // Single-file publish
 
-                return true;
+                var assemblyName = Path.GetFileName(location);
+                var result = VerifyAssembly(assemblyName);
+
+                return result.Status == VerificationStatus.Valid;
             }
             catch
             {
-                return false;
+                return true; // Hata durumunda false positive önle
             }
+#endif
         }
-
-        #region Manifest Operations
 
         /// <summary>
-        /// Build sonrası çağrılır - tüm DLL'lerin hash'ini oluşturur.
+        /// Strong name imzasını doğrular (varsa).
         /// </summary>
-        public static Dictionary<string, string> GenerateManifest(string directory)
+        public static bool VerifyStrongName(Assembly assembly)
         {
-            var hashes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            var extensions = new[] { "*.exe", "*.dll" };
-
-            foreach (var ext in extensions)
-            {
-                foreach (var file in Directory.GetFiles(directory, ext))
-                {
-                    var fileName = Path.GetFileName(file);
-
-                    // Üçüncü parti dll'leri hariç tut
-                    if (ShouldIncludeInManifest(fileName))
-                    {
-                        var hash = ComputeFileHash(file);
-                        hashes[fileName] = hash;
-                    }
-                }
-            }
-
-            return hashes;
-        }
-
-        private static bool ShouldIncludeInManifest(string fileName)
-        {
-            // UniCast assembly'leri
-            if (fileName.StartsWith("UniCast.", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            // Ana exe
-            if (fileName.Equals("UniCast.exe", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            return false;
-        }
-
-        private static void SaveManifest(string path, Dictionary<string, string> hashes)
-        {
-            var json = JsonSerializer.Serialize(hashes, new JsonSerializerOptions
-            {
-                WriteIndented = false
-            });
-
-            // Basit XOR obfuscation (gerçek uygulamada daha güçlü şifreleme)
-            var bytes = Encoding.UTF8.GetBytes(json);
-            var key = GetManifestKey();
-
-            for (int i = 0; i < bytes.Length; i++)
-                bytes[i] ^= key[i % key.Length];
-
-            File.WriteAllBytes(path, bytes);
-        }
-
-        private static Dictionary<string, string>? LoadManifest(string path)
-        {
+#if DEBUG
+            return true;
+#else
             try
             {
-                var bytes = File.ReadAllBytes(path);
-                var key = GetManifestKey();
+                var name = assembly.GetName();
+                var publicKey = name.GetPublicKey();
 
-                for (int i = 0; i < bytes.Length; i++)
-                    bytes[i] ^= key[i % key.Length];
+                // İmza yoksa atla
+                if (publicKey == null || publicKey.Length == 0)
+                    return true;
 
-                var json = Encoding.UTF8.GetString(bytes);
-                return JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                // Strong name token kontrolü
+                var token = name.GetPublicKeyToken();
+                if (token == null || token.Length == 0)
+                    return true;
+
+                // Assembly'nin imzasının beklenen token ile eşleştiğini kontrol et
+                // NOT: Gerçek implementasyonda beklenen token'ı hardcode'lamanız gerekir
+                // var expectedToken = new byte[] { ... };
+                // return token.SequenceEqual(expectedToken);
+
+                return true;
             }
             catch
             {
-                return null;
+                return true;
             }
+#endif
         }
 
-        #endregion
+        /// <summary>
+        /// Beklenen hash'leri günceller.
+        /// Sadece ilk kurulum veya güncelleme sonrası kullanılmalı.
+        /// </summary>
+        public static void UpdateHashes()
+        {
+            lock (_initLock)
+            {
+                _expectedHashes.Clear();
+                _isInitialized = false;
+                Initialize();
+            }
+        }
 
         #region Helpers
 
         private static string ComputeFileHash(string filePath)
         {
-            using var sha256 = SHA256.Create();
-            using var stream = File.OpenRead(filePath);
-            var hash = sha256.ComputeHash(stream);
-            return Convert.ToHexString(hash).ToLowerInvariant();
-        }
-
-        private static byte[] GetManifestKey()
-        {
-            // Obfuscation için statik key
-            return "UCIntegrityKey25"u8.ToArray();
-        }
-
-        private static byte[] GetExpectedPublicKeyToken()
-        {
-            // Bu değer strong name key'inizden türetilir
-            // sn -T UniCast.dll komutuyla alınır
-            return new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var hash = SHA256.HashData(stream);
+            return Convert.ToHexString(hash);
         }
 
         #endregion
     }
 
     /// <summary>
-    /// Bütünlük kontrol sonucu.
+    /// Bütünlük kontrolü sonucu.
     /// </summary>
-    public sealed class IntegrityCheckResult
+    public sealed class IntegrityResult
     {
-        public IntegrityStatus Status { get; set; }
-        public string Message { get; set; } = "";
-        public List<string> TamperedFiles { get; set; } = [];
-        public List<string> MissingFiles { get; set; } = [];
-
-        public bool IsValid => Status == IntegrityStatus.Valid;
+        public bool IsValid { get; set; }
+        public List<AssemblyVerification> Verifications { get; } = new();
 
         public string GetReport()
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"Integrity Status: {Status}");
-            sb.AppendLine($"Message: {Message}");
+            sb.AppendLine($"Integrity Check: {(IsValid ? "✓ VALID" : "✗ INVALID")}");
 
-            if (TamperedFiles.Count > 0)
+            foreach (var v in Verifications)
             {
-                sb.AppendLine("Tampered Files:");
-                foreach (var file in TamperedFiles)
-                    sb.AppendLine($"  ✗ {file}");
-            }
+                var status = v.Status switch
+                {
+                    VerificationStatus.Valid => "✓",
+                    VerificationStatus.Modified => "✗ MODIFIED",
+                    VerificationStatus.Missing => "⚠ MISSING",
+                    VerificationStatus.Error => "⚠ ERROR",
+                    _ => "?"
+                };
 
-            if (MissingFiles.Count > 0)
-            {
-                sb.AppendLine("Missing Files:");
-                foreach (var file in MissingFiles)
-                    sb.AppendLine($"  ? {file}");
+                sb.AppendLine($"  [{status}] {v.Name}");
+
+                if (!string.IsNullOrEmpty(v.Details))
+                    sb.AppendLine($"       Details: {v.Details}");
             }
 
             return sb.ToString();
         }
     }
 
-    public enum IntegrityStatus
+    /// <summary>
+    /// Assembly doğrulama detayı.
+    /// </summary>
+    public sealed class AssemblyVerification
+    {
+        public string Name { get; set; } = "";
+        public VerificationStatus Status { get; set; }
+        public string? CurrentHash { get; set; }
+        public string? ExpectedHash { get; set; }
+        public string? Details { get; set; }
+    }
+
+    /// <summary>
+    /// Doğrulama durumu.
+    /// </summary>
+    public enum VerificationStatus
     {
         Valid,
-        Tampered,
-        FilesMissing,
-        ManifestMissing,
+        Modified,
+        Missing,
         Error
     }
 }

@@ -7,6 +7,7 @@ using UniCast.App.Infrastructure;
 using UniCast.App.Services;
 using UniCast.Core.Settings;
 using Serilog;
+using SettingsData = UniCast.Core.Settings.SettingsData;
 
 namespace UniCast.App.ViewModels
 {

@@ -1,253 +1,260 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 using Serilog;
 
 namespace UniCast.Core.Chat
 {
     /// <summary>
-    /// Çoklu kaynaktan gelen mesajları tek akışta birleştirir, dedupe eder ve rate-limit uygular.
-    /// DÜZELTME: Hardcoded değerler yerine Constants kullanımı.
+    /// Merkezi chat mesaj dağıtım sistemi.
+    /// Tüm platformlardan gelen mesajları birleştirir ve dağıtır.
+    /// Thread-safe ve memory leak güvenli.
     /// </summary>
     public sealed class ChatBus : IDisposable
     {
-        private readonly List<IChatIngestor> _ingestors = [];
-        private readonly LruCache<string> _seenMessages;
-        private readonly Timer _statsTimer;
-        private readonly int _maxPerSecond;
-        private long _tickSecond = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        private int _countThisSecond = 0;
+        private static readonly Lazy<ChatBus> _instance = new(() => new ChatBus(), LazyThreadSafetyMode.ExecutionAndPublication);
+        public static ChatBus Instance => _instance.Value;
+
+        // Event (weak reference pattern önerilir ama basitlik için standard kullanıyoruz)
+        public event EventHandler<ChatMessageEventArgs>? MessageReceived;
+
+        // Message queue (rate limiting için)
+        private readonly ConcurrentQueue<ChatMessage> _messageQueue = new();
+        private readonly SemaphoreSlim _processingLock = new(1, 1);
+
+        // Rate limiting
+        private readonly ConcurrentDictionary<string, DateTime> _lastMessageTime = new();
+        private const int MinMessageIntervalMs = 100; // Platform başına minimum mesaj aralığı
+
+        // Statistics
+        private long _totalMessagesReceived;
+        private long _totalMessagesDropped;
+
         private bool _disposed;
 
-        // İstatistikler
-        private long _totalReceived = 0;
-        private long _totalDuplicate = 0;
-        private long _totalRateLimited = 0;
-
-        public event Action<ChatMessage>? OnMerged;
+        private ChatBus()
+        {
+            Log.Debug("[ChatBus] Initialized");
+        }
 
         /// <summary>
-        /// ChatBus oluşturur.
+        /// Yeni bir chat mesajı yayınlar.
         /// </summary>
-        /// <param name="maxPerSecond">Saniyede maksimum mesaj (varsayılan: ChatConstants.MaxMessagesPerSecond)</param>
-        /// <param name="cacheCapacity">Dedupe cache kapasitesi (varsayılan: ChatConstants.CacheCapacity)</param>
-        public ChatBus(int maxPerSecond = 0, int cacheCapacity = 0)
+        public void Publish(ChatMessage message)
         {
-            // DÜZELTME: Constants kullanımı - 0 veya negatif ise varsayılan değerleri kullan
-            _maxPerSecond = maxPerSecond > 0 ? maxPerSecond : ChatConstants.MaxMessagesPerSecond;
-            var capacity = cacheCapacity > 0 ? cacheCapacity : ChatConstants.CacheCapacity;
+            if (_disposed)
+                return;
 
-            _seenMessages = new LruCache<string>(capacity);
+            if (message == null)
+                return;
 
-            // İstatistik loglama aralığı Constants'tan
-            _statsTimer = new Timer(_ => LogStats(), null, ChatConstants.StatsIntervalMs, ChatConstants.StatsIntervalMs);
-        }
+            Interlocked.Increment(ref _totalMessagesReceived);
 
-        public void Attach(IChatIngestor ingestor)
-        {
-            if (ingestor == null) return;
+            // Rate limiting kontrolü
+            var platformKey = message.Platform.ToString();
+            var now = DateTime.UtcNow;
 
-            lock (_ingestors)
+            if (_lastMessageTime.TryGetValue(platformKey, out var lastTime))
             {
-                if (_ingestors.Contains(ingestor)) return;
-                ingestor.OnMessage += HandleIncoming;
-                _ingestors.Add(ingestor);
-            }
-
-            Log.Debug("[ChatBus] Ingestor eklendi: {Name}", ingestor.Name);
-        }
-
-        public void Detach(IChatIngestor ingestor)
-        {
-            if (ingestor == null) return;
-
-            lock (_ingestors)
-            {
-                if (_ingestors.Remove(ingestor))
+                if ((now - lastTime).TotalMilliseconds < MinMessageIntervalMs)
                 {
-                    ingestor.OnMessage -= HandleIncoming;
-                    Log.Debug("[ChatBus] Ingestor çıkarıldı: {Name}", ingestor.Name);
+                    Interlocked.Increment(ref _totalMessagesDropped);
+                    Log.Verbose("[ChatBus] Message rate limited: {Platform}", message.Platform);
+                    return;
                 }
             }
-        }
 
-        private void HandleIncoming(ChatMessage m)
-        {
-            if (_disposed) return;
+            _lastMessageTime[platformKey] = now;
 
-            Interlocked.Increment(ref _totalReceived);
-
-            // Dedupe: Source + Id kombinasyonu
-            var key = $"{m.Source}:{m.Id}";
-
-            if (!_seenMessages.TryAdd(key))
-            {
-                Interlocked.Increment(ref _totalDuplicate);
-                return;
-            }
-
-            // Rate limiting
-            var nowSec = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            if (nowSec != Interlocked.Read(ref _tickSecond))
-            {
-                Interlocked.Exchange(ref _tickSecond, nowSec);
-                Interlocked.Exchange(ref _countThisSecond, 0);
-            }
-
-            var count = Interlocked.Increment(ref _countThisSecond);
-            if (count > _maxPerSecond)
-            {
-                Interlocked.Increment(ref _totalRateLimited);
-                return;
-            }
-
-            // Mesajı ilet
+            // Event'i tetikle
             try
             {
-                OnMerged?.Invoke(m);
+                MessageReceived?.Invoke(this, new ChatMessageEventArgs(message));
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[ChatBus] OnMerged handler hatası");
+                Log.Error(ex, "[ChatBus] MessageReceived event handler hatası");
             }
         }
 
-        private void LogStats()
+        /// <summary>
+        /// Async olarak mesaj yayınlar.
+        /// </summary>
+        public async Task PublishAsync(ChatMessage message, CancellationToken ct = default)
         {
-            if (_disposed) return;
+            if (_disposed || ct.IsCancellationRequested)
+                return;
 
-            var received = Interlocked.Read(ref _totalReceived);
-            var duplicate = Interlocked.Read(ref _totalDuplicate);
-            var limited = Interlocked.Read(ref _totalRateLimited);
-            var cacheSize = _seenMessages.Count;
+            await Task.Run(() => Publish(message), ct);
+        }
 
-            if (received > 0)
+        /// <summary>
+        /// Toplu mesaj yayınlar.
+        /// </summary>
+        public void PublishBatch(IEnumerable<ChatMessage> messages)
+        {
+            if (_disposed)
+                return;
+
+            foreach (var message in messages)
             {
-                Log.Information(
-                    "[ChatBus] Stats: Received={Received}, Duplicate={Duplicate}, RateLimited={Limited}, CacheSize={Cache}",
-                    received, duplicate, limited, cacheSize);
+                Publish(message);
             }
+        }
+
+        /// <summary>
+        /// İstatistikleri döndürür.
+        /// </summary>
+        public ChatBusStatistics GetStatistics()
+        {
+            return new ChatBusStatistics
+            {
+                TotalMessagesReceived = Interlocked.Read(ref _totalMessagesReceived),
+                TotalMessagesDropped = Interlocked.Read(ref _totalMessagesDropped),
+                ActivePlatforms = _lastMessageTime.Count
+            };
+        }
+
+        /// <summary>
+        /// İstatistikleri sıfırlar.
+        /// </summary>
+        public void ResetStatistics()
+        {
+            Interlocked.Exchange(ref _totalMessagesReceived, 0);
+            Interlocked.Exchange(ref _totalMessagesDropped, 0);
+        }
+
+        /// <summary>
+        /// Tüm event handler'ları temizler.
+        /// </summary>
+        public void ClearSubscribers()
+        {
+            MessageReceived = null;
+            Log.Debug("[ChatBus] All subscribers cleared");
         }
 
         public void Dispose()
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
+
             _disposed = true;
 
-            _statsTimer.Dispose();
+            // Event handler'ları temizle
+            MessageReceived = null;
 
-            lock (_ingestors)
-            {
-                foreach (var i in _ingestors)
-                {
-                    i.OnMessage -= HandleIncoming;
-                }
-                _ingestors.Clear();
-            }
+            // Queue'yu temizle
+            while (_messageQueue.TryDequeue(out _)) { }
 
-            _seenMessages.Clear();
-            OnMerged = null;
+            // Dictionary'leri temizle
+            _lastMessageTime.Clear();
+
+            // Semaphore'u dispose et
+            _processingLock.Dispose();
+
+            Log.Debug("[ChatBus] Disposed");
         }
     }
 
     /// <summary>
-    /// Chat sistemi sabitleri.
-    /// DÜZELTME: Hardcoded değerler yerine merkezi sabitler.
+    /// Chat mesajı.
     /// </summary>
-    public static class ChatConstants
+    public sealed class ChatMessage
     {
-        /// <summary>Saniyede maksimum mesaj (rate limit)</summary>
-        public const int MaxMessagesPerSecond = 20;
+        public string Id { get; init; } = Guid.NewGuid().ToString("N");
+        public ChatPlatform Platform { get; init; }
+        public string Username { get; init; } = "";
+        public string DisplayName { get; init; } = "";
+        public string Message { get; init; } = "";
+        public string? AvatarUrl { get; init; }
+        public DateTime Timestamp { get; init; } = DateTime.UtcNow;
+        public bool IsSubscriber { get; init; }
+        public bool IsModerator { get; init; }
+        public bool IsOwner { get; init; }
+        public bool IsVerified { get; init; }
+        public ChatMessageType Type { get; init; } = ChatMessageType.Normal;
+        public string? DonationAmount { get; init; }
+        public string? DonationCurrency { get; init; }
+        public string? BadgeUrl { get; init; }
+        public Dictionary<string, string> Metadata { get; init; } = new();
 
-        /// <summary>Dedupe cache kapasitesi</summary>
-        public const int CacheCapacity = 10000;
+        /// <summary>
+        /// Maskelenmiş kullanıcı adı (gizlilik için).
+        /// </summary>
+        public string MaskedUsername
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Username) || Username.Length < 3)
+                    return "***";
 
-        /// <summary>Overlay'de gösterilecek maksimum mesaj</summary>
-        public const int MaxOverlayMessages = 8;
+                return Username[0] + new string('*', Username.Length - 2) + Username[^1];
+            }
+        }
 
-        /// <summary>UI'da gösterilecek maksimum mesaj</summary>
-        public const int MaxUiMessages = 1000;
-
-        /// <summary>İstatistik loglama aralığı (ms)</summary>
-        public const int StatsIntervalMs = 60000;
+        public override string ToString()
+        {
+            return $"[{Platform}] {DisplayName}: {Message}";
+        }
     }
 
     /// <summary>
-    /// Thread-safe LRU (Least Recently Used) Cache.
-    /// Kapasite dolunca en eski öğeler otomatik silinir.
+    /// Chat platformları.
     /// </summary>
-    internal sealed class LruCache<T> where T : notnull
+    public enum ChatPlatform
     {
-        private readonly int _capacity;
-        private readonly Dictionary<T, LinkedListNode<T>> _map;
-        private readonly LinkedList<T> _list;
-        private readonly object _lock = new();
+        Unknown = 0,
+        YouTube = 1,
+        Twitch = 2,
+        TikTok = 3,
+        Instagram = 4,
+        Facebook = 5,
+        Twitter = 6,
+        Discord = 7,
+        Kick = 8
+    }
 
-        public int Count
+    /// <summary>
+    /// Mesaj türleri.
+    /// </summary>
+    public enum ChatMessageType
+    {
+        Normal = 0,
+        Superchat = 1,
+        Subscription = 2,
+        Gift = 3,
+        Raid = 4,
+        System = 5,
+        Highlight = 6
+    }
+
+    /// <summary>
+    /// Chat mesajı event argümanları.
+    /// </summary>
+    public sealed class ChatMessageEventArgs : EventArgs
+    {
+        public ChatMessage Message { get; }
+        public DateTime ReceivedAt { get; }
+
+        public ChatMessageEventArgs(ChatMessage message)
         {
-            get { lock (_lock) return _map.Count; }
+            Message = message ?? throw new ArgumentNullException(nameof(message));
+            ReceivedAt = DateTime.UtcNow;
         }
+    }
 
-        public LruCache(int capacity)
-        {
-            _capacity = Math.Max(100, capacity);
-            _map = new Dictionary<T, LinkedListNode<T>>(_capacity);
-            _list = new LinkedList<T>();
-        }
+    /// <summary>
+    /// ChatBus istatistikleri.
+    /// </summary>
+    public sealed class ChatBusStatistics
+    {
+        public long TotalMessagesReceived { get; init; }
+        public long TotalMessagesDropped { get; init; }
+        public int ActivePlatforms { get; init; }
 
-        /// <summary>
-        /// Öğeyi cache'e ekler. Zaten varsa false döner.
-        /// </summary>
-        public bool TryAdd(T item)
-        {
-            lock (_lock)
-            {
-                if (_map.ContainsKey(item))
-                {
-                    return false;
-                }
-
-                while (_map.Count >= _capacity)
-                {
-                    var oldest = _list.Last;
-                    if (oldest != null)
-                    {
-                        _map.Remove(oldest.Value);
-                        _list.RemoveLast();
-                    }
-                }
-
-                var node = _list.AddFirst(item);
-                _map[item] = node;
-
-                return true;
-            }
-        }
-
-        /// <summary>
-        /// Öğenin cache'te olup olmadığını kontrol eder.
-        /// </summary>
-        public bool Contains(T item)
-        {
-            lock (_lock)
-            {
-                if (_map.TryGetValue(item, out var node))
-                {
-                    _list.Remove(node);
-                    _list.AddFirst(node);
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        public void Clear()
-        {
-            lock (_lock)
-            {
-                _map.Clear();
-                _list.Clear();
-            }
-        }
+        public double DropRate => TotalMessagesReceived > 0
+            ? (double)TotalMessagesDropped / TotalMessagesReceived * 100
+            : 0;
     }
 }

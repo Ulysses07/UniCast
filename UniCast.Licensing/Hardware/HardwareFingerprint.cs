@@ -3,434 +3,469 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Management;
 using System.Net.NetworkInformation;
-using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
-using System.Runtime.Versioning;
+using System.Text.Json;
 
 namespace UniCast.Licensing.Hardware
 {
     /// <summary>
-    /// KATMAN 1: Makineye özgü benzersiz ve değiştirilemez kimlik oluşturur.
-    /// Birden fazla donanım bileşeni kombine edilerek kopyalanması zorlaştırılır.
+    /// KATMAN 1: Makineye özgü donanım parmak izi oluşturur.
+    /// Çoklu donanım bileşeni kullanarak sağlam bir kimlik üretir.
+    /// Küçük donanım değişikliklerine toleranslıdır.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public static class HardwareFingerprint
     {
-        // Bileşen ağırlıkları (toplam = 100)
+        // Bileşen ağırlıkları (toplam: 100)
         private static readonly Dictionary<string, int> ComponentWeights = new()
         {
-            ["CPU"] = 25,      // İşlemci ID - çok güvenilir
-            ["BIOS"] = 20,     // BIOS seri no - güvenilir
-            ["DISK"] = 20,     // Boot disk seri - güvenilir
-            ["MAC"] = 15,      // MAC adresi - değişebilir ama önemli
-            ["MB"] = 10,       // Anakart seri - güvenilir
-            ["TPM"] = 10       // TPM varsa - çok güvenilir
+            { "CPU", 25 },           // Nadiren değişir
+            { "Motherboard", 25 },   // Çok nadiren değişir
+            { "BIOS", 15 },          // Neredeyse hiç değişmez
+            { "MAC", 20 },           // Bazen değişebilir
+            { "Disk", 15 }           // Sık değişebilir
         };
 
-        private const int MIN_VALID_SCORE = 55; // En az bu kadar puan olmalı
-        private const int SIMILARITY_THRESHOLD = 60; // Benzerlik eşiği
-
-        // HMAC için gizli salt (obfuscation sonrası bile sabit kalmalı)
-        private static readonly byte[] HmacKey =
-        {
-            0x55, 0x6E, 0x69, 0x43, 0x61, 0x73, 0x74, 0x4C,
-            0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x32, 0x30,
-            0x32, 0x35, 0x48, 0x57, 0x46, 0x50, 0x76, 0x31
-        };
-
-        #region Public API
+        private const int MinimumValidScore = 60; // %60 eşleşme yeterli
 
         /// <summary>
-        /// Tam Hardware ID üretir (64 karakter hex).
+        /// Tam donanım ID'si oluşturur (SHA256 hash).
         /// </summary>
-        [SupportedOSPlatform("windows")]
         public static string Generate()
         {
-            var components = CollectComponents();
-            var raw = SerializeComponents(components);
-            return ComputeHmacSha256(raw);
+            var result = Validate();
+            return result.HardwareId;
         }
 
         /// <summary>
-        /// Kısa format ID (UI için) - XXXX-XXXX-XXXX-XXXX
+        /// Kısa donanım ID'si oluşturur (ilk 16 karakter).
+        /// UI ve log için kullanışlı.
         /// </summary>
-        [SupportedOSPlatform("windows")]
         public static string GenerateShort()
         {
-            var full = Generate();
-            var short16 = full.Substring(0, 16).ToUpperInvariant();
-            return $"{short16[..4]}-{short16[4..8]}-{short16[8..12]}-{short16[12..]}";
+            var fullId = Generate();
+            return fullId.Length >= 16 ? fullId[..16] : fullId;
         }
 
         /// <summary>
-        /// Donanım bileşenlerini toplar ve doğrular.
+        /// Donanım bilgilerini toplar ve doğrular.
         /// </summary>
-        [SupportedOSPlatform("windows")]
-        public static HardwareInfo Validate()
+        public static HardwareValidationResult Validate()
         {
-            var info = new HardwareInfo();
-            var components = CollectComponents();
+            var result = new HardwareValidationResult();
+            var components = new Dictionary<string, ComponentInfo>();
+            int totalScore = 0;
 
-            info.CpuId = components.GetValueOrDefault("CPU", "");
-            info.BiosSerial = components.GetValueOrDefault("BIOS", "");
-            info.DiskSerial = components.GetValueOrDefault("DISK", "");
-            info.MacAddress = components.GetValueOrDefault("MAC", "");
-            info.MotherboardSerial = components.GetValueOrDefault("MB", "");
-            info.TpmPresent = components.ContainsKey("TPM");
+            // 1. CPU bilgisi
+            var cpuInfo = GetCpuInfo();
+            components["CPU"] = cpuInfo;
+            if (!string.IsNullOrEmpty(cpuInfo.Value))
+                totalScore += ComponentWeights["CPU"];
 
-            // Skor hesapla
-            int score = 0;
-            foreach (var kvp in components)
+            // 2. Anakart bilgisi
+            var mbInfo = GetMotherboardInfo();
+            components["Motherboard"] = mbInfo;
+            if (!string.IsNullOrEmpty(mbInfo.Value))
+                totalScore += ComponentWeights["Motherboard"];
+
+            // 3. BIOS bilgisi
+            var biosInfo = GetBiosInfo();
+            components["BIOS"] = biosInfo;
+            if (!string.IsNullOrEmpty(biosInfo.Value))
+                totalScore += ComponentWeights["BIOS"];
+
+            // 4. MAC adresi
+            var macInfo = GetMacAddress();
+            components["MAC"] = macInfo;
+            if (!string.IsNullOrEmpty(macInfo.Value))
+                totalScore += ComponentWeights["MAC"];
+
+            // 5. Disk seri numarası
+            var diskInfo = GetDiskSerial();
+            components["Disk"] = diskInfo;
+            if (!string.IsNullOrEmpty(diskInfo.Value))
+                totalScore += ComponentWeights["Disk"];
+
+            // Bileşenleri JSON'a çevir (karşılaştırma için)
+            result.ComponentsRaw = SerializeComponents(components);
+
+            // Hash oluştur
+            var combinedData = string.Join("|", components
+                .OrderBy(c => c.Key)
+                .Select(c => $"{c.Key}:{c.Value.Value}"));
+
+            result.HardwareId = ComputeHash(combinedData);
+            result.ShortId = result.HardwareId[..16];
+            result.Score = totalScore;
+            result.IsValid = totalScore >= MinimumValidScore;
+            result.Components = components;
+
+            return result;
+        }
+
+        /// <summary>
+        /// İki bileşen seti arasındaki benzerliği hesaplar.
+        /// </summary>
+        public static int CalculateSimilarity(string? componentsJson1, string? componentsJson2)
+        {
+            if (string.IsNullOrEmpty(componentsJson1) || string.IsNullOrEmpty(componentsJson2))
+                return 0;
+
+            try
             {
-                if (ComponentWeights.TryGetValue(kvp.Key, out var weight))
-                    score += weight;
-            }
+                var components1 = DeserializeComponents(componentsJson1);
+                var components2 = DeserializeComponents(componentsJson2);
 
-            info.Score = score;
-            info.IsValid = score >= MIN_VALID_SCORE;
-            info.HardwareId = Generate();
-            info.ShortId = GenerateShort();
-            info.ComponentsRaw = SerializeComponents(components);
-            info.MachineName = Environment.MachineName;
+                if (components1 == null || components2 == null)
+                    return 0;
+
+                int matchScore = 0;
+
+                foreach (var weight in ComponentWeights)
+                {
+                    var key = weight.Key;
+                    var weightValue = weight.Value;
+
+                    if (components1.TryGetValue(key, out var comp1) &&
+                        components2.TryGetValue(key, out var comp2))
+                    {
+                        if (!string.IsNullOrEmpty(comp1.Value) &&
+                            comp1.Value == comp2.Value)
+                        {
+                            matchScore += weightValue;
+                        }
+                    }
+                }
+
+                return matchScore;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        #region Component Collection
+
+        private static ComponentInfo GetCpuInfo()
+        {
+            var info = new ComponentInfo { Name = "CPU" };
+
+            try
+            {
+                using var searcher = new ManagementObjectSearcher(
+                    "SELECT ProcessorId, Name, NumberOfCores FROM Win32_Processor");
+
+                foreach (ManagementObject obj in searcher.Get())
+                {
+                    var processorId = obj["ProcessorId"]?.ToString()?.Trim();
+                    var name = obj["Name"]?.ToString()?.Trim();
+                    var cores = obj["NumberOfCores"]?.ToString();
+
+                    if (!string.IsNullOrEmpty(processorId))
+                    {
+                        info.Value = processorId;
+                        info.Details = $"{name} ({cores} cores)";
+                        info.IsAvailable = true;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                info.Error = ex.Message;
+            }
 
             return info;
         }
 
-        /// <summary>
-        /// İki donanım kimliğinin benzerlik oranını hesaplar (0-100).
-        /// Küçük değişikliklerde (örn: yeni NIC) tolerans sağlar.
-        /// </summary>
-        public static int CalculateSimilarity(string storedRaw, string currentRaw)
+        private static ComponentInfo GetMotherboardInfo()
         {
-            if (string.IsNullOrEmpty(storedRaw) || string.IsNullOrEmpty(currentRaw))
-                return 0;
+            var info = new ComponentInfo { Name = "Motherboard" };
 
-            var stored = DeserializeComponents(storedRaw);
-            var current = DeserializeComponents(currentRaw);
-
-            int matchedWeight = 0;
-            int totalWeight = 0;
-
-            foreach (var kvp in ComponentWeights)
-            {
-                var key = kvp.Key;
-                var weight = kvp.Value;
-
-                var hasStored = stored.TryGetValue(key, out var storedVal);
-                var hasCurrent = current.TryGetValue(key, out var currentVal);
-
-                if (hasStored || hasCurrent)
-                {
-                    totalWeight += weight;
-
-                    if (hasStored && hasCurrent && storedVal == currentVal)
-                        matchedWeight += weight;
-                }
-            }
-
-            return totalWeight > 0 ? (matchedWeight * 100) / totalWeight : 0;
-        }
-
-        /// <summary>
-        /// Mevcut donanımın kayıtlı donanımla eşleşip eşleşmediğini kontrol eder.
-        /// </summary>
-        [SupportedOSPlatform("windows")]
-        public static bool IsMatchingHardware(string storedRaw)
-        {
-            var currentRaw = Validate().ComponentsRaw;
-            var similarity = CalculateSimilarity(storedRaw, currentRaw);
-            return similarity >= SIMILARITY_THRESHOLD;
-        }
-
-        #endregion
-
-        #region Component Collectors
-
-        [SupportedOSPlatform("windows")]
-        private static Dictionary<string, string> CollectComponents()
-        {
-            var components = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            // 1. CPU ID
-            var cpuId = GetCpuId();
-            if (!string.IsNullOrEmpty(cpuId))
-                components["CPU"] = cpuId;
-
-            // 2. BIOS Serial
-            var biosSerial = GetBiosSerial();
-            if (!string.IsNullOrEmpty(biosSerial))
-                components["BIOS"] = biosSerial;
-
-            // 3. Boot Disk Serial
-            var diskSerial = GetDiskSerial();
-            if (!string.IsNullOrEmpty(diskSerial))
-                components["DISK"] = diskSerial;
-
-            // 4. MAC Address
-            var macAddress = GetPrimaryMacAddress();
-            if (!string.IsNullOrEmpty(macAddress))
-                components["MAC"] = macAddress;
-
-            // 5. Motherboard Serial
-            var mbSerial = GetMotherboardSerial();
-            if (!string.IsNullOrEmpty(mbSerial))
-                components["MB"] = mbSerial;
-
-            // 6. TPM (varsa)
-            var tpmId = GetTpmId();
-            if (!string.IsNullOrEmpty(tpmId))
-                components["TPM"] = tpmId;
-
-            return components;
-        }
-
-        [SupportedOSPlatform("windows")]
-        private static string GetCpuId()
-        {
             try
             {
                 using var searcher = new ManagementObjectSearcher(
-                    "SELECT ProcessorId, Name FROM Win32_Processor");
-
-                foreach (ManagementObject obj in searcher.Get())
-                {
-                    var id = obj["ProcessorId"]?.ToString()?.Trim();
-                    if (!string.IsNullOrEmpty(id) && id != "0000000000000000")
-                        return id;
-                }
-            }
-            catch { }
-            return "";
-        }
-
-        [SupportedOSPlatform("windows")]
-        private static string GetBiosSerial()
-        {
-            try
-            {
-                using var searcher = new ManagementObjectSearcher(
-                    "SELECT SerialNumber, Manufacturer FROM Win32_BIOS");
+                    "SELECT SerialNumber, Manufacturer, Product FROM Win32_BaseBoard");
 
                 foreach (ManagementObject obj in searcher.Get())
                 {
                     var serial = obj["SerialNumber"]?.ToString()?.Trim();
-                    if (IsValidSerial(serial))
-                        return serial!;
+                    var manufacturer = obj["Manufacturer"]?.ToString()?.Trim();
+                    var product = obj["Product"]?.ToString()?.Trim();
+
+                    // "To Be Filled" gibi placeholder değerleri atla
+                    if (!string.IsNullOrEmpty(serial) &&
+                        !serial.Contains("To Be", StringComparison.OrdinalIgnoreCase) &&
+                        !serial.Equals("Default string", StringComparison.OrdinalIgnoreCase))
+                    {
+                        info.Value = serial;
+                        info.Details = $"{manufacturer} {product}";
+                        info.IsAvailable = true;
+                        break;
+                    }
+
+                    // Serial yoksa manufacturer + product kullan
+                    if (!string.IsNullOrEmpty(manufacturer) && !string.IsNullOrEmpty(product))
+                    {
+                        info.Value = ComputeHash($"{manufacturer}|{product}")[..16];
+                        info.Details = $"{manufacturer} {product}";
+                        info.IsAvailable = true;
+                    }
                 }
             }
-            catch { }
-            return "";
+            catch (Exception ex)
+            {
+                info.Error = ex.Message;
+            }
+
+            return info;
         }
 
-        [SupportedOSPlatform("windows")]
-        private static string GetDiskSerial()
+        private static ComponentInfo GetBiosInfo()
         {
+            var info = new ComponentInfo { Name = "BIOS" };
+
             try
             {
-                // Boot disk (Index=0)
                 using var searcher = new ManagementObjectSearcher(
-                    "SELECT SerialNumber, Model FROM Win32_DiskDrive WHERE Index=0");
+                    "SELECT SerialNumber, Manufacturer, Version FROM Win32_BIOS");
 
                 foreach (ManagementObject obj in searcher.Get())
                 {
-                    var serial = obj["SerialNumber"]?.ToString()?.Trim().Replace(" ", "");
-                    if (!string.IsNullOrEmpty(serial))
-                        return serial;
+                    var serial = obj["SerialNumber"]?.ToString()?.Trim();
+                    var manufacturer = obj["Manufacturer"]?.ToString()?.Trim();
+                    var version = obj["Version"]?.ToString()?.Trim();
+
+                    if (!string.IsNullOrEmpty(serial) &&
+                        !serial.Contains("To Be", StringComparison.OrdinalIgnoreCase))
+                    {
+                        info.Value = serial;
+                        info.Details = $"{manufacturer} v{version}";
+                        info.IsAvailable = true;
+                        break;
+                    }
+
+                    // Serial yoksa manufacturer + version kullan
+                    if (!string.IsNullOrEmpty(manufacturer))
+                    {
+                        info.Value = ComputeHash($"{manufacturer}|{version}")[..16];
+                        info.Details = $"{manufacturer} v{version}";
+                        info.IsAvailable = true;
+                    }
                 }
             }
-            catch { }
-            return "";
+            catch (Exception ex)
+            {
+                info.Error = ex.Message;
+            }
+
+            return info;
         }
 
-        private static string GetPrimaryMacAddress()
+        private static ComponentInfo GetMacAddress()
         {
+            var info = new ComponentInfo { Name = "MAC" };
+
             try
             {
-                // Fiziksel, aktif, non-virtual NIC bul
-                var nic = NetworkInterface.GetAllNetworkInterfaces()
-                    .Where(n =>
-                        n.OperationalStatus == OperationalStatus.Up &&
-                        n.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
-                        n.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
-                        !IsVirtualAdapter(n.Description))
-                    .OrderByDescending(n => n.Speed)
-                    .ThenBy(n => n.NetworkInterfaceType == NetworkInterfaceType.Ethernet ? 0 : 1)
+                var networkInterface = NetworkInterface.GetAllNetworkInterfaces()
+                    .Where(nic =>
+                        nic.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                        nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
+                        !nic.Description.Contains("Virtual", StringComparison.OrdinalIgnoreCase) &&
+                        !nic.Description.Contains("Hyper-V", StringComparison.OrdinalIgnoreCase) &&
+                        nic.OperationalStatus == OperationalStatus.Up)
+                    .OrderByDescending(nic =>
+                        nic.NetworkInterfaceType == NetworkInterfaceType.Ethernet ? 2 :
+                        nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ? 1 : 0)
                     .FirstOrDefault();
 
-                if (nic != null)
+                if (networkInterface != null)
                 {
-                    var mac = nic.GetPhysicalAddress().ToString();
+                    var mac = networkInterface.GetPhysicalAddress().ToString();
                     if (!string.IsNullOrEmpty(mac) && mac != "000000000000")
-                        return mac;
+                    {
+                        info.Value = mac;
+                        info.Details = $"{networkInterface.Name} ({networkInterface.Description})";
+                        info.IsAvailable = true;
+                    }
+                }
+
+                // Yedek: Herhangi bir fiziksel MAC bul
+                if (!info.IsAvailable)
+                {
+                    var anyNic = NetworkInterface.GetAllNetworkInterfaces()
+                        .FirstOrDefault(nic =>
+                            nic.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
+                            nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211);
+
+                    if (anyNic != null)
+                    {
+                        var mac = anyNic.GetPhysicalAddress().ToString();
+                        if (!string.IsNullOrEmpty(mac) && mac != "000000000000")
+                        {
+                            info.Value = mac;
+                            info.Details = $"{anyNic.Name} (inactive)";
+                            info.IsAvailable = true;
+                        }
+                    }
                 }
             }
-            catch { }
-            return "";
+            catch (Exception ex)
+            {
+                info.Error = ex.Message;
+            }
+
+            return info;
         }
 
-        [SupportedOSPlatform("windows")]
-        private static string GetMotherboardSerial()
+        private static ComponentInfo GetDiskSerial()
         {
+            var info = new ComponentInfo { Name = "Disk" };
+
             try
             {
+                // Windows sürücüsünü bul
+                var systemDrive = Environment.GetFolderPath(Environment.SpecialFolder.System)[0];
+
                 using var searcher = new ManagementObjectSearcher(
-                    "SELECT SerialNumber, Product FROM Win32_BaseBoard");
+                    $"SELECT SerialNumber, Model, Size FROM Win32_DiskDrive WHERE DeviceID LIKE '%PHYSICALDRIVE0%'");
 
                 foreach (ManagementObject obj in searcher.Get())
                 {
                     var serial = obj["SerialNumber"]?.ToString()?.Trim();
-                    if (IsValidSerial(serial))
-                        return serial!;
+                    var model = obj["Model"]?.ToString()?.Trim();
+                    var size = obj["Size"] != null ?
+                        (Convert.ToInt64(obj["Size"]) / (1024 * 1024 * 1024)).ToString() + "GB" :
+                        "Unknown";
+
+                    if (!string.IsNullOrEmpty(serial))
+                    {
+                        // Bazı sürücüler ters serial döndürür, normalize et
+                        info.Value = NormalizeDiskSerial(serial);
+                        info.Details = $"{model} ({size})";
+                        info.IsAvailable = true;
+                        break;
+                    }
                 }
             }
-            catch { }
-            return "";
-        }
-
-        [SupportedOSPlatform("windows")]
-        private static string GetTpmId()
-        {
-            try
+            catch (Exception ex)
             {
-                // TPM 2.0 kontrolü
-                using var searcher = new ManagementObjectSearcher(
-                    @"root\cimv2\Security\MicrosoftTpm",
-                    "SELECT * FROM Win32_Tpm");
-
-                foreach (ManagementObject obj in searcher.Get())
-                {
-                    var specVersion = obj["SpecVersion"]?.ToString();
-                    var manufacturerId = obj["ManufacturerId"]?.ToString();
-
-                    if (!string.IsNullOrEmpty(specVersion))
-                        return $"{manufacturerId ?? "TPM"}-{specVersion.Replace(",", ".")}";
-                }
+                info.Error = ex.Message;
             }
-            catch { }
-            return "";
+
+            return info;
         }
 
         #endregion
 
         #region Helpers
 
-        private static bool IsValidSerial(string? serial)
+        private static string NormalizeDiskSerial(string serial)
         {
-            if (string.IsNullOrWhiteSpace(serial))
-                return false;
+            if (string.IsNullOrEmpty(serial))
+                return "";
 
-            var invalidValues = new[]
-            {
-                "To Be Filled By O.E.M.",
-                "Default string",
-                "None",
-                "N/A",
-                "Not Specified",
-                "System Serial Number",
-                "0000000000",
-                "123456789"
-            };
+            // Bazı sürücüler her iki karakteri ters çevirir
+            // "1234" -> "2143" gibi
+            serial = serial.Trim().Replace(" ", "");
 
-            return !invalidValues.Any(v =>
-                serial.Equals(v, StringComparison.OrdinalIgnoreCase));
+            // Sadece alfanumerik karakterleri al
+            var normalized = new string(serial.Where(char.IsLetterOrDigit).ToArray());
+
+            return normalized.ToUpperInvariant();
         }
 
-        private static bool IsVirtualAdapter(string description)
+        private static string ComputeHash(string input)
         {
-            var virtualKeywords = new[]
-            {
-                "Virtual", "VPN", "Hyper-V", "VMware", "VirtualBox",
-                "Tunnel", "Pseudo", "TAP-", "tun", "Docker"
-            };
-
-            return virtualKeywords.Any(k =>
-                description.Contains(k, StringComparison.OrdinalIgnoreCase));
+            var bytes = Encoding.UTF8.GetBytes(input);
+            var hash = SHA256.HashData(bytes);
+            return Convert.ToHexString(hash);
         }
 
-        private static string SerializeComponents(Dictionary<string, string> components)
+        private static string SerializeComponents(Dictionary<string, ComponentInfo> components)
         {
-            var parts = components
-                .OrderBy(kvp => kvp.Key)
-                .Select(kvp => $"{kvp.Key}:{kvp.Value}");
-            return string.Join("|", parts);
+            var simplified = components.ToDictionary(
+                kvp => kvp.Key,
+                kvp => new { kvp.Value.Value, kvp.Value.IsAvailable });
+
+            return JsonSerializer.Serialize(simplified);
         }
 
-        private static Dictionary<string, string> DeserializeComponents(string raw)
+        private static Dictionary<string, ComponentInfo>? DeserializeComponents(string json)
         {
-            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            if (string.IsNullOrEmpty(raw))
-                return dict;
-
-            foreach (var part in raw.Split('|'))
+            try
             {
-                var colonIdx = part.IndexOf(':');
-                if (colonIdx > 0)
-                {
-                    var key = part[..colonIdx];
-                    var value = part[(colonIdx + 1)..];
-                    dict[key] = value;
-                }
+                var simplified = JsonSerializer.Deserialize<Dictionary<string, ComponentInfo>>(json);
+                return simplified;
             }
-
-            return dict;
-        }
-
-        private static string ComputeHmacSha256(string input)
-        {
-            using var hmac = new HMACSHA256(HmacKey);
-            var inputBytes = Encoding.UTF8.GetBytes(input);
-            var hashBytes = hmac.ComputeHash(inputBytes);
-            return Convert.ToHexString(hashBytes).ToLowerInvariant();
+            catch
+            {
+                return null;
+            }
         }
 
         #endregion
     }
 
     /// <summary>
-    /// Donanım bilgisi sonucu.
+    /// Donanım bileşeni bilgisi.
     /// </summary>
-    public sealed class HardwareInfo
+    public sealed class ComponentInfo
     {
-        public bool IsValid { get; set; }
-        public int Score { get; set; }
+        public string Name { get; set; } = "";
+        public string Value { get; set; } = "";
+        public string? Details { get; set; }
+        public bool IsAvailable { get; set; }
+        public string? Error { get; set; }
+
+        public override string ToString()
+        {
+            if (!IsAvailable)
+                return $"{Name}: N/A ({Error ?? "Not found"})";
+
+            return $"{Name}: {Value[..Math.Min(8, Value.Length)]}... ({Details})";
+        }
+    }
+
+    /// <summary>
+    /// Donanım doğrulama sonucu.
+    /// </summary>
+    public sealed class HardwareValidationResult
+    {
         public string HardwareId { get; set; } = "";
         public string ShortId { get; set; } = "";
+        public int Score { get; set; }
+        public bool IsValid { get; set; }
         public string ComponentsRaw { get; set; } = "";
-        public string MachineName { get; set; } = "";
+        public Dictionary<string, ComponentInfo> Components { get; set; } = new();
 
-        public string CpuId { get; set; } = "";
-        public string BiosSerial { get; set; } = "";
-        public string DiskSerial { get; set; } = "";
-        public string MacAddress { get; set; } = "";
-        public string MotherboardSerial { get; set; } = "";
-        public bool TpmPresent { get; set; }
-
+        /// <summary>
+        /// Tanılama raporu oluşturur.
+        /// </summary>
         public string GetDiagnosticsReport()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("╔════════════════════════════════════════════════════╗");
-            sb.AppendLine("║         HARDWARE FINGERPRINT REPORT                ║");
-            sb.AppendLine("╠════════════════════════════════════════════════════╣");
-            sb.AppendLine($"║ Machine:    {MachineName,-39}║");
-            sb.AppendLine($"║ Status:     {(IsValid ? "✓ VALID" : "✗ INVALID"),-39}║");
-            sb.AppendLine($"║ Score:      {Score}/100 (minimum 55)                  ║");
-            sb.AppendLine("╠════════════════════════════════════════════════════╣");
-            sb.AppendLine("║ COMPONENTS                                         ║");
-            sb.AppendLine($"║   CPU ID:      {Check(!string.IsNullOrEmpty(CpuId))} {Mask(CpuId),-30}║");
-            sb.AppendLine($"║   BIOS:        {Check(!string.IsNullOrEmpty(BiosSerial))} {Mask(BiosSerial),-30}║");
-            sb.AppendLine($"║   Disk:        {Check(!string.IsNullOrEmpty(DiskSerial))} {Mask(DiskSerial),-30}║");
-            sb.AppendLine($"║   MAC:         {Check(!string.IsNullOrEmpty(MacAddress))} {Mask(MacAddress),-30}║");
-            sb.AppendLine($"║   Motherboard: {Check(!string.IsNullOrEmpty(MotherboardSerial))} {Mask(MotherboardSerial),-30}║");
-            sb.AppendLine($"║   TPM:         {Check(TpmPresent)} {(TpmPresent ? "Present" : "Not found"),-30}║");
-            sb.AppendLine("╠════════════════════════════════════════════════════╣");
-            sb.AppendLine($"║ Hardware ID: {ShortId,-38}║");
-            sb.AppendLine("╚════════════════════════════════════════════════════╝");
-            return sb.ToString();
+            sb.AppendLine("═══════════════════════════════════════════");
+            sb.AppendLine("Hardware Fingerprint Diagnostics Report");
+            sb.AppendLine("═══════════════════════════════════════════");
+            sb.AppendLine($"Hardware ID: {HardwareId}");
+            sb.AppendLine($"Short ID:    {ShortId}");
+            sb.AppendLine($"Score:       {Score}/100 ({(IsValid ? "VALID" : "INVALID")})");
+            sb.AppendLine("───────────────────────────────────────────");
+            sb.AppendLine("Components:");
 
-            static string Check(bool ok) => ok ? "✓" : "✗";
-            static string Mask(string s) => string.IsNullOrEmpty(s) ? "(none)" :
-                s.Length <= 8 ? s : $"{s[..4]}...{s[^4..]}";
+            foreach (var component in Components.OrderByDescending(c => c.Value.IsAvailable))
+            {
+                var status = component.Value.IsAvailable ? "✓" : "✗";
+                sb.AppendLine($"  [{status}] {component.Value}");
+            }
+
+            sb.AppendLine("═══════════════════════════════════════════");
+            return sb.ToString();
         }
     }
 }

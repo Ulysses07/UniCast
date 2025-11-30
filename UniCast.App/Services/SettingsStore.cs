@@ -2,330 +2,297 @@
 using System.IO;
 using System.Text.Json;
 using System.Threading;
-using UniCast.Core.Settings;
-using UniCast.App.Security;
+using Serilog;
 
 namespace UniCast.App.Services
 {
     /// <summary>
-    /// Ayarları dosyadan okuyup yazan servis.
-    /// DÜZELTME: Static lock için dispose mekanizması eklendi.
+    /// Uygulama ayarlarını yöneten merkezi store.
+    /// Thread-safe, auto-save destekli.
     /// </summary>
     public static class SettingsStore
     {
-        private static readonly string Dir =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UniCast");
+        private static readonly string SettingsPath;
+        private static readonly object _lock = new();
+        private static SettingsData? _data;
+        private static System.Threading.Timer? _autoSaveTimer;
+        private static bool _isDirty;
 
-        private static readonly string FilePath = Path.Combine(Dir, "settings.json");
-
-        // DÜZELTME: Lazy initialization ile dispose edilebilir lock
-        private static readonly Lazy<ReaderWriterLockSlim> _lockLazy =
-            new(() => new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion));
-
-        private static ReaderWriterLockSlim Lock => _lockLazy.Value;
-
-        private const int MAX_RETRY_ATTEMPTS = 3;
-        private const int RETRY_DELAY_MS = 100;
-
-        private sealed class PersistModel
+        static SettingsStore()
         {
-            // Plain alanlar
-            public bool ShowOverlay { get; set; }
-            public int OverlayX { get; set; }
-            public int OverlayY { get; set; }
-            public double OverlayOpacity { get; set; }
-            public int OverlayFontSize { get; set; }
-            public double OverlayWidth { get; set; } = 300;
-            public double OverlayHeight { get; set; } = 400;
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var settingsDir = Path.Combine(appData, "UniCast");
 
-            public string YouTubeChannelId { get; set; } = "";
-            public string TikTokRoomId { get; set; } = "";
-
-            // Encrypted alanlar (base64)
-            public string YouTubeApiKeyEnc { get; set; } = "";
-            public string TikTokSessionCookieEnc { get; set; } = "";
-            public string FacebookPageId { get; set; } = "";
-            public string FacebookLiveVideoId { get; set; } = "";
-            public string FacebookAccessTokenEnc { get; set; } = "";
-
-            // Encoder/Quality alanları
-            public string Encoder { get; set; } = "auto";
-            public int VideoKbps { get; set; } = 3500;
-            public int AudioKbps { get; set; } = 160;
-            public int AudioDelayMs { get; set; } = 0;
-            public int Fps { get; set; } = 30;
-            public int Width { get; set; } = 1280;
-            public int Height { get; set; } = 720;
-            public string DefaultCamera { get; set; } = "";
-            public string DefaultMicrophone { get; set; } = "";
-            public string RecordFolder { get; set; } = "";
-            public bool EnableLocalRecord { get; set; } = false;
-
-            // Instagram
-            public string InstagramUserId { get; set; } = "";
-            public string InstagramSessionIdEnc { get; set; } = "";
-        }
-
-        public static SettingsData Load()
-        {
-            Lock.EnterReadLock();
             try
             {
-                return LoadInternal();
+                Directory.CreateDirectory(settingsDir);
             }
-            finally
+            catch (Exception ex)
             {
-                Lock.ExitReadLock();
+                Log.Error(ex, "[SettingsStore] Settings dizini oluşturulamadı");
             }
+
+            SettingsPath = Path.Combine(settingsDir, "settings.json");
         }
 
-        public static void Save(SettingsData s)
+        /// <summary>
+        /// Mevcut ayarlar.
+        /// </summary>
+        public static SettingsData Data
         {
-            if (s == null) throw new ArgumentNullException(nameof(s));
-
-            Lock.EnterWriteLock();
-            try
+            get
             {
-                SaveInternalWithRetry(s);
-            }
-            finally
-            {
-                Lock.ExitWriteLock();
-            }
-        }
-
-        public static void Update(Action<SettingsData> modifier)
-        {
-            if (modifier == null) throw new ArgumentNullException(nameof(modifier));
-
-            Lock.EnterWriteLock();
-            try
-            {
-                var data = LoadInternal();
-                modifier(data);
-                SaveInternalWithRetry(data);
-            }
-            finally
-            {
-                Lock.ExitWriteLock();
+                lock (_lock)
+                {
+                    if (_data == null)
+                    {
+                        _data = Load();
+                        StartAutoSave();
+                    }
+                    return _data;
+                }
             }
         }
 
         /// <summary>
-        /// DÜZELTME: Uygulama kapanırken lock'u dispose etmek için.
-        /// App.OnExit'te çağrılmalı.
+        /// Ayarları günceller.
+        /// </summary>
+        public static void Update(Action<SettingsData> updateAction)
+        {
+            lock (_lock)
+            {
+                var data = Data;
+                updateAction(data);
+                _isDirty = true;
+            }
+        }
+
+        /// <summary>
+        /// Ayarları hemen kaydeder.
+        /// </summary>
+        public static void Save()
+        {
+            lock (_lock)
+            {
+                if (_data == null)
+                    return;
+
+                try
+                {
+                    _data.Normalize();
+
+                    var json = JsonSerializer.Serialize(_data, new JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    });
+
+                    // Atomic write
+                    var tempPath = SettingsPath + ".tmp";
+                    File.WriteAllText(tempPath, json);
+
+                    if (File.Exists(SettingsPath))
+                        File.Delete(SettingsPath);
+
+                    File.Move(tempPath, SettingsPath);
+
+                    _isDirty = false;
+                    Log.Debug("[SettingsStore] Ayarlar kaydedildi");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "[SettingsStore] Kaydetme hatası");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Ayarları yeniden yükler.
+        /// </summary>
+        public static void Reload()
+        {
+            lock (_lock)
+            {
+                _data = Load();
+                _isDirty = false;
+            }
+        }
+
+        /// <summary>
+        /// Varsayılan ayarlara sıfırlar.
+        /// </summary>
+        public static void Reset()
+        {
+            lock (_lock)
+            {
+                _data = new SettingsData();
+                _data.Normalize();
+                Save();
+            }
+        }
+
+        /// <summary>
+        /// Kaynakları temizler.
         /// </summary>
         public static void Cleanup()
         {
-            if (_lockLazy.IsValueCreated)
+            lock (_lock)
             {
-                try
+                // Auto-save timer'ı durdur
+                _autoSaveTimer?.Dispose();
+                _autoSaveTimer = null;
+
+                // Dirty ise kaydet
+                if (_isDirty)
                 {
-                    _lockLazy.Value.Dispose();
+                    Save();
                 }
-                catch { }
             }
         }
 
-        private static SettingsData LoadInternal()
+        private static SettingsData Load()
         {
             try
             {
-                if (!File.Exists(FilePath))
-                    return CreateDefaultSettings();
-
-                string json;
-                using (var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                using (var reader = new StreamReader(fs))
+                if (File.Exists(SettingsPath))
                 {
-                    json = reader.ReadToEnd();
-                }
+                    var json = File.ReadAllText(SettingsPath);
+                    var data = JsonSerializer.Deserialize<SettingsData>(json);
 
-                if (string.IsNullOrWhiteSpace(json))
-                    return CreateDefaultSettings();
-
-                var p = JsonSerializer.Deserialize<PersistModel>(json);
-                if (p == null)
-                    return CreateDefaultSettings();
-
-                var s = MapToSettingsData(p);
-                s.Normalize();
-                return s;
-            }
-            catch (JsonException ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Settings] JSON parse hatası: {ex.Message}");
-                BackupCorruptedFile();
-                return CreateDefaultSettings();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Settings] Yükleme hatası: {ex.Message}");
-                return CreateDefaultSettings();
-            }
-        }
-
-        private static void SaveInternalWithRetry(SettingsData s)
-        {
-            Exception? lastException = null;
-
-            for (int attempt = 0; attempt < MAX_RETRY_ATTEMPTS; attempt++)
-            {
-                try
-                {
-                    SaveInternal(s);
-                    return;
-                }
-                catch (IOException ex)
-                {
-                    lastException = ex;
-                    System.Diagnostics.Debug.WriteLine($"[Settings] Yazma hatası (deneme {attempt + 1}): {ex.Message}");
-
-                    if (attempt < MAX_RETRY_ATTEMPTS - 1)
+                    if (data != null)
                     {
-                        Thread.Sleep(RETRY_DELAY_MS * (attempt + 1));
+                        data.Normalize();
+                        Log.Debug("[SettingsStore] Ayarlar yüklendi");
+                        return data;
                     }
                 }
             }
-
-            throw new IOException($"Ayarlar kaydedilemedi ({MAX_RETRY_ATTEMPTS} deneme sonrası)", lastException);
-        }
-
-        private static void SaveInternal(SettingsData s)
-        {
-            if (!Directory.Exists(Dir))
-                Directory.CreateDirectory(Dir);
-
-            var p = MapToPersistModel(s);
-
-            var json = JsonSerializer.Serialize(p, new JsonSerializerOptions { WriteIndented = true });
-
-            var tempPath = FilePath + ".tmp";
-            var backupPath = FilePath + ".bak";
-
-            try
+            catch (Exception ex)
             {
-                using (var fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                using (var writer = new StreamWriter(fs))
-                {
-                    writer.Write(json);
-                    writer.Flush();
-                    fs.Flush(true);
-                }
-
-                if (File.Exists(FilePath))
-                {
-                    if (File.Exists(backupPath))
-                        File.Delete(backupPath);
-                    File.Move(FilePath, backupPath);
-                }
-
-                File.Move(tempPath, FilePath);
+                Log.Error(ex, "[SettingsStore] Yükleme hatası");
             }
-            catch
+
+            Log.Information("[SettingsStore] Varsayılan ayarlar kullanılıyor");
+            var defaults = new SettingsData();
+            defaults.Normalize();
+            return defaults;
+        }
+
+        private static void StartAutoSave()
+        {
+            _autoSaveTimer?.Dispose();
+            _autoSaveTimer = new System.Threading.Timer(_ =>
             {
-                if (File.Exists(tempPath))
+                if (_isDirty)
                 {
-                    try { File.Delete(tempPath); } catch { }
+                    Save();
                 }
-                throw;
+            }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+        }
+    }
+
+    /// <summary>
+    /// Uygulama ayarları veri modeli.
+    /// </summary>
+    public sealed class SettingsData
+    {
+        // Stream Ayarları
+        public int VideoKbps { get; set; } = 2500;
+        public int AudioKbps { get; set; } = 128;
+        public int Fps { get; set; } = 30;
+        public string VideoResolution { get; set; } = "1920x1080";
+        public string VideoEncoder { get; set; } = "libx264";
+        public string VideoPreset { get; set; } = "veryfast";
+        public string AudioEncoder { get; set; } = "aac";
+        public int AudioSampleRate { get; set; } = 44100;
+
+        // Platform Bağlantıları
+        public string YouTubeVideoId { get; set; } = "";
+        public string YouTubeStreamKey { get; set; } = "";
+        public string TwitchStreamKey { get; set; } = "";
+        public string TikTokUsername { get; set; } = "";
+        public string InstagramUsername { get; set; } = "";
+        public string FacebookPageId { get; set; } = "";
+        public string FacebookStreamKey { get; set; } = "";
+        public string CustomRtmpUrl { get; set; } = "";
+
+        // Overlay Ayarları
+        public bool OverlayEnabled { get; set; } = true;
+        public double OverlayOpacity { get; set; } = 0.9;
+        public string OverlayPosition { get; set; } = "BottomRight";
+        public int OverlayWidth { get; set; } = 400;
+        public int OverlayHeight { get; set; } = 300;
+        public string OverlayTheme { get; set; } = "Dark";
+        public bool OverlayShowChat { get; set; } = true;
+        public int OverlayChatMessageLimit { get; set; } = 50;
+
+        // Chat Ayarları
+        public bool ChatEnabled { get; set; } = true;
+        public bool ChatShowTimestamps { get; set; } = true;
+        public bool ChatShowPlatformBadges { get; set; } = true;
+        public bool ChatFilterProfanity { get; set; } = false;
+        public string[] ChatBlockedWords { get; set; } = Array.Empty<string>();
+        public string[] ChatBlockedUsers { get; set; } = Array.Empty<string>();
+
+        // Genel Ayarlar
+        public bool StartMinimized { get; set; } = false;
+        public bool MinimizeToTray { get; set; } = true;
+        public bool StartWithWindows { get; set; } = false;
+        public bool CheckForUpdates { get; set; } = true;
+        public string Language { get; set; } = "tr-TR";
+        public string Theme { get; set; } = "Dark";
+
+        // Kayıt Ayarları
+        public bool RecordingEnabled { get; set; } = false;
+        public string RecordingPath { get; set; } = "";
+        public string RecordingFormat { get; set; } = "mp4";
+        public int RecordingQuality { get; set; } = 80;
+
+        // API Keys (şifrelenmiş saklanmalı)
+        public string YouTubeApiKey { get; set; } = "";
+        public string TwitchClientId { get; set; } = "";
+        public string FacebookAccessToken { get; set; } = "";
+
+        /// <summary>
+        /// Değerleri normalize eder ve sınırlar içinde tutar.
+        /// </summary>
+        public void Normalize()
+        {
+            // Video
+            VideoKbps = Math.Clamp(VideoKbps, 500, 50000);
+            AudioKbps = Math.Clamp(AudioKbps, 64, 320);
+            Fps = Math.Clamp(Fps, 15, 120);
+
+            // Overlay
+            OverlayOpacity = Math.Clamp(OverlayOpacity, 0.1, 1.0);
+            OverlayWidth = Math.Clamp(OverlayWidth, 200, 1920);
+            OverlayHeight = Math.Clamp(OverlayHeight, 150, 1080);
+            OverlayChatMessageLimit = Math.Clamp(OverlayChatMessageLimit, 10, 500);
+
+            // Recording
+            RecordingQuality = Math.Clamp(RecordingQuality, 1, 100);
+
+            // Varsayılan kayıt yolu
+            if (string.IsNullOrEmpty(RecordingPath))
+            {
+                RecordingPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyVideos),
+                    "UniCast Recordings");
             }
-        }
 
-        private static void BackupCorruptedFile()
-        {
-            try
-            {
-                if (File.Exists(FilePath))
-                {
-                    var corruptPath = FilePath + $".corrupt_{DateTime.Now:yyyyMMdd_HHmmss}";
-                    File.Move(FilePath, corruptPath);
-                    System.Diagnostics.Debug.WriteLine($"[Settings] Bozuk dosya yedeklendi: {corruptPath}");
-                }
-            }
-            catch { }
-        }
+            // Null array'leri düzelt
+            ChatBlockedWords ??= Array.Empty<string>();
+            ChatBlockedUsers ??= Array.Empty<string>();
 
-        private static SettingsData CreateDefaultSettings()
-        {
-            var s = new SettingsData();
-            s.Normalize();
-            return s;
-        }
-
-        private static SettingsData MapToSettingsData(PersistModel p)
-        {
-            return new SettingsData
-            {
-                ShowOverlay = p.ShowOverlay,
-                OverlayX = p.OverlayX,
-                OverlayY = p.OverlayY,
-                OverlayOpacity = p.OverlayOpacity,
-                OverlayFontSize = p.OverlayFontSize,
-                OverlayWidth = p.OverlayWidth,
-                OverlayHeight = p.OverlayHeight,
-
-                YouTubeChannelId = p.YouTubeChannelId ?? "",
-                TikTokRoomId = p.TikTokRoomId ?? "",
-
-                YouTubeApiKey = SecretStore.Unprotect(p.YouTubeApiKeyEnc) ?? "",
-                TikTokSessionCookie = SecretStore.Unprotect(p.TikTokSessionCookieEnc) ?? "",
-                FacebookPageId = p.FacebookPageId ?? "",
-                FacebookLiveVideoId = p.FacebookLiveVideoId ?? "",
-                FacebookAccessToken = SecretStore.Unprotect(p.FacebookAccessTokenEnc) ?? "",
-
-                Encoder = p.Encoder ?? "auto",
-                VideoKbps = p.VideoKbps,
-                AudioKbps = p.AudioKbps,
-                AudioDelayMs = p.AudioDelayMs,
-                Fps = p.Fps,
-                Width = p.Width,
-                Height = p.Height,
-                DefaultCamera = p.DefaultCamera ?? "",
-                DefaultMicrophone = p.DefaultMicrophone ?? "",
-                RecordFolder = p.RecordFolder ?? "",
-                EnableLocalRecord = p.EnableLocalRecord,
-
-                InstagramUserId = p.InstagramUserId ?? "",
-                InstagramSessionId = SecretStore.Unprotect(p.InstagramSessionIdEnc) ?? ""
-            };
-        }
-
-        private static PersistModel MapToPersistModel(SettingsData s)
-        {
-            return new PersistModel
-            {
-                ShowOverlay = s.ShowOverlay,
-                OverlayX = s.OverlayX,
-                OverlayY = s.OverlayY,
-                OverlayOpacity = s.OverlayOpacity,
-                OverlayFontSize = s.OverlayFontSize,
-                OverlayWidth = s.OverlayWidth,
-                OverlayHeight = s.OverlayHeight,
-
-                YouTubeChannelId = s.YouTubeChannelId ?? "",
-                TikTokRoomId = s.TikTokRoomId ?? "",
-
-                YouTubeApiKeyEnc = SecretStore.Protect(s.YouTubeApiKey ?? "") ?? "",
-                TikTokSessionCookieEnc = SecretStore.Protect(s.TikTokSessionCookie ?? "") ?? "",
-                InstagramUserId = s.InstagramUserId ?? "",
-                InstagramSessionIdEnc = SecretStore.Protect(s.InstagramSessionId ?? "") ?? "",
-                FacebookPageId = s.FacebookPageId ?? "",
-                FacebookLiveVideoId = s.FacebookLiveVideoId ?? "",
-                FacebookAccessTokenEnc = SecretStore.Protect(s.FacebookAccessToken ?? "") ?? "",
-
-                Encoder = s.Encoder ?? "auto",
-                VideoKbps = s.VideoKbps,
-                AudioKbps = s.AudioKbps,
-                AudioDelayMs = s.AudioDelayMs,
-                Fps = s.Fps,
-                Width = s.Width,
-                Height = s.Height,
-                DefaultCamera = s.DefaultCamera ?? "",
-                DefaultMicrophone = s.DefaultMicrophone ?? "",
-                RecordFolder = s.RecordFolder ?? "",
-                EnableLocalRecord = s.EnableLocalRecord
-            };
+            // Boş string'leri düzelt
+            VideoResolution ??= "1920x1080";
+            VideoEncoder ??= "libx264";
+            VideoPreset ??= "veryfast";
+            AudioEncoder ??= "aac";
+            OverlayPosition ??= "BottomRight";
+            OverlayTheme ??= "Dark";
+            Language ??= "tr-TR";
+            Theme ??= "Dark";
+            RecordingFormat ??= "mp4";
         }
     }
 }
