@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration; // WinRT Modern API
-using UniCast.Core.Models;         // Core Model
+using UniCast.Core.Models;
 
-namespace UniCast.Capture
+namespace UniCast.Capture.MediaFoundation
 {
     public sealed class MediaFoundationCaptureService
     {

@@ -298,11 +298,7 @@ namespace UniCast.Licensing.Protection
         private static byte[] GetManifestKey()
         {
             // Obfuscation için statik key
-            return new byte[]
-            {
-                0x55, 0x43, 0x49, 0x6E, 0x74, 0x65, 0x67, 0x72,
-                0x69, 0x74, 0x79, 0x4B, 0x65, 0x79, 0x32, 0x35
-            };
+            return "UCIntegrityKey25"u8.ToArray();
         }
 
         private static byte[] GetExpectedPublicKeyToken()
@@ -322,8 +318,8 @@ namespace UniCast.Licensing.Protection
     {
         public IntegrityStatus Status { get; set; }
         public string Message { get; set; } = "";
-        public List<string> TamperedFiles { get; set; } = new();
-        public List<string> MissingFiles { get; set; } = new();
+        public List<string> TamperedFiles { get; set; } = [];
+        public List<string> MissingFiles { get; set; } = [];
 
         public bool IsValid => Status == IntegrityStatus.Valid;
 

@@ -11,7 +11,7 @@ namespace UniCast.Core.Chat
     /// </summary>
     public sealed class ChatBus : IDisposable
     {
-        private readonly List<IChatIngestor> _ingestors = new();
+        private readonly List<IChatIngestor> _ingestors = [];
         private readonly LruCache<string> _seenMessages;
         private readonly Timer _statsTimer;
         private readonly int _maxPerSecond;

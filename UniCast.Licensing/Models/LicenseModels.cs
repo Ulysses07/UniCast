@@ -114,7 +114,7 @@ namespace UniCast.Licensing.Models
         public DateTime LastValidationUtc { get; set; } = DateTime.UtcNow;
 
         /// <summary>Aktivasyon yapılan Hardware ID'ler</summary>
-        public List<HardwareActivation> Activations { get; set; } = new();
+        public List<HardwareActivation> Activations { get; set; } = [];
 
         /// <summary>Maksimum izin verilen makine sayısı</summary>
         public int MaxMachines { get; set; } = 1;

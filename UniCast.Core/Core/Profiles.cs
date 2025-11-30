@@ -21,7 +21,7 @@ namespace UniCast.Core.Core
         // HATA DÜZELTME: Eksik olan özellik eklendi
         public int AudioDelayMs { get; set; } = 0;
 
-        public static Profile Default() => new Profile();
+        public static Profile Default() => new();
 
         public static Profile GetByName(string? name, IEnumerable<Profile>? list)
         {

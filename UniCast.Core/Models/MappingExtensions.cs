@@ -8,7 +8,7 @@ namespace UniCast.Core.Models
     {
         public static List<StreamTarget> ToStreamTargets(this IEnumerable<TargetItem> items)
         {
-            if (items == null) return new List<StreamTarget>();
+            if (items == null) return [];
 
             return items.Select(i => new StreamTarget
             {

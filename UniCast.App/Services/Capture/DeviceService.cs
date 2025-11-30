@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using UniCast.Core.Models;
-using UniCast.Capture; // REFERANS: Unicast.Capture Projesi
+using UniCast.Capture.MediaFoundation; // REFERANS: Unicast.Capture Projesi
 
 namespace UniCast.App.Services.Capture
 {

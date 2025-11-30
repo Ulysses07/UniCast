@@ -27,7 +27,7 @@ namespace UniCast.App.Views
 
         // DÜZELTME: SceneItems artık yerel bir ObservableCollection
         // ViewModel'den bağımsız, sadece sahne editörü için
-        private readonly ObservableCollection<OverlayItem> _sceneItems = new();
+        private readonly ObservableCollection<OverlayItem> _sceneItems = [];
 
         // Durum Değişkenleri
         private bool _isDragging = false;

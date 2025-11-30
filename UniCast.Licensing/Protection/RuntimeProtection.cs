@@ -90,6 +90,16 @@ namespace UniCast.Licensing.Protection
         {
             var result = new SecurityCheckResult();
 
+        #if DEBUG
+            // DEBUG modunda tüm kontrolleri atla
+            result.IsSecure = true;
+            result.DebuggerAttached = false;
+            result.VirtualMachine = false;
+            result.Sandbox = false;
+            result.TimingAnomaly = false;
+            result.CrackToolDetected = false;
+            return result;
+        #else
             // 1. Debugger kontrolü
             result.DebuggerAttached = CheckDebugger();
             if (result.DebuggerAttached)
@@ -99,11 +109,6 @@ namespace UniCast.Licensing.Protection
 
             // 2. VM/Sandbox kontrolü
             result.VirtualMachine = CheckVirtualMachine();
-            if (result.VirtualMachine)
-            {
-                // VM tespit edildi ama bu her zaman tehdit değil
-                // Sadece logla, uygulamayı durdurma
-            }
 
             // 3. Sandbox kontrolü
             result.Sandbox = CheckSandbox();
@@ -112,14 +117,14 @@ namespace UniCast.Licensing.Protection
                 RaiseThreat(ThreatType.SandboxDetected, "Sandbox ortamı algılandı");
             }
 
-            // 4. Zamanlama anomalisi (debug tespiti)
+            // 4. Zamanlama anomalisi
             result.TimingAnomaly = CheckTimingAnomaly();
             if (result.TimingAnomaly)
             {
-                RaiseThreat(ThreatType.TimingAnomaly, "Zamanlama anomalisi - olası debug");
+                RaiseThreat(ThreatType.TimingAnomaly, "Zamanlama anomalisi");
             }
 
-            // 5. Bilinen crack araçları
+            // 5. Crack araçları
             result.CrackToolDetected = CheckCrackTools();
             if (result.CrackToolDetected)
             {
@@ -127,12 +132,13 @@ namespace UniCast.Licensing.Protection
             }
 
             result.IsSecure = !result.DebuggerAttached &&
-                              !result.Sandbox &&
-                              !result.TimingAnomaly &&
-                              !result.CrackToolDetected;
+                            !result.Sandbox &&
+                            !result.TimingAnomaly &&
+                            !result.CrackToolDetected;
 
             _threatDetected = !result.IsSecure;
             return result;
+        #endif
         }
 
         #region Security Checks

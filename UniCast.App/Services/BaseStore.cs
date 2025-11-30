@@ -66,7 +66,7 @@ namespace UniCast.App.Services
         /// </summary>
         public void Save(T data)
         {
-            if (data == null) throw new ArgumentNullException(nameof(data));
+            ArgumentNullException.ThrowIfNull(data);
 
             _lock.EnterWriteLock();
             try
@@ -84,7 +84,7 @@ namespace UniCast.App.Services
         /// </summary>
         public void Update(Action<T> modifier)
         {
-            if (modifier == null) throw new ArgumentNullException(nameof(modifier));
+            ArgumentNullException.ThrowIfNull(modifier);
 
             _lock.EnterWriteLock();
             try

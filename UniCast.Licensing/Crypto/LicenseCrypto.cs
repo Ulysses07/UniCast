@@ -162,8 +162,7 @@ R5E9L3xjVcJ8Y5H3XKLPQ6F5W1X9vLQXD3R5kJHF3vNE5FQ5xL8Y9H5QKLPW1X3D
             writer.Write(encryptedBytes);
 
             // Checksum
-            using var sha = SHA256.Create();
-            var checksum = sha.ComputeHash(encryptedBytes);
+            var checksum = SHA256.HashData(encryptedBytes);
             writer.Write(checksum);
         }
 
@@ -195,8 +194,7 @@ R5E9L3xjVcJ8Y5H3XKLPQ6F5W1X9vLQXD3R5kJHF3vNE5FQ5xL8Y9H5QKLPW1X3D
                 var storedChecksum = reader.ReadBytes(32);
 
                 // Checksum doğrulama
-                using var sha = SHA256.Create();
-                var computedChecksum = sha.ComputeHash(encryptedBytes);
+                var computedChecksum = SHA256.HashData(encryptedBytes);
 
                 if (!CryptographicEquals(storedChecksum, computedChecksum))
                     return null; // Dosya bozulmuş veya kurcalanmış
@@ -329,8 +327,7 @@ R5E9L3xjVcJ8Y5H3XKLPQ6F5W1X9vLQXD3R5kJHF3vNE5FQ5xL8Y9H5QKLPW1X3D
 
         private static string ComputeKeyChecksum(string baseKey)
         {
-            using var sha = SHA256.Create();
-            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(baseKey + "UniCastLicenseChecksum"));
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(baseKey + "UniCastLicenseChecksum"));
 
             var checksum = new char[SegmentLength];
             for (int i = 0; i < SegmentLength; i++)

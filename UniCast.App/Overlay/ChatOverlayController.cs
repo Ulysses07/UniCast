@@ -92,9 +92,6 @@ namespace UniCast.App.Overlay
             _publisher.Invalidate();
         }
 
-        public async ValueTask DisposeAsync()
-        {
-            await _publisher.DisposeAsync();
-        }
+        public async ValueTask DisposeAsync() => await _publisher.DisposeAsync();
     }
 }

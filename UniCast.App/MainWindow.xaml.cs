@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.Http;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,7 +11,7 @@ using UniCast.App.Views;
 using UniCast.Core.Chat;
 using Serilog;
 using Button = System.Windows.Controls.Button;
-using MessageBox = System.Windows.MessageBox; // Button çakışmasını önle
+using MessageBox = System.Windows.MessageBox;
 
 namespace UniCast.App
 {
@@ -39,7 +38,6 @@ namespace UniCast.App
         {
             InitializeComponent();
 
-            // HATA DÜZELTME: GetRequiredService YERİNE 'new' KULLANIYORUZ
             _deviceService = new DeviceService();
             _stream = new StreamController();
 
@@ -58,7 +56,6 @@ namespace UniCast.App
             Loaded += MainWindow_Loaded;
         }
 
-        // ... (WireUpLogging, WireNavigation, SetMainContent, EnsureFfmpegExists AYNI KALSIN) ...
         private void WireUpLogging()
         {
             _stream.OnLog += (s, m) => { if (m.Contains("Error") || m.Contains("Failed")) Log.Error("[Stream] " + m); else Log.Information("[Stream] " + m); };
@@ -98,7 +95,6 @@ namespace UniCast.App
             }
             catch { return false; }
         }
-        // ...
 
         private void MainWindow_Loaded(object? sender, RoutedEventArgs e)
         {
@@ -139,19 +135,32 @@ namespace UniCast.App
 
         private void OnMsg(ChatMessage msg) { try { _overlay?.Push(msg.Author, msg.Text); } catch { } }
 
+        // ========== EKSİK METOTLAR ==========
+
         public void UpdateOverlaySize(double width, double height) { _overlay?.UpdateSize(width, height); }
         public void UpdateOverlayPosition(int x, int y) { _overlay?.UpdatePosition(x, y); }
+
+        /// <summary>
+        /// Overlay'i yeniden yükler - PreviewView tarafından çağrılır.
+        /// </summary>
         public void RefreshOverlay() { _overlay?.ReloadSettings(); }
 
-        // Mola Metotları
+        /// <summary>
+        /// Mola modunu başlatır - ControlViewModel tarafından çağrılır.
+        /// </summary>
         public void StartBreak(int minutes) { _overlay?.StartBreakMode(minutes); }
+
+        /// <summary>
+        /// Mola modunu durdurur - ControlViewModel tarafından çağrılır.
+        /// </summary>
         public void StopBreak() { _overlay?.StopBreakMode(); }
+
+        // =====================================
 
         protected override void OnClosed(EventArgs e)
         {
             try { _chatCts?.Cancel(); } catch { }
 
-            // Servisleri durdur
             try { _ytIngestor?.StopAsync().GetAwaiter().GetResult(); } catch { }
             try { _tiktok?.StopAsync().GetAwaiter().GetResult(); } catch { }
             try { _instagram?.StopAsync().GetAwaiter().GetResult(); } catch { }
@@ -161,7 +170,7 @@ namespace UniCast.App
             _chatBus.Dispose();
             try { (_stream as IAsyncDisposable)?.DisposeAsync().AsTask().GetAwaiter().GetResult(); } catch { }
 
-            _controlVm.Dispose(); // ViewModel'i temizle
+            _controlVm.Dispose();
             base.OnClosed(e);
         }
     }

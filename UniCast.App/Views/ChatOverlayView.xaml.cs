@@ -44,8 +44,8 @@ namespace UniCast.App.Views
     /// </summary>
     public sealed class ChatOverlayViewModel : INotifyPropertyChanged
     {
-        public ObservableCollection<OverlayItem> SceneItems { get; } = new();
-        public ObservableCollection<OverlayChatMessage> ChatMessages { get; } = new();
+        public ObservableCollection<OverlayItem> SceneItems { get; } = [];
+        public ObservableCollection<OverlayChatMessage> ChatMessages { get; } = [];
 
         public ChatOverlayViewModel()
         {

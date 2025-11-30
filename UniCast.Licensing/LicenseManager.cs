@@ -276,8 +276,8 @@ namespace UniCast.Licensing
                 IssuedAtUtc = DateTime.UtcNow,
                 ExpiresAtUtc = DateTime.UtcNow.AddDays(14),
                 MaxMachines = 1,
-                Activations = new()
-                {
+                Activations =
+                [
                     new HardwareActivation
                     {
                         HardwareId = hwInfo.HardwareId,
@@ -286,7 +286,7 @@ namespace UniCast.Licensing
                         ActivatedAtUtc = DateTime.UtcNow,
                         ComponentsHash = hwInfo.ComponentsRaw
                     }
-                }
+                ]
             };
 
             // Trial'ı imzala (lokal)
