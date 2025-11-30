@@ -1,13 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
 
-  <ItemGroup>
-    <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.0.20250507" />
-  </ItemGroup>
+		<!-- Assembly bilgileri -->
+		<AssemblyName>UniCast.Licensing</AssemblyName>
+		<RootNamespace>UniCast.Licensing</RootNamespace>
+		<Version>1.0.0</Version>
+		<Company>UniCast</Company>
+		<Product>UniCast Licensing</Product>
+		<Copyright>Copyright © 2025 UniCast</Copyright>
+
+		<!-- Strong naming (production'da aktif edilmeli) -->
+		<!-- <SignAssembly>true</SignAssembly> -->
+		<!-- <AssemblyOriginatorKeyFile>UniCast.snk</AssemblyOriginatorKeyFile> -->
+
+		<!-- Trimming ayarları (daha küçük çıktı) -->
+		<PublishTrimmed>false</PublishTrimmed>
+		<TrimMode>link</TrimMode>
+	</PropertyGroup>
+
+	<!-- WMI için gerekli referans -->
+	<ItemGroup>
+		<PackageReference Include="System.Management" Version="10.0.0" />
+		<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
+	</ItemGroup>
+
+	<!-- Windows-only API'ler -->
+	<ItemGroup>
+		<Using Include="System.Management" />
+	</ItemGroup>
+
+	<!-- Obfuscation post-build task (isteğe bağlı) -->
+	<!-- 
+  <Target Name="Obfuscate" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <Exec Command="&quot;$(SolutionDir)tools\ConfuserEx\Confuser.CLI.exe&quot; &quot;$(ProjectDir)confuser.crproj&quot;" />
+  </Target>
+  -->
 
 </Project>

@@ -43,6 +43,7 @@
 		<ProjectReference Include="..\Unicast.Capture\Unicast.Capture.csproj" />
 		<ProjectReference Include="..\UniCast.Core\UniCast.Core.csproj" />
 		<ProjectReference Include="..\UniCast.Encoder\UniCast.Encoder.csproj" />
+		<ProjectReference Include="..\UniCast.Licensing\UniCast.Licensing.csproj" />
 	</ItemGroup>
 
 </Project>
