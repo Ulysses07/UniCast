@@ -4,44 +4,46 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Serilog;
 using UniCast.App.Services;
-using UniCast.Core.Chat;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 
+
+
+// Çakışma önlemek için alias
+using CoreChatMessage = UniCast.Core.Chat.ChatMessage;
+using CoreChatPlatform = UniCast.Core.Chat.ChatPlatform;
+
 namespace UniCast.App.Overlay
 {
     /// <summary>
-    /// Overlay penceresi - Stream üstünde gösterilen chat ve bilgi paneli.
+    /// Overlay penceresi - yayın üzerinde gösterilen chat ve bilgiler
     /// </summary>
     public partial class OverlayWindow : Window
     {
+        private const int MaxMessages = 50;
+
         private readonly ObservableCollection<ChatMessageViewModel> _messages = new();
         private readonly DispatcherTimer _uptimeTimer;
         private readonly DispatcherTimer _breakTimer;
 
         private DateTime _streamStartTime;
-        private int _breakRemainingSeconds;
-        private bool _isBreakMode;
-
-        private const int MaxMessages = 50;
+        private int _breakMinutesRemaining;
+        private OverlayStatus _currentStatus = OverlayStatus.Offline;
 
         public OverlayWindow()
         {
             InitializeComponent();
 
-            ChatItemsControl.ItemsSource = _messages;
+            ChatMessages.ItemsSource = _messages;
 
             // Uptime timer
-            _streamStartTime = DateTime.UtcNow;
             _uptimeTimer = new DispatcherTimer
             {
                 Interval = TimeSpan.FromSeconds(1)
             };
             _uptimeTimer.Tick += UptimeTimer_Tick;
-            _uptimeTimer.Start();
 
             // Break timer
             _breakTimer = new DispatcherTimer
@@ -50,47 +52,28 @@ namespace UniCast.App.Overlay
             };
             _breakTimer.Tick += BreakTimer_Tick;
 
-            // Ayarları yükle
             ReloadSettings();
-
-            Log.Debug("[OverlayWindow] Initialized");
         }
 
         #region Public Methods
 
         /// <summary>
-        /// Ayarları yeniden yükler.
+        /// Ayarları yeniden yükle
         /// </summary>
         public void ReloadSettings()
         {
-            try
-            {
-                var settings = SettingsStore.Data;
+            var settings = SettingsStore.Current;
 
-                Width = settings.OverlayWidth;
-                Height = settings.OverlayHeight;
-                MainBorder.Opacity = settings.OverlayOpacity;
+            Width = Math.Clamp(settings.OverlayWidth, 200, 1920);
+            Height = Math.Clamp(settings.OverlayHeight, 150, 1080);
+            Opacity = Math.Clamp(settings.OverlayOpacity, 0.1, 1.0);
 
-                // Tema
-                if (settings.OverlayTheme == "Light")
-                {
-                    MainBorder.Background = new SolidColorBrush(Color.FromArgb(230, 245, 245, 250));
-                }
-                else
-                {
-                    MainBorder.Background = new SolidColorBrush(Color.FromArgb(230, 24, 24, 37));
-                }
-
-                Log.Debug("[OverlayWindow] Ayarlar yeniden yüklendi");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "[OverlayWindow] Ayar yükleme hatası");
-            }
+            // Theme uygula
+            ApplyTheme(settings.OverlayTheme);
         }
 
         /// <summary>
-        /// Boyutu günceller.
+        /// Pencere boyutunu güncelle
         /// </summary>
         public void UpdateSize(double width, double height)
         {
@@ -99,138 +82,160 @@ namespace UniCast.App.Overlay
         }
 
         /// <summary>
-        /// Pozisyonu günceller.
+        /// Pencere pozisyonunu güncelle
         /// </summary>
-        public void UpdatePosition(int x, int y)
+        public void UpdatePosition(double x, double y)
         {
             Left = x;
             Top = y;
         }
 
         /// <summary>
-        /// Chat mesajı gösterir.
+        /// Chat mesajı göster
         /// </summary>
-        public void ShowChatMessage(ChatMessage message)
+        public void ShowChatMessage(CoreChatMessage message)
         {
-            if (message == null)
-                return;
-
             Dispatcher.Invoke(() =>
             {
-                try
+                var vm = new ChatMessageViewModel
                 {
-                    var vm = new ChatMessageViewModel
-                    {
-                        DisplayName = message.DisplayName,
-                        Message = message.Message,
-                        Platform = message.Platform,
-                        PlatformShort = GetPlatformShort(message.Platform),
-                        PlatformColor = GetPlatformBrush(message.Platform),
-                        Timestamp = message.Timestamp
-                    };
+                    DisplayName = message.DisplayName ?? message.Username,
+                    Message = message.Message,
+                    Platform = message.Platform,
+                    PlatformShort = GetPlatformShort(message.Platform),
+                    PlatformColor = GetPlatformBrush(message.Platform),
+                    Timestamp = message.Timestamp
+                };
 
-                    _messages.Add(vm);
+                _messages.Add(vm);
 
-                    // Limit kontrolü
-                    while (_messages.Count > MaxMessages)
-                    {
-                        _messages.RemoveAt(0);
-                    }
-
-                    // Otomatik scroll
-                    ChatScrollViewer.ScrollToEnd();
+                // Limit mesaj sayısı
+                while (_messages.Count > MaxMessages)
+                {
+                    _messages.RemoveAt(0);
                 }
-                catch (Exception ex)
+
+                // Auto-scroll
+                if (ChatScrollViewer != null)
                 {
-                    Log.Error(ex, "[OverlayWindow] Mesaj gösterme hatası");
+                    ChatScrollViewer.ScrollToEnd();
                 }
             });
         }
 
         /// <summary>
-        /// Bildirim mesajı gösterir.
+        /// Sistem mesajı göster
         /// </summary>
-        public void ShowMessage(string message, string? sender = null)
+        public void ShowMessage(string message, string sender = "System")
         {
-            var chatMessage = new ChatMessage
+            Dispatcher.Invoke(() =>
             {
-                Platform = ChatPlatform.Unknown,
-                DisplayName = sender ?? "System",
-                Message = message,
-                Type = ChatMessageType.System
-            };
+                var vm = new ChatMessageViewModel
+                {
+                    DisplayName = sender,
+                    Message = message,
+                    Platform = CoreChatPlatform.YouTube,
+                    PlatformShort = "SYS",
+                    PlatformColor = Brushes.Gray,
+                    Timestamp = DateTime.Now
+                };
 
-            ShowChatMessage(chatMessage);
+                _messages.Add(vm);
+
+                while (_messages.Count > MaxMessages)
+                {
+                    _messages.RemoveAt(0);
+                }
+            });
         }
 
         /// <summary>
-        /// Mola modunu başlatır.
+        /// Mola modunu başlat
         /// </summary>
         public void StartBreakMode(int minutes)
         {
-            _isBreakMode = true;
-            _breakRemainingSeconds = minutes * 60;
+            _breakMinutesRemaining = minutes * 60; // saniyeye çevir
 
-            BreakOverlay.Visibility = Visibility.Visible;
-            UpdateBreakTimer();
-            _breakTimer.Start();
-
-            Log.Information("[OverlayWindow] Mola modu başlatıldı: {Minutes} dakika", minutes);
+            Dispatcher.Invoke(() =>
+            {
+                if (BreakOverlay != null)
+                {
+                    BreakOverlay.Visibility = Visibility.Visible;
+                }
+                UpdateBreakTimer();
+                _breakTimer.Start();
+            });
         }
 
         /// <summary>
-        /// Mola modunu durdurur.
+        /// Mola modunu durdur
         /// </summary>
         public void StopBreakMode()
         {
-            _isBreakMode = false;
             _breakTimer.Stop();
-            BreakOverlay.Visibility = Visibility.Collapsed;
 
-            Log.Information("[OverlayWindow] Mola modu durduruldu");
+            Dispatcher.Invoke(() =>
+            {
+                if (BreakOverlay != null)
+                {
+                    BreakOverlay.Visibility = Visibility.Collapsed;
+                }
+            });
         }
 
         /// <summary>
-        /// İzleyici sayısını günceller.
+        /// İzleyici sayısını güncelle
         /// </summary>
         public void UpdateViewerCount(int count)
         {
             Dispatcher.Invoke(() =>
             {
-                ViewerCountText.Text = $"👥 {count:N0}";
+                if (ViewerCount != null)
+                {
+                    ViewerCount.Text = $"👥 {count:N0}";
+                }
             });
         }
 
         /// <summary>
-        /// Stream başlangıç zamanını ayarlar.
+        /// Yayın başlangıç zamanını ayarla
         /// </summary>
         public void SetStreamStartTime(DateTime startTime)
         {
             _streamStartTime = startTime;
+            _uptimeTimer.Start();
         }
 
         /// <summary>
-        /// Durum göstergesini günceller.
+        /// Durumu ayarla
         /// </summary>
         public void SetStatus(OverlayStatus status)
         {
+            _currentStatus = status;
+
             Dispatcher.Invoke(() =>
             {
-                StatusIndicator.Fill = status switch
+                if (StatusIndicator != null)
                 {
-                    OverlayStatus.Live => new SolidColorBrush(Color.FromRgb(16, 185, 129)), // Yeşil
-                    OverlayStatus.Connecting => new SolidColorBrush(Color.FromRgb(251, 191, 36)), // Sarı
-                    OverlayStatus.Error => new SolidColorBrush(Color.FromRgb(239, 68, 68)), // Kırmızı
-                    _ => new SolidColorBrush(Color.FromRgb(107, 114, 128)) // Gri
-                };
+                    StatusIndicator.Fill = status switch
+                    {
+                        OverlayStatus.Live => Brushes.LimeGreen,
+                        OverlayStatus.Connecting => Brushes.Yellow,
+                        OverlayStatus.Error => Brushes.Red,
+                        _ => Brushes.Gray
+                    };
+                }
 
-                TitleText.Text = status switch
+                if (StatusText != null)
                 {
-                    OverlayStatus.Live => "🔴 LIVE",
-                    OverlayStatus.Connecting => "Bağlanıyor...",
-                    OverlayStatus.Error => "Hata",
-                    _ => "UniCast"
-                };
+                    StatusText.Text = status switch
+                    {
+                        OverlayStatus.Live => "CANLI",
+                        OverlayStatus.Connecting => "BAĞLANIYOR",
+                        OverlayStatus.Error => "HATA",
+                        _ => "KAPALI"
+                    };
+                }
             });
         }
 
@@ -238,106 +243,116 @@ namespace UniCast.App.Overlay
 
         #region Event Handlers
 
-        private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                DragMove();
-            }
+            DragMove();
         }
 
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
-            WindowState = WindowState.Minimized;
+            Hide();
         }
 
         private void UptimeTimer_Tick(object? sender, EventArgs e)
         {
-            var uptime = DateTime.UtcNow - _streamStartTime;
-            UptimeText.Text = $"⏱ {uptime:hh\\:mm\\:ss}";
+            var elapsed = DateTime.Now - _streamStartTime;
+
+            Dispatcher.Invoke(() =>
+            {
+                if (UptimeText != null)
+                {
+                    UptimeText.Text = $"⏱ {elapsed:hh\\:mm\\:ss}";
+                }
+            });
         }
 
         private void BreakTimer_Tick(object? sender, EventArgs e)
         {
-            if (_breakRemainingSeconds > 0)
-            {
-                _breakRemainingSeconds--;
-                UpdateBreakTimer();
-            }
-            else
+            _breakMinutesRemaining--;
+
+            if (_breakMinutesRemaining <= 0)
             {
                 StopBreakMode();
+                return;
             }
-        }
 
-        private void UpdateBreakTimer()
-        {
-            var minutes = _breakRemainingSeconds / 60;
-            var seconds = _breakRemainingSeconds % 60;
-            BreakTimerText.Text = $"{minutes:D2}:{seconds:D2}";
+            UpdateBreakTimer();
         }
 
         #endregion
 
-        #region Helpers
+        #region Private Methods
 
-        private static string GetPlatformShort(ChatPlatform platform)
+        private void UpdateBreakTimer()
+        {
+            var minutes = _breakMinutesRemaining / 60;
+            var seconds = _breakMinutesRemaining % 60;
+
+            Dispatcher.Invoke(() =>
+            {
+                if (BreakCountdown != null)
+                {
+                    BreakCountdown.Text = $"{minutes:D2}:{seconds:D2}";
+                }
+            });
+        }
+
+        private void ApplyTheme(string theme)
+        {
+            // Tema uygulaması - şimdilik basit
+            // İleride genişletilebilir
+        }
+
+        private static string GetPlatformShort(CoreChatPlatform platform)
         {
             return platform switch
             {
-                ChatPlatform.YouTube => "YT",
-                ChatPlatform.Twitch => "TW",
-                ChatPlatform.TikTok => "TT",
-                ChatPlatform.Instagram => "IG",
-                ChatPlatform.Facebook => "FB",
-                ChatPlatform.Twitter => "X",
-                ChatPlatform.Discord => "DC",
-                ChatPlatform.Kick => "KK",
+                CoreChatPlatform.YouTube => "YT",
+                CoreChatPlatform.Twitch => "TW",
+                CoreChatPlatform.TikTok => "TT",
+                CoreChatPlatform.Instagram => "IG",
+                CoreChatPlatform.Facebook => "FB",
+                CoreChatPlatform.Twitter => "X",
+                CoreChatPlatform.Discord => "DC",
+                CoreChatPlatform.Kick => "KK",
                 _ => "?"
             };
         }
 
-        private static Brush GetPlatformBrush(ChatPlatform platform)
+        private static Brush GetPlatformBrush(CoreChatPlatform platform)
         {
             return platform switch
             {
-                ChatPlatform.YouTube => new SolidColorBrush(Color.FromRgb(255, 0, 0)),
-                ChatPlatform.Twitch => new SolidColorBrush(Color.FromRgb(145, 70, 255)),
-                ChatPlatform.TikTok => new SolidColorBrush(Color.FromRgb(0, 0, 0)),
-                ChatPlatform.Instagram => new SolidColorBrush(Color.FromRgb(225, 48, 108)),
-                ChatPlatform.Facebook => new SolidColorBrush(Color.FromRgb(66, 103, 178)),
-                ChatPlatform.Twitter => new SolidColorBrush(Color.FromRgb(29, 161, 242)),
-                ChatPlatform.Discord => new SolidColorBrush(Color.FromRgb(114, 137, 218)),
-                ChatPlatform.Kick => new SolidColorBrush(Color.FromRgb(83, 252, 24)),
-                _ => new SolidColorBrush(Color.FromRgb(128, 128, 128))
+                CoreChatPlatform.YouTube => new SolidColorBrush(Color.FromRgb(255, 0, 0)),
+                CoreChatPlatform.Twitch => new SolidColorBrush(Color.FromRgb(145, 70, 255)),
+                CoreChatPlatform.TikTok => new SolidColorBrush(Color.FromRgb(0, 0, 0)),
+                CoreChatPlatform.Instagram => new SolidColorBrush(Color.FromRgb(225, 48, 108)),
+                CoreChatPlatform.Facebook => new SolidColorBrush(Color.FromRgb(24, 119, 242)),
+                CoreChatPlatform.Twitter => new SolidColorBrush(Color.FromRgb(29, 161, 242)),
+                CoreChatPlatform.Discord => new SolidColorBrush(Color.FromRgb(114, 137, 218)),
+                CoreChatPlatform.Kick => new SolidColorBrush(Color.FromRgb(83, 252, 24)),
+                _ => Brushes.White
             };
         }
 
         #endregion
-
-        protected override void OnClosed(EventArgs e)
-        {
-            _uptimeTimer.Stop();
-            _breakTimer.Stop();
-            base.OnClosed(e);
-        }
     }
 
     /// <summary>
-    /// Chat mesajı view model.
+    /// Chat mesaj view model
     /// </summary>
     public class ChatMessageViewModel
     {
-        public string DisplayName { get; set; } = "";
-        public string Message { get; set; } = "";
-        public ChatPlatform Platform { get; set; }
-        public string PlatformShort { get; set; } = "";
-        public Brush PlatformColor { get; set; } = Brushes.Gray;
+        public string DisplayName { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public CoreChatPlatform Platform { get; set; }
+        public string PlatformShort { get; set; } = string.Empty;
+        public Brush PlatformColor { get; set; } = Brushes.White;
         public DateTime Timestamp { get; set; }
     }
 
     /// <summary>
-    /// Overlay durum türleri.
+    /// Overlay durumu
     /// </summary>
     public enum OverlayStatus
     {

@@ -1,190 +1,166 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
-using Serilog;
-using UniCast.LicenseServer.Models;
 
 namespace UniCast.LicenseServer.Services
 {
+    /// <summary>
+    /// Lisans servisi interface
+    /// </summary>
     public interface ILicenseService
     {
-        Task<ActivationResponse> ActivateAsync(ActivationRequest request, string clientIp);
-        Task<bool> DeactivateAsync(DeactivationRequest request);
-        Task<ValidationResponse> ValidateAsync(ValidationRequest request);
+        Task<ActivationResult> ActivateAsync(string licenseKey, string hardwareId, string? machineName, string? ipAddress);
+        Task<bool> DeactivateAsync(string licenseKey, string hardwareId);
+        Task<ValidationResult> ValidateAsync(string licenseKey, string hardwareId);
         Task<LicenseData> CreateLicenseAsync(CreateLicenseRequest request);
         Task<bool> RevokeLicenseAsync(string licenseId);
         Task<IEnumerable<LicenseData>> GetAllLicensesAsync();
     }
 
+    /// <summary>
+    /// Lisans servisi implementasyonu
+    /// </summary>
     public class LicenseService : ILicenseService
     {
         private readonly ILicenseRepository _repository;
-        private readonly string _privateKeyPath;
+        private readonly string _keysPath;
 
         public LicenseService(ILicenseRepository repository)
         {
             _repository = repository;
-            _privateKeyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Keys", "license_private.pem");
+            _keysPath = Path.Combine(AppContext.BaseDirectory, "Keys");
 
-            // Key dosyası yoksa oluştur
+            if (!Directory.Exists(_keysPath))
+            {
+                Directory.CreateDirectory(_keysPath);
+            }
+
             EnsureKeysExist();
         }
 
-        public async Task<ActivationResponse> ActivateAsync(ActivationRequest request, string clientIp)
+        public async Task<ActivationResult> ActivateAsync(string licenseKey, string hardwareId, string? machineName, string? ipAddress)
         {
-            // 1. Lisans key'ini bul
-            var license = await _repository.FindByKeyAsync(request.LicenseKey);
+            var license = await _repository.FindByKeyAsync(licenseKey);
 
             if (license == null)
             {
-                return new ActivationResponse(false, "Geçersiz lisans anahtarı", null);
+                return ActivationResult.Failed("Lisans bulunamadı");
             }
 
-            // 2. İptal edilmiş mi?
             if (license.IsRevoked)
             {
-                return new ActivationResponse(false, "Bu lisans iptal edilmiş", null);
+                return ActivationResult.Failed("Bu lisans iptal edilmiş");
             }
 
-            // 3. Süresi dolmuş mu?
-            if (license.IsExpired)
+            if (license.ExpiresAtUtc < DateTime.UtcNow)
             {
-                return new ActivationResponse(false, "Lisans süresi dolmuş", null);
+                return ActivationResult.Failed("Lisans süresi dolmuş");
             }
 
-            // 4. Bu donanım zaten kayıtlı mı?
-            var existingActivation = license.Activations.Find(a => a.HardwareId == request.HardwareId);
-
+            // Mevcut aktivasyon kontrolü
+            var existingActivation = license.Activations.FirstOrDefault(a => a.HardwareId == hardwareId);
             if (existingActivation != null)
             {
-                // Zaten aktif, sadece güncelle
                 existingActivation.LastSeenUtc = DateTime.UtcNow;
-                existingActivation.IpAddress = clientIp;
+                existingActivation.IpAddress = ipAddress;
                 await _repository.SaveAsync(license);
 
-                // İmzala ve döndür
-                license.Signature = SignLicense(license);
-                return new ActivationResponse(true, "Lisans zaten aktif", license);
+                return ActivationResult.Succeeded(license, "Mevcut aktivasyon güncellendi");
             }
 
-            // 5. Makine limiti kontrolü
+            // Makine limiti kontrolü
             if (license.Activations.Count >= license.MaxMachines)
             {
-                return new ActivationResponse(false,
-                    $"Maksimum makine sayısına ({license.MaxMachines}) ulaşıldı", null);
+                return ActivationResult.Failed($"Maksimum makine sayısına ({license.MaxMachines}) ulaşıldı");
             }
 
-            // 6. Yeni aktivasyon ekle
+            // Yeni aktivasyon
             var activation = new HardwareActivation
             {
-                HardwareId = request.HardwareId,
-                HardwareIdShort = request.HardwareIdShort,
-                MachineName = request.MachineName,
-                ComponentsHash = request.ComponentsHash,
+                HardwareId = hardwareId,
+                HardwareIdShort = hardwareId.Length > 8 ? hardwareId.Substring(0, 8) : hardwareId,
+                MachineName = machineName,
                 ActivatedAtUtc = DateTime.UtcNow,
                 LastSeenUtc = DateTime.UtcNow,
-                IpAddress = clientIp,
-                OsVersion = request.OsVersion
+                IpAddress = ipAddress,
+                OsVersion = Environment.OSVersion.ToString()
             };
 
             license.Activations.Add(activation);
+            license.Signature = await SignLicenseAsync(license);
             await _repository.SaveAsync(license);
 
-            // 7. İmzala ve döndür
-            license.Signature = SignLicense(license);
-
-            Log.Information("[LicenseService] Aktivasyon başarılı: {LicenseId}, Machine: {Machine}",
-                license.LicenseId, request.MachineName);
-
-            return new ActivationResponse(true, "Aktivasyon başarılı", license);
+            return ActivationResult.Succeeded(license, "Aktivasyon başarılı");
         }
 
-        public async Task<bool> DeactivateAsync(DeactivationRequest request)
+        public async Task<bool> DeactivateAsync(string licenseKey, string hardwareId)
         {
-            var license = await _repository.FindByIdAsync(request.LicenseId);
+            var license = await _repository.FindByKeyAsync(licenseKey);
+            if (license == null) return false;
 
-            if (license == null)
-            {
-                return false;
-            }
-
-            var activation = license.Activations.Find(a => a.HardwareId == request.HardwareId);
-
-            if (activation == null)
-            {
-                return false;
-            }
+            var activation = license.Activations.FirstOrDefault(a => a.HardwareId == hardwareId);
+            if (activation == null) return false;
 
             license.Activations.Remove(activation);
             await _repository.SaveAsync(license);
-
-            Log.Information("[LicenseService] Deaktivasyon başarılı: {LicenseId}, HW: {HW}",
-                license.LicenseId, request.HardwareId[..Math.Min(16, request.HardwareId.Length)]);
-
             return true;
         }
 
-        public async Task<ValidationResponse> ValidateAsync(ValidationRequest request)
+        public async Task<ValidationResult> ValidateAsync(string licenseKey, string hardwareId)
         {
-            var license = await _repository.FindByIdAsync(request.LicenseId);
+            var license = await _repository.FindByKeyAsync(licenseKey);
 
             if (license == null)
             {
-                return new ValidationResponse(false, LicenseStatus.NotFound, "Lisans bulunamadı");
+                return ValidationResult.Invalid("Lisans bulunamadı");
             }
 
             if (license.IsRevoked)
             {
-                return new ValidationResponse(false, LicenseStatus.Revoked, "Lisans iptal edilmiş");
+                return ValidationResult.Invalid("Lisans iptal edilmiş");
             }
 
-            if (license.IsExpired)
+            if (license.ExpiresAtUtc < DateTime.UtcNow)
             {
-                return new ValidationResponse(false, LicenseStatus.Expired, "Lisans süresi dolmuş");
+                return ValidationResult.Invalid("Lisans süresi dolmuş");
             }
 
-            var activation = license.Activations.Find(a => a.HardwareId == request.HardwareId);
-
+            var activation = license.Activations.FirstOrDefault(a => a.HardwareId == hardwareId);
             if (activation == null)
             {
-                return new ValidationResponse(false, LicenseStatus.HardwareMismatch,
-                    "Bu donanım için aktivasyon bulunamadı");
+                return ValidationResult.Invalid("Bu cihaz için aktivasyon bulunamadı");
             }
 
-            // Son görülme zamanını güncelle
+            // LastSeen güncelle
             activation.LastSeenUtc = DateTime.UtcNow;
+            license.LastValidationUtc = DateTime.UtcNow;
             await _repository.SaveAsync(license);
 
-            return new ValidationResponse(true, LicenseStatus.Valid, "Geçerli");
+            return ValidationResult.Valid(license);
         }
 
         public async Task<LicenseData> CreateLicenseAsync(CreateLicenseRequest request)
         {
-            var licenseKey = GenerateLicenseKey();
-            var licenseType = Enum.Parse<LicenseType>(request.Type, true);
-
             var license = new LicenseData
             {
                 LicenseId = Guid.NewGuid().ToString("N"),
-                LicenseKey = licenseKey,
-                Type = licenseType,
-                Features = GetFeaturesForType(licenseType),
-                LicenseeName = request.Name,
-                LicenseeEmail = request.Email,
+                LicenseKey = GenerateLicenseKey(),
+                Type = request.LicenseType,
+                Features = GetFeaturesForType(request.LicenseType),
+                LicenseeName = request.LicenseeName,
+                LicenseeEmail = request.LicenseeEmail,
                 IssuedAtUtc = DateTime.UtcNow,
                 ExpiresAtUtc = DateTime.UtcNow.AddDays(request.DurationDays),
                 MaxMachines = request.MaxMachines,
-                OfflineGraceDays = 7,
                 Activations = new List<HardwareActivation>()
             };
 
+            license.Signature = await SignLicenseAsync(license);
             await _repository.SaveAsync(license);
-
-            Log.Information("[LicenseService] Yeni lisans oluşturuldu: {LicenseId}, Key: {Key}, Type: {Type}",
-                license.LicenseId, MaskKey(licenseKey), licenseType);
 
             return license;
         }
@@ -192,17 +168,12 @@ namespace UniCast.LicenseServer.Services
         public async Task<bool> RevokeLicenseAsync(string licenseId)
         {
             var license = await _repository.FindByIdAsync(licenseId);
-
-            if (license == null)
-            {
-                return false;
-            }
+            if (license == null) return false;
 
             license.IsRevoked = true;
             license.RevokedAtUtc = DateTime.UtcNow;
             await _repository.SaveAsync(license);
 
-            Log.Information("[LicenseService] Lisans iptal edildi: {LicenseId}", licenseId);
             return true;
         }
 
@@ -211,243 +182,116 @@ namespace UniCast.LicenseServer.Services
             return await _repository.GetAllAsync();
         }
 
-        #region Helpers
-
-        private string SignLicense(LicenseData license)
-        {
-            try
-            {
-                if (!File.Exists(_privateKeyPath))
-                {
-                    Log.Warning("[LicenseService] Private key bulunamadı, imzalama atlanıyor");
-                    return "UNSIGNED";
-                }
-
-                var privateKey = File.ReadAllText(_privateKeyPath);
-                var dataToSign = license.GetSignableContent();
-                var dataBytes = Encoding.UTF8.GetBytes(dataToSign);
-
-                using var rsa = RSA.Create();
-                rsa.ImportFromPem(privateKey);
-
-                var signatureBytes = rsa.SignData(
-                    dataBytes,
-                    HashAlgorithmName.SHA256,
-                    RSASignaturePadding.Pkcs1);
-
-                return Convert.ToBase64String(signatureBytes);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "[LicenseService] İmzalama hatası");
-                return "SIGN_ERROR";
-            }
-        }
-
         private string GenerateLicenseKey()
         {
-            const string validChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-            const int segmentLength = 5;
-            const int segmentCount = 5;
+            var segments = new string[5];
+            var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Karıştırılabilir karakterler çıkarıldı
+            var random = RandomNumberGenerator.Create();
+            var bytes = new byte[5];
 
-            var segments = new string[segmentCount];
-
-            using var rng = RandomNumberGenerator.Create();
-            var bytes = new byte[segmentLength * (segmentCount - 1)];
-            rng.GetBytes(bytes);
-
-            for (int s = 0; s < segmentCount - 1; s++)
+            for (int i = 0; i < 4; i++)
             {
-                var segment = new char[segmentLength];
-                for (int c = 0; c < segmentLength; c++)
-                {
-                    var idx = bytes[s * segmentLength + c] % validChars.Length;
-                    segment[c] = validChars[idx];
-                }
-                segments[s] = new string(segment);
+                random.GetBytes(bytes);
+                segments[i] = new string(bytes.Select(b => chars[b % chars.Length]).ToArray());
             }
 
-            // Checksum segment
-            var baseKey = string.Join("", segments.Take(segmentCount - 1));
-            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(baseKey + "UniCastLicenseChecksum2025"));
-            var checksum = new char[segmentLength];
-            for (int i = 0; i < segmentLength; i++)
-                checksum[i] = validChars[hash[i] % validChars.Length];
-            segments[segmentCount - 1] = new string(checksum);
+            // Son segment checksum
+            var combined = string.Join("", segments.Take(4));
+            using var sha = SHA256.Create();
+            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(combined));
+            segments[4] = new string(hash.Take(5).Select(b => chars[b % chars.Length]).ToArray());
 
             return string.Join("-", segments);
         }
 
-        private static LicenseFeatures GetFeaturesForType(LicenseType type)
+        private long GetFeaturesForType(string type)
         {
-            return type switch
+            return type.ToLower() switch
             {
-                LicenseType.Trial => LicenseFeatures.TrialFeatures,
-                LicenseType.Personal => LicenseFeatures.StandardFeatures,
-                LicenseType.Professional => LicenseFeatures.ProFeatures,
-                LicenseType.Business => LicenseFeatures.ProFeatures,
-                LicenseType.Enterprise => LicenseFeatures.AllFeatures,
-                LicenseType.Lifetime => LicenseFeatures.AllFeatures,
-                _ => LicenseFeatures.TrialFeatures
+                "trial" => 0x03, // BasicStreaming | ChatIntegration
+                "personal" => 0x3F, // Standard features + NoWatermark
+                "professional" => 0x3FFF,
+                "business" => 0xFFFFFF,
+                "enterprise" => -1L, // All features
+                _ => 0x03
             };
+        }
+
+        private async Task<string> SignLicenseAsync(LicenseData license)
+        {
+            var privateKeyPath = Path.Combine(_keysPath, "private.key");
+            if (!File.Exists(privateKeyPath))
+            {
+                return string.Empty;
+            }
+
+            var data = $"{license.LicenseId}|{license.LicenseKey}|{license.ExpiresAtUtc:O}";
+            var dataBytes = Encoding.UTF8.GetBytes(data);
+
+            using var rsa = RSA.Create();
+            var privateKey = await File.ReadAllTextAsync(privateKeyPath);
+            rsa.ImportFromPem(privateKey);
+
+            var signature = rsa.SignData(dataBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            return Convert.ToBase64String(signature);
         }
 
         private void EnsureKeysExist()
         {
-            var keysDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Keys");
-            Directory.CreateDirectory(keysDir);
-
-            var privateKeyPath = Path.Combine(keysDir, "license_private.pem");
-            var publicKeyPath = Path.Combine(keysDir, "license_public.pem");
+            var privateKeyPath = Path.Combine(_keysPath, "private.key");
+            var publicKeyPath = Path.Combine(_keysPath, "public.key");
 
             if (!File.Exists(privateKeyPath) || !File.Exists(publicKeyPath))
             {
-                Log.Information("[LicenseService] RSA key pair oluşturuluyor...");
-
                 using var rsa = RSA.Create(2048);
+
                 var privateKey = rsa.ExportRSAPrivateKeyPem();
-                var publicKey = rsa.ExportSubjectPublicKeyInfoPem();
+                var publicKey = rsa.ExportRSAPublicKeyPem();
 
                 File.WriteAllText(privateKeyPath, privateKey);
                 File.WriteAllText(publicKeyPath, publicKey);
-
-                Log.Information("[LicenseService] RSA key pair oluşturuldu");
-                Log.Warning("[LicenseService] ÖNEMLİ: Public key'i client uygulamasına kopyalayın!");
-                Log.Information("[LicenseService] Public key path: {Path}", publicKeyPath);
             }
         }
+    }
 
-        private static string MaskKey(string key)
+    // Result classes
+    public class ActivationResult
+    {
+        public bool Success { get; set; }
+        public string? ErrorMessage { get; set; }
+        public string? Message { get; set; }
+        public LicenseData? License { get; set; }
+
+        public static ActivationResult Succeeded(LicenseData license, string message) => new()
         {
-            if (string.IsNullOrEmpty(key) || key.Length < 10)
-                return "***";
-            return key[..5] + "-***-" + key[^5..];
-        }
+            Success = true,
+            License = license,
+            Message = message
+        };
 
-        #endregion
-    }
-
-    // Response modelleri
-    public record ActivationResponse(bool Success, string? Message, LicenseData? License);
-    public record ValidationResponse(bool Valid, LicenseStatus Status, string? Message);
-
-    // Lisans modelleri (client ile paylaşılan)
-    public class LicenseData
-    {
-        public string LicenseId { get; set; } = "";
-        public string LicenseKey { get; set; } = "";
-        public LicenseType Type { get; set; }
-        public LicenseFeatures Features { get; set; }
-        public string LicenseeName { get; set; } = "";
-        public string LicenseeEmail { get; set; } = "";
-        public DateTime IssuedAtUtc { get; set; }
-        public DateTime ExpiresAtUtc { get; set; }
-        public int MaxMachines { get; set; } = 1;
-        public int OfflineGraceDays { get; set; } = 7;
-        public List<HardwareActivation> Activations { get; set; } = new();
-        public string Signature { get; set; } = "";
-        public bool IsRevoked { get; set; }
-        public DateTime? RevokedAtUtc { get; set; }
-        public DateTime LastValidationUtc { get; set; }
-
-        public bool IsExpired => DateTime.UtcNow > ExpiresAtUtc;
-        public bool IsTrial => Type == LicenseType.Trial;
-
-        public string GetSignableContent()
+        public static ActivationResult Failed(string error) => new()
         {
-            var sb = new StringBuilder();
-            sb.Append(LicenseId);
-            sb.Append('|');
-            sb.Append(LicenseKey);
-            sb.Append('|');
-            sb.Append((int)Type);
-            sb.Append('|');
-            sb.Append((int)Features);
-            sb.Append('|');
-            sb.Append(LicenseeName);
-            sb.Append('|');
-            sb.Append(LicenseeEmail);
-            sb.Append('|');
-            sb.Append(IssuedAtUtc.ToString("O"));
-            sb.Append('|');
-            sb.Append(ExpiresAtUtc.ToString("O"));
-            sb.Append('|');
-            sb.Append(MaxMachines);
-
-            foreach (var activation in Activations)
-            {
-                sb.Append('|');
-                sb.Append(activation.HardwareId);
-            }
-
-            return sb.ToString();
-        }
+            Success = false,
+            ErrorMessage = error
+        };
     }
 
-    public class HardwareActivation
+    public class ValidationResult
     {
-        public string HardwareId { get; set; } = "";
-        public string HardwareIdShort { get; set; } = "";
-        public string MachineName { get; set; } = "";
-        public string ComponentsHash { get; set; } = "";
-        public DateTime ActivatedAtUtc { get; set; }
-        public DateTime LastSeenUtc { get; set; }
-        public string? IpAddress { get; set; }
-        public string? OsVersion { get; set; }
-    }
+        public bool IsValid { get; set; }
+        public string? ErrorMessage { get; set; }
+        public LicenseData? License { get; set; }
 
-    public enum LicenseType
-    {
-        Trial = 0,
-        Personal = 1,
-        Professional = 2,
-        Business = 3,
-        Enterprise = 4,
-        MonthlySubscription = 10,
-        YearlySubscription = 11,
-        Lifetime = 20,
-        Educational = 30,
-        NFR = 40
-    }
+        public static ValidationResult Valid(LicenseData license) => new()
+        {
+            IsValid = true,
+            License = license
+        };
 
-    [Flags]
-    public enum LicenseFeatures
-    {
-        None = 0,
-        BasicStreaming = 1 << 0,
-        MultiPlatform = 1 << 1,
-        ChatIntegration = 1 << 2,
-        Overlay = 1 << 3,
-        Recording = 1 << 4,
-        CustomBranding = 1 << 5,
-        AdvancedAnalytics = 1 << 6,
-        MultiCam = 1 << 7,
-        VirtualCamera = 1 << 8,
-        RTMP = 1 << 9,
-        SRT = 1 << 10,
-        CloudStorage = 1 << 11,
-        TeamCollaboration = 1 << 12,
-        APIAccess = 1 << 13,
-        WhiteLabel = 1 << 14,
-        PrioritySupport = 1 << 15,
-
-        TrialFeatures = BasicStreaming | MultiPlatform | ChatIntegration | Overlay,
-        StandardFeatures = TrialFeatures | Recording | CustomBranding,
-        ProFeatures = StandardFeatures | AdvancedAnalytics | MultiCam | VirtualCamera | RTMP | SRT,
-        AllFeatures = int.MaxValue
-    }
-
-    public enum LicenseStatus
-    {
-        Valid = 0,
-        NotFound = 1,
-        Expired = 2,
-        HardwareMismatch = 3,
-        InvalidSignature = 4,
-        Revoked = 5,
-        Tampered = 6,
-        MachineLimitExceeded = 7,
-        ServerUnreachable = 8,
-        GracePeriod = 9
+        public static ValidationResult Invalid(string error) => new()
+        {
+            IsValid = false,
+            ErrorMessage = error
+        };
     }
 }

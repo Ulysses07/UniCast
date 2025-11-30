@@ -1,93 +1,86 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media.Animation;
-using System.Windows.Threading;
 
 namespace UniCast.App.Views
 {
     /// <summary>
-    /// Uygulama açılış ekranı.
-    /// Yükleme durumunu gösterir.
+    /// Uygulama açılış ekranı
     /// </summary>
     public partial class SplashWindow : Window
     {
-        private readonly DispatcherTimer _animationTimer;
-        private double _progress;
+        public bool InitializationSuccess { get; private set; }
+        public string? ErrorMessage { get; private set; }
 
         public SplashWindow()
         {
             InitializeComponent();
-
-            // Loading bar animasyonu
-            _animationTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(50)
-            };
-            _animationTimer.Tick += AnimationTimer_Tick;
-            _animationTimer.Start();
-
-            // Fade-in animasyonu
-            Opacity = 0;
-            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
-            BeginAnimation(OpacityProperty, fadeIn);
+            Loaded += SplashWindow_Loaded;
         }
 
-        private void AnimationTimer_Tick(object? sender, EventArgs e)
+        private async void SplashWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            _progress += 2;
-
-            if (_progress > 100)
-                _progress = 0;
-
-            // Loading bar genişliğini güncelle
-            var maxWidth = LoadingBar.ActualWidth > 0 ?
-                ((Grid)LoadingBar.Parent).ActualWidth : 320;
-
-            LoadingBar.Width = (maxWidth * Math.Min(_progress, 100)) / 100;
+            try
+            {
+                await InitializeApplicationAsync();
+                InitializationSuccess = true;
+            }
+            catch (Exception ex)
+            {
+                InitializationSuccess = false;
+                ErrorMessage = ex.Message;
+            }
+            finally
+            {
+                Close();
+            }
         }
 
-        /// <summary>
-        /// Durum metnini günceller.
-        /// </summary>
-        public void UpdateStatus(string status)
+        private async Task InitializeApplicationAsync()
+        {
+            // Step 1: Temel kontroller
+            UpdateProgress(0, "Sistem kontrolleri yapılıyor...");
+            await Task.Delay(300);
+
+            // Step 2: Yapılandırma yükleme
+            UpdateProgress(20, "Yapılandırma yükleniyor...");
+            await Task.Delay(300);
+
+            // Step 3: Lisans kontrolü
+            UpdateProgress(40, "Lisans doğrulanıyor...");
+            await Task.Delay(500);
+
+            // Step 4: Servisler başlatılıyor
+            UpdateProgress(60, "Servisler başlatılıyor...");
+            await Task.Delay(400);
+
+            // Step 5: UI hazırlanıyor
+            UpdateProgress(80, "Arayüz hazırlanıyor...");
+            await Task.Delay(300);
+
+            // Step 6: Tamamlandı
+            UpdateProgress(100, "Hazır!");
+            await Task.Delay(200);
+        }
+
+        private void UpdateProgress(int value, string status)
         {
             Dispatcher.Invoke(() =>
             {
-                StatusText.Text = status;
+                if (LoadingBar != null)
+                {
+                    LoadingBar.Value = value;
+                }
+                if (StatusText != null)
+                {
+                    StatusText.Text = status;
+                }
             });
         }
 
-        /// <summary>
-        /// İlerleme yüzdesini günceller.
-        /// </summary>
-        public void UpdateProgress(double percentage)
+        public void SetProgress(int value, string status)
         {
-            Dispatcher.Invoke(() =>
-            {
-                _progress = Math.Clamp(percentage, 0, 100);
-
-                var maxWidth = ((Grid)LoadingBar.Parent).ActualWidth;
-                LoadingBar.Width = (maxWidth * _progress) / 100;
-            });
-        }
-
-        /// <summary>
-        /// Animasyonlu kapatma.
-        /// </summary>
-        public new void Close()
-        {
-            _animationTimer.Stop();
-
-            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(200));
-            fadeOut.Completed += (s, e) => base.Close();
-            BeginAnimation(OpacityProperty, fadeOut);
-        }
-
-        protected override void OnClosed(EventArgs e)
-        {
-            _animationTimer.Stop();
-            base.OnClosed(e);
+            UpdateProgress(value, status);
         }
     }
 }

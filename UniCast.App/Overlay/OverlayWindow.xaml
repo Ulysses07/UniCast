@@ -2,157 +2,109 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="UniCast Overlay"
-        Width="400" Height="300"
+        Width="400" Height="600"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
-        ResizeMode="NoResize">
-
-    <Border x:Name="MainBorder"
-            Background="#E6181825"
-            CornerRadius="10"
-            BorderBrush="#3D3D4D"
-            BorderThickness="1">
-
-        <Grid Margin="10">
+        ResizeMode="NoResize"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+    
+    <Border Background="#E6181825" CornerRadius="10">
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-
+            
             <!-- Header -->
-            <Border Grid.Row="0" 
-                    Background="#2D2D3D" 
-                    CornerRadius="6"
-                    Padding="10,6"
-                    Margin="0,0,0,8"
-                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
+            <Border Grid.Row="0" Background="#20FFFFFF" CornerRadius="10,10,0,0" Padding="10,8">
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0" Orientation="Horizontal">
-                        <Ellipse Width="8" Height="8" 
-                                 x:Name="StatusIndicator"
-                                 Fill="#10B981" Margin="0,0,8,0"/>
-                        <TextBlock x:Name="TitleText"
-                                   Text="UniCast" 
-                                   Foreground="#FFFFFF"
-                                   FontWeight="SemiBold"
-                                   VerticalAlignment="Center"/>
+                    
+                    <!-- Status Indicator -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse x:Name="StatusIndicator" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
+                        <TextBlock x:Name="StatusText" Text="KAPALI" Foreground="#888" FontSize="11" FontWeight="SemiBold"/>
                     </StackPanel>
-
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button x:Name="MinimizeButton"
-                                Content="─"
-                                Width="24" Height="24"
-                                Background="Transparent"
-                                Foreground="#A0A0B0"
-                                BorderThickness="0"
-                                Click="MinimizeButton_Click"
-                                Cursor="Hand"/>
-                    </StackPanel>
+                    
+                    <!-- Title -->
+                    <TextBlock Grid.Column="1" Text="UniCast" Foreground="White" FontWeight="Bold" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    
+                    <!-- Minimize Button -->
+                    <Button Grid.Column="2" Content="─" Width="24" Height="24"
+                            Background="Transparent" Foreground="#888" BorderThickness="0"
+                            Click="MinimizeButton_Click" Cursor="Hand"
+                            ToolTip="Gizle"/>
                 </Grid>
             </Border>
-
+            
             <!-- Chat Messages -->
-            <ScrollViewer Grid.Row="1" 
-                          x:Name="ChatScrollViewer"
+            <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1" 
                           VerticalScrollBarVisibility="Hidden"
-                          HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl x:Name="ChatItemsControl">
+                          Margin="10">
+                <ItemsControl x:Name="ChatMessages">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="#1D1D2D"
-                                    CornerRadius="4"
-                                    Padding="8,6"
-                                    Margin="0,2">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <!-- Platform badge -->
-                                    <Border Grid.Column="0"
-                                            Background="{Binding PlatformColor}"
-                                            CornerRadius="3"
-                                            Padding="4,2"
-                                            Margin="0,0,8,0"
-                                            VerticalAlignment="Top">
-                                        <TextBlock Text="{Binding PlatformShort}"
-                                                   Foreground="White"
-                                                   FontSize="10"
-                                                   FontWeight="Bold"/>
-                                    </Border>
-
-                                    <!-- Message content -->
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock FontWeight="SemiBold" FontSize="12">
-                                            <Run Text="{Binding DisplayName}" Foreground="#A855F7"/>
-                                        </TextBlock>
-                                        <TextBlock Text="{Binding Message}"
-                                                   Foreground="#E0E0E0"
-                                                   TextWrapping="Wrap"
-                                                   FontSize="12"/>
+                            <Border Margin="0,3" Padding="8,5" Background="#15FFFFFF" CornerRadius="5">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <!-- Platform Badge -->
+                                        <Border Background="{Binding PlatformColor}" CornerRadius="3" 
+                                                Padding="4,1" Margin="0,0,6,0">
+                                            <TextBlock Text="{Binding PlatformShort}" 
+                                                       Foreground="White" FontSize="9" FontWeight="Bold"/>
+                                        </Border>
+                                        <!-- Username -->
+                                        <TextBlock Text="{Binding DisplayName}" 
+                                                   Foreground="#BB86FC" FontWeight="SemiBold" FontSize="12"/>
                                     </StackPanel>
-                                </Grid>
+                                    <!-- Message -->
+                                    <TextBlock Text="{Binding Message}" 
+                                               Foreground="White" FontSize="13" 
+                                               TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                </StackPanel>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
-
-            <!-- Break Mode Overlay -->
-            <Border Grid.Row="1"
-                    x:Name="BreakOverlay"
-                    Background="#F0181825"
-                    CornerRadius="6"
-                    Visibility="Collapsed">
+            
+            <!-- Break Overlay -->
+            <Border x:Name="BreakOverlay" Grid.Row="1" 
+                    Background="#DD181825" Visibility="Collapsed"
+                    CornerRadius="0">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="☕" FontSize="48" HorizontalAlignment="Center"/>
-                    <TextBlock x:Name="BreakText"
-                               Text="Mola"
-                               Foreground="#FFFFFF"
-                               FontSize="24"
-                               FontWeight="Bold"
-                               HorizontalAlignment="Center"
-                               Margin="0,10,0,0"/>
-                    <TextBlock x:Name="BreakTimerText"
-                               Text="05:00"
-                               Foreground="#A0A0B0"
-                               FontSize="36"
-                               FontFamily="Consolas"
+                    <TextBlock Text="☕" FontSize="64" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Mola" FontSize="24" Foreground="White" 
+                               FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10,0,5"/>
+                    <TextBlock x:Name="BreakCountdown" Text="05:00" 
+                               FontSize="48" Foreground="#e94560" 
+                               FontFamily="Consolas" FontWeight="Bold"
                                HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
-
-            <!-- Footer / Status Bar -->
-            <Border Grid.Row="2" Margin="0,8,0,0">
+            
+            <!-- Footer -->
+            <Border Grid.Row="2" Background="#15FFFFFF" CornerRadius="0,0,10,10" Padding="10,6">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Column="0"
-                               x:Name="ViewerCountText"
-                               Text="👥 0"
-                               Foreground="#6A6A7A"
-                               FontSize="11"
-                               VerticalAlignment="Center"/>
-
-                    <TextBlock Grid.Column="1"
-                               x:Name="UptimeText"
-                               Text="⏱ 00:00:00"
-                               Foreground="#6A6A7A"
-                               FontSize="11"
-                               VerticalAlignment="Center"/>
+                    
+                    <TextBlock x:Name="ViewerCount" Grid.Column="0" 
+                               Text="👥 0" Foreground="#aaa" FontSize="12"/>
+                    <TextBlock x:Name="UptimeText" Grid.Column="1" 
+                               Text="⏱ 00:00:00" Foreground="#aaa" FontSize="12"
+                               HorizontalAlignment="Right"/>
                 </Grid>
             </Border>
         </Grid>
