@@ -12,7 +12,6 @@ namespace UniCast.App
 {
     /// <summary>
     /// Lisans aktivasyon penceresi.
-    /// DÜZELTME: AppIntegration.cs'den ayrıldı, düzgün XAML code-behind yapısı.
     /// </summary>
     public partial class ActivationWindow : Window
     {
@@ -24,9 +23,6 @@ namespace UniCast.App
             LoadHardwareId();
         }
 
-        /// <summary>
-        /// Makine kimliğini yükler ve gösterir.
-        /// </summary>
         private void LoadHardwareId()
         {
             try
@@ -36,7 +32,7 @@ namespace UniCast.App
 
                 if (!hwInfo.IsValid)
                 {
-                    ShowStatus("⚠️ Donanım kimliği düşük güvenilirlikte. Aktivasyon sorunlu olabilir.", isError: true);
+                    ShowStatus("⚠️ Donanım kimliği düşük güvenilirlikte.", isError: true);
                 }
             }
             catch (Exception ex)
@@ -47,10 +43,8 @@ namespace UniCast.App
             }
         }
 
-        /// <summary>
-        /// Hardware ID kopyalama butonu.
-        /// </summary>
-        private void BtnCopyHwId_Click(object sender, RoutedEventArgs e)
+        // HATA DÜZELTME 1: Metot adı XAML ile eşitlendi (BtnCopyHardwareId_Click)
+        private void BtnCopyHardwareId_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -66,14 +60,17 @@ namespace UniCast.App
             }
         }
 
-        /// <summary>
-        /// Lisans anahtarı değiştiğinde format kontrolü.
-        /// </summary>
+        // HATA DÜZELTME 2: Eksik olan İptal metodu eklendi
+        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
+        }
+
         private void TxtLicenseKey_TextChanged(object sender, TextChangedEventArgs e)
         {
             var key = txtLicenseKey.Text?.Trim() ?? "";
 
-            // Otomatik tire ekleme
             if (key.Length > 0 && !key.Contains("-"))
             {
                 key = FormatLicenseKey(key.Replace("-", ""));
@@ -82,39 +79,27 @@ namespace UniCast.App
                 txtLicenseKey.CaretIndex = Math.Min(caretPos + 1, key.Length);
             }
 
-            // Aktifleştir butonunu etkinleştir/devre dışı bırak
             btnActivate.IsEnabled = LicenseKeyFormat.Validate(key) && !_isActivating;
 
-            // Hata mesajını temizle
             if (StatusBorder.Visibility == Visibility.Visible)
             {
                 StatusBorder.Visibility = Visibility.Collapsed;
             }
         }
 
-        /// <summary>
-        /// Lisans anahtarını formatla (tire ekle).
-        /// </summary>
         private static string FormatLicenseKey(string raw)
         {
             if (string.IsNullOrEmpty(raw)) return "";
-
             raw = raw.Replace("-", "").Replace(" ", "").ToUpperInvariant();
-
             var result = "";
             for (int i = 0; i < raw.Length && i < 25; i++)
             {
-                if (i > 0 && i % 5 == 0)
-                    result += "-";
+                if (i > 0 && i % 5 == 0) result += "-";
                 result += raw[i];
             }
             return result;
         }
 
-        /// <summary>
-        /// Aktivasyon butonu tıklandığında.
-        /// DÜZELTME: async void yerine try-catch ile güvenli hale getirildi.
-        /// </summary>
         private async void BtnActivate_Click(object sender, RoutedEventArgs e)
         {
             if (_isActivating) return;
@@ -127,7 +112,6 @@ namespace UniCast.App
                 return;
             }
 
-            // Format kontrolü
             if (!LicenseKeyFormat.Validate(licenseKey))
             {
                 ShowStatus("Geçersiz lisans anahtarı formatı.", isError: true);
@@ -146,29 +130,20 @@ namespace UniCast.App
                 if (result.IsValid && result.License != null)
                 {
                     Log.Information("Lisans aktivasyonu başarılı: {Type}", result.License.Type);
-
-                    MessageBox.Show(
-                        $"Aktivasyon başarılı!\n\n" +
-                        $"Tür: {result.License.Type}\n" +
-                        $"Kullanıcı: {result.License.LicenseeName}\n" +
-                        $"Bitiş: {result.License.ExpiresAtUtc:dd.MM.yyyy}",
-                        "Başarılı",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
-
+                    MessageBox.Show($"Aktivasyon başarılı!\n\nTür: {result.License.Type}", "Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
                     DialogResult = true;
                     Close();
                 }
                 else
                 {
-                    Log.Warning("Lisans aktivasyonu başarısız: {Status} - {Message}", result.Status, result.Message);
+                    Log.Warning("Aktivasyon başarısız: {Message}", result.Message);
                     ShowStatus($"Aktivasyon başarısız: {result.Message}", isError: true);
                 }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Aktivasyon exception");
-                ShowStatus($"Bağlantı hatası: {ex.Message}", isError: true);
+                Log.Error(ex, "Aktivasyon hatası");
+                ShowStatus($"Hata: {ex.Message}", isError: true);
             }
             finally
             {
@@ -178,9 +153,6 @@ namespace UniCast.App
             }
         }
 
-        /// <summary>
-        /// Lisans satın alma sayfasını aç.
-        /// </summary>
         private void BtnBuyLicense_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -191,20 +163,12 @@ namespace UniCast.App
                     UseShellExecute = true
                 });
             }
-            catch (Exception ex)
+            catch
             {
-                Log.Warning(ex, "Tarayıcı açma hatası");
-                MessageBox.Show(
-                    "Tarayıcı açılamadı. Lütfen manuel olarak https://unicast.app/buy adresini ziyaret edin.",
-                    "Bilgi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                MessageBox.Show("Tarayıcı açılamadı.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
-        /// <summary>
-        /// Durum mesajı göster.
-        /// </summary>
         private void ShowStatus(string message, bool isError)
         {
             txtStatus.Text = message;
