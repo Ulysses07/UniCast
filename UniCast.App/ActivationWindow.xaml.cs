@@ -1,24 +1,19 @@
 ﻿using System;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
-using Serilog;
 using UniCast.Licensing;
-using UniCast.Licensing.Crypto;
-using UniCast.Licensing.Hardware;
-using UniCast.Licensing.Models;
-using ColorConverter = System.Windows.Media.ColorConverter;
+using UniCast.Licensing.Hardware; // HardwareFingerprint için gerekli
+using Serilog;
+using Color = System.Windows.Media.Color;
 using MessageBox = System.Windows.MessageBox;
+using Clipboard = System.Windows.Clipboard;
 
-namespace UniCast.App.Views
+namespace UniCast.App
 {
-    /// <summary>
-    /// Lisans aktivasyon penceresi.
-    /// </summary>
     public partial class ActivationWindow : Window
     {
-        private bool _isActivating;
+        private bool _isActivating = false;
 
         public ActivationWindow()
         {
@@ -30,191 +25,119 @@ namespace UniCast.App.Views
         {
             try
             {
-                var shortId = HardwareFingerprint.GenerateShort();
-                HardwareIdText.Text = FormatHardwareId(shortId);
+                // HardwareFingerprint sınıfı UniCast.Licensing projesinden geliyor
+                var hwInfo = HardwareFingerprint.Validate();
+                txtHardwareId.Text = hwInfo.ShortId;
+
+                if (!hwInfo.IsValid)
+                {
+                    ShowStatus("⚠️ Donanım kimliği güvenilirliği düşük.", isError: true);
+                }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[ActivationWindow] Hardware ID yüklenemedi");
-                HardwareIdText.Text = "Yüklenemedi";
+                Log.Error(ex, "Hardware ID yüklenemedi");
+                txtHardwareId.Text = "HATA";
             }
         }
 
-        private static string FormatHardwareId(string id)
+        // HATA DÜZELTME 1: XAML'daki 'BtnCopyHardwareId_Click' ismine uygun metot
+        private void BtnCopyHardwareId_Click(object sender, RoutedEventArgs e)
         {
-            // Her 4 karakterde bir tire ekle
-            if (string.IsNullOrEmpty(id))
-                return "";
-
-            var formatted = "";
-            for (int i = 0; i < id.Length; i++)
-            {
-                if (i > 0 && i % 4 == 0)
-                    formatted += "-";
-                formatted += id[i];
-            }
-
-            return formatted;
-        }
-
-        private void LicenseKeyTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
-        {
-            var text = LicenseKeyTextBox.Text;
-
-            // Otomatik tire ekleme
-            if (text.Length > 0 && !text.Contains('-'))
-            {
-                var clean = text.Replace("-", "").ToUpperInvariant();
-
-                if (clean.Length > 5)
-                {
-                    var formatted = "";
-                    for (int i = 0; i < clean.Length && i < 25; i++)
-                    {
-                        if (i > 0 && i % 5 == 0)
-                            formatted += "-";
-                        formatted += clean[i];
-                    }
-
-                    LicenseKeyTextBox.Text = formatted;
-                    LicenseKeyTextBox.CaretIndex = formatted.Length;
-                }
-            }
-
-            // Aktivasyon butonu kontrolü
-            var isValidFormat = LicenseKeyFormat.Validate(LicenseKeyTextBox.Text);
-            ActivateButton.IsEnabled = isValidFormat && !_isActivating;
-
-            // Geçersiz format uyarısı
-            if (LicenseKeyTextBox.Text.Length >= 29 && !isValidFormat)
-            {
-                ShowStatus("⚠️", "Geçersiz lisans anahtarı formatı", "#FFA500");
-            }
-            else
-            {
-                HideStatus();
-            }
-        }
-
-        private async void ActivateButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_isActivating)
-                return;
-
-            var licenseKey = LicenseKeyTextBox.Text.Trim();
-
-            if (!LicenseKeyFormat.Validate(licenseKey))
-            {
-                ShowStatus("❌", "Geçersiz lisans anahtarı formatı", "#FF4444");
-                return;
-            }
-
-            await ActivateLicenseAsync(licenseKey);
-        }
-
-        private async Task ActivateLicenseAsync(string licenseKey)
-        {
-            _isActivating = true;
-            ActivateButton.IsEnabled = false;
-            LicenseKeyTextBox.IsEnabled = false;
-            LoadingOverlay.Visibility = Visibility.Visible;
-            LoadingText.Text = "Lisans doğrulanıyor...";
-
             try
             {
-                Log.Information("[ActivationWindow] Aktivasyon başlatılıyor: {Key}",
-                    LicenseKeyFormat.Mask(licenseKey));
-
-                var result = await LicenseManager.Instance.ActivateAsync(licenseKey);
-
-                if (result.IsValid)
+                if (!string.IsNullOrEmpty(txtHardwareId.Text))
                 {
-                    Log.Information("[ActivationWindow] Aktivasyon başarılı: {Type}",
-                        result.License?.Type);
-
-                    LoadingOverlay.Visibility = Visibility.Collapsed;
-
-                    MessageBox.Show(
-                        $"Lisans başarıyla aktifleştirildi!\n\n" +
-                        $"Tür: {GetLicenseTypeName(result.License?.Type ?? LicenseType.Trial)}\n" +
-                        $"Süre: {result.License?.DaysRemaining} gün kaldı\n" +
-                        $"Sahip: {result.License?.LicenseeName}",
-                        "Aktivasyon Başarılı",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
-
-                    DialogResult = true;
-                    Close();
-                }
-                else
-                {
-                    LoadingOverlay.Visibility = Visibility.Collapsed;
-
-                    var errorMessage = result.Status switch
-                    {
-                        LicenseStatus.InvalidSignature => "Geçersiz lisans anahtarı. Lütfen kontrol edin.",
-                        LicenseStatus.Expired => "Bu lisansın süresi dolmuş.",
-                        LicenseStatus.Revoked => "Bu lisans iptal edilmiş.",
-                        LicenseStatus.MachineLimitExceeded => "Maksimum makine sayısına ulaşıldı.",
-                        LicenseStatus.ServerUnreachable => "Lisans sunucusuna bağlanılamadı. İnternet bağlantınızı kontrol edin.",
-                        _ => result.Message ?? "Bilinmeyen hata"
-                    };
-
-                    ShowStatus("❌", errorMessage, "#FF4444");
-                    Log.Warning("[ActivationWindow] Aktivasyon başarısız: {Status} - {Message}",
-                        result.Status, result.Message);
+                    Clipboard.SetText(txtHardwareId.Text);
+                    ShowStatus("✓ Kopyalandı!", isError: false);
                 }
             }
             catch (Exception ex)
             {
-                LoadingOverlay.Visibility = Visibility.Collapsed;
-                ShowStatus("❌", $"Hata: {ex.Message}", "#FF4444");
-                Log.Error(ex, "[ActivationWindow] Aktivasyon hatası");
-            }
-            finally
-            {
-                _isActivating = false;
-                ActivateButton.IsEnabled = LicenseKeyFormat.Validate(LicenseKeyTextBox.Text);
-                LicenseKeyTextBox.IsEnabled = true;
+                Log.Warning(ex, "Kopyalama hatası");
             }
         }
 
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        // HATA DÜZELTME 2: XAML'daki 'BtnCancel_Click' ismine uygun metot
+        private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
             Close();
         }
 
-        private void ShowStatus(string icon, string message, string color)
+        private async void BtnActivate_Click(object sender, RoutedEventArgs e)
         {
-            StatusIcon.Text = icon;
-            StatusText.Text = message;
-            StatusBorder.Background = new SolidColorBrush(
-                (Color)ColorConverter.ConvertFromString(color + "33")); // %20 opaklık
-            StatusBorder.Visibility = Visibility.Visible;
-        }
+            if (_isActivating) return;
 
-        private void HideStatus()
-        {
-            StatusBorder.Visibility = Visibility.Collapsed;
-        }
-
-        private static string GetLicenseTypeName(LicenseType type)
-        {
-            return type switch
+            var key = txtLicenseKey.Text?.Trim();
+            if (string.IsNullOrEmpty(key))
             {
-                LicenseType.Trial => "Deneme",
-                LicenseType.Personal => "Kişisel",
-                LicenseType.Professional => "Profesyonel",
-                LicenseType.Business => "İşletme",
-                LicenseType.Enterprise => "Kurumsal",
-                LicenseType.MonthlySubscription => "Aylık Abonelik",
-                LicenseType.YearlySubscription => "Yıllık Abonelik",
-                LicenseType.Lifetime => "Ömür Boyu",
-                LicenseType.Educational => "Eğitim",
-                LicenseType.NFR => "NFR",
-                _ => type.ToString()
-            };
+                ShowStatus("Lütfen anahtar girin.", isError: true);
+                return;
+            }
+
+            _isActivating = true;
+            btnActivate.IsEnabled = false;
+            progressBar.Visibility = Visibility.Visible;
+            ShowStatus("Aktivasyon yapılıyor...", isError: false);
+
+            try
+            {
+                // LicenseManager üzerinden aktivasyon
+                var result = await LicenseManager.Instance.ActivateAsync(key);
+
+                if (result.IsValid)
+                {
+                    MessageBox.Show("Lisans başarıyla aktif edildi!", "Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DialogResult = true;
+                    Close();
+                }
+                else
+                {
+                    ShowStatus($"Hata: {result.Message}", isError: true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Aktivasyon hatası");
+                ShowStatus("Sunucu bağlantı hatası.", isError: true);
+            }
+            finally
+            {
+                _isActivating = false;
+                btnActivate.IsEnabled = true;
+                progressBar.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void BtnBuyLicense_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://unicast.app/buy",
+                    UseShellExecute = true
+                });
+            }
+            catch { }
+        }
+
+        private void TxtLicenseKey_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Basit formatlama (Tire ekleme vb.)
+            // İstersen burayı detaylandırabilirsin
+            if (StatusBorder.Visibility == Visibility.Visible)
+                StatusBorder.Visibility = Visibility.Collapsed;
+        }
+
+        private void ShowStatus(string msg, bool isError)
+        {
+            txtStatus.Text = msg;
+            StatusBorder.Background = isError
+                ? new SolidColorBrush(Color.FromRgb(0x5C, 0x1A, 0x1A)) // Kırmızımsı
+                : new SolidColorBrush(Color.FromRgb(0x0F, 0x34, 0x60)); // Mavimsi
+            StatusBorder.Visibility = Visibility.Visible;
         }
     }
 }

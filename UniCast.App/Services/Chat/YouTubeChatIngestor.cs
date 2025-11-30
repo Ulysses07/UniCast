@@ -4,7 +4,6 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using UniCast.Core.Chat;
 using UniCast.App.Services;
 using UniCast.Core.Settings;
 
@@ -65,7 +64,7 @@ namespace UniCast.App.Services.Chat
         }
 
         // 3. Veri Çekme
-        protected override async Task<(IEnumerable<ChatMessage> messages, int? nextDelayMs)> FetchMessagesAsync(CancellationToken ct)
+        protected override async Task<(IEnumerable<UniCast.Core.Chat.ChatMessage> messages, int? nextDelayMs)> FetchMessagesAsync(CancellationToken ct)
         {
             var (messages, nextToken, pollMs) = await ListChatMessagesAsync(_apiKey, _liveChatId, _pageToken, ct);
             _pageToken = nextToken;
@@ -102,7 +101,7 @@ namespace UniCast.App.Services.Chat
             return null;
         }
 
-        private async Task<(List<ChatMessage> messages, string? nextPageToken, int pollingMs)> ListChatMessagesAsync(
+        private async Task<(List<UniCast.Core.Chat.ChatMessage> messages, string? nextPageToken, int pollingMs)> ListChatMessagesAsync(
             string apiKey, string liveChatId, string? pageToken, CancellationToken ct)
         {
             var url = $"https://www.googleapis.com/youtube/v3/liveChatMessages?part=snippet,authorDetails&liveChatId={Uri.EscapeDataString(liveChatId)}&maxResults=200&key={Uri.EscapeDataString(apiKey)}"
@@ -113,7 +112,7 @@ namespace UniCast.App.Services.Chat
             using var s = await resp.Content.ReadAsStreamAsync(ct);
             using var doc = await JsonDocument.ParseAsync(s, cancellationToken: ct);
 
-            var result = new List<ChatMessage>();
+            var result = new List<UniCast.Core.Chat.ChatMessage>();
             var root = doc.RootElement;
             var pollMs = root.TryGetProperty("pollingIntervalMillis", out var p) ? p.GetInt32() : 1000;
             var next = root.TryGetProperty("nextPageToken", out var npt) ? npt.GetString() : null;
@@ -136,7 +135,7 @@ namespace UniCast.App.Services.Chat
                     }
 
                     if (!string.IsNullOrWhiteSpace(text))
-                        result.Add(new ChatMessage(id, ChatSource.YouTube, ts, author, text));
+                        result.Add(new UniCast.Core.Chat.ChatMessage(id, UniCast.Core.Chat.ChatSource.YouTube, ts, author, text));
                 }
             }
             return (result, next, pollMs);

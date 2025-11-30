@@ -7,6 +7,7 @@ using UniCast.App.Services.Chat;
 using UniCast.App.ViewModels;
 using UniCast.App.Views;
 using UniCast.Core.Chat;
+using UniCast.Core.Chat.Ingestors;
 using MessageBox = System.Windows.MessageBox;
 
 namespace UniCast.App
