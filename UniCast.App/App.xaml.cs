@@ -64,6 +64,10 @@ namespace UniCast.App
                     Log.Debug("MainWindow oluşturuluyor...");
                     var mainWindow = new MainWindow();
 
+                    // KRİTİK: MainWindow'u Application.MainWindow olarak ayarla
+                    // Bu olmadan ShutdownMode="OnMainWindowClose" düzgün çalışmaz
+                    this.MainWindow = mainWindow;
+
                     Log.Debug("MainWindow.Show() çağrılıyor...");
                     mainWindow.Show();
 
@@ -198,6 +202,7 @@ namespace UniCast.App
                 {
                     LicenseManager.Instance.StatusChanged += OnLicenseStatusChanged;
                     var mainWindow = new MainWindow();
+                    this.MainWindow = mainWindow;
                     mainWindow.Show();
                     return;
                 }

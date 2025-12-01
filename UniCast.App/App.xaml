@@ -1,6 +1,7 @@
 ﻿<Application x:Class="UniCast.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             ShutdownMode="OnMainWindowClose">
     <!-- DÜZELTME: StartupUri KALDIRILDI - App.xaml.cs'de manuel oluşturulacak -->
     <Application.Resources>
 
