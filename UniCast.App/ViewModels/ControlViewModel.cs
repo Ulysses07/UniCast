@@ -9,7 +9,6 @@ using System.Windows.Media;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
 using UniCast.Core.Models;
-using UniCast.Core.Services;
 
 
 // App.Services.SettingsData kullan
@@ -34,8 +33,11 @@ namespace UniCast.App.ViewModels
         private readonly Action<bool> _onMuteChangeHandler;
 
         // Parametresiz constructor
+        // DÜZELTME: StreamControllerAdapter kullanılıyor
+        private static readonly Lazy<StreamControllerAdapter> _defaultAdapter = new(() => new StreamControllerAdapter());
+
         public ControlViewModel() : this(
-            StreamController.Instance,
+            _defaultAdapter.Value,
             () => (new ObservableCollection<TargetItem>(), SettingsStore.Data))
         {
         }

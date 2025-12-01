@@ -264,8 +264,11 @@ namespace UniCast.App.Services
         public string TwitchStreamKey { get; set; } = "";
         public string TikTokUsername { get; set; } = "";
         public string InstagramUsername { get; set; } = "";
+        public string InstagramUserId { get => InstagramUsername; set => InstagramUsername = value; }
+        public string InstagramSessionId { get; set; } = "";
         public string FacebookPageId { get; set; } = "";
         public string FacebookStreamKey { get; set; } = "";
+        public string FacebookLiveVideoId { get; set; } = "";
         public string CustomRtmpUrl { get; set; } = "";
 
         // Overlay Ayarları

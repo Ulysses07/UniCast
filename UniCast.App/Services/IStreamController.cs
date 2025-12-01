@@ -4,8 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using UniCast.Core.Core;
 using UniCast.Core.Models;
-using UniCast.Core.Settings;
 using UniCast.Core.Streaming;
+
+// App.Services.SettingsData kullanılacak
+using SettingsData = UniCast.App.Services.SettingsData;
 
 namespace UniCast.App.Services
 {

@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -13,10 +14,11 @@ using SettingsData = UniCast.App.Services.SettingsData;
 
 namespace UniCast.App.ViewModels
 {
-    public sealed class SettingsViewModel : INotifyPropertyChanged
+    public sealed class SettingsViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly IDeviceService? _devices;
         private SettingsData _settings;
+        private bool _disposed;
 
         public SettingsViewModel() : this(new DeviceService())
         {
@@ -185,6 +187,16 @@ namespace UniCast.App.ViewModels
 
             AudioDevices.Clear();
             foreach (var a in audios) AudioDevices.Add(a);
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+
+            VideoDevices.Clear();
+            AudioDevices.Clear();
+            PropertyChanged = null;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
