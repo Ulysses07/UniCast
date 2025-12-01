@@ -39,26 +39,59 @@ namespace UniCast.App
                 Log.Error(ex, "Splash ekranı açılamadı.");
             }
 
-            // 4. LİSANS KONTROLÜ
-            var licenseResult = await InitializeLicenseAsync();
-
-            // Splash'i kapat
-            splash?.Close();
-
-            if (!licenseResult.IsValid)
+            try
             {
-                await HandleLicenseFailureAsync(licenseResult);
-                return;
+                // 4. LİSANS KONTROLÜ
+                var licenseResult = await InitializeLicenseAsync();
+
+                // Splash'i kapat
+                splash?.Close();
+
+                if (!licenseResult.IsValid)
+                {
+                    await HandleLicenseFailureAsync(licenseResult);
+                    return;
+                }
+
+                // Lisans olaylarını dinle
+                LicenseManager.Instance.StatusChanged += OnLicenseStatusChanged;
+
+                Log.Information("Lisans doğrulandı. Tür: {LicenseType}", licenseResult.License?.Type);
+
+                // 5. Ana Pencereyi Aç
+                try
+                {
+                    Log.Debug("MainWindow oluşturuluyor...");
+                    var mainWindow = new MainWindow();
+
+                    Log.Debug("MainWindow.Show() çağrılıyor...");
+                    mainWindow.Show();
+
+                    Log.Information("MainWindow başarıyla açıldı");
+                }
+                catch (Exception ex)
+                {
+                    Log.Fatal(ex, "MainWindow açılamadı: {Message}", ex.Message);
+                    MessageBox.Show(
+                        $"Ana pencere açılamadı:\n\n{ex.Message}\n\n{ex.StackTrace}",
+                        "UniCast - Kritik Hata",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    Shutdown(1);
+                }
             }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Uygulama başlatma hatası: {Message}", ex.Message);
+                splash?.Close();
 
-            // Lisans olaylarını dinle
-            LicenseManager.Instance.StatusChanged += OnLicenseStatusChanged;
-
-            Log.Information("Lisans doğrulandı. Tür: {LicenseType}", licenseResult.License?.Type);
-
-            // 5. Ana Pencereyi Aç
-            var mainWindow = new MainWindow();
-            mainWindow.Show();
+                MessageBox.Show(
+                    $"Uygulama başlatılamadı:\n\n{ex.Message}",
+                    "UniCast - Kritik Hata",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Shutdown(1);
+            }
         }
 
         private async Task<LicenseValidationResult> InitializeLicenseAsync()
@@ -235,18 +268,37 @@ namespace UniCast.App
         {
             DispatcherUnhandledException += (s, e) =>
             {
-                Log.Fatal(e.Exception, "Kritik UI Hatası");
+                Log.Fatal(e.Exception, "Kritik UI Hatası: {Message}", e.Exception.Message);
+
+                // Hatayı kullanıcıya göster
+                MessageBox.Show(
+                    $"Bir hata oluştu:\n\n{e.Exception.Message}\n\nDetaylar log dosyasına kaydedildi.",
+                    "UniCast - Hata",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+
+                // Uygulamanın kapanmasını önle (kritik olmayan hatalar için)
+                e.Handled = true;
             };
 
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
                 var ex = e.ExceptionObject as Exception;
-                if (ex != null) Log.Fatal(ex, "Kritik Sistem Hatası");
+                if (ex != null)
+                {
+                    Log.Fatal(ex, "Kritik Sistem Hatası: {Message}", ex.Message);
+
+                    MessageBox.Show(
+                        $"Kritik bir hata oluştu:\n\n{ex.Message}\n\nUygulama kapatılacak.",
+                        "UniCast - Kritik Hata",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
             };
 
             TaskScheduler.UnobservedTaskException += (s, e) =>
             {
-                Log.Error(e.Exception, "Arka plan Task hatası");
+                Log.Error(e.Exception, "Arka plan Task hatası: {Message}", e.Exception.Message);
                 e.SetObserved();
             };
         }

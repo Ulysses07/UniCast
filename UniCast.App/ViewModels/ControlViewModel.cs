@@ -91,7 +91,21 @@ namespace UniCast.App.ViewModels
 
             ToggleMuteCommand = new RelayCommand(_ => _audioService.ToggleMute());
 
-            _ = InitializeAudio();
+            // Audio başlatmayı güvenli şekilde yap
+            _ = InitializeAudioSafe();
+        }
+
+        private async Task InitializeAudioSafe()
+        {
+            try
+            {
+                await InitializeAudio();
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "[ControlViewModel] Audio başlatma hatası: {Message}", ex.Message);
+                // Audio olmadan da devam edilebilir
+            }
         }
 
         private async Task InitializeAudio()

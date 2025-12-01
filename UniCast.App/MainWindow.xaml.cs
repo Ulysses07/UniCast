@@ -98,7 +98,10 @@ namespace UniCast.App
         {
             try
             {
+                Log.Debug("[MainWindow] Overlay oluşturuluyor...");
                 _overlay = new OverlayWindow();
+
+                Log.Debug("[MainWindow] Overlay.Show() çağrılıyor...");
                 _overlay.Show();
 
                 // Overlay pozisyonu ayarla (varsayılan: sağ alt köşe)
@@ -110,7 +113,9 @@ namespace UniCast.App
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[MainWindow] Overlay başlatma hatası");
+                Log.Error(ex, "[MainWindow] Overlay başlatma hatası: {Message}", ex.Message);
+                // Overlay olmadan da uygulama çalışabilir
+                _overlay = null;
             }
         }
 
