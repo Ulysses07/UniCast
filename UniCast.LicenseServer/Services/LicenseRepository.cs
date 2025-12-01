@@ -128,18 +128,27 @@ namespace UniCast.LicenseServer.Services
     {
         public string LicenseId { get; set; } = string.Empty;
         public string LicenseKey { get; set; } = string.Empty;
-        public string Type { get; set; } = "Trial";
-        public long Features { get; set; }
+        public LicenseType Type { get; set; } = LicenseType.Trial;
         public string LicenseeName { get; set; } = string.Empty;
         public string LicenseeEmail { get; set; } = string.Empty;
         public DateTime IssuedAtUtc { get; set; }
         public DateTime ExpiresAtUtc { get; set; }
+        public DateTime SupportExpiryUtc { get; set; }
         public int MaxMachines { get; set; } = 1;
         public List<HardwareActivation> Activations { get; set; } = new();
         public string? Signature { get; set; }
         public bool IsRevoked { get; set; }
         public DateTime? RevokedAtUtc { get; set; }
         public DateTime? LastValidationUtc { get; set; }
+    }
+
+    /// <summary>
+    /// Lisans türleri
+    /// </summary>
+    public enum LicenseType
+    {
+        Trial = 0,
+        Lifetime = 1
     }
 
     /// <summary>

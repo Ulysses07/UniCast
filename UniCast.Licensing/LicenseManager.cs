@@ -328,17 +328,35 @@ namespace UniCast.Licensing
         }
 
         /// <summary>
-        /// Belirli bir özelliğin kullanılabilir olup olmadığını kontrol eder.
+        /// Lisansın geçerli olup olmadığını kontrol eder.
+        /// Trial veya Lifetime fark etmez, geçerliyse tüm özellikler açık.
         /// </summary>
-        public bool HasFeature(LicenseFeatures feature)
+        public bool IsLicenseValid()
         {
             if (_disposed)
                 return false;
 
-            if (_currentLicense == null || _currentStatus != LicenseStatus.Valid)
+            if (_currentLicense == null)
                 return false;
 
-            return _currentLicense.HasFeature(feature);
+            // Trial için süre kontrolü
+            if (_currentLicense.IsTrial && _currentLicense.IsExpired)
+                return false;
+
+            return _currentStatus == LicenseStatus.Valid ||
+                   _currentStatus == LicenseStatus.GracePeriod ||
+                   _currentStatus == LicenseStatus.SupportExpired;
+        }
+
+        /// <summary>
+        /// Bakım/destek süresinin aktif olup olmadığını kontrol eder.
+        /// </summary>
+        public bool IsSupportActive()
+        {
+            if (_disposed || _currentLicense == null)
+                return false;
+
+            return _currentLicense.IsSupportActive;
         }
 
         /// <summary>
@@ -364,7 +382,9 @@ namespace UniCast.Licensing
                 LicenseeName = _currentLicense?.LicenseeName ?? "",
                 ExpiresAt = _currentLicense?.ExpiresAtUtc,
                 DaysRemaining = _currentLicense?.DaysRemaining ?? 0,
-                Features = _currentLicense?.Features ?? LicenseFeatures.None,
+                IsSupportActive = _currentLicense?.IsSupportActive ?? false,
+                SupportDaysRemaining = _currentLicense?.SupportDaysRemaining ?? 0,
+                SupportExpiresAt = _currentLicense?.SupportExpiryUtc,
                 HardwareId = hardwareId
             };
         }
@@ -393,11 +413,11 @@ namespace UniCast.Licensing
                     LicenseId = Guid.NewGuid().ToString("N"),
                     LicenseKey = "TRIAL-" + hwInfo.ShortId,
                     Type = LicenseType.Trial,
-                    Features = LicenseFeatures.TrialFeatures,
                     LicenseeName = "Trial User",
                     LicenseeEmail = "",
                     IssuedAtUtc = DateTime.UtcNow,
                     ExpiresAtUtc = DateTime.UtcNow.AddDays(14),
+                    SupportExpiryUtc = DateTime.UtcNow.AddDays(14), // Trial için destek de 14 gün
                     MaxMachines = 1,
                     Activations =
                     [
@@ -841,7 +861,9 @@ namespace UniCast.Licensing
         public string LicenseeName { get; set; } = "";
         public DateTime? ExpiresAt { get; set; }
         public int DaysRemaining { get; set; }
-        public LicenseFeatures Features { get; set; }
+        public bool IsSupportActive { get; set; }
+        public int SupportDaysRemaining { get; set; }
+        public DateTime? SupportExpiresAt { get; set; }
         public string HardwareId { get; set; } = "";
     }
 

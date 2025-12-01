@@ -214,6 +214,75 @@ try
         }
     });
 
+    // Admin: Get license details
+    app.MapGet("/api/v1/admin/licenses/{licenseId}", async (HttpContext context, string licenseId) =>
+    {
+        var providedKey = context.Request.Headers["X-Admin-Key"].ToString();
+        if (providedKey != adminKey)
+        {
+            return Results.Unauthorized();
+        }
+
+        try
+        {
+            var license = await licenseService.GetLicenseByIdAsync(licenseId);
+            return license != null
+                ? Results.Ok(license)
+                : Results.NotFound(new { error = "License not found" });
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Get license error");
+            return Results.StatusCode(500);
+        }
+    });
+
+    // Admin: Renew support period
+    app.MapPost("/api/v1/admin/renew-support", async (HttpContext context, RenewSupportRequest request) =>
+    {
+        var providedKey = context.Request.Headers["X-Admin-Key"].ToString();
+        if (providedKey != adminKey)
+        {
+            return Results.Unauthorized();
+        }
+
+        try
+        {
+            var result = await licenseService.RenewSupportAsync(request.LicenseId, request.DurationDays);
+            return result
+                ? Results.Ok(new { success = true, message = $"Support renewed for {request.DurationDays} days" })
+                : Results.NotFound(new { success = false, error = "License not found" });
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Renew support error");
+            return Results.StatusCode(500);
+        }
+    });
+
+    // Admin: Unrevoke license (restore)
+    app.MapPost("/api/v1/admin/unrevoke/{licenseId}", async (HttpContext context, string licenseId) =>
+    {
+        var providedKey = context.Request.Headers["X-Admin-Key"].ToString();
+        if (providedKey != adminKey)
+        {
+            return Results.Unauthorized();
+        }
+
+        try
+        {
+            var result = await licenseService.UnrevokeLicenseAsync(licenseId);
+            return result
+                ? Results.Ok(new { success = true, message = "License restored" })
+                : Results.NotFound(new { success = false, error = "License not found" });
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Unrevoke license error");
+            return Results.StatusCode(500);
+        }
+    });
+
     Log.Information("Server listening on http://0.0.0.0:5000");
     app.Run("http://0.0.0.0:5000");
 }
@@ -233,7 +302,7 @@ public record ValidationRequest(string LicenseKey, string HardwareId);
 public record CreateLicenseRequest(
     string LicenseeName,
     string LicenseeEmail,
-    string LicenseType,
-    int DurationDays,
-    int MaxMachines
+    int MaxMachines = 1,
+    int SupportDurationDays = 365  // Destek süresi (varsayılan 1 yıl)
 );
+public record RenewSupportRequest(string LicenseId, int DurationDays = 365);

@@ -66,15 +66,7 @@ namespace UniCast.App.ViewModels
                 return _licenseInfo.Type switch
                 {
                     LicenseType.Trial => "Deneme Sürümü",
-                    LicenseType.Personal => "Kişisel Lisans",
-                    LicenseType.Professional => "Profesyonel Lisans",
-                    LicenseType.Business => "İşletme Lisansı",
-                    LicenseType.Enterprise => "Kurumsal Lisans",
-                    LicenseType.MonthlySubscription => "Aylık Abonelik",
-                    LicenseType.YearlySubscription => "Yıllık Abonelik",
                     LicenseType.Lifetime => "Ömür Boyu Lisans",
-                    LicenseType.Educational => "Eğitim Lisansı",
-                    LicenseType.NFR => "NFR Lisansı",
                     _ => "Bilinmeyen"
                 };
             }

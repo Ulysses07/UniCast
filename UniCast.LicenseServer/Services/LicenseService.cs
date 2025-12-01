@@ -18,6 +18,9 @@ namespace UniCast.LicenseServer.Services
         Task<ValidationResult> ValidateAsync(string licenseKey, string hardwareId);
         Task<LicenseData> CreateLicenseAsync(CreateLicenseRequest request);
         Task<bool> RevokeLicenseAsync(string licenseId);
+        Task<bool> UnrevokeLicenseAsync(string licenseId);
+        Task<bool> RenewSupportAsync(string licenseId, int durationDays);
+        Task<LicenseData?> GetLicenseByIdAsync(string licenseId);
         Task<IEnumerable<LicenseData>> GetAllLicensesAsync();
     }
 
@@ -56,9 +59,10 @@ namespace UniCast.LicenseServer.Services
                 return ActivationResult.Failed("Bu lisans iptal edilmiş");
             }
 
-            if (license.ExpiresAtUtc < DateTime.UtcNow)
+            // Trial için süre kontrolü (Lifetime asla dolmaz)
+            if (license.Type == LicenseType.Trial && license.ExpiresAtUtc < DateTime.UtcNow)
             {
-                return ActivationResult.Failed("Lisans süresi dolmuş");
+                return ActivationResult.Failed("Deneme süresi dolmuş");
             }
 
             // Mevcut aktivasyon kontrolü
@@ -124,9 +128,10 @@ namespace UniCast.LicenseServer.Services
                 return ValidationResult.Invalid("Lisans iptal edilmiş");
             }
 
-            if (license.ExpiresAtUtc < DateTime.UtcNow)
+            // Trial için süre kontrolü (Lifetime asla dolmaz)
+            if (license.Type == LicenseType.Trial && license.ExpiresAtUtc < DateTime.UtcNow)
             {
-                return ValidationResult.Invalid("Lisans süresi dolmuş");
+                return ValidationResult.Invalid("Deneme süresi dolmuş");
             }
 
             var activation = license.Activations.FirstOrDefault(a => a.HardwareId == hardwareId);
@@ -149,12 +154,12 @@ namespace UniCast.LicenseServer.Services
             {
                 LicenseId = Guid.NewGuid().ToString("N"),
                 LicenseKey = GenerateLicenseKey(),
-                Type = request.LicenseType,
-                Features = GetFeaturesForType(request.LicenseType),
+                Type = LicenseType.Lifetime, // Her zaman Lifetime
                 LicenseeName = request.LicenseeName,
                 LicenseeEmail = request.LicenseeEmail,
                 IssuedAtUtc = DateTime.UtcNow,
-                ExpiresAtUtc = DateTime.UtcNow.AddDays(request.DurationDays),
+                ExpiresAtUtc = DateTime.MaxValue, // Ömür boyu - asla dolmaz
+                SupportExpiryUtc = DateTime.UtcNow.AddDays(request.SupportDurationDays), // Destek süresi
                 MaxMachines = request.MaxMachines,
                 Activations = new List<HardwareActivation>()
             };
@@ -175,6 +180,39 @@ namespace UniCast.LicenseServer.Services
             await _repository.SaveAsync(license);
 
             return true;
+        }
+
+        public async Task<bool> UnrevokeLicenseAsync(string licenseId)
+        {
+            var license = await _repository.FindByIdAsync(licenseId);
+            if (license == null) return false;
+
+            license.IsRevoked = false;
+            license.RevokedAtUtc = null;
+            await _repository.SaveAsync(license);
+
+            return true;
+        }
+
+        public async Task<bool> RenewSupportAsync(string licenseId, int durationDays)
+        {
+            var license = await _repository.FindByIdAsync(licenseId);
+            if (license == null) return false;
+
+            // Destek süresi dolmuşsa bugünden itibaren, dolmadıysa mevcut tarihten itibaren uzat
+            var baseDate = license.SupportExpiryUtc > DateTime.UtcNow
+                ? license.SupportExpiryUtc
+                : DateTime.UtcNow;
+
+            license.SupportExpiryUtc = baseDate.AddDays(durationDays);
+            await _repository.SaveAsync(license);
+
+            return true;
+        }
+
+        public async Task<LicenseData?> GetLicenseByIdAsync(string licenseId)
+        {
+            return await _repository.FindByIdAsync(licenseId);
         }
 
         public async Task<IEnumerable<LicenseData>> GetAllLicensesAsync()
@@ -204,19 +242,6 @@ namespace UniCast.LicenseServer.Services
             return string.Join("-", segments);
         }
 
-        private long GetFeaturesForType(string type)
-        {
-            return type.ToLower() switch
-            {
-                "trial" => 0x03, // BasicStreaming | ChatIntegration
-                "personal" => 0x3F, // Standard features + NoWatermark
-                "professional" => 0x3FFF,
-                "business" => 0xFFFFFF,
-                "enterprise" => -1L, // All features
-                _ => 0x03
-            };
-        }
-
         private async Task<string> SignLicenseAsync(LicenseData license)
         {
             var privateKeyPath = Path.Combine(_keysPath, "private.key");
@@ -225,7 +250,8 @@ namespace UniCast.LicenseServer.Services
                 return string.Empty;
             }
 
-            var data = $"{license.LicenseId}|{license.LicenseKey}|{license.ExpiresAtUtc:O}";
+            // İmzaya dahil edilecek veriler
+            var data = $"{license.LicenseId}|{license.LicenseKey}|{license.Type}|{license.ExpiresAtUtc:O}|{license.SupportExpiryUtc:O}";
             var dataBytes = Encoding.UTF8.GetBytes(data);
 
             using var rsa = RSA.Create();

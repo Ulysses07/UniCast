@@ -44,11 +44,11 @@ namespace UniCast.App
                 // 4. LİSANS KONTROLÜ
                 var licenseResult = await InitializeLicenseAsync();
 
-                // Splash'i kapat
-                splash?.Close();
+                // NOT: Splash artık MainWindow.Show()'dan sonra kapatılıyor
 
                 if (!licenseResult.IsValid)
                 {
+                    splash?.Close();
                     await HandleLicenseFailureAsync(licenseResult);
                     return;
                 }
@@ -65,11 +65,22 @@ namespace UniCast.App
                     var mainWindow = new MainWindow();
 
                     // KRİTİK: MainWindow'u Application.MainWindow olarak ayarla
-                    // Bu olmadan ShutdownMode="OnMainWindowClose" düzgün çalışmaz
                     this.MainWindow = mainWindow;
+
+                    // KRİTİK: MainWindow kapandığında uygulamayı kapat
+                    // (ShutdownMode="OnExplicitShutdown" kullandığımız için gerekli)
+                    mainWindow.Closed += (s, args) =>
+                    {
+                        Log.Debug("MainWindow kapandı, uygulama kapatılıyor...");
+                        Shutdown();
+                    };
 
                     Log.Debug("MainWindow.Show() çağrılıyor...");
                     mainWindow.Show();
+
+                    // KRİTİK: Splash'ı MainWindow'dan SONRA kapat!
+                    // Bu sayede ShutdownMode sorunu oluşmaz
+                    splash?.Close();
 
                     Log.Information("MainWindow başarıyla açıldı");
                 }
@@ -203,6 +214,7 @@ namespace UniCast.App
                     LicenseManager.Instance.StatusChanged += OnLicenseStatusChanged;
                     var mainWindow = new MainWindow();
                     this.MainWindow = mainWindow;
+                    mainWindow.Closed += (s, args) => Shutdown();
                     mainWindow.Show();
                     return;
                 }

@@ -6,39 +6,37 @@ using MessageBox = System.Windows.MessageBox;
 namespace UniCast.App
 {
     /// <summary>
-    /// Özellik bazlı erişim kontrolü.
-    /// UI tarafında özellik kısıtlaması için kullanılır.
+    /// Lisans kontrolü için yardımcı sınıf.
+    /// Tüm özellikler herkese açık - sadece geçerli lisans gerekli.
     /// </summary>
-    public static class FeatureGate
+    public static class LicenseGate
     {
         /// <summary>
-        /// Özelliğin kullanılabilir olup olmadığını kontrol eder.
+        /// Lisansın geçerli olup olmadığını kontrol eder.
         /// </summary>
-        public static bool IsEnabled(LicenseFeatures feature)
+        public static bool IsValid()
         {
-            return LicenseManager.Instance.HasFeature(feature);
+            return LicenseManager.Instance.IsLicenseValid();
         }
 
         /// <summary>
-        /// Özellik aktif değilse mesaj gösterir ve false döner.
-        /// Kullanım: if (!FeatureGate.RequireFeature(...)) return;
+        /// Lisans geçerli değilse mesaj gösterir ve false döner.
+        /// Kullanım: if (!LicenseGate.RequireValidLicense()) return;
         /// </summary>
-        public static bool RequireFeature(LicenseFeatures feature, string featureName)
+        public static bool RequireValidLicense(string actionName = "Bu işlem")
         {
-            if (IsEnabled(feature))
+            if (IsValid())
                 return true;
 
             var info = LicenseManager.Instance.GetLicenseInfo();
 
-            string message = info.Type == LicenseType.Trial
-                ? $"'{featureName}' özelliği deneme sürümünde kullanılamaz.\n\n" +
-                  "Tüm özelliklere erişmek için lisans satın alın."
-                : $"'{featureName}' özelliği mevcut lisansınızda bulunmuyor.\n\n" +
-                  "Bu özelliği kullanmak için lisansınızı yükseltin.";
+            string message = info.Status == LicenseStatus.Expired
+                ? "Deneme süreniz doldu.\n\nDevam etmek için lisans satın alın."
+                : $"{actionName} için geçerli bir lisans gerekli.\n\nLisans satın alın veya deneme sürümünü başlatın.";
 
             MessageBox.Show(
                 message,
-                "Özellik Kısıtlı",
+                "Lisans Gerekli",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
@@ -46,26 +44,28 @@ namespace UniCast.App
         }
 
         /// <summary>
-        /// Özellik aktif değilse sessizce false döner (mesaj göstermez).
+        /// Destek süresinin aktif olup olmadığını kontrol eder.
         /// </summary>
-        public static bool CheckFeatureSilent(LicenseFeatures feature)
+        public static bool IsSupportActive()
         {
-            return IsEnabled(feature);
+            return LicenseManager.Instance.IsSupportActive();
         }
     }
 
     /// <summary>
     /// Watermark kontrolü için yardımcı sınıf.
-    /// Trial ve bazı lisanslarda watermark gösterilir.
+    /// Sadece Trial'da watermark gösterilir.
     /// </summary>
     public static class WatermarkHelper
     {
         /// <summary>
         /// Watermark gösterilmeli mi?
+        /// Sadece Trial lisansta watermark var.
         /// </summary>
         public static bool ShouldShowWatermark()
         {
-            return !LicenseManager.Instance.HasFeature(LicenseFeatures.NoWatermark);
+            var info = LicenseManager.Instance.GetLicenseInfo();
+            return info.Type == LicenseType.Trial;
         }
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace UniCast.App
             if (info.Type == LicenseType.Trial)
                 return $"UniCast Trial - {info.DaysRemaining} gün kaldı";
 
-            return "UniCast";
+            return ""; // Lifetime'da watermark yok
         }
 
         /// <summary>
@@ -86,8 +86,7 @@ namespace UniCast.App
         /// </summary>
         public static double GetWatermarkOpacity()
         {
-            var info = LicenseManager.Instance.GetLicenseInfo();
-            return info.Type == LicenseType.Trial ? 0.7 : 0.3;
+            return 0.7; // Trial'da görünür
         }
     }
 
@@ -103,10 +102,8 @@ namespace UniCast.App
         {
             return type switch
             {
-                LicenseType.Trial => "Deneme Sürümü",
-                LicenseType.Personal => "Kişisel Lisans",
-                LicenseType.Professional => "Profesyonel Lisans",
-                LicenseType.Enterprise => "Kurumsal Lisans",
+                LicenseType.Trial => "Deneme Sürümü (14 gün)",
+                LicenseType.Lifetime => "Ömür Boyu Lisans",
                 _ => "Bilinmeyen"
             };
         }
@@ -121,6 +118,7 @@ namespace UniCast.App
                 LicenseStatus.Valid => "Geçerli",
                 LicenseStatus.Expired => "Süresi Dolmuş",
                 LicenseStatus.GracePeriod => "Çevrimdışı Mod",
+                LicenseStatus.SupportExpired => "Destek Süresi Dolmuş",
                 LicenseStatus.NotFound => "Lisans Yok",
                 LicenseStatus.HardwareMismatch => "Donanım Uyumsuz",
                 LicenseStatus.InvalidSignature => "Geçersiz İmza",
@@ -128,6 +126,22 @@ namespace UniCast.App
                 LicenseStatus.Tampered => "Güvenlik İhlali",
                 _ => "Bilinmeyen"
             };
+        }
+
+        /// <summary>
+        /// Destek durumu metnini döner.
+        /// </summary>
+        public static string GetSupportStatusText()
+        {
+            var info = LicenseManager.Instance.GetLicenseInfo();
+
+            if (info.Type == LicenseType.Trial)
+                return "Deneme sürümü";
+
+            if (info.IsSupportActive)
+                return $"Aktif ({info.SupportDaysRemaining} gün kaldı)";
+
+            return "Süresi dolmuş - Yenileyin";
         }
     }
 }
