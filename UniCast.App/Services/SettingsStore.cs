@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
 using Serilog;
+using UniCast.Core.Models;
 
 namespace UniCast.App.Services
 {
@@ -53,6 +55,11 @@ namespace UniCast.App.Services
                 }
             }
         }
+
+        /// <summary>
+        /// Mevcut ayarlar (Data ile aynı, alias).
+        /// </summary>
+        public static SettingsData Current => Data;
 
         /// <summary>
         /// Ayarları günceller.
@@ -149,7 +156,10 @@ namespace UniCast.App.Services
             }
         }
 
-        private static SettingsData Load()
+        /// <summary>
+        /// Ayarları yükler.
+        /// </summary>
+        public static SettingsData Load()
         {
             try
             {
@@ -175,6 +185,28 @@ namespace UniCast.App.Services
             var defaults = new SettingsData();
             defaults.Normalize();
             return defaults;
+        }
+
+        /// <summary>
+        /// Core.Settings.SettingsData olarak yükler (uyumluluk için).
+        /// </summary>
+        public static UniCast.Core.Settings.SettingsData LoadCore()
+        {
+            var appData = Data;
+            return new UniCast.Core.Settings.SettingsData
+            {
+                DefaultCamera = appData.VideoDevice,
+                DefaultMicrophone = appData.AudioDevice,
+                SelectedVideoDevice = appData.VideoDevice,
+                SelectedAudioDevice = appData.AudioDevice,
+                VideoKbps = appData.VideoKbps,
+                AudioKbps = appData.AudioKbps,
+                Fps = appData.Fps,
+                Width = appData.Width,
+                Height = appData.Height,
+                EnableLocalRecord = appData.RecordingEnabled,
+                RecordFolder = appData.RecordingPath
+            };
         }
 
         private static void StartAutoSave()
@@ -204,6 +236,27 @@ namespace UniCast.App.Services
         public string VideoPreset { get; set; } = "veryfast";
         public string AudioEncoder { get; set; } = "aac";
         public int AudioSampleRate { get; set; } = 44100;
+
+        // Çözünürlük (Core uyumluluğu için)
+        public int Width { get; set; } = 1920;
+        public int Height { get; set; } = 1080;
+
+        // Cihaz Seçimleri
+        public string VideoDevice { get; set; } = "";
+        public string AudioDevice { get; set; } = "";
+        public string SelectedVideoDevice { get => VideoDevice; set => VideoDevice = value; }
+        public string SelectedAudioDevice { get => AudioDevice; set => AudioDevice = value; }
+        public string DefaultCamera { get => VideoDevice; set => VideoDevice = value; }
+        public string DefaultMicrophone { get => AudioDevice; set => AudioDevice = value; }
+
+        // Ses Gecikmesi
+        public int AudioDelayMs { get; set; } = 0;
+
+        // Scene Items (Core uyumluluğu için)
+        public List<UniCast.Core.Models.OverlayItem> SceneItems { get; set; } = new();
+
+        // Encoder
+        public string Encoder { get => VideoEncoder; set => VideoEncoder = value; }
 
         // Platform Bağlantıları
         public string YouTubeVideoId { get; set; } = "";
@@ -246,6 +299,8 @@ namespace UniCast.App.Services
         public string RecordingPath { get; set; } = "";
         public string RecordingFormat { get; set; } = "mp4";
         public int RecordingQuality { get; set; } = 80;
+        public bool EnableLocalRecord { get => RecordingEnabled; set => RecordingEnabled = value; }
+        public string RecordFolder { get => RecordingPath; set => RecordingPath = value; }
 
         // API Keys (şifrelenmiş saklanmalı)
         public string YouTubeApiKey { get; set; } = "";

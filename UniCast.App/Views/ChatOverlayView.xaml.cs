@@ -54,11 +54,11 @@ namespace UniCast.App.Views
 
         public void LoadFromSettings()
         {
-            var s = SettingsStore.Load();
+            var s = SettingsStore.Data;
             if (s.SceneItems == null || s.SceneItems.Count == 0)
             {
                 s.Normalize();
-                SettingsStore.Save(s);
+                SettingsStore.Save();
             }
 
             SceneItems.Clear();

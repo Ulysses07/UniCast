@@ -14,9 +14,34 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="1" Margin="10" x:Name="ContentPanel">
-            <ContentControl x:Name="MainContent"/>
-        </Border>
+        <!-- Main Content - TabControl -->
+        <TabControl x:Name="MainTabControl" Grid.Column="1" Margin="10"
+                    Background="Transparent" BorderThickness="0">
+            <TabControl.ItemContainerStyle>
+                <Style TargetType="TabItem">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </Style>
+            </TabControl.ItemContainerStyle>
+
+            <TabItem x:Name="ControlTab">
+                <ContentControl x:Name="ControlTabContent"/>
+            </TabItem>
+            <TabItem x:Name="PreviewTab">
+                <ContentControl x:Name="PreviewTabContent"/>
+            </TabItem>
+            <TabItem x:Name="TargetsTab">
+                <ContentControl x:Name="TargetsTabContent"/>
+            </TabItem>
+            <TabItem x:Name="ChatTab">
+                <ContentControl x:Name="ChatTabContent"/>
+            </TabItem>
+            <TabItem x:Name="SettingsTab">
+                <ContentControl x:Name="SettingsTabContent"/>
+            </TabItem>
+            <TabItem x:Name="LicenseTab">
+                <ContentControl x:Name="LicenseTabContent"/>
+            </TabItem>
+        </TabControl>
 
         <Border x:Name="Sidebar"
                 Grid.Column="0" Grid.ColumnSpan="2"
@@ -60,11 +85,12 @@
                                HorizontalAlignment="Left" VerticalAlignment="Center" Margin="45,0,0,0"/>
                 </Grid>
 
-                <Button x:Name="BtnControl" Content="📡   Yayın Paneli" Style="{StaticResource NavButton}" Margin="0,0,15,0"/>
-                <Button x:Name="BtnPreview" Content="👁️   Önizleme"    Style="{StaticResource NavButton}" Margin="0,0,15,0"/>
-                <Button x:Name="BtnTargets" Content="🔗   Platformlar" Style="{StaticResource NavButton}" Margin="0,0,15,0"/>
-                <Button x:Name="BtnChat"    Content="💬   Sohbet Akışı" Style="{StaticResource NavButton}" Margin="0,0,15,0"/>
-                <Button x:Name="BtnSettings" Content="⚙️   Ayarlar"     Style="{StaticResource NavButton}" Margin="0,0,15,0"/>
+                <Button x:Name="BtnControl" Content="📡   Yayın Paneli" Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="0"/>
+                <Button x:Name="BtnPreview" Content="👁️   Önizleme"    Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="1"/>
+                <Button x:Name="BtnTargets" Content="🔗   Platformlar" Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="2"/>
+                <Button x:Name="BtnChat"    Content="💬   Sohbet Akışı" Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="3"/>
+                <Button x:Name="BtnSettings" Content="⚙️   Ayarlar"     Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="4"/>
+                <Button x:Name="BtnLicense" Content="🔑   Lisans"       Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="5"/>
             </StackPanel>
         </Border>
 

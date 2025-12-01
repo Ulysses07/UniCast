@@ -58,13 +58,13 @@ namespace UniCast.App.ViewModels
             View.Filter = o =>
             {
                 if (o is not ChatMessage m) return false;
-                return m.Source switch
+                return m.Platform switch
                 {
-                    ChatSource.YouTube => ShowYouTube,
-                    ChatSource.TikTok => ShowTikTok,
-                    ChatSource.Instagram => ShowInstagram,
-                    ChatSource.Facebook => ShowFacebook,
-                    _ => false
+                    ChatPlatform.YouTube => ShowYouTube,
+                    ChatPlatform.TikTok => ShowTikTok,
+                    ChatPlatform.Instagram => ShowInstagram,
+                    ChatPlatform.Facebook => ShowFacebook,
+                    _ => true
                 };
             };
 

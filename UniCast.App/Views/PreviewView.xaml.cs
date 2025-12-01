@@ -58,7 +58,7 @@ namespace UniCast.App.Views
 
         private void LoadItems()
         {
-            var s = SettingsStore.Load();
+            var s = SettingsStore.Data;
             s.Normalize();
             _sceneItems.Clear();
             foreach (var item in s.SceneItems)
@@ -67,9 +67,8 @@ namespace UniCast.App.Views
 
         private void SaveSettings()
         {
-            var s = SettingsStore.Load();
-            s.SceneItems = _sceneItems.ToList();
-            SettingsStore.Save(s);
+            SettingsStore.Update(s => s.SceneItems = _sceneItems.ToList());
+            SettingsStore.Save();
 
             if (Application.Current.MainWindow is MainWindow mw)
                 mw.RefreshOverlay();

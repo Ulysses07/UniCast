@@ -188,10 +188,23 @@ namespace UniCast.Core.Chat.Ingestors
                 // Superchat detayları
                 if (messageType == "superChatEvent" && snippet.TryGetProperty("superChatDetails", out var superChat))
                 {
-                    message = message with
+                    message = new ChatMessage
                     {
+                        Platform = message.Platform,
+                        Username = message.Username,
+                        DisplayName = message.DisplayName,
+                        Message = message.Message,
+                        AvatarUrl = message.AvatarUrl,
+                        IsSubscriber = message.IsSubscriber,
+                        IsModerator = message.IsModerator,
+                        IsOwner = message.IsOwner,
+                        IsVerified = message.IsVerified,
+                        Type = message.Type,
+                        Timestamp = message.Timestamp,
                         DonationAmount = superChat.GetProperty("amountDisplayString").GetString(),
-                        DonationCurrency = superChat.GetProperty("currency").GetString()
+                        DonationCurrency = superChat.GetProperty("currency").GetString(),
+                        BadgeUrl = message.BadgeUrl,
+                        Metadata = message.Metadata
                     };
                 }
 

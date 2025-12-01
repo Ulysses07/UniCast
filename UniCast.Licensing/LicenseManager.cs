@@ -237,6 +237,31 @@ namespace UniCast.Licensing
         }
 
         /// <summary>
+        /// Lisans anahtarı ile aktivasyon yapar (senkron wrapper).
+        /// </summary>
+        [SupportedOSPlatform("windows")]
+        public ActivationResult ActivateLicense(string licenseKey)
+        {
+            try
+            {
+                var result = ActivateAsync(licenseKey).GetAwaiter().GetResult();
+                return new ActivationResult
+                {
+                    Success = result.IsValid,
+                    ErrorMessage = result.IsValid ? null : result.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ActivationResult
+                {
+                    Success = false,
+                    ErrorMessage = ex.Message
+                };
+            }
+        }
+
+        /// <summary>
         /// Mevcut lisansı devre dışı bırakır (makine değişikliği için).
         /// </summary>
         [SupportedOSPlatform("windows")]
@@ -830,6 +855,12 @@ namespace UniCast.Licensing
             NewStatus = status;
             Timestamp = DateTime.UtcNow;
         }
+    }
+
+    public sealed class ActivationResult
+    {
+        public bool Success { get; set; }
+        public string? ErrorMessage { get; set; }
     }
 
     #endregion

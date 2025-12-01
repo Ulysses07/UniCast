@@ -1,0 +1,79 @@
+﻿<UserControl x:Class="UniCast.App.Views.LicenseView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="Lisans Bilgileri" 
+                   FontSize="24" FontWeight="Bold" 
+                   Foreground="White" Margin="0,0,0,20"/>
+
+        <!-- Status Card -->
+        <Border Grid.Row="1" Background="#16213e" CornerRadius="10" Padding="20" Margin="0,0,0,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Status Indicator -->
+                <Ellipse x:Name="StatusIndicator" Grid.Column="0" 
+                         Width="16" Height="16" 
+                         Fill="Gray" Margin="0,0,15,0"/>
+
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="{Binding LicenseTypeName}" 
+                               FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+                    <TextBlock Text="{Binding StatusText}" 
+                               FontSize="14" Foreground="#888" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Details Card -->
+        <Border Grid.Row="2" Background="#16213e" CornerRadius="10" Padding="20" Margin="0,0,0,15">
+            <StackPanel>
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Son Kullanma:" Foreground="#888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding ExpiryText}" Foreground="White"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Kalan Gün:" Foreground="#888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding DaysRemaining}" Foreground="White"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" VerticalAlignment="Top">
+            <Button x:Name="BtnActivate" Content="Yeni Lisans Aktive Et" 
+                    Click="BtnActivate_Click"
+                    Background="#e94560" Foreground="White" 
+                    Padding="20,10" Margin="0,0,10,0"
+                    BorderThickness="0" Cursor="Hand"/>
+
+            <Button x:Name="BtnRefresh" Content="Yenile" 
+                    Click="BtnRefresh_Click"
+                    Background="#0f3460" Foreground="White" 
+                    Padding="20,10" Margin="0,0,10,0"
+                    BorderThickness="0" Cursor="Hand"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

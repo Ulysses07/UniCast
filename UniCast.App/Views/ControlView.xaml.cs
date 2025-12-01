@@ -9,6 +9,10 @@ namespace UniCast.App.Views
     {
         private readonly ControlViewModel _vm;
 
+        public ControlView() : this(new ControlViewModel())
+        {
+        }
+
         public ControlView(ControlViewModel vm)
         {
             InitializeComponent();

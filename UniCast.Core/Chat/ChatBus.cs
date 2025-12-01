@@ -19,6 +19,11 @@ namespace UniCast.Core.Chat
         // Event (weak reference pattern önerilir ama basitlik için standard kullanıyoruz)
         public event EventHandler<ChatMessageEventArgs>? MessageReceived;
 
+        /// <summary>
+        /// Mesaj birleştirildiğinde tetiklenir (ChatViewModel için).
+        /// </summary>
+        public event Action<ChatMessage>? OnMerged;
+
         // Message queue (rate limiting için)
         private readonly ConcurrentQueue<ChatMessage> _messageQueue = new();
         private readonly SemaphoreSlim _processingLock = new(1, 1);
@@ -71,6 +76,7 @@ namespace UniCast.Core.Chat
             try
             {
                 MessageReceived?.Invoke(this, new ChatMessageEventArgs(message));
+                OnMerged?.Invoke(message);
             }
             catch (Exception ex)
             {
@@ -131,6 +137,7 @@ namespace UniCast.Core.Chat
         public void ClearSubscribers()
         {
             MessageReceived = null;
+            OnMerged = null;
             Log.Debug("[ChatBus] All subscribers cleared");
         }
 
@@ -143,6 +150,7 @@ namespace UniCast.Core.Chat
 
             // Event handler'ları temizle
             MessageReceived = null;
+            OnMerged = null;
 
             // Queue'yu temizle
             while (_messageQueue.TryDequeue(out _)) { }

@@ -222,6 +222,7 @@ namespace UniCast.Licensing.Models
         ChatIntegration = 1 << 2,       // Chat entegrasyonu
         Overlay = 1 << 3,               // Overlay desteği
         Recording = 1 << 4,             // Kayıt özelliği
+        NoWatermark = 1 << 16,          // Filigransız yayın
 
         // Gelişmiş özellikler
         CustomBranding = 1 << 5,        // Özel markalama

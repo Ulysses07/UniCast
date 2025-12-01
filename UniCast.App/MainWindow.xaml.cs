@@ -2,12 +2,13 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using UniCast.App.Overlay;
 using UniCast.App.Services;
-using UniCast.App.Services.Chat;
 using UniCast.App.ViewModels;
 using UniCast.App.Views;
 using UniCast.Core.Chat;
 using UniCast.Core.Chat.Ingestors;
+using UniCast.Core.Services;
 using MessageBox = System.Windows.MessageBox;
 
 namespace UniCast.App
@@ -277,25 +278,37 @@ namespace UniCast.App
             LoadTabContent(selectedIndex);
         }
 
+        private void BtnNav_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.Tag is string tagStr && int.TryParse(tagStr, out int index))
+            {
+                MainTabControl.SelectedIndex = index;
+                LoadTabContent(index);
+            }
+        }
+
         private void LoadTabContent(int tabIndex)
         {
             try
             {
                 switch (tabIndex)
                 {
-                    case 0: // Preview
-                        LoadPreviewTab();
-                        break;
-                    case 1: // Control
+                    case 0: // Control
                         LoadControlTab();
                         break;
-                    case 2: // Chat
+                    case 1: // Preview
+                        LoadPreviewTab();
+                        break;
+                    case 2: // Targets
+                        LoadTargetsTab();
+                        break;
+                    case 3: // Chat
                         LoadChatTab();
                         break;
-                    case 3: // Settings
+                    case 4: // Settings
                         LoadSettingsTab();
                         break;
-                    case 4: // License
+                    case 5: // License
                         LoadLicenseTab();
                         break;
                 }
@@ -304,6 +317,18 @@ namespace UniCast.App
             {
                 Log.Error(ex, "[MainWindow] Tab {Index} yükleme hatası", tabIndex);
             }
+        }
+
+        private void LoadControlTab()
+        {
+            if (_controlView != null)
+                return;
+
+            _controlViewModel = new ControlViewModel();
+            _controlView = new ControlView { DataContext = _controlViewModel };
+
+            if (ControlTabContent != null)
+                ControlTabContent.Content = _controlView;
         }
 
         private void LoadPreviewTab()
@@ -318,16 +343,21 @@ namespace UniCast.App
                 PreviewTabContent.Content = _previewView;
         }
 
-        private void LoadControlTab()
+        private void LoadTargetsTab()
         {
-            if (_controlView != null)
+            // TargetsView için - henüz yoksa basit bir placeholder
+            if (TargetsTabContent?.Content != null)
                 return;
 
-            _controlViewModel = new ControlViewModel();
-            _controlView = new ControlView { DataContext = _controlViewModel };
-
-            if (ControlTabContent != null)
-                ControlTabContent.Content = _controlView;
+            try
+            {
+                var targetsView = new TargetsView();
+                TargetsTabContent.Content = targetsView;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[MainWindow] TargetsView yüklenemedi");
+            }
         }
 
         private void LoadChatTab()

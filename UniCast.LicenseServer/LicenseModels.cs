@@ -16,7 +16,7 @@ namespace UniCast.Licensing
         YearlySubscription = 11,
         Lifetime = 20,
         Educational = 30,
-        NFR = 99  // Not For Resale
+        NFR = 99
     }
 
     /// <summary>
@@ -33,7 +33,7 @@ namespace UniCast.Licensing
         ChatIntegration = 1L << 2,
         Overlay = 1L << 3,
         Recording = 1L << 4,
-        NoWatermark = 1L << 5,  // Filigran olmadan yayın
+        NoWatermark = 1L << 5,
 
         // Profesyonel özellikler
         CustomBranding = 1L << 10,
@@ -76,27 +76,14 @@ namespace UniCast.Licensing
         public bool IsValid { get; set; }
         public string? ValidationError { get; set; }
 
-        /// <summary>
-        /// Lisansın süresi dolmuş mu?
-        /// </summary>
         public bool IsExpired => DateTime.UtcNow > ExpiresAt;
-
-        /// <summary>
-        /// Kalan gün sayısı
-        /// </summary>
         public int DaysRemaining => Math.Max(0, (ExpiresAt - DateTime.UtcNow).Days);
 
-        /// <summary>
-        /// Belirli bir özellik aktif mi?
-        /// </summary>
         public bool HasFeature(LicenseFeatures feature)
         {
             return (Features & feature) == feature;
         }
 
-        /// <summary>
-        /// Lisans türünün görünen adı
-        /// </summary>
         public string TypeDisplayName => Type switch
         {
             LicenseType.Trial => "Deneme",
@@ -176,7 +163,7 @@ namespace UniCast.Licensing
     }
 
     /// <summary>
-    /// Şifrelenmiş lisans verisi (yerel depolama için)
+    /// Şifrelenmiş lisans verisi
     /// </summary>
     public class EncryptedLicenseData
     {

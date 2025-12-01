@@ -9,14 +9,18 @@ using System.Windows.Media;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
 using UniCast.Core.Models;
-using UniCast.Core.Settings;
+using UniCast.Core.Services;
+
+
+// App.Services.SettingsData kullan
+using SettingsData = UniCast.App.Services.SettingsData;
 
 namespace UniCast.App.ViewModels
 {
     public sealed class ControlViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly IStreamController _stream;
-        private readonly Func<(ObservableCollection<TargetItem> targets, SettingsData settings)> _provider;
+        private readonly Func<(ObservableCollection<TargetItem> targets, SettingsData settings)>? _provider;
 
         private readonly PreviewService _preview = new();
         private readonly AudioService _audioService = new();
@@ -28,6 +32,13 @@ namespace UniCast.App.ViewModels
         private readonly Action<ImageSource> _onFrameHandler;
         private readonly Action<float> _onLevelChangeHandler;
         private readonly Action<bool> _onMuteChangeHandler;
+
+        // Parametresiz constructor
+        public ControlViewModel() : this(
+            StreamController.Instance,
+            () => (new ObservableCollection<TargetItem>(), SettingsStore.Data))
+        {
+        }
 
         public ControlViewModel(
             IStreamController stream,
@@ -83,7 +94,7 @@ namespace UniCast.App.ViewModels
 
         private async Task InitializeAudio()
         {
-            var s = Services.SettingsStore.Load();
+            var s = Services.SettingsStore.Data;
             await _audioService.InitializeAsync(s.SelectedAudioDevice ?? "");
         }
 
@@ -97,7 +108,7 @@ namespace UniCast.App.ViewModels
 
         public async Task StartPreviewAsync()
         {
-            var s = Services.SettingsStore.Load();
+            var s = Services.SettingsStore.Data;
             if (!_preview.IsRunning)
                 await _preview.StartAsync(-1, s.Width, s.Height, s.Fps);
         }

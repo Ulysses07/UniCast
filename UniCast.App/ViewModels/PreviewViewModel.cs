@@ -5,9 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
-using UniCast.Core.Settings;
 using Serilog;
-using SettingsData = UniCast.Core.Settings.SettingsData;
 
 namespace UniCast.App.ViewModels
 {
@@ -30,6 +28,11 @@ namespace UniCast.App.ViewModels
         public ICommand StartPreviewCommand { get; }
         public ICommand StopPreviewCommand { get; }
 
+        // Parametresiz constructor
+        public PreviewViewModel() : this(new PreviewService())
+        {
+        }
+
         // DÜZELTME: DI Constructor
         public PreviewViewModel(PreviewService service)
         {
@@ -44,7 +47,7 @@ namespace UniCast.App.ViewModels
                 _isStarting = true;
                 try
                 {
-                    SettingsData s = SettingsStore.Load();
+                    var s = SettingsStore.Data;
                     await _service.StartAsync(-1, s.Width, s.Height, s.Fps);
                 }
                 catch (Exception ex)

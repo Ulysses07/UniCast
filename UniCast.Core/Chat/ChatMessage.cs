@@ -2,14 +2,25 @@
 
 namespace UniCast.Core.Chat
 {
-    public enum ChatSource { YouTube, TikTok, Instagram, Facebook }
+    /// <summary>
+    /// Chat kaynağı (eski uyumluluk için)
+    /// </summary>
+    public enum ChatSource
+    {
+        YouTube = 1,
+        TikTok = 3,
+        Instagram = 4,
+        Facebook = 5
+    }
 
-    public sealed record ChatMessage(
-        string Id,
-        ChatSource Source,
-        DateTimeOffset Timestamp,
-        string Author,
-        string Text,
-        string? AvatarUrl = null
-    );
+    /// <summary>
+    /// Chat sabitleri
+    /// </summary>
+    public static class ChatConstants
+    {
+        public const int MaxUiMessages = 100;
+        public const int MaxBufferSize = 500;
+        public const int BatchIntervalMs = 250;
+        public const int MaxOverlayMessages = 50;
+    }
 }

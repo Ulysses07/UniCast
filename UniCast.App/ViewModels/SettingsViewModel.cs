@@ -6,15 +6,21 @@ using System.Windows.Input;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
 using UniCast.App.Services.Capture;
-using UniCast.Core.Settings;
 using UniCast.Core.Models;
+
+// App.Services.SettingsData kullan
+using SettingsData = UniCast.App.Services.SettingsData;
 
 namespace UniCast.App.ViewModels
 {
     public sealed class SettingsViewModel : INotifyPropertyChanged
     {
-        private readonly IDeviceService _devices;
+        private readonly IDeviceService? _devices;
         private SettingsData _settings;
+
+        public SettingsViewModel() : this(new DeviceService())
+        {
+        }
 
         public SettingsViewModel(IDeviceService devices)
         {
@@ -129,28 +135,26 @@ namespace UniCast.App.ViewModels
 
         private void Save()
         {
-            _settings.DefaultCamera = (DefaultCamera ?? "").Trim();
-            _settings.DefaultMicrophone = (DefaultMicrophone ?? "").Trim();
-            _settings.SelectedVideoDevice = _settings.DefaultCamera;
-            _settings.SelectedAudioDevice = _settings.DefaultMicrophone;
+            // SettingsStore.Data'yı güncelle
+            SettingsStore.Update(s =>
+            {
+                s.DefaultCamera = (DefaultCamera ?? "").Trim();
+                s.DefaultMicrophone = (DefaultMicrophone ?? "").Trim();
+                s.Encoder = string.IsNullOrWhiteSpace(Encoder) ? "auto" : Encoder.Trim();
+                s.VideoKbps = VideoKbps;
+                s.AudioKbps = AudioKbps;
+                s.AudioDelayMs = AudioDelayMs;
+                s.Fps = Fps;
+                s.Width = Width;
+                s.Height = Height;
+                s.RecordFolder = (RecordFolder ?? "").Trim();
+                s.EnableLocalRecord = EnableLocalRecord;
+                s.InstagramUsername = (InstagramUserId ?? "").Trim();
+                s.FacebookPageId = (FacebookPageId ?? "").Trim();
+                s.FacebookAccessToken = (FacebookAccessToken ?? "").Trim();
+            });
 
-            _settings.Encoder = string.IsNullOrWhiteSpace(Encoder) ? "auto" : Encoder.Trim();
-            _settings.VideoKbps = VideoKbps;
-            _settings.AudioKbps = AudioKbps;
-            _settings.AudioDelayMs = AudioDelayMs;
-            _settings.Fps = Fps;
-            _settings.Width = Width;
-            _settings.Height = Height;
-            _settings.RecordFolder = (RecordFolder ?? "").Trim();
-            _settings.EnableLocalRecord = EnableLocalRecord;
-
-            _settings.InstagramUserId = (InstagramUserId ?? "").Trim();
-            _settings.InstagramSessionId = (InstagramSessionId ?? "").Trim();
-            _settings.FacebookPageId = (FacebookPageId ?? "").Trim();
-            _settings.FacebookLiveVideoId = (FacebookLiveVideoId ?? "").Trim();
-            _settings.FacebookAccessToken = (FacebookAccessToken ?? "").Trim();
-
-            SettingsStore.Save(_settings);
+            SettingsStore.Save();
         }
 
         private void BrowseFolder()
@@ -171,6 +175,8 @@ namespace UniCast.App.ViewModels
 
         private async Task RefreshDevicesAsync()
         {
+            if (_devices == null) return;
+
             var videos = await _devices.GetVideoDevicesAsync();
             var audios = await _devices.GetAudioDevicesAsync();
 
