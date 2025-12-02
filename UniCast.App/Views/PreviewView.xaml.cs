@@ -23,7 +23,8 @@ namespace UniCast.App.Views
     /// </summary>
     public partial class PreviewView : UserControl
     {
-        private readonly PreviewViewModel? _viewModel;
+        // DÜZELTME: readonly kaldırıldı - constructor'da değiştirilebilmeli
+        private PreviewViewModel _viewModel;
 
         // DÜZELTME: SceneItems artık yerel bir ObservableCollection
         // ViewModel'den bağımsız, sadece sahne editörü için
@@ -39,11 +40,16 @@ namespace UniCast.App.Views
         private double _startWidth;
         private double _startHeight;
 
-        public PreviewView(object? viewModel = null)
+        public PreviewView() : this(new PreviewViewModel())
+        {
+        }
+
+        public PreviewView(PreviewViewModel viewModel)
         {
             InitializeComponent();
 
-            _viewModel = viewModel as PreviewViewModel;
+            // DÜZELTME: ViewModel'i parametre olarak al
+            _viewModel = viewModel ?? new PreviewViewModel();
 
             // DÜZELTME: Composite DataContext - hem preview hem scene items için
             DataContext = new PreviewViewDataContext
@@ -209,7 +215,7 @@ namespace UniCast.App.Views
     /// </summary>
     public class PreviewViewDataContext
     {
-        public PreviewViewModel? PreviewViewModel { get; set; }
-        public ObservableCollection<OverlayItem>? SceneItems { get; set; }
+        public PreviewViewModel PreviewViewModel { get; set; } = new();
+        public ObservableCollection<OverlayItem> SceneItems { get; set; } = [];
     }
 }

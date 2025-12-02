@@ -24,8 +24,14 @@
 
                         <ComboBox Grid.Column="1" ItemsSource="{Binding VideoDevices}"
                                   SelectedValue="{Binding DefaultCamera, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  SelectedValuePath="Id" DisplayMemberPath="Name"
-                                  Height="35"/>
+                                  SelectedValuePath="Id" 
+                                  Height="35">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" Foreground="Black"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
 
                         <Button Grid.Column="2" Content="🔄" Command="{Binding RefreshDevicesCommand}" 
                                 Width="40" Height="35" Margin="10,0,0,0" ToolTip="Cihazları Yenile"/>
@@ -40,8 +46,14 @@
 
                         <ComboBox Grid.Column="1" ItemsSource="{Binding AudioDevices}"
                                   SelectedValue="{Binding DefaultMicrophone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  SelectedValuePath="Id" DisplayMemberPath="Name"
-                                  Height="35"/>
+                                  SelectedValuePath="Id"
+                                  Height="35">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" Foreground="Black"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -59,11 +71,21 @@
                         <TextBlock Text="Video Encoder" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
                         <ComboBox Grid.Column="1" SelectedValue="{Binding Encoder, Mode=TwoWay}" 
                                   SelectedValuePath="Tag" Height="35">
-                            <ComboBoxItem Content="Otomatik (Önerilen)" Tag="auto"/>
-                            <ComboBoxItem Content="NVIDIA NVENC (GPU)" Tag="h264_nvenc"/>
-                            <ComboBoxItem Content="AMD AMF (GPU)" Tag="h264_amf"/>
-                            <ComboBoxItem Content="Intel QuickSync (GPU)" Tag="h264_qsv"/>
-                            <ComboBoxItem Content="CPU (libx264)" Tag="libx264"/>
+                            <ComboBoxItem Tag="auto">
+                                <TextBlock Text="Otomatik (Önerilen)" Foreground="Black"/>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="h264_nvenc">
+                                <TextBlock Text="NVIDIA NVENC (GPU)" Foreground="Black"/>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="h264_amf">
+                                <TextBlock Text="AMD AMF (GPU)" Foreground="Black"/>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="h264_qsv">
+                                <TextBlock Text="Intel QuickSync (GPU)" Foreground="Black"/>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="libx264">
+                                <TextBlock Text="CPU (libx264)" Foreground="Black"/>
+                            </ComboBoxItem>
                         </ComboBox>
                     </Grid>
 

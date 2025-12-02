@@ -341,8 +341,10 @@ namespace UniCast.App
             if (_previewView != null)
                 return;
 
+            // DÜZELTME: PreviewView kendi DataContext'ini yönetiyor (PreviewViewDataContext)
+            // Dışarıdan DataContext atamıyoruz, PreviewView constructor'da hallediyor
             _previewViewModel = new PreviewViewModel();
-            _previewView = new PreviewView { DataContext = _previewViewModel };
+            _previewView = new PreviewView(_previewViewModel);
 
             if (PreviewTabContent != null)
                 PreviewTabContent.Content = _previewView;

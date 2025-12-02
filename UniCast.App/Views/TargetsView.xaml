@@ -16,7 +16,15 @@
                 <TextBlock Text="🔗 Yeni Hedef Ekle" FontSize="18" FontWeight="Bold" Foreground="{StaticResource Primary}" Margin="0,0,0,15"/>
 
                 <TextBlock Text="Platform" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
-                <ComboBox ItemsSource="{Binding PlatformOptions}" SelectedItem="{Binding SelectedPlatform}" Margin="0,0,0,15" Height="35"/>
+                <ComboBox ItemsSource="{Binding PlatformOptions}" 
+                          SelectedItem="{Binding SelectedPlatform}" 
+                          Margin="0,0,0,15" Height="35">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" Foreground="Black"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
 
                 <TextBlock Text="İsim (Örn: Ana Kanal)" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
                 <TextBox Text="{Binding DisplayName}" Margin="0,0,0,15" Height="35"/>
