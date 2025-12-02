@@ -40,7 +40,7 @@ namespace UniCast.Licensing
         public event EventHandler<LicenseValidationResult>? ValidationCompleted;
 
         // Ayarlar
-        public string LicenseServerUrl { get; set; } = "https://license.unicast.app/api/v1";
+        public string LicenseServerUrl { get; set; } = "https://license.unicastapp.com/api/v1";
         public int OnlineValidationIntervalHours { get; set; } = 24;
         public bool AllowOfflineMode { get; set; } = true;
         public int MaxRetryAttempts { get; set; } = 3;
