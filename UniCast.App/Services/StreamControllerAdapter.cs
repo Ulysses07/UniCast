@@ -24,7 +24,7 @@ namespace UniCast.App.Services
         private readonly List<StreamTarget> _targets = new();
         private Profile _currentProfile = Profile.Default();
 
-        private volatile bool _isReconnecting;
+        private bool _isReconnecting;
         private string? _lastAdvisory;
         private string? _lastMessage;
         private string? _lastMetric;
@@ -278,18 +278,25 @@ namespace UniCast.App.Services
             {
                 case StreamState.Starting:
                     _lastMessage = "Başlatılıyor...";
+                    _isReconnecting = false;
                     break;
                 case StreamState.Running:
                     _lastMessage = "Yayında";
+                    _isReconnecting = false;
                     break;
                 case StreamState.Stopping:
                     _lastMessage = "Durduruluyor...";
+                    _isReconnecting = false;
                     break;
                 case StreamState.Stopped:
                     _lastMessage = "Durduruldu";
+                    _isReconnecting = false;
+                    OnExit?.Invoke(this, 0); // Normal çıkış
                     break;
                 case StreamState.Error:
                     _lastAdvisory = "Yayın hatası oluştu";
+                    _isReconnecting = true; // Hata durumunda yeniden bağlanma denenebilir
+                    OnExit?.Invoke(this, 1); // Hata ile çıkış
                     break;
             }
         }

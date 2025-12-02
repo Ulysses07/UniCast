@@ -16,7 +16,9 @@ namespace UniCast.Licensing.Protection
     public static class RuntimeProtection
     {
         private static volatile bool _isInitialized;
+#pragma warning disable CS0414 // Field is assigned but never used (DEBUG modunda kullanılmıyor)
         private static volatile bool _threatDetected;
+#pragma warning restore CS0414
         private static Timer? _heartbeatTimer;
         private static readonly object _initLock = new();
 

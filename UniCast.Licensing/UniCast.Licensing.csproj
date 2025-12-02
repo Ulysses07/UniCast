@@ -24,9 +24,8 @@
 		<Optimize>true</Optimize>
 		<DebugType>embedded</DebugType>
 
-		<!-- Platform -->
-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
-		<PlatformTarget>x64</PlatformTarget>
+		<!-- Platform - AnyCPU (diğer projelerle uyumlu) -->
+		<!-- NOT: win-x64 kısıtlaması kaldırıldı, App projesiyle uyumlu hale getirildi -->
 
 		<!-- Security -->
 		<AllowUnsafeBlocks>false</AllowUnsafeBlocks>

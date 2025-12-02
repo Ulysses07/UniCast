@@ -470,3 +470,101 @@
 2025-12-02 14:53:44.479 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
 2025-12-02 14:53:44.494 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
 2025-12-02 14:53:44.495 +03:00 [DBG] [LicenseManager] Disposed
+2025-12-02 14:58:35.177 +03:00 [INF] ===================================================
+2025-12-02 14:58:35.197 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-02 14:58:35.198 +03:00 [INF] ===================================================
+2025-12-02 14:58:35.525 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-02 14:58:35.685 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-02 14:58:35.723 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-02 14:58:35.726 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-02 14:58:35.757 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-02 14:58:35.764 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-02 14:58:35.768 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-02 14:58:35.811 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-02 14:58:35.814 +03:00 [DBG] [ChatBus] Initialized
+2025-12-02 14:58:35.815 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-02 14:58:35.816 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-02 14:58:35.817 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-02 14:58:35.879 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-02 14:58:40.403 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-02 14:58:52.234 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-02 14:58:52.236 +03:00 [DBG] [MainWindow] PreviewViewModel disposed
+2025-12-02 14:58:52.737 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-02 14:58:52.738 +03:00 [DBG] [MainWindow] ChatViewModel disposed
+2025-12-02 14:58:52.744 +03:00 [DBG] [MainWindow] SettingsViewModel disposed
+2025-12-02 14:58:52.744 +03:00 [DBG] [MainWindow] LicenseViewModel disposed
+2025-12-02 14:58:52.750 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-02 14:58:52.751 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-02 14:58:52.766 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-02 14:58:52.767 +03:00 [DBG] [LicenseManager] Disposed
+2025-12-02 15:08:19.183 +03:00 [INF] ===================================================
+2025-12-02 15:08:19.203 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-02 15:08:19.204 +03:00 [INF] ===================================================
+2025-12-02 15:08:19.552 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-02 15:08:19.702 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-02 15:08:19.732 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-02 15:08:19.735 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-02 15:08:19.769 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-02 15:08:19.775 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-02 15:08:19.778 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-02 15:08:19.826 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-02 15:08:19.829 +03:00 [DBG] [ChatBus] Initialized
+2025-12-02 15:08:19.830 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-02 15:08:19.831 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-02 15:08:19.832 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-02 15:08:19.898 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-02 15:08:23.558 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-02 15:08:24.059 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-02 15:08:24.066 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-02 15:08:24.067 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-02 15:08:24.081 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-02 15:08:24.082 +03:00 [DBG] [LicenseManager] Disposed
+2025-12-02 15:09:59.633 +03:00 [INF] ===================================================
+2025-12-02 15:09:59.660 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-02 15:09:59.661 +03:00 [INF] ===================================================
+2025-12-02 15:10:00.005 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-02 15:10:00.149 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-02 15:10:00.218 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-02 15:10:00.221 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-02 15:10:00.326 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-02 15:10:00.332 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-02 15:10:00.335 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-02 15:10:00.376 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-02 15:10:00.378 +03:00 [DBG] [ChatBus] Initialized
+2025-12-02 15:10:00.380 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-02 15:10:00.380 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-02 15:10:00.381 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-02 15:10:00.726 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-02 15:10:06.694 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-02 15:10:27.160 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-02 15:10:27.162 +03:00 [DBG] [MainWindow] PreviewViewModel disposed
+2025-12-02 15:10:27.663 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-02 15:10:27.665 +03:00 [DBG] [MainWindow] ChatViewModel disposed
+2025-12-02 15:10:27.671 +03:00 [DBG] [MainWindow] SettingsViewModel disposed
+2025-12-02 15:10:27.672 +03:00 [DBG] [MainWindow] LicenseViewModel disposed
+2025-12-02 15:10:27.678 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-02 15:10:27.679 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-02 15:10:27.696 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-02 15:10:27.698 +03:00 [DBG] [LicenseManager] Disposed
+2025-12-02 15:12:12.560 +03:00 [INF] ===================================================
+2025-12-02 15:12:12.580 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-02 15:12:12.581 +03:00 [INF] ===================================================
+2025-12-02 15:12:12.909 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-02 15:12:13.038 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-02 15:12:13.124 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-02 15:12:13.126 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-02 15:12:13.160 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-02 15:12:13.165 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-02 15:12:13.168 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-02 15:12:13.215 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-02 15:12:13.217 +03:00 [DBG] [ChatBus] Initialized
+2025-12-02 15:12:13.219 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-02 15:12:13.220 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-02 15:12:13.220 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-02 15:12:13.280 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-02 15:12:14.408 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-02 15:12:14.906 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-02 15:12:14.913 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-02 15:12:14.914 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-02 15:12:14.928 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-02 15:12:14.930 +03:00 [DBG] [LicenseManager] Disposed

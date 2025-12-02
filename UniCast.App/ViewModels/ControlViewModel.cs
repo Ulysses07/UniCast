@@ -202,6 +202,13 @@ namespace UniCast.App.ViewModels
 
             try
             {
+                // DÜZELTME: Null check eklendi
+                if (_provider == null)
+                {
+                    Advisory = "Yapılandırma sağlayıcısı bulunamadı.";
+                    return;
+                }
+
                 var (targets, settings) = _provider();
 
                 // DÜZELTME: Eski CTS'i dispose et

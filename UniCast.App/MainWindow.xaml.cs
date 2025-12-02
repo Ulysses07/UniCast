@@ -353,7 +353,7 @@ namespace UniCast.App
         private void LoadTargetsTab()
         {
             // TargetsView için - henüz yoksa basit bir placeholder
-            if (TargetsTabContent?.Content != null)
+            if (TargetsTabContent == null || TargetsTabContent.Content != null)
                 return;
 
             try
@@ -534,7 +534,7 @@ namespace UniCast.App
 
             try
             {
-                _overlay.ShowMessage(message, sender);
+                _overlay.ShowMessage(message, sender ?? "System");
             }
             catch (Exception ex)
             {
