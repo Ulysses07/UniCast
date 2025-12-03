@@ -38,7 +38,11 @@ namespace UniCast.Core
                     if (obj != null) return obj;
                 }
             }
-            catch { /* ignore and fall back */ }
+            catch (Exception ex)
+            {
+                // DÜZELTME v25: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[SettingsStorage] Load hatası, varsayılana dönülüyor: {ex.Message}");
+            }
 
             return new AppSettings(); // defaults
         }

@@ -46,9 +46,10 @@ namespace UniCast.App.Services
 
                     StartMonitoring();
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Mikrofon yoksa sessizce geç
+                    // DÜZELTME v25: Mikrofon yoksa sessizce geç - loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[AudioService] Mikrofon başlatma hatası: {ex.Message}");
                 }
             });
         }
@@ -109,7 +110,7 @@ namespace UniCast.App.Services
                 {
                     _cts.Cancel();
                 }
-                catch { }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AudioService] CTS cancel hatası: {ex.Message}"); }
 
                 if (_monitorTask != null)
                 {
@@ -117,7 +118,7 @@ namespace UniCast.App.Services
                     {
                         await _monitorTask.ConfigureAwait(false);
                     }
-                    catch { }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AudioService] Monitor task bekleme hatası: {ex.Message}"); }
                 }
 
                 _cts.Dispose();
@@ -140,10 +141,10 @@ namespace UniCast.App.Services
                 // Task'ın bitmesini kısa süre bekle - deadlock önleme
                 _monitorTask?.Wait(TimeSpan.FromMilliseconds(500));
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AudioService] StopMonitoring hatası: {ex.Message}"); }
             finally
             {
-                try { _cts?.Dispose(); } catch { }
+                try { _cts?.Dispose(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AudioService] CTS dispose hatası: {ex.Message}"); }
                 _cts = null;
                 _monitorTask = null;
                 _selectedDevice = null;
@@ -165,9 +166,9 @@ namespace UniCast.App.Services
                 _cts?.Cancel();
                 _monitorTask?.Wait(TimeSpan.FromMilliseconds(500));
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AudioService] Dispose wait hatası: {ex.Message}"); }
 
-            try { _cts?.Dispose(); } catch { }
+            try { _cts?.Dispose(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AudioService] CTS dispose hatası: {ex.Message}"); }
             _cts = null;
             _monitorTask = null;
             _selectedDevice = null;
@@ -176,7 +177,7 @@ namespace UniCast.App.Services
             {
                 _enumerator.Dispose();
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AudioService] Enumerator dispose hatası: {ex.Message}"); }
         }
     }
 }

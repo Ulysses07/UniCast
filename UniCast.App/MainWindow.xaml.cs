@@ -675,9 +675,10 @@ namespace UniCast.App
                             Log.Debug("[MainWindow] Ingestor task'ları bekleniyor... ({Count} adet)", _ingestorTasks.Count);
                             Task.WhenAll(_ingestorTasks).Wait(TimeSpan.FromSeconds(5));
                         }
-                        catch (AggregateException)
+                        catch (AggregateException ae)
                         {
-                            // Task iptal edildiğinde normal
+                            // DÜZELTME v25: Task iptal edildiğinde normal - loglama eklendi
+                            System.Diagnostics.Debug.WriteLine($"[MainWindow] Ingestor task'ları AggregateException: {ae.InnerExceptions.Count} inner exception");
                         }
                         catch (Exception ex)
                         {

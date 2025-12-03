@@ -66,7 +66,7 @@ namespace UniCast.Encoder
                     var fullPath = Path.Combine(path.Trim(), "ffmpeg.exe");
                     if (File.Exists(fullPath)) return fullPath;
                 }
-                catch { }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[FFmpeg] PATH arama hatası ({path}): {ex.Message}"); }
             }
 
             return "ffmpeg";
@@ -192,9 +192,10 @@ namespace UniCast.Encoder
                         // DÜZELTME: Access denied veya process zaten kapanmış olabilir
                         OnLog?.Invoke($"[FFmpeg] Kill hatası (muhtemelen zaten kapandı): {ex.Message}");
                     }
-                    catch (InvalidOperationException)
+                    catch (InvalidOperationException ex)
                     {
-                        // Process zaten kapanmış
+                        // DÜZELTME v25: Process zaten kapanmış - loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[FFmpeg] Kill InvalidOperationException (zaten kapanmış): {ex.Message}");
                     }
 
                     await WaitForExitAsync(KILL_TIMEOUT_MS);
@@ -212,7 +213,7 @@ namespace UniCast.Encoder
                 {
                     _proc?.Dispose();
                 }
-                catch { }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[FFmpeg] Process dispose hatası: {ex.Message}"); }
 
                 _proc = null;
             }
@@ -348,16 +349,16 @@ namespace UniCast.Encoder
                     {
                         _proc.Kill(entireProcessTree: true);
                     }
-                    catch { }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[FFmpeg] Process kill hatası: {ex.Message}"); }
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[FFmpeg] Dispose block hatası: {ex.Message}"); }
 
             try
             {
                 _proc?.Dispose();
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[FFmpeg] Final dispose hatası: {ex.Message}"); }
 
             _proc = null;
 

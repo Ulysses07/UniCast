@@ -21,7 +21,8 @@ namespace UniCast.Licensing.Protection
     public static class AssemblyIntegrity
     {
         private static readonly Dictionary<string, string> _expectedHashes = new();
-        private static bool _isInitialized;
+        // DÜZELTME v25: Thread safety - volatile eklendi
+        private static volatile bool _isInitialized;
         private static readonly object _initLock = new();
 
         // Kontrol edilecek assembly'ler
@@ -375,15 +376,17 @@ namespace UniCast.Licensing.Protection
                             return true;
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Process bilgisi alınamadı, devam et
+                        // DÜZELTME v25: Process bilgisi alınamadı - loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[AssemblyIntegrity] Process bilgisi hatası: {ex.Message}");
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Process listesi alınamadı
+                // DÜZELTME v25: Process listesi alınamadı - loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[AssemblyIntegrity] Process listesi hatası: {ex.Message}");
             }
 
             return false;
@@ -408,15 +411,17 @@ namespace UniCast.Licensing.Protection
                             return processName;
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Process bilgisi alınamadı
+                        // DÜZELTME v25: Process bilgisi alınamadı - loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[AssemblyIntegrity] GetDetectedAntivirus process hatası: {ex.Message}");
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Process listesi alınamadı
+                // DÜZELTME v25: Process listesi alınamadı - loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[AssemblyIntegrity] GetDetectedAntivirus liste hatası: {ex.Message}");
             }
 
             return null;

@@ -256,9 +256,10 @@ namespace UniCast.Core.Services
                             _ffmpegProcess.Kill(entireProcessTree: true);
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        try { _ffmpegProcess.Kill(); } catch { }
+                        Log.Debug(ex, "[StreamController] FFmpeg kapatma hatası");
+                        try { _ffmpegProcess.Kill(); } catch (Exception killEx) { Log.Debug(killEx, "[StreamController] FFmpeg kill hatası"); }
                     }
                 }
 
@@ -420,9 +421,10 @@ namespace UniCast.Core.Services
 
                 StatisticsUpdated?.Invoke(this, new StreamStatisticsEventArgs(stats));
             }
-            catch
+            catch (Exception ex)
             {
-                // İstatistik parse hatası - yok say
+                // DÜZELTME v25: İstatistik parse hatası - loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[StreamController] İstatistik parse hatası: {ex.Message}");
             }
         }
 
@@ -438,7 +440,7 @@ namespace UniCast.Core.Services
                     _ffmpegProcess = null;
                 }
             }
-            catch { }
+            catch (Exception ex) { Log.Debug(ex, "[StreamController] FFmpeg cleanup hatası"); }
         }
 
         private string BuildFfmpegArgs(StreamConfiguration config)
@@ -485,7 +487,7 @@ namespace UniCast.Core.Services
                     if (File.Exists(path))
                         return path;
                 }
-                catch { }
+                catch (Exception ex) { Log.Debug(ex, "[StreamController] FFmpeg arama hatası ({Dir})", dir); }
             }
 
             return null;
@@ -509,7 +511,7 @@ namespace UniCast.Core.Services
             {
                 LogMessage?.Invoke(level, message);
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[StreamController] LogMessage event hatası: {ex.Message}"); }
         }
 
         private void ThrowIfDisposed()
@@ -529,7 +531,7 @@ namespace UniCast.Core.Services
             {
                 StopAsync().GetAwaiter().GetResult();
             }
-            catch { }
+            catch (Exception ex) { Log.Debug(ex, "[StreamController] Dispose sırasında stop hatası"); }
 
             _cts?.Dispose();
 

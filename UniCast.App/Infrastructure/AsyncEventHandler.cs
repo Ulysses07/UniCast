@@ -115,7 +115,7 @@ namespace UniCast.App.Infrastructure
                     {
                         onError?.Invoke(ex);
                     }
-                    catch { }
+                    catch (Exception callbackEx) { Log.Debug(callbackEx, "[AsyncEventHandler] Error callback hatası"); }
                 }
             }, TaskContinuationOptions.OnlyOnFaulted);
         }
@@ -184,9 +184,10 @@ namespace UniCast.App.Infrastructure
                         MessageBoxImage.Error);
                 });
             }
-            catch
+            catch (Exception )
             {
-                // Dialog gösterilemedi
+                // DÜZELTME v25: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[AsyncEventHandler] Dialog gösterme hatası: {ex.Message}");
             }
         }
 

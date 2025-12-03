@@ -43,12 +43,13 @@ namespace UniCast.Core.Chat.Ingestors
         private IInstaApi? _instaApi;
         private string? _broadcastId;
         private string _lastCommentTs = "0";
-        private bool _isPrivateApiLoggedIn = false;
+        // DÜZELTME v25: Thread safety - volatile eklendi
+        private volatile bool _isPrivateApiLoggedIn = false;
         private readonly string _sessionFile;
 
-        // Private API durumu
-        private bool _privateApiEnabled = true;
-        private int _privateApiFailCount = 0;
+        // Private API durumu - DÜZELTME v25: Thread safety
+        private volatile bool _privateApiEnabled = true;
+        private int _privateApiFailCount = 0;  // Interlocked ile kullanılacak
         private DateTime _privateApiDisabledUntil = DateTime.MinValue;
 
         #endregion
@@ -61,9 +62,9 @@ namespace UniCast.Core.Chat.Ingestors
         private string? _liveMediaId;
         private string? _lastGraphCommentCursor;
 
-        // Graph API durumu
-        private bool _graphApiEnabled = true;
-        private int _graphApiRequestsThisHour = 0;
+        // Graph API durumu - DÜZELTME v25: Thread safety
+        private volatile bool _graphApiEnabled = true;
+        private int _graphApiRequestsThisHour = 0;  // Interlocked ile kullanılacak
         private DateTime _graphApiHourStart = DateTime.UtcNow;
 
         #endregion
@@ -384,7 +385,8 @@ namespace UniCast.Core.Chat.Ingestors
             if (!_graphApiEnabled || string.IsNullOrEmpty(_liveMediaId) || string.IsNullOrEmpty(GraphApiAccessToken))
                 return false;
             CheckGraphApiRateLimit();
-            return _graphApiRequestsThisHour < 180;
+            // DÜZELTME v25: Thread-safe okuma
+            return Interlocked.CompareExchange(ref _graphApiRequestsThisHour, 0, 0) < 180;
         }
 
         private void CheckGraphApiRateLimit()
@@ -392,7 +394,8 @@ namespace UniCast.Core.Chat.Ingestors
             if ((DateTime.UtcNow - _graphApiHourStart).TotalHours >= 1)
             {
                 _graphApiHourStart = DateTime.UtcNow;
-                _graphApiRequestsThisHour = 0;
+                // DÜZELTME v25: Thread-safe reset
+                Interlocked.Exchange(ref _graphApiRequestsThisHour, 0);
             }
         }
 
@@ -412,7 +415,8 @@ namespace UniCast.Core.Chat.Ingestors
                     return;
                 }
 
-                _privateApiFailCount = 0;
+                // DÜZELTME v25: Thread-safe reset
+                Interlocked.Exchange(ref _privateApiFailCount, 0);
 
                 if (commentsResult.Value?.Comments != null)
                 {
@@ -470,8 +474,9 @@ namespace UniCast.Core.Chat.Ingestors
 
         private void HandlePrivateApiError()
         {
-            _privateApiFailCount++;
-            if (_privateApiFailCount >= 3)
+            // DÜZELTME v25: Thread-safe increment ve okuma
+            var newCount = Interlocked.Increment(ref _privateApiFailCount);
+            if (newCount >= 3)
             {
                 _privateApiDisabledUntil = DateTime.UtcNow.AddMinutes(5);
                 Log.Warning("[Instagram Private] 3 hata, 5 dakika devre dışı");
@@ -495,12 +500,14 @@ namespace UniCast.Core.Chat.Ingestors
                     url += $"&after={_lastGraphCommentCursor}";
 
                 using var response = await HttpClient.GetAsync(url, ct);
-                _graphApiRequestsThisHour++;
+                // DÜZELTME v25: Thread-safe increment
+                Interlocked.Increment(ref _graphApiRequestsThisHour);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     if ((int)response.StatusCode == 429)
-                        _graphApiRequestsThisHour = 200;
+                        // DÜZELTME v25: Thread-safe set
+                        Interlocked.Exchange(ref _graphApiRequestsThisHour, 200);
                     return;
                 }
 

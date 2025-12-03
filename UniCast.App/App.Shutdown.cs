@@ -27,7 +27,8 @@ namespace UniCast.App
             public const int SaveSettingsTimeoutMs = 2000; // Ayar kaydetme timeout
         }
 
-        private static bool _isShuttingDown = false;
+        // DÜZELTME v25: Thread safety - volatile eklendi
+        private static volatile bool _isShuttingDown = false;
         private static readonly object _shutdownLock = new();
 
         #endregion
@@ -199,9 +200,10 @@ namespace UniCast.App
             {
                 await Task.Run(() => Log.CloseAndFlush());
             }
-            catch
+            catch (Exception ex)
             {
-                // Log flush hatası önemsiz
+                // DÜZELTME v25: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[App.Shutdown] Log flush hatası: {ex.Message}");
             }
         }
 
@@ -223,7 +225,7 @@ namespace UniCast.App
                 {
                     StreamController.Instance.Stop();
                 }
-                catch { }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[EmergencyShutdown] Stream stop hatası: {ex.Message}"); }
 
                 // FFmpeg'leri öldür
                 try
@@ -235,10 +237,10 @@ namespace UniCast.App
                             proc.Kill();
                             proc.Dispose();
                         }
-                        catch { }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[EmergencyShutdown] FFmpeg kill hatası: {ex.Message}"); }
                     }
                 }
-                catch { }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[EmergencyShutdown] FFmpeg enumeration hatası: {ex.Message}"); }
 
                 // Log flush
                 Log.CloseAndFlush();
@@ -334,9 +336,10 @@ namespace UniCast.App
                     System.IO.File.Delete(crashMarkerPath);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Önemsiz
+                // DÜZELTME v25: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[App.Shutdown] Crash marker temizleme hatası: {ex.Message}");
             }
         }
 

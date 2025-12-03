@@ -45,7 +45,8 @@ namespace UniCast.Core.Chat.Ingestors
 
         private ClientWebSocket? _webSocket;
         private string? _roomId;
-        private bool _isConnected;
+        // DÜZELTME v25: Thread safety - volatile eklendi
+        private volatile bool _isConnected;
 
         // TikTok WebCast message types
         private const int MSG_CHAT = 1;
