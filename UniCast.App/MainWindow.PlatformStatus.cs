@@ -111,7 +111,7 @@ namespace UniCast.App
                 {
                     if (sender is IChatIngestor ingestor)
                     {
-                        UpdatePlatformIndicator(ingestor.Platform, e.NewState, e.Error);
+                        UpdatePlatformIndicator(ingestor.Platform, e.NewState, e.Message);
                     }
                 }
                 catch (Exception ex)
@@ -193,7 +193,7 @@ namespace UniCast.App
                 {
                     StreamStatusIndicator.Fill = DisconnectedColor;
                     StreamStatusText.Text = "Hazır";
-                    StreamStatusText.Foreground = (SolidColorBrush)FindResource("TextSecondary");
+                    StreamStatusText.Foreground = (SolidColorBrush)FindResource("TextMuted");
                 }
             }
             catch

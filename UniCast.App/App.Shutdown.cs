@@ -36,14 +36,14 @@ namespace UniCast.App
 
         /// <summary>
         /// DÜZELTME v18: Gelişmiş graceful shutdown
+        /// Bu metod App.xaml.cs OnExit'ten çağrılmalıdır
         /// </summary>
-        protected override void OnExit(ExitEventArgs e)
+        public void PerformGracefulShutdown()
         {
             lock (_shutdownLock)
             {
                 if (_isShuttingDown)
                 {
-                    base.OnExit(e);
                     return;
                 }
                 _isShuttingDown = true;
@@ -81,19 +81,15 @@ namespace UniCast.App
                 // FFmpeg orphan temizliği (sync)
                 CleanupOrphanFfmpegProcesses();
 
+                // Crash marker temizle (normal kapatma)
+                ClearCrashMarker();
+
                 Log.Information("[App] Graceful Shutdown tamamlandı ({ElapsedMs}ms)", sw.ElapsedMilliseconds);
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "[App] Shutdown sırasında hata");
             }
-            finally
-            {
-                // Serilog'u kapat
-                Log.CloseAndFlush();
-            }
-
-            base.OnExit(e);
         }
 
         /// <summary>

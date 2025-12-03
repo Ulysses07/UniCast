@@ -46,7 +46,6 @@ namespace UniCast.Core.Chat.Ingestors
         private ClientWebSocket? _webSocket;
         private string? _roomId;
         private bool _isConnected;
-        private int _currentSignServerIndex = 0;
 
         // TikTok WebCast message types
         private const int MSG_CHAT = 1;

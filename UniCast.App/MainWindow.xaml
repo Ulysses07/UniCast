@@ -62,7 +62,7 @@
 
                 <!-- Platform Status Indicators -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="10,0,0,0">
-                    <TextBlock Text="Platformlar:" Foreground="{StaticResource TextSecondary}" 
+                    <TextBlock Text="Platformlar:" Foreground="{StaticResource TextMuted}" 
                                VerticalAlignment="Center" Margin="0,0,10,0" FontSize="11"/>
 
                     <!-- YouTube Status -->
@@ -70,7 +70,7 @@
                             Background="#1a1a1a" ToolTip="YouTube: Bağlı değil">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse x:Name="YouTubeIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,4,0"/>
-                            <TextBlock Text="YT" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                            <TextBlock Text="YT" Foreground="{StaticResource TextMuted}" FontSize="10" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -79,7 +79,7 @@
                             Background="#1a1a1a" ToolTip="Twitch: Bağlı değil">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse x:Name="TwitchIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,4,0"/>
-                            <TextBlock Text="TW" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                            <TextBlock Text="TW" Foreground="{StaticResource TextMuted}" FontSize="10" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -88,7 +88,7 @@
                             Background="#1a1a1a" ToolTip="TikTok: Bağlı değil">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse x:Name="TikTokIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,4,0"/>
-                            <TextBlock Text="TT" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                            <TextBlock Text="TT" Foreground="{StaticResource TextMuted}" FontSize="10" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -97,7 +97,7 @@
                             Background="#1a1a1a" ToolTip="Instagram: Bağlı değil">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse x:Name="InstagramIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,4,0"/>
-                            <TextBlock Text="IG" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                            <TextBlock Text="IG" Foreground="{StaticResource TextMuted}" FontSize="10" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -106,7 +106,7 @@
                             Background="#1a1a1a" ToolTip="Facebook: Bağlı değil">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse x:Name="FacebookIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,4,0"/>
-                            <TextBlock Text="FB" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                            <TextBlock Text="FB" Foreground="{StaticResource TextMuted}" FontSize="10" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -115,16 +115,16 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Ellipse x:Name="StreamStatusIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,6,0"/>
                     <TextBlock x:Name="StreamStatusText" Text="Hazır" 
-                               Foreground="{StaticResource TextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                               Foreground="{StaticResource TextMuted}" FontSize="11" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <!-- Right: Chat Stats -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0">
                     <TextBlock x:Name="ChatStatsText" Text="💬 0 mesaj/dk" 
-                               Foreground="{StaticResource TextSecondary}" FontSize="11" 
+                               Foreground="{StaticResource TextMuted}" FontSize="11" 
                                VerticalAlignment="Center" Margin="0,0,15,0"/>
                     <TextBlock x:Name="ViewerCountText" Text="👁 --" 
-                               Foreground="{StaticResource TextSecondary}" FontSize="11" 
+                               Foreground="{StaticResource TextMuted}" FontSize="11" 
                                VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>

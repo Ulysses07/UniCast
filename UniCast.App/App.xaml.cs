@@ -256,6 +256,9 @@ namespace UniCast.App
         {
             Log.Information("Uygulama kapatılıyor. Çıkış Kodu: {ExitCode}", e.ApplicationExitCode);
 
+            // DÜZELTME v18: Gelişmiş graceful shutdown
+            PerformGracefulShutdown();
+
             try
             {
                 LicenseManager.Instance.StatusChanged -= OnLicenseStatusChanged;
