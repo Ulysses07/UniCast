@@ -166,9 +166,9 @@
 
                 <Grid Height="40" Margin="0,0,0,30">
                     <TextBlock Text="U" FontSize="24" FontWeight="Bold" Foreground="{StaticResource Primary}"
-                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="23,0,0,0"/>
+                               HorizontalAlignment="Left" Margin="32,0,0,0" Width="32"/>
 
-                    <TextBlock Text="niCast" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextMain}" 
+                    <TextBlock Text=" niCast" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextMain}" 
                                HorizontalAlignment="Left" VerticalAlignment="Center" Margin="45,0,0,0"/>
                 </Grid>
 
