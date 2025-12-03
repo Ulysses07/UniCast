@@ -30,7 +30,7 @@ namespace UniCast.App
         private YouTubeChatIngestor? _ytIngestor;
         private TwitchChatIngestor? _twitchIngestor;
         private TikTokChatIngestor? _tikTokIngestor;
-        private InstagramChatIngestor? _instagramIngestor;
+        private InstagramHybridChatIngestor? _instagramIngestor;  // DEĞİŞTİ
         private FacebookChatIngestor? _facebookIngestor;
 
         // ViewModels (IDisposable olanlar)
@@ -174,12 +174,34 @@ namespace UniCast.App
                     Log.Warning("[MainWindow] TikTok chat sadece mock modda çalışıyor - gerçek API henüz entegre edilmedi");
                 }
 
-                // Instagram (Mock - API henüz implement edilmedi)
+                // Instagram - Hibrit API (DEĞİŞTİ)
                 if (!string.IsNullOrWhiteSpace(settings.InstagramUsername))
                 {
-                    _instagramIngestor = new InstagramChatIngestor(settings.InstagramUsername);
-                    _ = StartIngestorSafeAsync(_instagramIngestor, "Instagram", ct);
-                    Log.Warning("[MainWindow] Instagram chat sadece mock modda çalışıyor - gerçek API henüz entegre edilmedi");
+                    var hasPassword = !string.IsNullOrWhiteSpace(settings.InstagramPassword);
+                    var hasToken = !string.IsNullOrWhiteSpace(settings.InstagramAccessToken) ||
+                                   !string.IsNullOrWhiteSpace(settings.FacebookPageAccessToken);
+
+                    if (hasPassword || hasToken)
+                    {
+                        _instagramIngestor = new InstagramHybridChatIngestor(settings.InstagramUsername)
+                        {
+                            Username = settings.InstagramUsername,
+                            Password = settings.InstagramPassword ?? "",
+                            GraphApiAccessToken = !string.IsNullOrWhiteSpace(settings.InstagramAccessToken)
+                                ? settings.InstagramAccessToken
+                                : settings.FacebookPageAccessToken,
+                            BroadcasterUsername = string.IsNullOrWhiteSpace(settings.InstagramBroadcasterUsername)
+                                ? null
+                                : settings.InstagramBroadcasterUsername,
+                            TotalPollingInterval = TimeSpan.FromSeconds(4)
+                        };
+                        _ = StartIngestorSafeAsync(_instagramIngestor, "Instagram", ct);
+                        Log.Information("[MainWindow] Instagram Hibrit API aktif");
+                    }
+                    else
+                    {
+                        Log.Warning("[MainWindow] Instagram chat için şifre veya token gerekli");
+                    }
                 }
 
                 // Facebook (Mock - API henüz implement edilmedi)

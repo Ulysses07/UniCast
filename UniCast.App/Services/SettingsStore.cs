@@ -242,19 +242,6 @@ namespace UniCast.App.Services
                     }
                 }
 
-                // Instagram Session ID
-                if (string.IsNullOrEmpty(data.EncryptedInstagramSessionId) &&
-                    root.TryGetProperty("InstagramSessionId", out var igSession))
-                {
-                    var value = igSession.GetString();
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        data.InstagramSessionId = value;
-                        migrated = true;
-                        Log.Information("[SettingsStore] Instagram Session ID migrate edildi");
-                    }
-                }
-
                 // YouTube API Key
                 if (string.IsNullOrEmpty(data.EncryptedYouTubeApiKey) &&
                     root.TryGetProperty("YouTubeApiKey", out var ytApiKey))
@@ -268,127 +255,87 @@ namespace UniCast.App.Services
                     }
                 }
 
-                // Twitch Client ID
-                if (string.IsNullOrEmpty(data.EncryptedTwitchClientId) &&
-                    root.TryGetProperty("TwitchClientId", out var twitchClientId))
+                // Instagram Session ID
+                if (string.IsNullOrEmpty(data.EncryptedInstagramSessionId) &&
+                    root.TryGetProperty("InstagramSessionId", out var igSession))
                 {
-                    var value = twitchClientId.GetString();
+                    var value = igSession.GetString();
                     if (!string.IsNullOrEmpty(value))
                     {
-                        data.TwitchClientId = value;
+                        data.InstagramSessionId = value;
                         migrated = true;
-                        Log.Information("[SettingsStore] Twitch Client ID migrate edildi");
-                    }
-                }
-
-                // Facebook Access Token
-                if (string.IsNullOrEmpty(data.EncryptedFacebookAccessToken) &&
-                    root.TryGetProperty("FacebookAccessToken", out var fbAccessToken))
-                {
-                    var value = fbAccessToken.GetString();
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        data.FacebookAccessToken = value;
-                        migrated = true;
-                        Log.Information("[SettingsStore] Facebook Access Token migrate edildi");
+                        Log.Information("[SettingsStore] Instagram Session ID migrate edildi");
                     }
                 }
 
                 if (migrated)
                 {
-                    // Migration yapıldı, yeni formatta kaydet
-                    _isDirty = true;
-                    Log.Information("[SettingsStore] Eski ayarlar şifreli formata migrate edildi, kaydediliyor...");
+                    Log.Information("[SettingsStore] Eski ayarlar şifreli formata migrate edildi");
                 }
             }
             catch (Exception ex)
             {
-                Log.Warning(ex, "[SettingsStore] Migration sırasında hata (yok sayılıyor)");
+                Log.Warning(ex, "[SettingsStore] Migration sırasında hata (yeni kurulumda normal)");
             }
-        }
-
-        /// <summary>
-        /// Core.Settings.SettingsData olarak yükler (uyumluluk için).
-        /// </summary>
-        public static UniCast.Core.Settings.SettingsData LoadCore()
-        {
-            var appData = Data;
-            return new UniCast.Core.Settings.SettingsData
-            {
-                DefaultCamera = appData.VideoDevice,
-                DefaultMicrophone = appData.AudioDevice,
-                SelectedVideoDevice = appData.VideoDevice,
-                SelectedAudioDevice = appData.AudioDevice,
-                VideoKbps = appData.VideoKbps,
-                AudioKbps = appData.AudioKbps,
-                Fps = appData.Fps,
-                Width = appData.Width,
-                Height = appData.Height,
-                EnableLocalRecord = appData.RecordingEnabled,
-                RecordFolder = appData.RecordingPath
-            };
         }
 
         private static void StartAutoSave()
         {
-            _autoSaveTimer?.Dispose();
+            // Her 30 saniyede bir kaydet (değişiklik varsa)
             _autoSaveTimer = new System.Threading.Timer(_ =>
             {
-                if (_isDirty)
+                lock (_lock)
                 {
-                    Save();
+                    if (_isDirty)
+                    {
+                        Save();
+                    }
                 }
             }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
         }
     }
 
     /// <summary>
-    /// Uygulama ayarları veri modeli.
+    /// Ayar verileri.
     /// </summary>
-    public sealed class SettingsData
+    public class SettingsData
     {
-        // Stream Ayarları
-        public int VideoKbps { get; set; } = 2500;
-        public int AudioKbps { get; set; } = 128;
-        public int Fps { get; set; } = 30;
+        // Video Ayarları
         public string VideoResolution { get; set; } = "1920x1080";
+        public int VideoWidth { get; set; } = 1920;
+        public int VideoHeight { get; set; } = 1080;
+        public int VideoKbps { get; set; } = 4500;
+        public int Fps { get; set; } = 30;
         public string VideoEncoder { get; set; } = "libx264";
         public string VideoPreset { get; set; } = "veryfast";
+
+        // Audio Ayarları
+        public int AudioKbps { get; set; } = 128;
         public string AudioEncoder { get; set; } = "aac";
         public int AudioSampleRate { get; set; } = 44100;
-
-        // Çözünürlük (Core uyumluluğu için)
-        public int Width { get; set; } = 1920;
-        public int Height { get; set; } = 1080;
+        public int AudioChannels { get; set; } = 2;
 
         // Cihaz Seçimleri
-        public string VideoDevice { get; set; } = "";
-        public string AudioDevice { get; set; } = "";
-        public string SelectedVideoDevice { get => VideoDevice; set => VideoDevice = value; }
-        public string SelectedAudioDevice { get => AudioDevice; set => AudioDevice = value; }
-        public string DefaultCamera { get => VideoDevice; set => VideoDevice = value; }
-        public string DefaultMicrophone { get => AudioDevice; set => AudioDevice = value; }
+        public string SelectedCamera { get; set; } = "";
+        public string SelectedMicrophone { get; set; } = "";
+        public string SelectedDesktopAudio { get; set; } = "";
+        public string SelectedScreen { get; set; } = "";
+        public string CaptureMode { get; set; } = "Camera"; // "Camera", "Screen", "Both"
 
-        // Ses Gecikmesi
-        public int AudioDelayMs { get; set; } = 0;
-
-        // Scene Items (Core uyumluluğu için)
-        public List<UniCast.Core.Models.OverlayItem> SceneItems { get; set; } = new();
-
-        // Encoder
-        public string Encoder { get => VideoEncoder; set => VideoEncoder = value; }
-
-        // Platform Bağlantıları
+        // Platform Ayarları
         public string YouTubeVideoId { get; set; } = "";
+        public string YouTubeChannelId { get; set; } = "";
+        public string YouTubeRtmpUrl { get; set; } = "rtmp://a.rtmp.youtube.com/live2";
 
-        // NOT: Stream key'ler artık şifrelenmiş olarak saklanıyor
-        // Eski property'ler geriye uyumluluk için - yeni şifreli versiyonları kullanın
         [System.Text.Json.Serialization.JsonIgnore]
         public string YouTubeStreamKey
         {
             get => YouTubeStreamKeyDecrypted;
             set => YouTubeStreamKeyDecrypted = value;
         }
+
+        public string TwitchUsername { get; set; } = "";
+        public string TwitchRtmpUrl { get; set; } = "rtmp://live.twitch.tv/app";
 
         [System.Text.Json.Serialization.JsonIgnore]
         public string TwitchStreamKey
@@ -419,6 +366,43 @@ namespace UniCast.App.Services
         public string TikTokUsername { get; set; } = "";
         public string InstagramUsername { get; set; } = "";
         public string InstagramUserId { get => InstagramUsername; set => InstagramUsername = value; }
+
+        // ===== INSTAGRAM CHAT ALANLARI =====
+
+        /// <summary>
+        /// Instagram okuyucu hesap şifresi (Private API için).
+        /// ÖNEMLİ: Ana hesap yerine ayrı bir okuyucu hesap kullanın!
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string InstagramPassword
+        {
+            get => InstagramPasswordDecrypted;
+            set => InstagramPasswordDecrypted = value;
+        }
+
+        /// <summary>
+        /// Yayın yapan hesabın kullanıcı adı.
+        /// Okuyucu hesap farklıysa burayı doldurun.
+        /// </summary>
+        public string InstagramBroadcasterUsername { get; set; } = "";
+
+        /// <summary>
+        /// Instagram Graph API Access Token (opsiyonel).
+        /// Business/Creator hesap gerektirir.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string InstagramAccessToken
+        {
+            get => InstagramAccessTokenDecrypted;
+            set => InstagramAccessTokenDecrypted = value;
+        }
+
+        /// <summary>
+        /// Instagram API modu: "Hybrid" (Private + Graph birlikte)
+        /// </summary>
+        public string InstagramApiMode { get; set; } = "Hybrid";
+
+        // ===== INSTAGRAM CHAT ALANLARI SONU =====
 
         [System.Text.Json.Serialization.JsonIgnore]
         public string InstagramSessionId
@@ -577,6 +561,52 @@ namespace UniCast.App.Services
             get => SecretStore.Unprotect(_encryptedInstagramSessionId) ?? "";
             set => _encryptedInstagramSessionId = SecretStore.Protect(value) ?? "";
         }
+
+        // ===== INSTAGRAM ENCRYPTED ALANLARI =====
+
+        private string _encryptedInstagramPassword = "";
+        public string EncryptedInstagramPassword
+        {
+            get => _encryptedInstagramPassword;
+            set => _encryptedInstagramPassword = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string InstagramPasswordDecrypted
+        {
+            get => SecretStore.Unprotect(_encryptedInstagramPassword) ?? "";
+            set => _encryptedInstagramPassword = SecretStore.Protect(value) ?? "";
+        }
+
+        private string _encryptedInstagramAccessToken = "";
+        public string EncryptedInstagramAccessToken
+        {
+            get => _encryptedInstagramAccessToken;
+            set => _encryptedInstagramAccessToken = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string InstagramAccessTokenDecrypted
+        {
+            get => SecretStore.Unprotect(_encryptedInstagramAccessToken) ?? "";
+            set => _encryptedInstagramAccessToken = SecretStore.Protect(value) ?? "";
+        }
+
+        private string _encryptedFacebookPageAccessToken = "";
+        public string EncryptedFacebookPageAccessToken
+        {
+            get => _encryptedFacebookPageAccessToken;
+            set => _encryptedFacebookPageAccessToken = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string FacebookPageAccessToken
+        {
+            get => SecretStore.Unprotect(_encryptedFacebookPageAccessToken) ?? "";
+            set => _encryptedFacebookPageAccessToken = SecretStore.Protect(value) ?? "";
+        }
+
+        // ===== INSTAGRAM ENCRYPTED ALANLARI SONU =====
 
         /// <summary>
         /// Değerleri normalize eder ve sınırlar içinde tutar.
