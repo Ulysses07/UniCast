@@ -42,10 +42,10 @@ namespace UniCast.App
         /// </summary>
         private void InitializeStatusBar()
         {
-            // Status güncelleme timer'ı (her saniye)
+            // DÜZELTME v20: AppConstants kullanımı
             _statusUpdateTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(1)
+                Interval = TimeSpan.FromSeconds(AppConstants.Intervals.StatusUpdateSeconds)
             };
             _statusUpdateTimer.Tick += OnStatusUpdateTick;
             _statusUpdateTimer.Start();

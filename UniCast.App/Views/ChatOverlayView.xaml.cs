@@ -78,8 +78,8 @@ namespace UniCast.App.Views
                 Text = message
             });
 
-            // DÜZELTME: Constants kullanımı
-            while (ChatMessages.Count > Core.Chat.ChatConstants.MaxOverlayMessages)
+            // DÜZELTME v20: AppConstants kullanımı
+            while (ChatMessages.Count > AppConstants.Limits.MaxOverlayChatMessages)
             {
                 ChatMessages.RemoveAt(0);
             }
@@ -112,7 +112,8 @@ namespace UniCast.App.Views
 
     /// <summary>
     /// Chat Overlay View.
-    /// DÜZELTME: DataContext = this anti-pattern düzeltildi, proper ViewModel kullanımı.
+    /// DÜZELTME v20: DataContext = this anti-pattern düzeltildi, proper ViewModel kullanımı.
+    /// Magic number'lar AppConstants ile değiştirildi.
     /// </summary>
     public partial class ChatOverlayView : UserControl
     {
@@ -169,7 +170,11 @@ namespace UniCast.App.Views
 
             if (_breakTimer == null)
             {
-                _breakTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+                // DÜZELTME v20: AppConstants kullanımı
+                _breakTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(AppConstants.Intervals.TimerTickSeconds)
+                };
                 _breakTimer.Tick += BreakTimer_Tick;
             }
             _breakTimer.Start();

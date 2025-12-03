@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Serilog;
+using UniCast.App.Infrastructure;
 using UniCast.App.Services;
 using UniCast.App.Services.Capture;
 using Color = System.Windows.Media.Color;
@@ -62,10 +63,16 @@ namespace UniCast.App.Views
 
         #region Initialization
 
-        private async void OnLoaded(object sender, RoutedEventArgs e)
+        // DÜZELTME v20: AsyncVoidHandler ile güvenli async event handler
+        private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            await LoadDevicesAsync();
-            UpdateUI();
+            AsyncVoidHandler.Handle(
+                async () =>
+                {
+                    await LoadDevicesAsync();
+                    UpdateUI();
+                },
+                showErrorDialog: false);
         }
 
         private async Task LoadDevicesAsync()
@@ -128,7 +135,9 @@ namespace UniCast.App.Views
 
         private void RefreshDevices_Click(object sender, RoutedEventArgs e)
         {
-            _ = LoadDevicesAsync();
+            // DÜZELTME v20: Fire-and-forget güvenli hale getirildi
+            LoadDevicesAsync().SafeFireAndForget(ex =>
+                Log.Warning(ex, "[FirstRunWizard] Cihaz yenileme hatası"));
         }
 
         private void UpdateUI()
@@ -189,14 +198,14 @@ namespace UniCast.App.Views
             Result.SelectedCamera = CameraCombo.SelectedItem?.ToString() ?? "";
             Result.SelectedMicrophone = MicrophoneCombo.SelectedItem?.ToString() ?? "";
 
-            // Kalite
+            // Kalite - DÜZELTME v20: AppConstants kullanımı
             if (QualityLow.IsChecked == true)
             {
                 Result.QualityPreset = QualityPreset.Low;
                 Result.VideoBitrate = 2500;
                 Result.Width = 1280;
                 Result.Height = 720;
-                Result.Fps = 30;
+                Result.Fps = AppConstants.Video.DefaultFps;
             }
             else if (QualityHigh.IsChecked == true)
             {
@@ -204,15 +213,15 @@ namespace UniCast.App.Views
                 Result.VideoBitrate = 6000;
                 Result.Width = 1920;
                 Result.Height = 1080;
-                Result.Fps = 30;
+                Result.Fps = AppConstants.Video.DefaultFps;
             }
             else // Medium (default)
             {
                 Result.QualityPreset = QualityPreset.Medium;
-                Result.VideoBitrate = 4500;
+                Result.VideoBitrate = AppConstants.Video.DefaultBitrateKbps;
                 Result.Width = 1280;
                 Result.Height = 720;
-                Result.Fps = 30;
+                Result.Fps = AppConstants.Video.DefaultFps;
             }
 
             // Platformlar
@@ -238,10 +247,7 @@ namespace UniCast.App.Views
                 s.Width = Result.Width;
                 s.Height = Result.Height;
                 s.Fps = Result.Fps;
-                s.AudioKbps = 128;
-
-                // Platformları etkinleştir (stream key'ler sonra eklenecek)
-                // Bu bilgi şu an sadece Result'ta saklanıyor
+                s.AudioKbps = AppConstants.Audio.DefaultBitrateKbps;
             });
 
             SettingsStore.Save();
@@ -249,11 +255,12 @@ namespace UniCast.App.Views
 
         private void MarkFirstRunComplete()
         {
+            // DÜZELTME v20: AsyncFileHelper kullanabilir ama sync versiyonu OK
             try
             {
                 var flagPath = System.IO.Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "UniCast", ".first_run_complete");
+                    AppConstants.Paths.AppFolderName, ".first_run_complete");
 
                 var dir = System.IO.Path.GetDirectoryName(flagPath);
                 if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
@@ -282,7 +289,7 @@ namespace UniCast.App.Views
             {
                 var flagPath = System.IO.Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "UniCast", ".first_run_complete");
+                    AppConstants.Paths.AppFolderName, ".first_run_complete");
 
                 return !System.IO.File.Exists(flagPath);
             }

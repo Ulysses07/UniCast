@@ -11,7 +11,7 @@ namespace UniCast.App.ViewModels
 {
     /// <summary>
     /// Chat akışı ViewModel.
-    /// DÜZELTME: Constants kullanımı ve proper dispose pattern.
+    /// DÜZELTME v20: AppConstants kullanımı ve proper dispose pattern.
     /// </summary>
     public sealed class ChatViewModel : INotifyPropertyChanged, IDisposable
     {
@@ -68,9 +68,10 @@ namespace UniCast.App.ViewModels
                 };
             };
 
+            // DÜZELTME v20: AppConstants kullanımı
             _batchTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromMilliseconds(250)
+                Interval = TimeSpan.FromMilliseconds(AppConstants.Intervals.ChatBatchProcessMs)
             };
             _batchTimer.Tick += ProcessMessageBatch;
             _batchTimer.Start();
@@ -106,8 +107,8 @@ namespace UniCast.App.ViewModels
                 Feed.Add(m);
             }
 
-            // DÜZELTME: Constants kullanımı
-            while (Feed.Count > ChatConstants.MaxUiMessages)
+            // DÜZELTME v20: AppConstants kullanımı
+            while (Feed.Count > AppConstants.Limits.MaxUiChatMessages)
             {
                 Feed.RemoveAt(0);
             }

@@ -16,6 +16,9 @@ namespace UniCast.App.Overlay
     /// DÜZELTME v17.1:
     /// - Double buffering ile race condition önlendi
     /// - Raw BGRA32 pixel data kullanarak CPU yükü %30'dan %5'e düşürüldü
+    /// 
+    /// DÜZELTME v20:
+    /// - Magic number'lar AppConstants ile değiştirildi
     /// </summary>
     public sealed class OverlayPipePublisher : IAsyncDisposable
     {
@@ -133,7 +136,8 @@ namespace UniCast.App.Overlay
                     System.Diagnostics.Debug.WriteLine($"[Overlay] Bağlantı bekleniyor... (Deneme: {reconnectAttempts + 1})");
 
                     using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                    timeoutCts.CancelAfter(TimeSpan.FromSeconds(30));
+                    // DÜZELTME v20: AppConstants kullanımı
+                    timeoutCts.CancelAfter(TimeSpan.FromMilliseconds(AppConstants.Timeouts.PipeConnectionMs));
 
                     try
                     {
@@ -238,7 +242,8 @@ namespace UniCast.App.Overlay
                         }
                     }
 
-                    await Task.Delay(10, ct);
+                    // DÜZELTME v20: AppConstants kullanımı
+                    await Task.Delay(AppConstants.Intervals.OverlayFrameDelayMs, ct);
                 }
                 catch (IOException)
                 {

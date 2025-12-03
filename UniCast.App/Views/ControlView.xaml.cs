@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using UniCast.App.Infrastructure;
 using UniCast.App.ViewModels;
 using Serilog;
 
@@ -23,30 +24,20 @@ namespace UniCast.App.Views
             Unloaded += ControlView_Unloaded;
         }
 
-        // DÜZELTME: Try-catch ile exception handling
-        private async void ControlView_Loaded(object sender, RoutedEventArgs e)
+        // DÜZELTME v20: AsyncVoidHandler ile güvenli async event handler
+        private void ControlView_Loaded(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                await _vm.StartPreviewAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Preview başlatma hatası");
-            }
+            AsyncVoidHandler.Handle(
+                async () => await _vm.StartPreviewAsync(),
+                showErrorDialog: false);
         }
 
-        // DÜZELTME: Try-catch ile exception handling
-        private async void ControlView_Unloaded(object sender, RoutedEventArgs e)
+        // DÜZELTME v20: AsyncVoidHandler ile güvenli async event handler
+        private void ControlView_Unloaded(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                await _vm.StopPreviewAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Preview durdurma hatası");
-            }
+            AsyncVoidHandler.Handle(
+                async () => await _vm.StopPreviewAsync(),
+                showErrorDialog: false);
         }
     }
 }

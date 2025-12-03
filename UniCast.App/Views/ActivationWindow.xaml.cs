@@ -1,5 +1,8 @@
-﻿using System.Windows;
+﻿using System;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
+using UniCast.App.Infrastructure;
 using UniCast.Licensing;
 using UniCast.Licensing.Hardware;
 using Clipboard = System.Windows.Clipboard;
@@ -80,7 +83,15 @@ namespace UniCast.App.Views
             btnActivate.IsEnabled = txtLicenseKey.Text.Replace("-", "").Length == 25;
         }
 
-        private async void Activate_Click(object sender, RoutedEventArgs e)
+        // DÜZELTME v20: AsyncVoidHandler ile güvenli async event handler
+        private void Activate_Click(object sender, RoutedEventArgs e)
+        {
+            AsyncVoidHandler.Handle(
+                async () => await ActivateAsync(),
+                showErrorDialog: true);
+        }
+
+        private async Task ActivateAsync()
         {
             var licenseKey = txtLicenseKey.Text.Trim();
 
@@ -113,10 +124,6 @@ namespace UniCast.App.Views
                 {
                     ShowStatus($"✗ {result.ErrorMessage}", false);
                 }
-            }
-            catch (Exception ex)
-            {
-                ShowStatus($"Aktivasyon hatası: {ex.Message}", false);
             }
             finally
             {

@@ -30,6 +30,9 @@ namespace UniCast.App
             /// <summary>Overlay pipe bağlantı timeout'u</summary>
             public const int OverlayPipeConnectMs = 5000;
 
+            /// <summary>Named pipe bağlantı bekleme timeout'u</summary>
+            public const int PipeConnectionMs = 30000;
+
             /// <summary>License doğrulama timeout'u</summary>
             public const int LicenseValidationMs = 10000;
 
@@ -54,7 +57,7 @@ namespace UniCast.App
 
         #endregion
 
-        #region Intervals (Seconds/Minutes)
+        #region Intervals (Seconds/Minutes/Milliseconds)
 
         public static class Intervals
         {
@@ -81,6 +84,21 @@ namespace UniCast.App
 
             /// <summary>Resource cleanup interval'ı (dakika)</summary>
             public const int ResourceCleanupMinutes = 1;
+
+            /// <summary>Status bar güncelleme interval'ı (saniye)</summary>
+            public const int StatusUpdateSeconds = 1;
+
+            /// <summary>Genel timer tick interval'ı (saniye) - Uptime, Break timer vb.</summary>
+            public const int TimerTickSeconds = 1;
+
+            /// <summary>Overlay frame gönderim delay'i (milisaniye)</summary>
+            public const int OverlayFrameDelayMs = 10;
+
+            /// <summary>Chat batch işleme interval'ı (milisaniye)</summary>
+            public const int ChatBatchProcessMs = 250;
+
+            /// <summary>Chat polling interval'ı (saniye)</summary>
+            public const int ChatPollingSeconds = 4;
         }
 
         #endregion
@@ -127,6 +145,12 @@ namespace UniCast.App
 
             /// <summary>Performance sample geçmişi</summary>
             public const int PerformanceSampleHistory = 300; // 5 dakika @ 1sn
+
+            /// <summary>UI chat view maksimum mesaj sayısı</summary>
+            public const int MaxUiChatMessages = 500;
+
+            /// <summary>Overlay chat maksimum mesaj sayısı</summary>
+            public const int MaxOverlayChatMessages = 30;
         }
 
         #endregion

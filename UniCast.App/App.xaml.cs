@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using Serilog;
+using UniCast.App.Infrastructure;
+using UniCast.App.Input;
+using UniCast.App.Logging;
 using UniCast.App.Security;
 using UniCast.App.Views;
 using UniCast.Licensing;
@@ -10,15 +14,27 @@ using UniCast.Licensing.Models;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
+// DÜZELTME v20: Namespace çakışmalarını önlemek için alias
+using DiagnosticsHealthCheck = UniCast.App.Diagnostics.HealthCheckService;
+using DiagnosticsMemoryProfiler = UniCast.App.Diagnostics.MemoryProfiler;
+using DiagnosticsPerformanceMonitor = UniCast.App.Diagnostics.PerformanceMonitor;
+using ConfigValidator = UniCast.App.Configuration.ConfigurationValidator;
+
 namespace UniCast.App
 {
     public partial class App : Application
     {
+        // DÜZELTME v20: Startup timing
+        private Stopwatch? _startupStopwatch;
+
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            // 1. Loglama
+            // DÜZELTME v20: Startup timing başlat
+            _startupStopwatch = Stopwatch.StartNew();
+
+            // 1. Loglama (DynamicLogLevel ile)
             ConfigureLogging();
 
             // 2. Hata Yakalama
@@ -30,6 +46,31 @@ namespace UniCast.App
 
             // DÜZELTME v17.1: Önceki oturumdan kalan orphan FFmpeg process'leri temizle
             CleanupOrphanFfmpegProcesses();
+
+            // DÜZELTME v20: Configuration Validation (kritik ayarları kontrol et)
+            try
+            {
+                var configResult = ConfigValidator.Instance.Validate();
+                foreach (var error in configResult.Errors)
+                {
+                    if (error.IsCritical)
+                    {
+                        Log.Fatal("[Config] Kritik hata: {Error}", error.Message);
+                        MessageBox.Show(
+                            $"Yapılandırma hatası:\n\n{error.Message}\n\nÖneri: {error.Suggestion}",
+                            "UniCast - Yapılandırma Hatası",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                        Shutdown(1);
+                        return;
+                    }
+                    Log.Warning("[Config] Uyarı: {Error}", error.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[Config] Yapılandırma doğrulama hatası (devam ediliyor)");
+            }
 
             // 3. Splash Screen
             SplashWindow? splash = null;
@@ -47,8 +88,6 @@ namespace UniCast.App
             {
                 // 4. LİSANS KONTROLÜ
                 var licenseResult = await InitializeLicenseAsync();
-
-                // NOT: Splash artık MainWindow.Show()'dan sonra kapatılıyor
 
                 if (!licenseResult.IsValid)
                 {
@@ -72,7 +111,6 @@ namespace UniCast.App
                     this.MainWindow = mainWindow;
 
                     // KRİTİK: MainWindow kapandığında uygulamayı kapat
-                    // (ShutdownMode="OnExplicitShutdown" kullandığımız için gerekli)
                     mainWindow.Closed += (s, args) =>
                     {
                         Log.Debug("MainWindow kapandı, uygulama kapatılıyor...");
@@ -83,8 +121,25 @@ namespace UniCast.App
                     mainWindow.Show();
 
                     // KRİTİK: Splash'ı MainWindow'dan SONRA kapat!
-                    // Bu sayede ShutdownMode sorunu oluşmaz
                     splash?.Close();
+
+                    // DÜZELTME v20: Keyboard shortcuts başlat
+                    try
+                    {
+                        KeyboardShortcutManager.Instance.Initialize(mainWindow);
+                        Log.Debug("[Shortcuts] Klavye kısayolları başlatıldı");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "[Shortcuts] Klavye kısayolları başlatılamadı");
+                    }
+
+                    // DÜZELTME v20: Diagnostics servisleri başlat (arka planda)
+                    _ = StartDiagnosticsAsync();
+
+                    // DÜZELTME v20: Startup timing bitir
+                    _startupStopwatch?.Stop();
+                    Log.Information("[Startup] Toplam süre: {TotalMs}ms", _startupStopwatch?.ElapsedMilliseconds);
 
                     Log.Information("MainWindow başarıyla açıldı");
                 }
@@ -110,6 +165,58 @@ namespace UniCast.App
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 Shutdown(1);
+            }
+        }
+
+        /// <summary>
+        /// DÜZELTME v20: Diagnostics servislerini arka planda başlat
+        /// </summary>
+        private async Task StartDiagnosticsAsync()
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        // Memory Profiler
+                        DiagnosticsMemoryProfiler.Instance.StartMonitoring();
+                        DiagnosticsMemoryProfiler.Instance.OnMemoryWarning += (s, ev) =>
+                        {
+                            Log.Warning("[Memory] Uyarı: {Message}", ev.Message);
+                        };
+
+                        // Health Check
+                        DiagnosticsHealthCheck.Instance.Start();
+                        DiagnosticsHealthCheck.Instance.OnStatusChanged += (s, ev) =>
+                        {
+                            if (ev.NewStatus == Diagnostics.HealthStatus.Unhealthy)
+                            {
+                                Log.Warning("[Health] Sağlık durumu: {Status}", ev.NewStatus);
+                            }
+                        };
+
+                        // Performance Monitor
+                        DiagnosticsPerformanceMonitor.Instance.StartMonitoring();
+                        DiagnosticsPerformanceMonitor.Instance.OnPerformanceAlert += (s, ev) =>
+                        {
+                            if (ev.Level == Diagnostics.AlertLevel.Critical)
+                            {
+                                Log.Error("[Performance] Kritik: {Type} - {Message}", ev.Type, ev.Message);
+                            }
+                        };
+
+                        Log.Information("[Diagnostics] Tüm servisler başlatıldı");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "[Diagnostics] Servis başlatma hatası");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[Diagnostics] Arka plan başlatma hatası");
             }
         }
 
@@ -256,6 +363,9 @@ namespace UniCast.App
         {
             Log.Information("Uygulama kapatılıyor. Çıkış Kodu: {ExitCode}", e.ApplicationExitCode);
 
+            // DÜZELTME v20: Diagnostics servislerini durdur
+            StopDiagnostics();
+
             // DÜZELTME v18: Gelişmiş graceful shutdown
             PerformGracefulShutdown();
 
@@ -273,29 +383,51 @@ namespace UniCast.App
             base.OnExit(e);
         }
 
+        /// <summary>
+        /// DÜZELTME v20: Diagnostics servislerini durdur
+        /// </summary>
+        private void StopDiagnostics()
+        {
+            try
+            {
+                DiagnosticsMemoryProfiler.Instance.StopMonitoring();
+                DiagnosticsHealthCheck.Instance.Stop();
+                DiagnosticsPerformanceMonitor.Instance.StopMonitoring();
+                Log.Debug("[Diagnostics] Servisler durduruldu");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[Diagnostics] Servis durdurma hatası");
+            }
+        }
+
         private void ConfigureLogging()
         {
             var logFolder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                "UniCast", "Logs");
+                AppConstants.Paths.AppFolderName,
+                AppConstants.Paths.LogFolderName);
 
             var logPath = Path.Combine(logFolder, "log-.txt");
 
-            // DÜZELTME v17.3: 
-            // 1. StreamKeyMaskingEnricher ile hassas verileri maskele
-            // 2. Log dosyası boyut limiti (50MB) ve rolling
+            // DÜZELTME v20: DynamicLogLevel ile runtime log level değiştirme
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
+                .MinimumLevel.ControlledBy(DynamicLogLevel.Instance.LevelSwitch)
                 .Enrich.With<StreamKeyMaskingEnricher>()
                 .WriteTo.Debug()
                 .WriteTo.File(
                     logPath,
                     rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 7,
-                    fileSizeLimitBytes: 50_000_000,  // 50 MB
+                    retainedFileCountLimit: AppConstants.Limits.LogFileRetainedCount,
+                    fileSizeLimitBytes: AppConstants.Limits.LogFileSizeBytes,
                     rollOnFileSizeLimit: true,
                     shared: true)
                 .CreateLogger();
+
+            // Debug modunda verbose log
+#if DEBUG
+            DynamicLogLevel.Instance.EnableDebugMode();
+#endif
         }
 
         private void SetupExceptionHandling()
@@ -304,14 +436,20 @@ namespace UniCast.App
             {
                 Log.Fatal(e.Exception, "Kritik UI Hatası: {Message}", e.Exception.Message);
 
-                // Hatayı kullanıcıya göster
+                // DÜZELTME v20: Crash report kaydet
+                try
+                {
+                    var report = Services.CrashReporter.CreateCrashReport(e.Exception, "UI", false);
+                    _ = Services.CrashReporter.SaveReportAsync(report);
+                }
+                catch { }
+
                 MessageBox.Show(
                     $"Bir hata oluştu:\n\n{e.Exception.Message}\n\nDetaylar log dosyasına kaydedildi.",
                     "UniCast - Hata",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
 
-                // Uygulamanın kapanmasını önle (kritik olmayan hatalar için)
                 e.Handled = true;
             };
 
@@ -321,6 +459,13 @@ namespace UniCast.App
                 if (ex != null)
                 {
                     Log.Fatal(ex, "Kritik Sistem Hatası: {Message}", ex.Message);
+
+                    try
+                    {
+                        var report = Services.CrashReporter.CreateCrashReport(ex, "AppDomain", true);
+                        _ = Services.CrashReporter.SaveReportAsync(report);
+                    }
+                    catch { }
 
                     MessageBox.Show(
                         $"Kritik bir hata oluştu:\n\n{ex.Message}\n\nUygulama kapatılacak.",
@@ -339,8 +484,6 @@ namespace UniCast.App
 
         /// <summary>
         /// DÜZELTME v17.1: Önceki oturumdan kalan orphan FFmpeg process'leri temizler.
-        /// Uygulama crash olduğunda veya düzgün kapatılmadığında FFmpeg arka planda çalışmaya devam edebilir.
-        /// Bu metod başlangıçta bu tür orphan process'leri temizler.
         /// </summary>
         private void CleanupOrphanFfmpegProcesses()
         {
@@ -360,14 +503,11 @@ namespace UniCast.App
                 {
                     try
                     {
-                        // Process'in UniCast tarafından başlatılıp başlatılmadığını kontrol et
-                        // (Kullanıcının başka FFmpeg işlemi olabilir)
                         var commandLine = GetProcessCommandLine(proc);
 
-                        // UniCast'e ait olduğunu anlamak için bazı ipuçları
                         bool isUniCastProcess = commandLine?.Contains("UniCast") == true ||
                                                 commandLine?.Contains("\\Temp\\") == true ||
-                                                proc.StartTime < DateTime.Now.AddHours(-24); // 24 saatten eski
+                                                proc.StartTime < DateTime.Now.AddHours(-24);
 
                         if (isUniCastProcess || proc.StartTime < DateTime.Now.AddMinutes(-30))
                         {
@@ -396,9 +536,6 @@ namespace UniCast.App
             }
         }
 
-        /// <summary>
-        /// Process'in komut satırı argümanlarını almaya çalışır.
-        /// </summary>
         private string? GetProcessCommandLine(System.Diagnostics.Process process)
         {
             try
@@ -413,7 +550,6 @@ namespace UniCast.App
             }
             catch
             {
-                // WMI erişimi başarısız olabilir
             }
             return null;
         }

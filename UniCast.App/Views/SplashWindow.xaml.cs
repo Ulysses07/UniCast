@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Windows;
+using UniCast.App.Infrastructure;
 
 namespace UniCast.App.Views
 {
@@ -18,7 +19,15 @@ namespace UniCast.App.Views
             Loaded += SplashWindow_Loaded;
         }
 
-        private async void SplashWindow_Loaded(object sender, RoutedEventArgs e)
+        // DÜZELTME v20: AsyncVoidHandler ile güvenli async event handler
+        private void SplashWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            AsyncVoidHandler.Handle(
+                async () => await InitializeAndCloseAsync(),
+                showErrorDialog: false);
+        }
+
+        private async Task InitializeAndCloseAsync()
         {
             try
             {
@@ -40,7 +49,7 @@ namespace UniCast.App.Views
         {
             // Step 1: Temel kontroller
             UpdateProgress(0, "Sistem kontrolleri yapılıyor...");
-            await Task.Delay(300);
+            await Task.Delay(AppConstants.UI.ToastDurationSeconds * 100); // ~300ms
 
             // Step 2: Yapılandırma yükleme
             UpdateProgress(20, "Yapılandırma yükleniyor...");
