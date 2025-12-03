@@ -10,6 +10,11 @@ namespace UniCast.Core.Chat.Ingestors
     /// <summary>
     /// YouTube Live Chat ingestor.
     /// YouTube Data API v3 kullanır.
+    /// 
+    /// DÜZELTME v18: Quota tracking eklendi.
+    /// - Günlük quota kullanımı takibi
+    /// - Quota aşım uyarısı
+    /// - Akıllı polling aralığı
     /// </summary>
     public sealed class YouTubeChatIngestor : BaseChatIngestor
     {
@@ -24,6 +29,132 @@ namespace UniCast.Core.Chat.Ingestors
         /// YouTube API Key (ortam değişkeninden veya ayarlardan alınmalı).
         /// </summary>
         public string? ApiKey { get; set; }
+
+        #region DÜZELTME v18: Quota Tracking
+
+        // YouTube API Quota Costs:
+        // - videos.list: 1 unit
+        // - liveChat/messages.list: 5 units (100 per page)
+        // Daily quota: 10,000 units (varsayılan)
+
+        private static class QuotaCosts
+        {
+            public const int VideosListCost = 1;
+            public const int LiveChatMessagesCost = 5;
+            public const int DailyLimit = 10000;
+            public const int WarningThreshold = 8000; // %80
+            public const int CriticalThreshold = 9500; // %95
+        }
+
+        private static readonly object _quotaLock = new();
+        private static int _dailyQuotaUsed = 0;
+        private static DateTime _quotaResetDate = DateTime.UtcNow.Date;
+
+        /// <summary>
+        /// Günlük quota kullanımı
+        /// </summary>
+        public static int DailyQuotaUsed
+        {
+            get
+            {
+                lock (_quotaLock)
+                {
+                    ResetQuotaIfNewDay();
+                    return _dailyQuotaUsed;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Kalan quota
+        /// </summary>
+        public static int RemainingQuota => QuotaCosts.DailyLimit - DailyQuotaUsed;
+
+        /// <summary>
+        /// Quota yüzdesi
+        /// </summary>
+        public static double QuotaPercentage => (double)DailyQuotaUsed / QuotaCosts.DailyLimit * 100;
+
+        /// <summary>
+        /// Quota durumu
+        /// </summary>
+        public static QuotaStatus CurrentQuotaStatus
+        {
+            get
+            {
+                var used = DailyQuotaUsed;
+                if (used >= QuotaCosts.DailyLimit)
+                    return QuotaStatus.Exhausted;
+                if (used >= QuotaCosts.CriticalThreshold)
+                    return QuotaStatus.Critical;
+                if (used >= QuotaCosts.WarningThreshold)
+                    return QuotaStatus.Warning;
+                return QuotaStatus.Normal;
+            }
+        }
+
+        /// <summary>
+        /// Quota değişikliğinde tetiklenen event
+        /// </summary>
+        public static event EventHandler<QuotaChangedEventArgs>? OnQuotaChanged;
+
+        private static void ResetQuotaIfNewDay()
+        {
+            var today = DateTime.UtcNow.Date;
+            if (_quotaResetDate != today)
+            {
+                var oldQuota = _dailyQuotaUsed;
+                _dailyQuotaUsed = 0;
+                _quotaResetDate = today;
+
+                Log.Information("[YouTube] Günlük quota sıfırlandı. Önceki kullanım: {OldQuota}", oldQuota);
+            }
+        }
+
+        private static void AddQuotaUsage(int cost)
+        {
+            lock (_quotaLock)
+            {
+                ResetQuotaIfNewDay();
+
+                var oldStatus = CurrentQuotaStatus;
+                _dailyQuotaUsed += cost;
+                var newStatus = CurrentQuotaStatus;
+
+                // Status değiştiyse event tetikle
+                if (oldStatus != newStatus)
+                {
+                    Log.Warning("[YouTube] Quota durumu değişti: {Old} -> {New} ({Used}/{Limit})",
+                        oldStatus, newStatus, _dailyQuotaUsed, QuotaCosts.DailyLimit);
+
+                    OnQuotaChanged?.Invoke(null, new QuotaChangedEventArgs
+                    {
+                        OldStatus = oldStatus,
+                        NewStatus = newStatus,
+                        QuotaUsed = _dailyQuotaUsed,
+                        QuotaLimit = QuotaCosts.DailyLimit
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Quota bilgilerini döndürür
+        /// </summary>
+        public static QuotaInfo GetQuotaInfo()
+        {
+            return new QuotaInfo
+            {
+                Used = DailyQuotaUsed,
+                Limit = QuotaCosts.DailyLimit,
+                Remaining = RemainingQuota,
+                Percentage = QuotaPercentage,
+                Status = CurrentQuotaStatus,
+                ResetTime = DateTime.UtcNow.Date.AddDays(1) // Pasifik saatine göre (Google)
+            };
+        }
+
+        #endregion
 
         public YouTubeChatIngestor(string videoId) : base(videoId)
         {
@@ -43,12 +174,21 @@ namespace UniCast.Core.Chat.Ingestors
                 return;
             }
 
+            // DÜZELTME v18: Quota kontrolü
+            if (CurrentQuotaStatus == QuotaStatus.Exhausted)
+            {
+                throw new QuotaExhaustedException("YouTube API günlük quota limiti aşıldı. Yarın tekrar deneyin.");
+            }
+
             // Video ID'den Live Chat ID'yi al
             var url = $"https://www.googleapis.com/youtube/v3/videos" +
                       $"?part=liveStreamingDetails&id={_identifier}&key={ApiKey}";
 
             var response = await _httpClient.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
+
+            // DÜZELTME v18: Quota kullanımını kaydet
+            AddQuotaUsage(QuotaCosts.VideosListCost);
 
             var json = await response.Content.ReadAsStringAsync(ct);
             var doc = JsonDocument.Parse(json);
@@ -82,12 +222,21 @@ namespace UniCast.Core.Chat.Ingestors
             {
                 try
                 {
+                    // DÜZELTME v18: Quota durumuna göre polling aralığını ayarla
+                    AdjustPollingInterval();
+
                     await FetchMessagesAsync(ct);
                     await Task.Delay(_pollingIntervalMs, ct);
                 }
                 catch (OperationCanceledException)
                 {
                     break;
+                }
+                catch (QuotaExhaustedException ex)
+                {
+                    Log.Error("[YouTube] {Message}", ex.Message);
+                    // Quota bitince 1 saat bekle
+                    await Task.Delay(TimeSpan.FromHours(1), ct);
                 }
                 catch (HttpRequestException ex)
                 {
@@ -110,12 +259,36 @@ namespace UniCast.Core.Chat.Ingestors
             }
         }
 
+        /// <summary>
+        /// DÜZELTME v18: Quota durumuna göre polling aralığını ayarla
+        /// </summary>
+        private void AdjustPollingInterval()
+        {
+            var status = CurrentQuotaStatus;
+
+            _pollingIntervalMs = status switch
+            {
+                QuotaStatus.Normal => Math.Max(_pollingIntervalMs, 5000),      // Normal: 5+ sn
+                QuotaStatus.Warning => Math.Max(_pollingIntervalMs, 10000),    // Uyarı: 10+ sn
+                QuotaStatus.Critical => Math.Max(_pollingIntervalMs, 30000),   // Kritik: 30+ sn
+                QuotaStatus.Exhausted => 60000,                                 // Bitti: 1 dk (check only)
+                _ => _pollingIntervalMs
+            };
+        }
+
         private async Task FetchMessagesAsync(CancellationToken ct)
         {
             if (string.IsNullOrEmpty(ApiKey))
             {
                 // Mock mod - test mesajları oluştur
                 await GenerateMockMessagesAsync(ct);
+                return;
+            }
+
+            // DÜZELTME v18: Quota kontrolü
+            if (CurrentQuotaStatus == QuotaStatus.Exhausted)
+            {
+                Log.Warning("[YouTube] Quota bitmiş, mesajlar alınamıyor");
                 return;
             }
 
@@ -127,6 +300,9 @@ namespace UniCast.Core.Chat.Ingestors
 
             var response = await _httpClient.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
+
+            // DÜZELTME v18: Quota kullanımını kaydet
+            AddQuotaUsage(QuotaCosts.LiveChatMessagesCost);
 
             var json = await response.Content.ReadAsStringAsync(ct);
             var doc = JsonDocument.Parse(json);
@@ -252,4 +428,51 @@ namespace UniCast.Core.Chat.Ingestors
             base.Dispose(disposing);
         }
     }
+
+    #region DÜZELTME v18: Quota Types
+
+    /// <summary>
+    /// Quota durumu
+    /// </summary>
+    public enum QuotaStatus
+    {
+        Normal,     // < 80%
+        Warning,    // 80-95%
+        Critical,   // 95-100%
+        Exhausted   // 100%
+    }
+
+    /// <summary>
+    /// Quota bilgileri
+    /// </summary>
+    public class QuotaInfo
+    {
+        public int Used { get; init; }
+        public int Limit { get; init; }
+        public int Remaining { get; init; }
+        public double Percentage { get; init; }
+        public QuotaStatus Status { get; init; }
+        public DateTime ResetTime { get; init; }
+    }
+
+    /// <summary>
+    /// Quota değişiklik event argümanları
+    /// </summary>
+    public class QuotaChangedEventArgs : EventArgs
+    {
+        public QuotaStatus OldStatus { get; init; }
+        public QuotaStatus NewStatus { get; init; }
+        public int QuotaUsed { get; init; }
+        public int QuotaLimit { get; init; }
+    }
+
+    /// <summary>
+    /// Quota bittiğinde fırlatılan exception
+    /// </summary>
+    public class QuotaExhaustedException : Exception
+    {
+        public QuotaExhaustedException(string message) : base(message) { }
+    }
+
+    #endregion
 }

@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
@@ -14,6 +15,9 @@ using SettingsData = UniCast.App.Services.SettingsData;
 
 namespace UniCast.App.ViewModels
 {
+    /// <summary>
+    /// DÜZELTME v18: Ayarlar kaydedildi onayı ve validation eklendi.
+    /// </summary>
     public sealed class SettingsViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly IDeviceService? _devices;
@@ -60,6 +64,55 @@ namespace UniCast.App.ViewModels
         public ObservableCollection<CaptureDevice> VideoDevices { get; } = new();
         public ObservableCollection<CaptureDevice> AudioDevices { get; } = new();
 
+        #region DÜZELTME v18: Save Status Properties
+
+        private bool _isSaving;
+        /// <summary>
+        /// Kaydetme işlemi devam ediyor mu
+        /// </summary>
+        public bool IsSaving
+        {
+            get => _isSaving;
+            private set { _isSaving = value; OnPropertyChanged(); }
+        }
+
+        private bool _saveSuccess;
+        /// <summary>
+        /// Son kaydetme başarılı mı
+        /// </summary>
+        public bool SaveSuccess
+        {
+            get => _saveSuccess;
+            private set { _saveSuccess = value; OnPropertyChanged(); }
+        }
+
+        private string? _saveMessage;
+        /// <summary>
+        /// Kaydetme durumu mesajı
+        /// </summary>
+        public string? SaveMessage
+        {
+            get => _saveMessage;
+            private set { _saveMessage = value; OnPropertyChanged(); }
+        }
+
+        private bool _hasUnsavedChanges;
+        /// <summary>
+        /// Kaydedilmemiş değişiklikler var mı
+        /// </summary>
+        public bool HasUnsavedChanges
+        {
+            get => _hasUnsavedChanges;
+            private set { _hasUnsavedChanges = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>
+        /// Ayarlar kaydedildiğinde tetiklenen event
+        /// </summary>
+        public event EventHandler<SettingsSavedEventArgs>? OnSettingsSaved;
+
+        #endregion
+
         // DÜZELTME: DefaultCamera - hem DefaultCamera hem SelectedVideoDevice güncelleniyor
         private string _defaultCamera;
         public string DefaultCamera
@@ -68,8 +121,9 @@ namespace UniCast.App.ViewModels
             set
             {
                 _defaultCamera = value;
-                _settings.DefaultCamera = value;         // DÜZELTME: Bu satır eklendi
+                _settings.DefaultCamera = value;
                 _settings.SelectedVideoDevice = value;
+                HasUnsavedChanges = true;
                 OnPropertyChanged();
             }
         }
@@ -82,81 +136,256 @@ namespace UniCast.App.ViewModels
             set
             {
                 _defaultMicrophone = value;
-                _settings.DefaultMicrophone = value;     // DÜZELTME: Bu satır eklendi
+                _settings.DefaultMicrophone = value;
                 _settings.SelectedAudioDevice = value;
+                HasUnsavedChanges = true;
                 OnPropertyChanged();
             }
         }
 
         private string _encoder;
-        public string Encoder { get => _encoder; set { _encoder = value; OnPropertyChanged(); } }
+        public string Encoder
+        {
+            get => _encoder;
+            set { _encoder = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private int _videoKbps;
-        public int VideoKbps { get => _videoKbps; set { _videoKbps = value; OnPropertyChanged(); } }
+        public int VideoKbps
+        {
+            get => _videoKbps;
+            set { _videoKbps = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private int _audioKbps;
-        public int AudioKbps { get => _audioKbps; set { _audioKbps = value; OnPropertyChanged(); } }
+        public int AudioKbps
+        {
+            get => _audioKbps;
+            set { _audioKbps = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private int _audioDelayMs;
-        public int AudioDelayMs { get => _audioDelayMs; set { _audioDelayMs = value; OnPropertyChanged(); } }
+        public int AudioDelayMs
+        {
+            get => _audioDelayMs;
+            set { _audioDelayMs = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private int _fps;
-        public int Fps { get => _fps; set { _fps = value; OnPropertyChanged(); } }
+        public int Fps
+        {
+            get => _fps;
+            set { _fps = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private int _width;
-        public int Width { get => _width; set { _width = value; OnPropertyChanged(); } }
+        public int Width
+        {
+            get => _width;
+            set { _width = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private int _height;
-        public int Height { get => _height; set { _height = value; OnPropertyChanged(); } }
+        public int Height
+        {
+            get => _height;
+            set { _height = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private string _recordFolder;
-        public string RecordFolder { get => _recordFolder; set { _recordFolder = value; OnPropertyChanged(); } }
+        public string RecordFolder
+        {
+            get => _recordFolder;
+            set { _recordFolder = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private bool _enableLocalRecord;
-        public bool EnableLocalRecord { get => _enableLocalRecord; set { _enableLocalRecord = value; OnPropertyChanged(); } }
+        public bool EnableLocalRecord
+        {
+            get => _enableLocalRecord;
+            set { _enableLocalRecord = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         // Sosyal Alanlar
         private string _instagramUserId;
-        public string InstagramUserId { get => _instagramUserId; set { _instagramUserId = value; OnPropertyChanged(); } }
+        public string InstagramUserId
+        {
+            get => _instagramUserId;
+            set { _instagramUserId = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private string _instagramSessionId;
-        public string InstagramSessionId { get => _instagramSessionId; set { _instagramSessionId = value; OnPropertyChanged(); } }
+        public string InstagramSessionId
+        {
+            get => _instagramSessionId;
+            set { _instagramSessionId = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private string _facebookPageId;
-        public string FacebookPageId { get => _facebookPageId; set { _facebookPageId = value; OnPropertyChanged(); } }
+        public string FacebookPageId
+        {
+            get => _facebookPageId;
+            set { _facebookPageId = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private string _facebookLiveVideoId;
-        public string FacebookLiveVideoId { get => _facebookLiveVideoId; set { _facebookLiveVideoId = value; OnPropertyChanged(); } }
+        public string FacebookLiveVideoId
+        {
+            get => _facebookLiveVideoId;
+            set { _facebookLiveVideoId = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         private string _facebookAccessToken;
-        public string FacebookAccessToken { get => _facebookAccessToken; set { _facebookAccessToken = value; OnPropertyChanged(); } }
+        public string FacebookAccessToken
+        {
+            get => _facebookAccessToken;
+            set { _facebookAccessToken = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
 
         public ICommand SaveCommand { get; }
         public ICommand BrowseRecordFolderCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
 
+        /// <summary>
+        /// DÜZELTME v18: Geliştirilmiş kaydetme metodu - validation ve onay mesajı
+        /// </summary>
         private void Save()
         {
-            // SettingsStore.Data'yı güncelle
-            SettingsStore.Update(s =>
-            {
-                s.DefaultCamera = (DefaultCamera ?? "").Trim();
-                s.DefaultMicrophone = (DefaultMicrophone ?? "").Trim();
-                s.Encoder = string.IsNullOrWhiteSpace(Encoder) ? "auto" : Encoder.Trim();
-                s.VideoKbps = VideoKbps;
-                s.AudioKbps = AudioKbps;
-                s.AudioDelayMs = AudioDelayMs;
-                s.Fps = Fps;
-                s.Width = Width;
-                s.Height = Height;
-                s.RecordFolder = (RecordFolder ?? "").Trim();
-                s.EnableLocalRecord = EnableLocalRecord;
-                s.InstagramUsername = (InstagramUserId ?? "").Trim();
-                s.FacebookPageId = (FacebookPageId ?? "").Trim();
-                s.FacebookAccessToken = (FacebookAccessToken ?? "").Trim();
-            });
+            IsSaving = true;
+            SaveMessage = null;
+            SaveSuccess = false;
 
-            SettingsStore.Save();
+            try
+            {
+                // DÜZELTME v18: Validation
+                var validationResult = ValidateSettings();
+                if (!validationResult.IsValid)
+                {
+                    SaveMessage = $"❌ {validationResult.ErrorMessage}";
+                    SaveSuccess = false;
+                    return;
+                }
+
+                // SettingsStore.Data'yı güncelle
+                SettingsStore.Update(s =>
+                {
+                    s.DefaultCamera = (DefaultCamera ?? "").Trim();
+                    s.DefaultMicrophone = (DefaultMicrophone ?? "").Trim();
+                    s.Encoder = string.IsNullOrWhiteSpace(Encoder) ? "auto" : Encoder.Trim();
+                    s.VideoKbps = VideoKbps;
+                    s.AudioKbps = AudioKbps;
+                    s.AudioDelayMs = AudioDelayMs;
+                    s.Fps = Fps;
+                    s.Width = Width;
+                    s.Height = Height;
+                    s.RecordFolder = (RecordFolder ?? "").Trim();
+                    s.EnableLocalRecord = EnableLocalRecord;
+                    s.InstagramUsername = (InstagramUserId ?? "").Trim();
+                    s.FacebookPageId = (FacebookPageId ?? "").Trim();
+                    s.FacebookAccessToken = (FacebookAccessToken ?? "").Trim();
+                });
+
+                SettingsStore.Save();
+
+                // DÜZELTME v18: Başarı durumu
+                SaveSuccess = true;
+                SaveMessage = "✅ Ayarlar başarıyla kaydedildi";
+                HasUnsavedChanges = false;
+
+                // Event tetikle
+                OnSettingsSaved?.Invoke(this, new SettingsSavedEventArgs
+                {
+                    Success = true,
+                    Message = "Ayarlar kaydedildi",
+                    Timestamp = DateTime.Now
+                });
+
+                // DÜZELTME v18: 3 saniye sonra mesajı temizle
+                _ = ClearSaveMessageAfterDelay();
+            }
+            catch (Exception ex)
+            {
+                SaveSuccess = false;
+                SaveMessage = $"❌ Kaydetme hatası: {ex.Message}";
+
+                OnSettingsSaved?.Invoke(this, new SettingsSavedEventArgs
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Timestamp = DateTime.Now
+                });
+            }
+            finally
+            {
+                IsSaving = false;
+            }
+        }
+
+        /// <summary>
+        /// DÜZELTME v18: Ayarları doğrula
+        /// </summary>
+        private ValidationResult ValidateSettings()
+        {
+            // Video bitrate kontrolü
+            if (VideoKbps < 500 || VideoKbps > 50000)
+            {
+                return new ValidationResult(false, "Video bitrate 500-50000 kbps arasında olmalı");
+            }
+
+            // Audio bitrate kontrolü
+            if (AudioKbps < 32 || AudioKbps > 320)
+            {
+                return new ValidationResult(false, "Audio bitrate 32-320 kbps arasında olmalı");
+            }
+
+            // FPS kontrolü
+            if (Fps < 15 || Fps > 60)
+            {
+                return new ValidationResult(false, "FPS 15-60 arasında olmalı");
+            }
+
+            // Çözünürlük kontrolü
+            if (Width < 640 || Width > 3840)
+            {
+                return new ValidationResult(false, "Genişlik 640-3840 arasında olmalı");
+            }
+
+            if (Height < 360 || Height > 2160)
+            {
+                return new ValidationResult(false, "Yükseklik 360-2160 arasında olmalı");
+            }
+
+            // Kayıt klasörü kontrolü
+            if (EnableLocalRecord && string.IsNullOrWhiteSpace(RecordFolder))
+            {
+                return new ValidationResult(false, "Yerel kayıt aktifse kayıt klasörü belirtilmeli");
+            }
+
+            if (EnableLocalRecord && !string.IsNullOrWhiteSpace(RecordFolder))
+            {
+                if (!System.IO.Directory.Exists(RecordFolder))
+                {
+                    try
+                    {
+                        System.IO.Directory.CreateDirectory(RecordFolder);
+                    }
+                    catch
+                    {
+                        return new ValidationResult(false, "Kayıt klasörü oluşturulamadı");
+                    }
+                }
+            }
+
+            return new ValidationResult(true, null);
+        }
+
+        private async Task ClearSaveMessageAfterDelay()
+        {
+            await Task.Delay(3000);
+            if (SaveSuccess)
+            {
+                SaveMessage = null;
+            }
         }
 
         private void BrowseFolder()
@@ -197,10 +426,30 @@ namespace UniCast.App.ViewModels
             VideoDevices.Clear();
             AudioDevices.Clear();
             PropertyChanged = null;
+            OnSettingsSaved = null;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? n = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
     }
+
+    #region DÜZELTME v18: Helper Types
+
+    /// <summary>
+    /// Validation sonucu
+    /// </summary>
+    internal record ValidationResult(bool IsValid, string? ErrorMessage);
+
+    /// <summary>
+    /// Ayarlar kaydedildi event argümanları
+    /// </summary>
+    public class SettingsSavedEventArgs : EventArgs
+    {
+        public bool Success { get; init; }
+        public string Message { get; init; } = "";
+        public DateTime Timestamp { get; init; }
+    }
+
+    #endregion
 }

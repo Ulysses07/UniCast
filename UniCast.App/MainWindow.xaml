@@ -43,6 +43,93 @@
             </TabItem>
         </TabControl>
 
+        <!-- DÜZELTME v18: Platform Connection Status Bar -->
+        <Border x:Name="StatusBar"
+                Grid.Column="1"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Stretch"
+                Background="{StaticResource BgLight}"
+                BorderBrush="{StaticResource BorderColor}"
+                BorderThickness="0,1,0,0"
+                Height="32"
+                Margin="10,0,10,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Platform Status Indicators -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="10,0,0,0">
+                    <TextBlock Text="Platformlar:" Foreground="{StaticResource TextSecondary}" 
+                               VerticalAlignment="Center" Margin="0,0,10,0" FontSize="11"/>
+
+                    <!-- YouTube Status -->
+                    <Border x:Name="YouTubeStatus" CornerRadius="3" Padding="6,2" Margin="2,0"
+                            Background="#1a1a1a" ToolTip="YouTube: Bağlı değil">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="YouTubeIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,4,0"/>
+                            <TextBlock Text="YT" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Twitch Status -->
+                    <Border x:Name="TwitchStatus" CornerRadius="3" Padding="6,2" Margin="2,0"
+                            Background="#1a1a1a" ToolTip="Twitch: Bağlı değil">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="TwitchIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,4,0"/>
+                            <TextBlock Text="TW" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- TikTok Status -->
+                    <Border x:Name="TikTokStatus" CornerRadius="3" Padding="6,2" Margin="2,0"
+                            Background="#1a1a1a" ToolTip="TikTok: Bağlı değil">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="TikTokIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,4,0"/>
+                            <TextBlock Text="TT" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Instagram Status -->
+                    <Border x:Name="InstagramStatus" CornerRadius="3" Padding="6,2" Margin="2,0"
+                            Background="#1a1a1a" ToolTip="Instagram: Bağlı değil">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="InstagramIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,4,0"/>
+                            <TextBlock Text="IG" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Facebook Status -->
+                    <Border x:Name="FacebookStatus" CornerRadius="3" Padding="6,2" Margin="2,0"
+                            Background="#1a1a1a" ToolTip="Facebook: Bağlı değil">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="FacebookIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,4,0"/>
+                            <TextBlock Text="FB" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Center: Stream Status -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse x:Name="StreamStatusIndicator" Width="8" Height="8" Fill="#666" Margin="0,0,6,0"/>
+                    <TextBlock x:Name="StreamStatusText" Text="Hazır" 
+                               Foreground="{StaticResource TextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Right: Chat Stats -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0">
+                    <TextBlock x:Name="ChatStatsText" Text="💬 0 mesaj/dk" 
+                               Foreground="{StaticResource TextSecondary}" FontSize="11" 
+                               VerticalAlignment="Center" Margin="0,0,15,0"/>
+                    <TextBlock x:Name="ViewerCountText" Text="👁 --" 
+                               Foreground="{StaticResource TextSecondary}" FontSize="11" 
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
         <Border x:Name="Sidebar"
                 Grid.Column="0" Grid.ColumnSpan="2"
                 Background="{StaticResource BgLight}"
@@ -85,12 +172,12 @@
                                HorizontalAlignment="Left" VerticalAlignment="Center" Margin="45,0,0,0"/>
                 </Grid>
 
-                <Button x:Name="BtnControl" Content="📡   Yayın Paneli" Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="0"/>
-                <Button x:Name="BtnPreview" Content="👁️   Önizleme"    Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="1"/>
-                <Button x:Name="BtnTargets" Content="🔗   Platformlar" Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="2"/>
-                <Button x:Name="BtnChat"    Content="💬   Sohbet Akışı" Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="3"/>
-                <Button x:Name="BtnSettings" Content="⚙️   Ayarlar"     Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="4"/>
-                <Button x:Name="BtnLicense" Content="🔑   Lisans"       Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="5"/>
+                <Button x:Name="BtnControl" Content=" 📡    Yayın Paneli" Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="0"/>
+                <Button x:Name="BtnPreview" Content=" 👁️    Önizleme"    Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="1"/>
+                <Button x:Name="BtnTargets" Content=" 🔗    Platformlar" Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="2"/>
+                <Button x:Name="BtnChat"    Content=" 💬    Sohbet Akışı" Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="3"/>
+                <Button x:Name="BtnSettings" Content=" ⚙️    Ayarlar"     Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="4"/>
+                <Button x:Name="BtnLicense" Content=" 🔑    Lisans"       Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="5"/>
             </StackPanel>
         </Border>
 

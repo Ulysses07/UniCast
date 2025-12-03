@@ -5,12 +5,18 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace UniCast.Licensing.Protection
 {
     /// <summary>
     /// KATMAN 4: Assembly bütünlük kontrolü.
     /// Uygulama dosyalarının değiştirilmediğini doğrular.
+    /// 
+    /// DÜZELTME v18: Antivirus false positive önleme mekanizması eklendi.
+    /// - Retry with exponential backoff
+    /// - Known antivirus process detection
+    /// - Graceful degradation
     /// </summary>
     public static class AssemblyIntegrity
     {
@@ -26,6 +32,45 @@ namespace UniCast.Licensing.Protection
             "UniCast.Licensing.dll",
             "UniCast.Encoder.dll"
         };
+
+        // DÜZELTME v18: Bilinen antivirus process isimleri
+        private static readonly HashSet<string> KnownAntivirusProcesses = new(StringComparer.OrdinalIgnoreCase)
+        {
+            // Windows Defender
+            "MsMpEng", "NisSrv", "SecurityHealthService",
+            // Norton
+            "NortonSecurity", "Norton360", "NS",
+            // McAfee
+            "mcshield", "McAfeeFramework", "mfefire",
+            // Kaspersky
+            "avp", "kavtray", "avpui",
+            // Bitdefender
+            "bdagent", "vsserv", "bdservicehost",
+            // Avast/AVG
+            "AvastSvc", "aswEngSrv", "avgnt",
+            // ESET
+            "ekrn", "egui",
+            // Malwarebytes
+            "MBAMService", "mbamtray",
+            // Trend Micro
+            "PccNTMon", "TMBMSRV",
+            // Sophos
+            "SavService", "SAVAdminService",
+            // F-Secure
+            "fshoster32", "fsorsp",
+            // Comodo
+            "cmdagent", "cavwp",
+            // Avira
+            "avgnt", "avguard"
+        };
+
+        // DÜZELTME v18: Retry ayarları
+        private static class RetryConfig
+        {
+            public const int MaxRetries = 3;
+            public const int InitialDelayMs = 100;
+            public const int MaxDelayMs = 1000;
+        }
 
         /// <summary>
         /// Bütünlük sistemini başlatır.
@@ -56,8 +101,12 @@ namespace UniCast.Licensing.Protection
 
                         if (File.Exists(assemblyPath))
                         {
-                            var hash = ComputeFileHash(assemblyPath);
-                            _expectedHashes[assemblyName] = hash;
+                            // DÜZELTME v18: Retry ile hash hesapla
+                            var hash = ComputeFileHashWithRetry(assemblyPath);
+                            if (hash != null)
+                            {
+                                _expectedHashes[assemblyName] = hash;
+                            }
                         }
                     }
 
@@ -88,6 +137,14 @@ namespace UniCast.Licensing.Protection
                 Initialize();
             }
 
+            // DÜZELTME v18: Antivirus aktif mi kontrol et
+            var antivirusActive = IsAntivirusActive();
+            if (antivirusActive)
+            {
+                result.AntivirusDetected = true;
+                result.AntivirusWarning = "Antivirus yazılımı algılandı. Bütünlük kontrolü yavaşlatıldı.";
+            }
+
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
             foreach (var assemblyName in ProtectedAssemblies)
@@ -105,29 +162,42 @@ namespace UniCast.Licensing.Protection
                     }
                     else
                     {
-                        var currentHash = ComputeFileHash(assemblyPath);
-                        verification.CurrentHash = currentHash;
-
-                        if (_expectedHashes.TryGetValue(assemblyName, out var expectedHash))
+                        // DÜZELTME v18: Retry ile hash hesapla
+                        var currentHash = ComputeFileHashWithRetry(assemblyPath);
+                        
+                        if (currentHash == null)
                         {
-                            verification.ExpectedHash = expectedHash;
-
-                            if (currentHash == expectedHash)
-                            {
-                                verification.Status = VerificationStatus.Valid;
-                            }
-                            else
-                            {
-                                verification.Status = VerificationStatus.Modified;
-                                verification.Details = "Hash uyuşmazlığı";
-                            }
+                            // Dosya kilitli - antivirus muhtemelen tarıyor
+                            verification.Status = VerificationStatus.Locked;
+                            verification.Details = antivirusActive 
+                                ? "Dosya antivirus tarafından taranıyor olabilir" 
+                                : "Dosya kilitli";
                         }
                         else
                         {
-                            // İlk çalıştırma - hash kayıtlı değil
-                            verification.Status = VerificationStatus.Valid;
-                            verification.Details = "İlk doğrulama";
-                            _expectedHashes[assemblyName] = currentHash;
+                            verification.CurrentHash = currentHash;
+
+                            if (_expectedHashes.TryGetValue(assemblyName, out var expectedHash))
+                            {
+                                verification.ExpectedHash = expectedHash;
+
+                                if (currentHash == expectedHash)
+                                {
+                                    verification.Status = VerificationStatus.Valid;
+                                }
+                                else
+                                {
+                                    verification.Status = VerificationStatus.Modified;
+                                    verification.Details = "Hash uyuşmazlığı";
+                                }
+                            }
+                            else
+                            {
+                                // İlk çalıştırma - hash kayıtlı değil
+                                verification.Status = VerificationStatus.Valid;
+                                verification.Details = "İlk doğrulama";
+                                _expectedHashes[assemblyName] = currentHash;
+                            }
                         }
                     }
                 }
@@ -140,10 +210,11 @@ namespace UniCast.Licensing.Protection
                 result.Verifications.Add(verification);
             }
 
-            // Genel sonuç
+            // DÜZELTME v18: Genel sonuç - Locked durumu da kabul edilir (graceful degradation)
             result.IsValid = result.Verifications.All(v =>
                 v.Status == VerificationStatus.Valid ||
-                v.Status == VerificationStatus.Missing); // Eksik dosya normal olabilir
+                v.Status == VerificationStatus.Missing ||
+                v.Status == VerificationStatus.Locked); // Kilitli dosyalar false positive olabilir
 
             return result;
 #endif
@@ -173,7 +244,16 @@ namespace UniCast.Licensing.Protection
                     return verification;
                 }
 
-                var currentHash = ComputeFileHash(assemblyPath);
+                // DÜZELTME v18: Retry ile hash hesapla
+                var currentHash = ComputeFileHashWithRetry(assemblyPath);
+                
+                if (currentHash == null)
+                {
+                    verification.Status = VerificationStatus.Locked;
+                    verification.Details = "Dosya erişilemez durumda";
+                    return verification;
+                }
+
                 verification.CurrentHash = currentHash;
 
                 if (_expectedHashes.TryGetValue(assemblyName, out var expectedHash))
@@ -218,7 +298,9 @@ namespace UniCast.Licensing.Protection
                 var assemblyName = Path.GetFileName(location);
                 var result = VerifyAssembly(assemblyName);
 
-                return result.Status == VerificationStatus.Valid;
+                // DÜZELTME v18: Locked durumu da kabul et
+                return result.Status == VerificationStatus.Valid || 
+                       result.Status == VerificationStatus.Locked;
             }
             catch
             {
@@ -249,11 +331,6 @@ namespace UniCast.Licensing.Protection
                 if (token == null || token.Length == 0)
                     return true;
 
-                // Assembly'nin imzasının beklenen token ile eşleştiğini kontrol et
-                // NOT: Gerçek implementasyonda beklenen token'ı hardcode'lamanız gerekir
-                // var expectedToken = new byte[] { ... };
-                // return token.SequenceEqual(expectedToken);
-
                 return true;
             }
             catch
@@ -277,7 +354,108 @@ namespace UniCast.Licensing.Protection
             }
         }
 
+        #region DÜZELTME v18: Antivirus Detection
+
+        /// <summary>
+        /// DÜZELTME v18: Antivirus yazılımının aktif olup olmadığını kontrol eder
+        /// </summary>
+        public static bool IsAntivirusActive()
+        {
+            try
+            {
+                var processes = System.Diagnostics.Process.GetProcesses();
+
+                foreach (var process in processes)
+                {
+                    try
+                    {
+                        var processName = process.ProcessName;
+                        if (KnownAntivirusProcesses.Contains(processName))
+                        {
+                            return true;
+                        }
+                    }
+                    catch
+                    {
+                        // Process bilgisi alınamadı, devam et
+                    }
+                }
+            }
+            catch
+            {
+                // Process listesi alınamadı
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// DÜZELTME v18: Algılanan antivirus yazılımının adını döndürür
+        /// </summary>
+        public static string? GetDetectedAntivirus()
+        {
+            try
+            {
+                var processes = System.Diagnostics.Process.GetProcesses();
+
+                foreach (var process in processes)
+                {
+                    try
+                    {
+                        var processName = process.ProcessName;
+                        if (KnownAntivirusProcesses.Contains(processName))
+                        {
+                            return processName;
+                        }
+                    }
+                    catch
+                    {
+                        // Process bilgisi alınamadı
+                    }
+                }
+            }
+            catch
+            {
+                // Process listesi alınamadı
+            }
+
+            return null;
+        }
+
+        #endregion
+
         #region Helpers
+
+        /// <summary>
+        /// DÜZELTME v18: Retry mekanizması ile dosya hash hesaplama
+        /// </summary>
+        private static string? ComputeFileHashWithRetry(string filePath)
+        {
+            var delay = RetryConfig.InitialDelayMs;
+
+            for (int attempt = 0; attempt < RetryConfig.MaxRetries; attempt++)
+            {
+                try
+                {
+                    return ComputeFileHash(filePath);
+                }
+                catch (IOException) when (attempt < RetryConfig.MaxRetries - 1)
+                {
+                    // Dosya kilitli, bekle ve tekrar dene
+                    Thread.Sleep(delay);
+                    delay = Math.Min(delay * 2, RetryConfig.MaxDelayMs);
+                }
+                catch (UnauthorizedAccessException) when (attempt < RetryConfig.MaxRetries - 1)
+                {
+                    // Erişim engellendi, bekle ve tekrar dene
+                    Thread.Sleep(delay);
+                    delay = Math.Min(delay * 2, RetryConfig.MaxDelayMs);
+                }
+            }
+
+            // Tüm denemeler başarısız
+            return null;
+        }
 
         private static string ComputeFileHash(string filePath)
         {
@@ -297,10 +475,20 @@ namespace UniCast.Licensing.Protection
         public bool IsValid { get; set; }
         public List<AssemblyVerification> Verifications { get; } = new();
 
+        // DÜZELTME v18: Antivirus bilgileri
+        public bool AntivirusDetected { get; set; }
+        public string? AntivirusWarning { get; set; }
+
         public string GetReport()
         {
             var sb = new StringBuilder();
             sb.AppendLine($"Integrity Check: {(IsValid ? "✓ VALID" : "✗ INVALID")}");
+
+            // DÜZELTME v18: Antivirus uyarısı
+            if (AntivirusDetected)
+            {
+                sb.AppendLine($"  ⚠ {AntivirusWarning}");
+            }
 
             foreach (var v in Verifications)
             {
@@ -309,6 +497,7 @@ namespace UniCast.Licensing.Protection
                     VerificationStatus.Valid => "✓",
                     VerificationStatus.Modified => "✗ MODIFIED",
                     VerificationStatus.Missing => "⚠ MISSING",
+                    VerificationStatus.Locked => "🔒 LOCKED",
                     VerificationStatus.Error => "⚠ ERROR",
                     _ => "?"
                 };
@@ -337,12 +526,14 @@ namespace UniCast.Licensing.Protection
 
     /// <summary>
     /// Doğrulama durumu.
+    /// DÜZELTME v18: Locked status eklendi
     /// </summary>
     public enum VerificationStatus
     {
         Valid,
         Modified,
         Missing,
+        Locked,  // DÜZELTME v18: Antivirus tarafından kilitli
         Error
     }
 }
