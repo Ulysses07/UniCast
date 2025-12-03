@@ -305,8 +305,48 @@ try
         }
     });
 
-    Log.Information("Server listening on http://0.0.0.0:5000");
-    app.Run("http://0.0.0.0:5000");
+    // DÜZELTME v27: HTTPS desteği ve environment-based configuration
+    var useHttps = Environment.GetEnvironmentVariable("USE_HTTPS")?.ToLower() == "true";
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+    var httpsPort = Environment.GetEnvironmentVariable("HTTPS_PORT") ?? "5001";
+
+    if (useHttps)
+    {
+        // Production: HTTPS zorunlu
+        var certPath = Environment.GetEnvironmentVariable("SSL_CERT_PATH");
+        var certPassword = Environment.GetEnvironmentVariable("SSL_CERT_PASSWORD");
+
+        if (string.IsNullOrEmpty(certPath) || !File.Exists(certPath))
+        {
+            Log.Fatal("KRİTİK HATA: USE_HTTPS=true ama SSL_CERT_PATH ayarlanmamış veya dosya bulunamadı!");
+            Log.Fatal("Örnek: SSL_CERT_PATH=/etc/ssl/certs/license-server.pfx");
+            Environment.Exit(1);
+            return;
+        }
+
+        Log.Information("HTTPS modu aktif, sertifika: {CertPath}", certPath);
+        Log.Information("Server listening on https://0.0.0.0:{Port}", httpsPort);
+
+        // HTTPS redirect middleware
+        app.UseHttpsRedirection();
+
+        // Kestrel HTTPS configuration
+        app.Urls.Clear();
+        app.Urls.Add($"https://0.0.0.0:{httpsPort}");
+
+        // HTTP'den HTTPS'e redirect için de HTTP dinle
+        app.Urls.Add($"http://0.0.0.0:{port}");
+
+        app.Run();
+    }
+    else
+    {
+        // Development: HTTP (sadece local test için)
+        Log.Warning("HTTP modu aktif - SADECE DEVELOPMENT IÇIN!");
+        Log.Warning("Production'da USE_HTTPS=true ayarlayın.");
+        Log.Information("Server listening on http://0.0.0.0:{Port}", port);
+        app.Run($"http://0.0.0.0:{port}");
+    }
 }
 catch (Exception ex)
 {

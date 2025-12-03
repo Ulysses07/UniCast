@@ -33,10 +33,14 @@ namespace UniCast.Licensing.Crypto
             if (File.Exists(keyPath))
             {
                 EmbeddedPublicKey = File.ReadAllText(keyPath);
+                System.Diagnostics.Debug.WriteLine($"[LicenseSigner] Production public key yüklendi: {keyPath}");
             }
             else
             {
-                // Fallback - Development için geçici key (Production'da ASLA kullanılmamalı!)
+#if DEBUG
+                // DÜZELTME v27: Development key SADECE DEBUG modunda kullanılır
+                // Bu key ile imzalanan lisanslar production'da çalışmaz!
+                System.Diagnostics.Debug.WriteLine("[LicenseSigner] WARNING: Using development key - NOT FOR PRODUCTION!");
                 EmbeddedPublicKey = @"-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwr8ywjC1J9lh4uPQhWeZ
 FXQzcJ/lWPhq78NLN+01ZFaxM7HN+NdHBq3kZhTTQflZkMfqbzwIpJuk46xNDZWd
@@ -46,6 +50,27 @@ I0BO3dJSI+jmRSm77IEsD86ciKLGAMPee+2T0XOBjMdPzhl1U2S0uELR/K/M4yHk
 VUEHp1Nss8XnoNcY68+hYi5gcqHMFac9EdHdUnvGhtqXOn0LmSTZ6KJSKY6Q5USp
 pwIDAQAB
 -----END PUBLIC KEY-----";
+#else
+                // DÜZELTME v27: Production'da key dosyası ZORUNLU!
+                // GenerateAndSaveKeyPair() ile key oluşturup Keys/ klasörüne koyun.
+                var errorMessage = $"KRITIK HATA: Production public key bulunamadı!\n" +
+                                   $"Beklenen konum: {keyPath}\n" +
+                                   $"Çözüm: GenerateAndSaveKeyPair() ile key oluşturun.";
+                
+                System.Diagnostics.Debug.WriteLine($"[LicenseSigner] {errorMessage}");
+                
+                // Boş key ile başlat - Verify() her zaman false dönecek
+                EmbeddedPublicKey = "";
+                
+                // Event log'a yaz (Windows)
+                try
+                {
+                    using var eventLog = new System.Diagnostics.EventLog("Application");
+                    eventLog.Source = "UniCast";
+                    eventLog.WriteEntry(errorMessage, System.Diagnostics.EventLogEntryType.Error);
+                }
+                catch { /* Event log yazılamazsa devam et */ }
+#endif
             }
         }
 

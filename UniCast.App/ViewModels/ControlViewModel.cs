@@ -25,6 +25,8 @@ namespace UniCast.App.ViewModels
         private readonly AudioService _audioService = new();
 
         private CancellationTokenSource? _cts;
+        // DÜZELTME v27: Status monitor task referansı
+        private Task? _statusMonitorTask;
         private bool _disposed;
 
         // DÜZELTME: Event handler'ları field olarak tut (unsubscribe için)
@@ -226,9 +228,9 @@ namespace UniCast.App.ViewModels
                     IsRunning = true;
                     Status = "Yayında";
 
-                    // DÜZELTME: Token'ı kullan ve task'ı takip etme (fire-and-forget ama kontrollü)
+                    // DÜZELTME v27: Task referansını tut (fire-and-forget yerine tracked task)
                     var token = _cts.Token;
-                    _ = Task.Run(async () =>
+                    _statusMonitorTask = Task.Run(async () =>
                     {
                         try
                         {
@@ -241,6 +243,10 @@ namespace UniCast.App.ViewModels
                             }
                         }
                         catch (OperationCanceledException) { }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[ControlViewModel] Status monitor exception: {ex.Message}");
+                        }
                     }, token);
                 }
                 else
@@ -314,6 +320,22 @@ namespace UniCast.App.ViewModels
             try
             {
                 _cts?.Cancel();
+
+                // DÜZELTME v27: Status monitor task'ın bitmesini bekle
+                if (_statusMonitorTask != null)
+                {
+                    try
+                    {
+                        _statusMonitorTask.Wait(TimeSpan.FromMilliseconds(500));
+                    }
+                    catch (AggregateException) { /* Task cancelled, expected */ }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ControlViewModel.Dispose] Status monitor wait exception: {ex.Message}");
+                    }
+                }
+                _statusMonitorTask = null;
+
                 _cts?.Dispose();
             }
             catch (Exception ex)

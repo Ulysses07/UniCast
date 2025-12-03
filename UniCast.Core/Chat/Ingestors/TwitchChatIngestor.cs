@@ -214,8 +214,10 @@ namespace UniCast.Core.Chat.Ingestors
                     {
                         await ReconnectAsync(ct);
                     }
-                    catch
+                    catch (Exception reconnectEx)
                     {
+                        // DÜZELTME v27: Reconnect exception logging eklendi
+                        Log.Error(reconnectEx, "[Twitch] Reconnect başarısız, ingestor durduruluyor");
                         break;
                     }
                 }

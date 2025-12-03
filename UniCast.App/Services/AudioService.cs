@@ -75,8 +75,10 @@ namespace UniCast.App.Services
                         var level = _selectedDevice.AudioMeterInformation.MasterPeakValue;
                         OnLevelChange?.Invoke(level);
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        // DÜZELTME v27: Exception logging eklendi
+                        System.Diagnostics.Debug.WriteLine($"[AudioService] Monitor loop exception: {ex.Message}");
                         break;
                     }
 

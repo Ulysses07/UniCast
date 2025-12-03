@@ -375,9 +375,11 @@ namespace UniCast.Licensing.Protection
 
                 return sw.ElapsedMilliseconds > maxExpectedMs;
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                // DÜZELTME v27: Exception logging eklendi
+                System.Diagnostics.Debug.WriteLine($"[RuntimeProtection] CheckTimingAnomaly exception: {ex.Message}");
+                return false; // Hata durumunda false positive önle
             }
         }
 

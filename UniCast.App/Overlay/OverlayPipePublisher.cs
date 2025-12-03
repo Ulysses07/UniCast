@@ -37,6 +37,8 @@ namespace UniCast.App.Overlay
         // DÜZELTME: Double buffering - race condition önleme
         private byte[]? _frontBuffer;
         private byte[]? _backBuffer;
+        // DÜZELTME v27: Ayrı send buffer - her frame'de allocation önleme
+        private byte[]? _sendBuffer;
         private readonly object _bufferLock = new();
 
         private DateTime _lastRender = DateTime.MinValue;
@@ -114,11 +116,12 @@ namespace UniCast.App.Overlay
             _cts?.Dispose();
             _bmp = null;
 
-            // DÜZELTME: Her iki buffer'ı da temizle
+            // DÜZELTME v27: Send buffer dahil tüm buffer'ları temizle
             lock (_bufferLock)
             {
                 _frontBuffer = null;
                 _backBuffer = null;
+                _sendBuffer = null;
             }
 
             GC.SuppressFinalize(this);
@@ -276,6 +279,7 @@ namespace UniCast.App.Overlay
 
         /// <summary>
         /// DÜZELTME v17.1: Double buffering ile race condition önlendi.
+        /// DÜZELTME v27: Send buffer ile her frame'de allocation önlendi.
         /// Raw BGRA32 pixel data döndürür (PNG encode yerine).
         /// CPU kullanımı ~%30'dan ~%5'e düşer.
         /// </summary>
@@ -291,24 +295,29 @@ namespace UniCast.App.Overlay
                     {
                         _frontBuffer = new byte[_stride * _height];
                         _backBuffer = new byte[_stride * _height];
+                        _sendBuffer = new byte[_stride * _height];
                     }
                 }
 
                 _bmp.Clear();
                 _bmp.Render(_visual);
 
-                // DÜZELTME: Double buffering - back buffer'a yaz, sonra swap et
+                // DÜZELTME v27: Send buffer kullanarak allocation önleme
                 lock (_bufferLock)
                 {
-                    if (_backBuffer != null)
+                    if (_backBuffer != null && _sendBuffer != null)
                     {
                         _bmp.CopyPixels(_backBuffer, _stride, 0);
 
                         // Buffer swap
                         (_frontBuffer, _backBuffer) = (_backBuffer, _frontBuffer);
 
-                        // Front buffer'ın KOPYASINI döndür (consumer bunu okurken producer yazmaz)
-                        return _frontBuffer?.ToArray();
+                        // Front buffer'ı send buffer'a kopyala (ToArray() yerine)
+                        if (_frontBuffer != null)
+                        {
+                            Buffer.BlockCopy(_frontBuffer, 0, _sendBuffer, 0, _frontBuffer.Length);
+                            return _sendBuffer;
+                        }
                     }
                 }
 

@@ -364,22 +364,12 @@ namespace UniCast.App.Services
         public string YouTubeChannelId { get; set; } = "";
         public string YouTubeRtmpUrl { get; set; } = "rtmp://a.rtmp.youtube.com/live2";
 
-        [System.Text.Json.Serialization.JsonIgnore]
-        public string YouTubeStreamKey
-        {
-            get => YouTubeStreamKeyDecrypted;
-            set => YouTubeStreamKeyDecrypted = value;
-        }
+        // YouTubeStreamKey - Tam tanım aşağıda (Stream Keys bölümünde)
 
         public string TwitchUsername { get; set; } = "";
         public string TwitchRtmpUrl { get; set; } = "rtmp://live.twitch.tv/app";
 
-        [System.Text.Json.Serialization.JsonIgnore]
-        public string TwitchStreamKey
-        {
-            get => TwitchStreamKeyDecrypted;
-            set => TwitchStreamKeyDecrypted = value;
-        }
+        // TwitchStreamKey - Tam tanım aşağıda (Stream Keys bölümünde)
 
         // Twitch Chat Ayarları
         public string TwitchChannelName { get; set; } = "";
@@ -406,16 +396,7 @@ namespace UniCast.App.Services
 
         // ===== INSTAGRAM CHAT ALANLARI =====
 
-        /// <summary>
-        /// Instagram okuyucu hesap şifresi (Private API için).
-        /// ÖNEMLİ: Ana hesap yerine ayrı bir okuyucu hesap kullanın!
-        /// </summary>
-        [System.Text.Json.Serialization.JsonIgnore]
-        public string InstagramPassword
-        {
-            get => InstagramPasswordDecrypted;
-            set => InstagramPasswordDecrypted = value;
-        }
+        // InstagramPassword - Tam tanım aşağıda (Instagram Encrypted Alanları bölümünde)
 
         /// <summary>
         /// Yayın yapan hesabın kullanıcı adı.
@@ -423,16 +404,7 @@ namespace UniCast.App.Services
         /// </summary>
         public string InstagramBroadcasterUsername { get; set; } = "";
 
-        /// <summary>
-        /// Instagram Graph API Access Token (opsiyonel).
-        /// Business/Creator hesap gerektirir.
-        /// </summary>
-        [System.Text.Json.Serialization.JsonIgnore]
-        public string InstagramAccessToken
-        {
-            get => InstagramAccessTokenDecrypted;
-            set => InstagramAccessTokenDecrypted = value;
-        }
+        // InstagramAccessToken - Tam tanım aşağıda (Instagram Encrypted Alanları bölümünde)
 
         /// <summary>
         /// Instagram API modu: "Hybrid" (Private + Graph birlikte)
@@ -441,21 +413,11 @@ namespace UniCast.App.Services
 
         // ===== INSTAGRAM CHAT ALANLARI SONU =====
 
-        [System.Text.Json.Serialization.JsonIgnore]
-        public string InstagramSessionId
-        {
-            get => InstagramSessionIdDecrypted;
-            set => InstagramSessionIdDecrypted = value;
-        }
+        // InstagramSessionId - Tam tanım aşağıda (Instagram Session ID bölümünde)
 
         public string FacebookPageId { get; set; } = "";
 
-        [System.Text.Json.Serialization.JsonIgnore]
-        public string FacebookStreamKey
-        {
-            get => FacebookStreamKeyDecrypted;
-            set => FacebookStreamKeyDecrypted = value;
-        }
+        // FacebookStreamKey - Tam tanım aşağıda (Facebook Stream Key bölümünde)
 
         public string FacebookLiveVideoId { get; set; } = "";
         public string CustomRtmpUrl { get; set; } = "";
@@ -542,7 +504,13 @@ namespace UniCast.App.Services
             set => _encryptedFacebookAccessToken = SecretStore.Protect(value) ?? "";
         }
 
-        // Stream Keys - BUNLAR DA ŞİFRELENMELİ!
+        // Stream Keys - ŞİFRELENMİŞ SAKLANIYOR (SecretStore ile DPAPI)
+        // DÜZELTME v27: Tutarlı naming convention
+        // - Encrypted{X} -> JSON'a yazılır (şifreli)
+        // - {X} -> Kod içinde kullanılır (decrypt edilmiş)
+        // - {X}Decrypted -> DEPRECATED, geriye uyumluluk için
+
+        // ===== YOUTUBE STREAM KEY =====
         private string _encryptedYouTubeStreamKey = "";
         public string EncryptedYouTubeStreamKey
         {
@@ -550,13 +518,30 @@ namespace UniCast.App.Services
             set => _encryptedYouTubeStreamKey = value;
         }
 
+        /// <summary>
+        /// YouTube Stream Key (decrypted).
+        /// Kullanım: var key = settings.YouTubeStreamKey;
+        /// </summary>
         [System.Text.Json.Serialization.JsonIgnore]
-        public string YouTubeStreamKeyDecrypted
+        public string YouTubeStreamKey
         {
             get => SecretStore.Unprotect(_encryptedYouTubeStreamKey) ?? "";
             set => _encryptedYouTubeStreamKey = SecretStore.Protect(value) ?? "";
         }
 
+        /// <summary>
+        /// DEPRECATED: YouTubeStreamKey kullanın.
+        /// Geriye uyumluluk için bırakıldı.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Obsolete("Use YouTubeStreamKey instead")]
+        public string YouTubeStreamKeyDecrypted
+        {
+            get => YouTubeStreamKey;
+            set => YouTubeStreamKey = value;
+        }
+
+        // ===== TWITCH STREAM KEY =====
         private string _encryptedTwitchStreamKey = "";
         public string EncryptedTwitchStreamKey
         {
@@ -564,13 +549,30 @@ namespace UniCast.App.Services
             set => _encryptedTwitchStreamKey = value;
         }
 
+        /// <summary>
+        /// Twitch Stream Key (decrypted).
+        /// Kullanım: var key = settings.TwitchStreamKey;
+        /// </summary>
         [System.Text.Json.Serialization.JsonIgnore]
-        public string TwitchStreamKeyDecrypted
+        public string TwitchStreamKey
         {
             get => SecretStore.Unprotect(_encryptedTwitchStreamKey) ?? "";
             set => _encryptedTwitchStreamKey = SecretStore.Protect(value) ?? "";
         }
 
+        /// <summary>
+        /// DEPRECATED: TwitchStreamKey kullanın.
+        /// Geriye uyumluluk için bırakıldı.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Obsolete("Use TwitchStreamKey instead")]
+        public string TwitchStreamKeyDecrypted
+        {
+            get => TwitchStreamKey;
+            set => TwitchStreamKey = value;
+        }
+
+        // ===== FACEBOOK STREAM KEY =====
         private string _encryptedFacebookStreamKey = "";
         public string EncryptedFacebookStreamKey
         {
@@ -578,13 +580,30 @@ namespace UniCast.App.Services
             set => _encryptedFacebookStreamKey = value;
         }
 
+        /// <summary>
+        /// Facebook Stream Key (decrypted).
+        /// Kullanım: var key = settings.FacebookStreamKey;
+        /// </summary>
         [System.Text.Json.Serialization.JsonIgnore]
-        public string FacebookStreamKeyDecrypted
+        public string FacebookStreamKey
         {
             get => SecretStore.Unprotect(_encryptedFacebookStreamKey) ?? "";
             set => _encryptedFacebookStreamKey = SecretStore.Protect(value) ?? "";
         }
 
+        /// <summary>
+        /// DEPRECATED: FacebookStreamKey kullanın.
+        /// Geriye uyumluluk için bırakıldı.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Obsolete("Use FacebookStreamKey instead")]
+        public string FacebookStreamKeyDecrypted
+        {
+            get => FacebookStreamKey;
+            set => FacebookStreamKey = value;
+        }
+
+        // ===== INSTAGRAM SESSION ID =====
         private string _encryptedInstagramSessionId = "";
         public string EncryptedInstagramSessionId
         {
@@ -592,11 +611,27 @@ namespace UniCast.App.Services
             set => _encryptedInstagramSessionId = value;
         }
 
+        /// <summary>
+        /// Instagram Session ID (decrypted).
+        /// Kullanım: var sessionId = settings.InstagramSessionId;
+        /// </summary>
         [System.Text.Json.Serialization.JsonIgnore]
-        public string InstagramSessionIdDecrypted
+        public string InstagramSessionId
         {
             get => SecretStore.Unprotect(_encryptedInstagramSessionId) ?? "";
             set => _encryptedInstagramSessionId = SecretStore.Protect(value) ?? "";
+        }
+
+        /// <summary>
+        /// DEPRECATED: InstagramSessionId kullanın.
+        /// Geriye uyumluluk için bırakıldı.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Obsolete("Use InstagramSessionId instead")]
+        public string InstagramSessionIdDecrypted
+        {
+            get => InstagramSessionId;
+            set => InstagramSessionId = value;
         }
 
         // ===== INSTAGRAM ENCRYPTED ALANLARI =====
@@ -608,11 +643,25 @@ namespace UniCast.App.Services
             set => _encryptedInstagramPassword = value;
         }
 
+        /// <summary>
+        /// Instagram Password (decrypted).
+        /// </summary>
         [System.Text.Json.Serialization.JsonIgnore]
-        public string InstagramPasswordDecrypted
+        public string InstagramPassword
         {
             get => SecretStore.Unprotect(_encryptedInstagramPassword) ?? "";
             set => _encryptedInstagramPassword = SecretStore.Protect(value) ?? "";
+        }
+
+        /// <summary>
+        /// DEPRECATED: InstagramPassword kullanın.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Obsolete("Use InstagramPassword instead")]
+        public string InstagramPasswordDecrypted
+        {
+            get => InstagramPassword;
+            set => InstagramPassword = value;
         }
 
         private string _encryptedInstagramAccessToken = "";
@@ -622,11 +671,25 @@ namespace UniCast.App.Services
             set => _encryptedInstagramAccessToken = value;
         }
 
+        /// <summary>
+        /// Instagram Access Token (decrypted).
+        /// </summary>
         [System.Text.Json.Serialization.JsonIgnore]
-        public string InstagramAccessTokenDecrypted
+        public string InstagramAccessToken
         {
             get => SecretStore.Unprotect(_encryptedInstagramAccessToken) ?? "";
             set => _encryptedInstagramAccessToken = SecretStore.Protect(value) ?? "";
+        }
+
+        /// <summary>
+        /// DEPRECATED: InstagramAccessToken kullanın.
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Obsolete("Use InstagramAccessToken instead")]
+        public string InstagramAccessTokenDecrypted
+        {
+            get => InstagramAccessToken;
+            set => InstagramAccessToken = value;
         }
 
         private string _encryptedFacebookPageAccessToken = "";
@@ -636,6 +699,9 @@ namespace UniCast.App.Services
             set => _encryptedFacebookPageAccessToken = value;
         }
 
+        /// <summary>
+        /// Facebook Page Access Token (decrypted).
+        /// </summary>
         [System.Text.Json.Serialization.JsonIgnore]
         public string FacebookPageAccessToken
         {

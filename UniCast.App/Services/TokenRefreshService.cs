@@ -63,10 +63,22 @@ namespace UniCast.App.Services
 
         private TokenRefreshService()
         {
-            _httpClient = new HttpClient
+            // DÜZELTME v27: SocketsHttpHandler ile düzgün HttpClient oluşturma
+            // Socket exhaustion önleme için connection pooling
+            var handler = new SocketsHttpHandler
+            {
+                PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+                PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+                MaxConnectionsPerServer = 5,
+                ConnectTimeout = TimeSpan.FromSeconds(10),
+                EnableMultipleHttp2Connections = true
+            };
+
+            _httpClient = new HttpClient(handler)
             {
                 Timeout = TimeSpan.FromSeconds(30)
             };
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", "UniCast-TokenRefresh/1.0");
 
             // Periyodik kontrol timer'ı
             _refreshTimer = new System.Threading.Timer(
