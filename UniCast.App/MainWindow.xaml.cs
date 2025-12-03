@@ -26,6 +26,9 @@ namespace UniCast.App
         private bool _isDisposed;
         private readonly object _disposeLock = new();
 
+        // DÜZELTME v17.3: Ingestor task'larını takip et (fire-and-forget önleme)
+        private readonly List<Task> _ingestorTasks = new();
+
         // Chat Ingestors
         private YouTubeChatIngestor? _ytIngestor;
         private TwitchChatIngestor? _twitchIngestor;
@@ -145,12 +148,15 @@ namespace UniCast.App
 
             try
             {
+                // DÜZELTME v17.3: Task'ları takip et (fire-and-forget yerine)
+                _ingestorTasks.Clear();
+
                 // YouTube
                 if (!string.IsNullOrWhiteSpace(settings.YouTubeVideoId))
                 {
                     _ytIngestor = new YouTubeChatIngestor(settings.YouTubeVideoId);
                     _ytIngestor.ApiKey = settings.YouTubeApiKey;
-                    _ = StartIngestorSafeAsync(_ytIngestor, "YouTube", ct);
+                    _ingestorTasks.Add(StartIngestorSafeAsync(_ytIngestor, "YouTube", ct));
                 }
 
                 // Twitch - YENİ!
@@ -163,14 +169,14 @@ namespace UniCast.App
                         _twitchIngestor.OAuthToken = settings.TwitchOAuthToken;
                         _twitchIngestor.BotUsername = settings.TwitchBotUsername;
                     }
-                    _ = StartIngestorSafeAsync(_twitchIngestor, "Twitch", ct);
+                    _ingestorTasks.Add(StartIngestorSafeAsync(_twitchIngestor, "Twitch", ct));
                 }
 
                 // TikTok (Mock - API henüz implement edilmedi)
                 if (!string.IsNullOrWhiteSpace(settings.TikTokUsername))
                 {
                     _tikTokIngestor = new TikTokChatIngestor(settings.TikTokUsername);
-                    _ = StartIngestorSafeAsync(_tikTokIngestor, "TikTok", ct);
+                    _ingestorTasks.Add(StartIngestorSafeAsync(_tikTokIngestor, "TikTok", ct));
                     Log.Warning("[MainWindow] TikTok chat sadece mock modda çalışıyor - gerçek API henüz entegre edilmedi");
                 }
 
@@ -195,7 +201,7 @@ namespace UniCast.App
                                 : settings.InstagramBroadcasterUsername,
                             TotalPollingInterval = TimeSpan.FromSeconds(4)
                         };
-                        _ = StartIngestorSafeAsync(_instagramIngestor, "Instagram", ct);
+                        _ingestorTasks.Add(StartIngestorSafeAsync(_instagramIngestor, "Instagram", ct));
                         Log.Information("[MainWindow] Instagram Hibrit API aktif");
                     }
                     else
@@ -208,9 +214,11 @@ namespace UniCast.App
                 if (!string.IsNullOrWhiteSpace(settings.FacebookPageId))
                 {
                     _facebookIngestor = new FacebookChatIngestor(settings.FacebookPageId);
-                    _ = StartIngestorSafeAsync(_facebookIngestor, "Facebook", ct);
+                    _ingestorTasks.Add(StartIngestorSafeAsync(_facebookIngestor, "Facebook", ct));
                     Log.Warning("[MainWindow] Facebook chat sadece mock modda çalışıyor - gerçek API henüz entegre edilmedi");
                 }
+
+                Log.Debug("[MainWindow] {Count} adet chat ingestor başlatıldı", _ingestorTasks.Count);
             }
             catch (Exception ex)
             {
@@ -659,7 +667,29 @@ namespace UniCast.App
                         Log.Error(ex, "[MainWindow] Tab event temizleme hatası");
                     }
 
-                    // 4. Chat Ingestors'ı durdur
+                    // 4. DÜZELTME v17.3: Ingestor task'larını bekle
+                    if (_ingestorTasks.Count > 0)
+                    {
+                        try
+                        {
+                            Log.Debug("[MainWindow] Ingestor task'ları bekleniyor... ({Count} adet)", _ingestorTasks.Count);
+                            Task.WhenAll(_ingestorTasks).Wait(TimeSpan.FromSeconds(5));
+                        }
+                        catch (AggregateException)
+                        {
+                            // Task iptal edildiğinde normal
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "[MainWindow] Ingestor task'ları bekleme hatası");
+                        }
+                        finally
+                        {
+                            _ingestorTasks.Clear();
+                        }
+                    }
+
+                    // 5. Chat Ingestors'ı durdur
                     DisposeIngestors();
 
                     // 5. ViewModels'i dispose et

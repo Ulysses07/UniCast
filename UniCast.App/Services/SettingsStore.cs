@@ -65,11 +65,18 @@ namespace UniCast.App.Services
         /// <summary>
         /// Ayarları günceller.
         /// </summary>
+        /// <summary>
+        /// Ayarları günceller.
+        /// DÜZELTME v17.3: Nested lock önlendi - Data erişimi lock dışında.
+        /// </summary>
         public static void Update(Action<SettingsData> updateAction)
         {
+            // DÜZELTME: Data property'sine erişim lock DIŞINDA
+            // Data property kendi lock'unu alır, içeride tekrar lock almak deadlock yaratır
+            var data = Data;
+
             lock (_lock)
             {
-                var data = Data;
                 updateAction(data);
                 _isDirty = true;
             }

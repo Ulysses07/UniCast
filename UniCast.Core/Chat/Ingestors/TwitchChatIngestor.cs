@@ -12,6 +12,8 @@ namespace UniCast.Core.Chat.Ingestors
     /// Twitch IRC Chat Ingestor.
     /// Twitch chat'e IRC protokolü üzerinden bağlanır.
     /// OAuth token OPSIYONEL - anonim okuma desteklenir.
+    /// 
+    /// DÜZELTME v17.3: OnAuthenticationFailed event eklendi
     /// </summary>
     public sealed class TwitchChatIngestor : BaseChatIngestor
     {
@@ -36,6 +38,12 @@ namespace UniCast.Core.Chat.Ingestors
             RegexOptions.Compiled);
 
         public override ChatPlatform Platform => ChatPlatform.Twitch;
+
+        /// <summary>
+        /// DÜZELTME v17.3: OAuth token geçersiz veya süresi dolduğunda tetiklenir.
+        /// UI'da kullanıcıya bildirim göstermek için kullanılabilir.
+        /// </summary>
+        public event EventHandler<AuthenticationFailedEventArgs>? OnAuthenticationFailed;
 
         /// <summary>
         /// Twitch OAuth Token (opsiyonel).
@@ -159,6 +167,24 @@ namespace UniCast.Core.Chat.Ingestors
                     {
                         await _writer.WriteLineAsync(line.Replace("PING", "PONG"));
                         continue;
+                    }
+
+                    // DÜZELTME v17.3: NOTICE - Authentication hataları ve token expiry
+                    if (line.Contains("NOTICE") &&
+                        (line.Contains("Login authentication failed") ||
+                         line.Contains("Login unsuccessful") ||
+                         line.Contains("Invalid NICK")))
+                    {
+                        Log.Error("[Twitch] OAuth token geçersiz veya süresi dolmuş! Ayarlardan yeni token alın.");
+
+                        OnAuthenticationFailed?.Invoke(this, new AuthenticationFailedEventArgs
+                        {
+                            Reason = "OAuth token geçersiz veya süresi dolmuş",
+                            RequiresReauth = true,
+                            Platform = "Twitch"
+                        });
+
+                        break; // Bağlantıyı kapat
                     }
 
                     // PRIVMSG - chat mesajı
@@ -305,5 +331,32 @@ namespace UniCast.Core.Chat.Ingestors
             }
             base.Dispose(disposing);
         }
+    }
+
+    /// <summary>
+    /// DÜZELTME v17.3: Authentication hatası event argümanları.
+    /// OAuth token expire olduğunda veya geçersiz olduğunda kullanılır.
+    /// </summary>
+    public sealed class AuthenticationFailedEventArgs : EventArgs
+    {
+        /// <summary>
+        /// Hata nedeni (kullanıcıya gösterilebilir).
+        /// </summary>
+        public string Reason { get; init; } = "";
+
+        /// <summary>
+        /// Kullanıcının yeniden kimlik doğrulaması yapması gerekiyor mu?
+        /// </summary>
+        public bool RequiresReauth { get; init; }
+
+        /// <summary>
+        /// Hangi platformda hata oluştu (Twitch, YouTube, vb.)
+        /// </summary>
+        public string Platform { get; init; } = "";
+
+        /// <summary>
+        /// Hata oluştuğu zaman.
+        /// </summary>
+        public DateTime OccurredAt { get; init; } = DateTime.UtcNow;
     }
 }

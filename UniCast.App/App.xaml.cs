@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using Serilog;
+using UniCast.App.Security;
 using UniCast.App.Views;
 using UniCast.Licensing;
 using UniCast.Licensing.Models;
@@ -277,10 +278,20 @@ namespace UniCast.App
 
             var logPath = Path.Combine(logFolder, "log-.txt");
 
+            // DÜZELTME v17.3: 
+            // 1. StreamKeyMaskingEnricher ile hassas verileri maskele
+            // 2. Log dosyası boyut limiti (50MB) ve rolling
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
+                .Enrich.With<StreamKeyMaskingEnricher>()
                 .WriteTo.Debug()
-                .WriteTo.File(logPath, rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
+                .WriteTo.File(
+                    logPath,
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 7,
+                    fileSizeLimitBytes: 50_000_000,  // 50 MB
+                    rollOnFileSizeLimit: true,
+                    shared: true)
                 .CreateLogger();
         }
 
