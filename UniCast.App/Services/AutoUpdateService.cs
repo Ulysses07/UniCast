@@ -75,7 +75,15 @@ namespace UniCast.App.Services
 
         private AutoUpdateService()
         {
-            _httpClient = new HttpClient
+            var handler = new SocketsHttpHandler
+            {
+                PooledConnectionLifetime = TimeSpan.FromMinutes(10),
+                PooledConnectionIdleTimeout = TimeSpan.FromMinutes(5),
+                MaxConnectionsPerServer = 2,
+                ConnectTimeout = TimeSpan.FromSeconds(30)
+            };
+
+            _httpClient = new HttpClient(handler)
             {
                 Timeout = TimeSpan.FromMinutes(Config.DownloadTimeoutMinutes)
             };

@@ -158,7 +158,15 @@ namespace UniCast.Core.Chat.Ingestors
 
         public YouTubeChatIngestor(string videoId) : base(videoId)
         {
-            _httpClient = new HttpClient
+            var handler = new SocketsHttpHandler
+            {
+                PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+                PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+                MaxConnectionsPerServer = 5,
+                ConnectTimeout = TimeSpan.FromSeconds(10)
+            };
+
+            _httpClient = new HttpClient(handler)
             {
                 Timeout = TimeSpan.FromSeconds(30)
             };
