@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
@@ -70,6 +71,76 @@ namespace UniCast.Core.Services
         }
 
         /// <summary>
+        /// GÜVENLİK: Stream URL'deki hassas bilgileri (stream key) maskeler.
+        /// Log dosyalarına yazılmadan önce kullanılmalı.
+        /// </summary>
+        private static string MaskSensitiveUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                return url;
+
+            try
+            {
+                // RTMP URL formatı: rtmp://server/app/stream_key
+                // Örnek: rtmp://a.rtmp.youtube.com/live2/xxxx-xxxx-xxxx-xxxx
+
+                // URL'i parçala
+                var uri = new Uri(url);
+                var path = uri.AbsolutePath;
+
+                // Path'in son segmentini (stream key) maskele
+                var segments = path.Split('/');
+                if (segments.Length > 1)
+                {
+                    var lastSegment = segments[^1];
+                    if (!string.IsNullOrEmpty(lastSegment) && lastSegment.Length > 4)
+                    {
+                        // Stream key'in sadece ilk 4 karakterini göster
+                        var masked = lastSegment[..4] + new string('*', Math.Min(lastSegment.Length - 4, 16));
+                        segments[^1] = masked;
+
+                        return $"{uri.Scheme}://{uri.Host}{string.Join("/", segments)}";
+                    }
+                }
+
+                return url;
+            }
+            catch
+            {
+                // Parse edilemezse, en azından son 20 karakteri maskele
+                if (url.Length > 24)
+                {
+                    return url[..^20] + new string('*', 16) + "****";
+                }
+                return "***MASKED***";
+            }
+        }
+
+        /// <summary>
+        /// GÜVENLİK: FFmpeg arguments'daki stream key'leri maskeler.
+        /// </summary>
+        private static string MaskSensitiveArgs(string args)
+        {
+            if (string.IsNullOrEmpty(args))
+                return args;
+
+            // -f flv "rtmp://..." kısmını bul ve maskele
+            var pattern = new System.Text.RegularExpressions.Regex(
+                @"(rtmp[s]?://[^/]+/[^/]+/)([^\s""']+)",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            return pattern.Replace(args, m =>
+            {
+                var streamKey = m.Groups[2].Value;
+                if (streamKey.Length > 4)
+                {
+                    return m.Groups[1].Value + streamKey[..4] + new string('*', Math.Min(12, streamKey.Length - 4));
+                }
+                return m.Value;
+            });
+        }
+
+        /// <summary>
         /// Stream'i başlatır.
         /// </summary>
         public async Task<bool> StartAsync(StreamConfiguration config, CancellationToken ct = default)
@@ -99,10 +170,12 @@ namespace UniCast.Core.Services
 
             try
             {
-                RaiseLog("info", $"Stream başlatılıyor: {config.OutputUrl}");
+                // GÜVENLİK: Stream URL'i loglarken stream key'i maskele
+                RaiseLog("info", $"Stream başlatılıyor: {MaskSensitiveUrl(config.OutputUrl)}");
 
                 var args = BuildFfmpegArgs(config);
-                RaiseLog("debug", $"FFmpeg args: {args}");
+                // GÜVENLİK: FFmpeg args'da stream key'i maskele
+                RaiseLog("debug", $"FFmpeg args: {MaskSensitiveArgs(args)}");
 
                 var startInfo = new ProcessStartInfo
                 {

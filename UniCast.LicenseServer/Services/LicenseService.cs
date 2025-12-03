@@ -235,8 +235,7 @@ namespace UniCast.LicenseServer.Services
 
             // Son segment checksum
             var combined = string.Join("", segments.Take(4));
-            using var sha = SHA256.Create();
-            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(combined));
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(combined));
             segments[4] = new string(hash.Take(5).Select(b => chars[b % chars.Length]).ToArray());
 
             return string.Join("-", segments);

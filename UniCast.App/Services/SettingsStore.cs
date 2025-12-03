@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using Serilog;
 using UniCast.Core.Models;
+using UniCast.App.Security;
 
 namespace UniCast.App.Services
 {
@@ -170,6 +171,10 @@ namespace UniCast.App.Services
 
                     if (data != null)
                     {
+                        // ESKİ AYARLARDAN MİGRASYON
+                        // Eski JSON'da şifrelenmemiş key'ler varsa, bunları şifreli versiyonlara aktar
+                        MigrateOldSettings(json, data);
+
                         data.Normalize();
                         Log.Debug("[SettingsStore] Ayarlar yüklendi");
                         return data;
@@ -185,6 +190,121 @@ namespace UniCast.App.Services
             var defaults = new SettingsData();
             defaults.Normalize();
             return defaults;
+        }
+
+        /// <summary>
+        /// Eski şifrelenmemiş ayarları yeni şifreli formata migrate eder.
+        /// </summary>
+        private static void MigrateOldSettings(string json, SettingsData data)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+                bool migrated = false;
+
+                // YouTube Stream Key
+                if (string.IsNullOrEmpty(data.EncryptedYouTubeStreamKey) &&
+                    root.TryGetProperty("YouTubeStreamKey", out var ytStreamKey))
+                {
+                    var value = ytStreamKey.GetString();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        data.YouTubeStreamKey = value; // Bu setter şifreleyecek
+                        migrated = true;
+                        Log.Information("[SettingsStore] YouTube Stream Key migrate edildi");
+                    }
+                }
+
+                // Twitch Stream Key
+                if (string.IsNullOrEmpty(data.EncryptedTwitchStreamKey) &&
+                    root.TryGetProperty("TwitchStreamKey", out var twitchStreamKey))
+                {
+                    var value = twitchStreamKey.GetString();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        data.TwitchStreamKey = value;
+                        migrated = true;
+                        Log.Information("[SettingsStore] Twitch Stream Key migrate edildi");
+                    }
+                }
+
+                // Facebook Stream Key
+                if (string.IsNullOrEmpty(data.EncryptedFacebookStreamKey) &&
+                    root.TryGetProperty("FacebookStreamKey", out var fbStreamKey))
+                {
+                    var value = fbStreamKey.GetString();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        data.FacebookStreamKey = value;
+                        migrated = true;
+                        Log.Information("[SettingsStore] Facebook Stream Key migrate edildi");
+                    }
+                }
+
+                // Instagram Session ID
+                if (string.IsNullOrEmpty(data.EncryptedInstagramSessionId) &&
+                    root.TryGetProperty("InstagramSessionId", out var igSession))
+                {
+                    var value = igSession.GetString();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        data.InstagramSessionId = value;
+                        migrated = true;
+                        Log.Information("[SettingsStore] Instagram Session ID migrate edildi");
+                    }
+                }
+
+                // YouTube API Key
+                if (string.IsNullOrEmpty(data.EncryptedYouTubeApiKey) &&
+                    root.TryGetProperty("YouTubeApiKey", out var ytApiKey))
+                {
+                    var value = ytApiKey.GetString();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        data.YouTubeApiKey = value;
+                        migrated = true;
+                        Log.Information("[SettingsStore] YouTube API Key migrate edildi");
+                    }
+                }
+
+                // Twitch Client ID
+                if (string.IsNullOrEmpty(data.EncryptedTwitchClientId) &&
+                    root.TryGetProperty("TwitchClientId", out var twitchClientId))
+                {
+                    var value = twitchClientId.GetString();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        data.TwitchClientId = value;
+                        migrated = true;
+                        Log.Information("[SettingsStore] Twitch Client ID migrate edildi");
+                    }
+                }
+
+                // Facebook Access Token
+                if (string.IsNullOrEmpty(data.EncryptedFacebookAccessToken) &&
+                    root.TryGetProperty("FacebookAccessToken", out var fbAccessToken))
+                {
+                    var value = fbAccessToken.GetString();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        data.FacebookAccessToken = value;
+                        migrated = true;
+                        Log.Information("[SettingsStore] Facebook Access Token migrate edildi");
+                    }
+                }
+
+                if (migrated)
+                {
+                    // Migration yapıldı, yeni formatta kaydet
+                    _isDirty = true;
+                    Log.Information("[SettingsStore] Eski ayarlar şifreli formata migrate edildi, kaydediliyor...");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[SettingsStore] Migration sırasında hata (yok sayılıyor)");
+            }
         }
 
         /// <summary>
@@ -260,14 +380,62 @@ namespace UniCast.App.Services
 
         // Platform Bağlantıları
         public string YouTubeVideoId { get; set; } = "";
-        public string YouTubeStreamKey { get; set; } = "";
-        public string TwitchStreamKey { get; set; } = "";
+
+        // NOT: Stream key'ler artık şifrelenmiş olarak saklanıyor
+        // Eski property'ler geriye uyumluluk için - yeni şifreli versiyonları kullanın
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string YouTubeStreamKey
+        {
+            get => YouTubeStreamKeyDecrypted;
+            set => YouTubeStreamKeyDecrypted = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string TwitchStreamKey
+        {
+            get => TwitchStreamKeyDecrypted;
+            set => TwitchStreamKeyDecrypted = value;
+        }
+
+        // Twitch Chat Ayarları
+        public string TwitchChannelName { get; set; } = "";
+        public string TwitchBotUsername { get; set; } = "";
+
+        // Twitch OAuth Token (şifreli)
+        private string _encryptedTwitchOAuthToken = "";
+        public string EncryptedTwitchOAuthToken
+        {
+            get => _encryptedTwitchOAuthToken;
+            set => _encryptedTwitchOAuthToken = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string TwitchOAuthToken
+        {
+            get => SecretStore.Unprotect(_encryptedTwitchOAuthToken) ?? "";
+            set => _encryptedTwitchOAuthToken = SecretStore.Protect(value) ?? "";
+        }
+
         public string TikTokUsername { get; set; } = "";
         public string InstagramUsername { get; set; } = "";
         public string InstagramUserId { get => InstagramUsername; set => InstagramUsername = value; }
-        public string InstagramSessionId { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string InstagramSessionId
+        {
+            get => InstagramSessionIdDecrypted;
+            set => InstagramSessionIdDecrypted = value;
+        }
+
         public string FacebookPageId { get; set; } = "";
-        public string FacebookStreamKey { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string FacebookStreamKey
+        {
+            get => FacebookStreamKeyDecrypted;
+            set => FacebookStreamKeyDecrypted = value;
+        }
+
         public string FacebookLiveVideoId { get; set; } = "";
         public string CustomRtmpUrl { get; set; } = "";
 
@@ -305,10 +473,110 @@ namespace UniCast.App.Services
         public bool EnableLocalRecord { get => RecordingEnabled; set => RecordingEnabled = value; }
         public string RecordFolder { get => RecordingPath; set => RecordingPath = value; }
 
-        // API Keys (şifrelenmiş saklanmalı)
-        public string YouTubeApiKey { get; set; } = "";
-        public string TwitchClientId { get; set; } = "";
-        public string FacebookAccessToken { get; set; } = "";
+        // API Keys - ŞİFRELENMİŞ SAKLANIYOR (SecretStore ile DPAPI)
+        // JSON'a şifreli olarak yazılır, okunurken çözülür
+
+        // YouTube API Key
+        private string _encryptedYouTubeApiKey = "";
+        public string EncryptedYouTubeApiKey
+        {
+            get => _encryptedYouTubeApiKey;
+            set => _encryptedYouTubeApiKey = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string YouTubeApiKey
+        {
+            get => SecretStore.Unprotect(_encryptedYouTubeApiKey) ?? "";
+            set => _encryptedYouTubeApiKey = SecretStore.Protect(value) ?? "";
+        }
+
+        // Twitch Client ID
+        private string _encryptedTwitchClientId = "";
+        public string EncryptedTwitchClientId
+        {
+            get => _encryptedTwitchClientId;
+            set => _encryptedTwitchClientId = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string TwitchClientId
+        {
+            get => SecretStore.Unprotect(_encryptedTwitchClientId) ?? "";
+            set => _encryptedTwitchClientId = SecretStore.Protect(value) ?? "";
+        }
+
+        // Facebook Access Token
+        private string _encryptedFacebookAccessToken = "";
+        public string EncryptedFacebookAccessToken
+        {
+            get => _encryptedFacebookAccessToken;
+            set => _encryptedFacebookAccessToken = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string FacebookAccessToken
+        {
+            get => SecretStore.Unprotect(_encryptedFacebookAccessToken) ?? "";
+            set => _encryptedFacebookAccessToken = SecretStore.Protect(value) ?? "";
+        }
+
+        // Stream Keys - BUNLAR DA ŞİFRELENMELİ!
+        private string _encryptedYouTubeStreamKey = "";
+        public string EncryptedYouTubeStreamKey
+        {
+            get => _encryptedYouTubeStreamKey;
+            set => _encryptedYouTubeStreamKey = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string YouTubeStreamKeyDecrypted
+        {
+            get => SecretStore.Unprotect(_encryptedYouTubeStreamKey) ?? "";
+            set => _encryptedYouTubeStreamKey = SecretStore.Protect(value) ?? "";
+        }
+
+        private string _encryptedTwitchStreamKey = "";
+        public string EncryptedTwitchStreamKey
+        {
+            get => _encryptedTwitchStreamKey;
+            set => _encryptedTwitchStreamKey = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string TwitchStreamKeyDecrypted
+        {
+            get => SecretStore.Unprotect(_encryptedTwitchStreamKey) ?? "";
+            set => _encryptedTwitchStreamKey = SecretStore.Protect(value) ?? "";
+        }
+
+        private string _encryptedFacebookStreamKey = "";
+        public string EncryptedFacebookStreamKey
+        {
+            get => _encryptedFacebookStreamKey;
+            set => _encryptedFacebookStreamKey = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string FacebookStreamKeyDecrypted
+        {
+            get => SecretStore.Unprotect(_encryptedFacebookStreamKey) ?? "";
+            set => _encryptedFacebookStreamKey = SecretStore.Protect(value) ?? "";
+        }
+
+        private string _encryptedInstagramSessionId = "";
+        public string EncryptedInstagramSessionId
+        {
+            get => _encryptedInstagramSessionId;
+            set => _encryptedInstagramSessionId = value;
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string InstagramSessionIdDecrypted
+        {
+            get => SecretStore.Unprotect(_encryptedInstagramSessionId) ?? "";
+            set => _encryptedInstagramSessionId = SecretStore.Protect(value) ?? "";
+        }
 
         /// <summary>
         /// Değerleri normalize eder ve sınırlar içinde tutar.

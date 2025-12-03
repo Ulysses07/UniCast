@@ -27,16 +27,40 @@ try
     // Serilog
     builder.Host.UseSerilog();
 
-    // CORS
+    // KRİTİK: Admin Key kontrolü - ZORUNLU!
+    var adminKey = Environment.GetEnvironmentVariable("ADMIN_KEY");
+    if (string.IsNullOrEmpty(adminKey) || adminKey.Length < 32)
+    {
+        Log.Fatal("KRİTİK HATA: ADMIN_KEY environment variable ayarlanmalı ve en az 32 karakter olmalı!");
+        Log.Fatal("Örnek: export ADMIN_KEY=$(openssl rand -hex 32)");
+        Environment.Exit(1);
+        return;
+    }
+    Log.Information("Admin key doğrulandı (uzunluk: {Length})", adminKey.Length);
+
+    // KRİTİK: CORS - Sadece izin verilen domain'ler
+    var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")?.Split(',')
+        ?? new[] { "https://unicastapp.com", "https://license.unicastapp.com" };
+
     builder.Services.AddCors(options =>
     {
         options.AddDefaultPolicy(policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins(allowedOrigins)
                   .AllowAnyMethod()
                   .AllowAnyHeader();
         });
+
+        // Health check için açık CORS (sadece GET)
+        options.AddPolicy("HealthCheck", policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .WithMethods("GET")
+                  .AllowAnyHeader();
+        });
     });
+
+    Log.Information("CORS izin verilen origin'ler: {Origins}", string.Join(", ", allowedOrigins));
 
     // Services
     builder.Services.AddSingleton<ILicenseRepository, LicenseRepository>();
@@ -53,11 +77,9 @@ try
     var rateLimiter = app.Services.GetRequiredService<RateLimiter>();
     var licenseService = app.Services.GetRequiredService<ILicenseService>();
 
-    // Admin key
-    var adminKey = Environment.GetEnvironmentVariable("ADMIN_KEY") ?? "default-admin-key-change-me";
-
-    // Health check
-    app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+    // Health check - açık CORS ile
+    app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
+       .RequireCors("HealthCheck");
 
     // API version
     app.MapGet("/api/v1", () => Results.Ok(new { version = "1.0", name = "UniCast License Server" }));

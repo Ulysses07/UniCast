@@ -28,6 +28,7 @@ namespace UniCast.App
 
         // Chat Ingestors
         private YouTubeChatIngestor? _ytIngestor;
+        private TwitchChatIngestor? _twitchIngestor;
         private TikTokChatIngestor? _tikTokIngestor;
         private InstagramChatIngestor? _instagramIngestor;
         private FacebookChatIngestor? _facebookIngestor;
@@ -148,28 +149,45 @@ namespace UniCast.App
                 if (!string.IsNullOrWhiteSpace(settings.YouTubeVideoId))
                 {
                     _ytIngestor = new YouTubeChatIngestor(settings.YouTubeVideoId);
+                    _ytIngestor.ApiKey = settings.YouTubeApiKey;
                     _ = StartIngestorSafeAsync(_ytIngestor, "YouTube", ct);
                 }
 
-                // TikTok
+                // Twitch - YENİ!
+                if (!string.IsNullOrWhiteSpace(settings.TwitchChannelName))
+                {
+                    _twitchIngestor = new TwitchChatIngestor(settings.TwitchChannelName);
+                    // OAuth opsiyonel - anonim okuma desteklenir
+                    if (!string.IsNullOrWhiteSpace(settings.TwitchOAuthToken))
+                    {
+                        _twitchIngestor.OAuthToken = settings.TwitchOAuthToken;
+                        _twitchIngestor.BotUsername = settings.TwitchBotUsername;
+                    }
+                    _ = StartIngestorSafeAsync(_twitchIngestor, "Twitch", ct);
+                }
+
+                // TikTok (Mock - API henüz implement edilmedi)
                 if (!string.IsNullOrWhiteSpace(settings.TikTokUsername))
                 {
                     _tikTokIngestor = new TikTokChatIngestor(settings.TikTokUsername);
                     _ = StartIngestorSafeAsync(_tikTokIngestor, "TikTok", ct);
+                    Log.Warning("[MainWindow] TikTok chat sadece mock modda çalışıyor - gerçek API henüz entegre edilmedi");
                 }
 
-                // Instagram
+                // Instagram (Mock - API henüz implement edilmedi)
                 if (!string.IsNullOrWhiteSpace(settings.InstagramUsername))
                 {
                     _instagramIngestor = new InstagramChatIngestor(settings.InstagramUsername);
                     _ = StartIngestorSafeAsync(_instagramIngestor, "Instagram", ct);
+                    Log.Warning("[MainWindow] Instagram chat sadece mock modda çalışıyor - gerçek API henüz entegre edilmedi");
                 }
 
-                // Facebook
+                // Facebook (Mock - API henüz implement edilmedi)
                 if (!string.IsNullOrWhiteSpace(settings.FacebookPageId))
                 {
                     _facebookIngestor = new FacebookChatIngestor(settings.FacebookPageId);
                     _ = StartIngestorSafeAsync(_facebookIngestor, "Facebook", ct);
+                    Log.Warning("[MainWindow] Facebook chat sadece mock modda çalışıyor - gerçek API henüz entegre edilmedi");
                 }
             }
             catch (Exception ex)
@@ -672,6 +690,7 @@ namespace UniCast.App
             var ingestors = new List<(IChatIngestor? Ingestor, string Name)>
             {
                 (_ytIngestor, "YouTube"),
+                (_twitchIngestor, "Twitch"),
                 (_tikTokIngestor, "TikTok"),
                 (_instagramIngestor, "Instagram"),
                 (_facebookIngestor, "Facebook")
@@ -695,6 +714,7 @@ namespace UniCast.App
             }
 
             _ytIngestor = null;
+            _twitchIngestor = null;
             _tikTokIngestor = null;
             _instagramIngestor = null;
             _facebookIngestor = null;
