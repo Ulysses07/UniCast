@@ -194,34 +194,6 @@ namespace UniCast.App.Infrastructure
     }
 
     /// <summary>
-    /// Task extension metodları
-    /// </summary>
-    public static class TaskExtensionsMethods
-    {
-        /// <summary>
-        /// Task'ı fire-and-forget olarak çalıştır (güvenli)
-        /// </summary>
-        public static void SafeFireAndForget(
-            this Task task,
-            Action<Exception>? onError = null,
-            [CallerMemberName] string? callerName = null)
-        {
-            AsyncEventHandler.FireAndForget(task, onError, callerName);
-        }
-
-        /// <summary>
-        /// ValueTask'ı fire-and-forget olarak çalıştır
-        /// </summary>
-        public static void SafeFireAndForget(
-            this ValueTask task,
-            Action<Exception>? onError = null,
-            [CallerMemberName] string? callerName = null)
-        {
-            AsyncEventHandler.FireAndForget(task.AsTask(), onError, callerName);
-        }
-    }
-
-    /// <summary>
     /// DÜZELTME v18: Retry logic helper
     /// </summary>
     public static class RetryHelper

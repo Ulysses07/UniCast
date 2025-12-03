@@ -135,9 +135,9 @@ namespace UniCast.App.Views
 
         private void RefreshDevices_Click(object sender, RoutedEventArgs e)
         {
-            // DÜZELTME v20: Fire-and-forget güvenli hale getirildi
-            LoadDevicesAsync().SafeFireAndForget(ex =>
-                Log.Warning(ex, "[FirstRunWizard] Cihaz yenileme hatası"));
+            AsyncVoidHandler.Handle(
+                async () => await LoadDevicesAsync(),
+                showErrorDialog: false);
         }
 
         private void UpdateUI()

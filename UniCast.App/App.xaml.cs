@@ -14,7 +14,7 @@ using UniCast.Licensing.Models;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
-// DÜZELTME v20: Namespace çakışmalarını önlemek için alias
+// DÜZELTME v24: Namespace çakışmalarını önlemek için alias
 using DiagnosticsHealthCheck = UniCast.App.Diagnostics.HealthCheckService;
 using DiagnosticsMemoryProfiler = UniCast.App.Diagnostics.MemoryProfiler;
 using DiagnosticsPerformanceMonitor = UniCast.App.Diagnostics.PerformanceMonitor;
@@ -24,14 +24,19 @@ namespace UniCast.App
 {
     public partial class App : Application
     {
-        // DÜZELTME v20: Startup timing
+        // DÜZELTME v24: Startup timing
         private Stopwatch? _startupStopwatch;
+
+        // DÜZELTME v24: Event handler referansları (memory leak önleme)
+        private EventHandler<Diagnostics.MemoryWarningEventArgs>? _memoryWarningHandler;
+        private EventHandler<Diagnostics.HealthStatusChangedEventArgs>? _healthStatusHandler;
+        private EventHandler<Diagnostics.PerformanceAlertEventArgs>? _performanceAlertHandler;
 
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            // DÜZELTME v20: Startup timing başlat
+            // DÜZELTME v24: Startup timing başlat
             _startupStopwatch = Stopwatch.StartNew();
 
             // 1. Loglama (DynamicLogLevel ile)
@@ -47,7 +52,7 @@ namespace UniCast.App
             // DÜZELTME v17.1: Önceki oturumdan kalan orphan FFmpeg process'leri temizle
             CleanupOrphanFfmpegProcesses();
 
-            // DÜZELTME v20: Configuration Validation (kritik ayarları kontrol et)
+            // DÜZELTME v24: Configuration Validation (kritik ayarları kontrol et)
             try
             {
                 var configResult = ConfigValidator.Instance.Validate();
@@ -87,12 +92,12 @@ namespace UniCast.App
             try
             {
                 // 4. LİSANS KONTROLÜ
-                var licenseResult = await InitializeLicenseAsync();
+                var licenseResult = await InitializeLicenseAsync().ConfigureAwait(true);
 
                 if (!licenseResult.IsValid)
                 {
                     splash?.Close();
-                    await HandleLicenseFailureAsync(licenseResult);
+                    await HandleLicenseFailureAsync(licenseResult).ConfigureAwait(true);
                     return;
                 }
 
@@ -123,7 +128,7 @@ namespace UniCast.App
                     // KRİTİK: Splash'ı MainWindow'dan SONRA kapat!
                     splash?.Close();
 
-                    // DÜZELTME v20: Keyboard shortcuts başlat
+                    // DÜZELTME v24: Keyboard shortcuts başlat
                     try
                     {
                         KeyboardShortcutManager.Instance.Initialize(mainWindow);
@@ -134,10 +139,10 @@ namespace UniCast.App
                         Log.Warning(ex, "[Shortcuts] Klavye kısayolları başlatılamadı");
                     }
 
-                    // DÜZELTME v20: Diagnostics servisleri başlat (arka planda)
+                    // DÜZELTME v24: Diagnostics servisleri başlat (arka planda)
                     _ = StartDiagnosticsAsync();
 
-                    // DÜZELTME v20: Startup timing bitir
+                    // DÜZELTME v24: Startup timing bitir
                     _startupStopwatch?.Stop();
                     Log.Information("[Startup] Toplam süre: {TotalMs}ms", _startupStopwatch?.ElapsedMilliseconds);
 
@@ -169,7 +174,8 @@ namespace UniCast.App
         }
 
         /// <summary>
-        /// DÜZELTME v20: Diagnostics servislerini arka planda başlat
+        /// DÜZELTME v24: Diagnostics servislerini arka planda başlat
+        /// - Lambda yerine named handler'lar kullanıldı (memory leak önleme)
         /// </summary>
         private async Task StartDiagnosticsAsync()
         {
@@ -179,32 +185,22 @@ namespace UniCast.App
                 {
                     try
                     {
+                        // DÜZELTME v24: Named handler'lar oluştur
+                        _memoryWarningHandler = OnMemoryWarning;
+                        _healthStatusHandler = OnHealthStatusChanged;
+                        _performanceAlertHandler = OnPerformanceAlert;
+
                         // Memory Profiler
                         DiagnosticsMemoryProfiler.Instance.StartMonitoring();
-                        DiagnosticsMemoryProfiler.Instance.OnMemoryWarning += (s, ev) =>
-                        {
-                            Log.Warning("[Memory] Uyarı: {Message}", ev.Message);
-                        };
+                        DiagnosticsMemoryProfiler.Instance.OnMemoryWarning += _memoryWarningHandler;
 
                         // Health Check
                         DiagnosticsHealthCheck.Instance.Start();
-                        DiagnosticsHealthCheck.Instance.OnStatusChanged += (s, ev) =>
-                        {
-                            if (ev.NewStatus == Diagnostics.HealthStatus.Unhealthy)
-                            {
-                                Log.Warning("[Health] Sağlık durumu: {Status}", ev.NewStatus);
-                            }
-                        };
+                        DiagnosticsHealthCheck.Instance.OnStatusChanged += _healthStatusHandler;
 
                         // Performance Monitor
                         DiagnosticsPerformanceMonitor.Instance.StartMonitoring();
-                        DiagnosticsPerformanceMonitor.Instance.OnPerformanceAlert += (s, ev) =>
-                        {
-                            if (ev.Level == Diagnostics.AlertLevel.Critical)
-                            {
-                                Log.Error("[Performance] Kritik: {Type} - {Message}", ev.Type, ev.Message);
-                            }
-                        };
+                        DiagnosticsPerformanceMonitor.Instance.OnPerformanceAlert += _performanceAlertHandler;
 
                         Log.Information("[Diagnostics] Tüm servisler başlatıldı");
                     }
@@ -212,11 +208,33 @@ namespace UniCast.App
                     {
                         Log.Warning(ex, "[Diagnostics] Servis başlatma hatası");
                     }
-                });
+                }).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 Log.Warning(ex, "[Diagnostics] Arka plan başlatma hatası");
+            }
+        }
+
+        // DÜZELTME v24: Named event handlers
+        private void OnMemoryWarning(object? sender, Diagnostics.MemoryWarningEventArgs e)
+        {
+            Log.Warning("[Memory] Uyarı: {Message}", e.Message);
+        }
+
+        private void OnHealthStatusChanged(object? sender, Diagnostics.HealthStatusChangedEventArgs e)
+        {
+            if (e.NewStatus == Diagnostics.HealthStatus.Unhealthy)
+            {
+                Log.Warning("[Health] Sağlık durumu: {Status}", e.NewStatus);
+            }
+        }
+
+        private void OnPerformanceAlert(object? sender, Diagnostics.PerformanceAlertEventArgs e)
+        {
+            if (e.Level == Diagnostics.AlertLevel.Critical)
+            {
+                Log.Error("[Performance] Kritik: {Type} - {Message}", e.Type, e.Message);
             }
         }
 
@@ -227,6 +245,7 @@ namespace UniCast.App
 #if DEBUG
                 Log.Warning("DEBUG modu: Güvenlik kontrolleri atlanıyor...");
 
+                // DÜZELTME v24: ConfigureAwait(false) eklendi
                 var result = await Task.Run(() =>
                 {
                     try
@@ -237,39 +256,47 @@ namespace UniCast.App
                     {
                         return LicenseValidationResult.Failure(LicenseStatus.NotFound, "Lisans bulunamadı");
                     }
-                });
+                }).ConfigureAwait(false);
 #else
-                var result = await LicenseManager.Instance.InitializeAsync();
+                var result = await LicenseManager.Instance.InitializeAsync().ConfigureAwait(false);
 #endif
 
                 if (result.Status == LicenseStatus.NotFound)
                 {
-                    var choice = MessageBox.Show(
-                        "Lisans bulunamadı. Deneme sürümünü başlatmak ister misiniz?\n\n" +
-                        "• Evet: 14 günlük ücretsiz deneme başlar\n" +
-                        "• Hayır: Lisans anahtarı girişi yaparsınız",
-                        "UniCast - Lisans",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question);
+                    // UI thread'e dön
+                    var choice = await Dispatcher.InvokeAsync(() =>
+                        MessageBox.Show(
+                            "Lisans bulunamadı. Deneme sürümünü başlatmak ister misiniz?\n\n" +
+                            "• Evet: 14 günlük ücretsiz deneme başlar\n" +
+                            "• Hayır: Lisans anahtarı girişi yaparsınız",
+                            "UniCast - Lisans",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Question));
 
                     if (choice == MessageBoxResult.Yes)
                     {
                         result = LicenseManager.Instance.StartTrial();
                         if (result.IsValid)
                         {
-                            MessageBox.Show(
-                                $"14 günlük deneme sürümü başlatıldı!\n\nKalan süre: {result.License?.DaysRemaining} gün",
-                                "UniCast - Deneme Sürümü",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Information);
+                            await Dispatcher.InvokeAsync(() =>
+                                MessageBox.Show(
+                                    $"14 günlük deneme sürümü başlatıldı!\n\nKalan süre: {result.License?.DaysRemaining} gün",
+                                    "UniCast - Deneme Sürümü",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Information));
                         }
                     }
                     else
                     {
-                        var activationWindow = new ActivationWindow();
-                        if (activationWindow.ShowDialog() == true)
+                        var activationResult = await Dispatcher.InvokeAsync(() =>
                         {
-                            result = await LicenseManager.Instance.ValidateAsync();
+                            var activationWindow = new ActivationWindow();
+                            return activationWindow.ShowDialog() == true;
+                        });
+
+                        if (activationResult)
+                        {
+                            result = await LicenseManager.Instance.ValidateAsync().ConfigureAwait(false);
                         }
                     }
                 }
@@ -304,7 +331,8 @@ namespace UniCast.App
 
             Log.Warning("Lisans hatası: {Status} - {Message}", result.Status, result.Message);
 
-            MessageBox.Show(message, "UniCast - Lisans Hatası", MessageBoxButton.OK, MessageBoxImage.Error);
+            await Dispatcher.InvokeAsync(() =>
+                MessageBox.Show(message, "UniCast - Lisans Hatası", MessageBoxButton.OK, MessageBoxImage.Error));
 
             if (result.Status == LicenseStatus.Tampered)
             {
@@ -316,17 +344,26 @@ namespace UniCast.App
 #endif
             }
 
-            var activationWindow = new ActivationWindow();
-            if (activationWindow.ShowDialog() == true)
+            var activationResult = await Dispatcher.InvokeAsync(() =>
             {
-                var newResult = await LicenseManager.Instance.ValidateAsync();
+                var activationWindow = new ActivationWindow();
+                return activationWindow.ShowDialog() == true;
+            });
+
+            if (activationResult)
+            {
+                var newResult = await LicenseManager.Instance.ValidateAsync().ConfigureAwait(false);
                 if (newResult.IsValid)
                 {
                     LicenseManager.Instance.StatusChanged += OnLicenseStatusChanged;
-                    var mainWindow = new MainWindow();
-                    this.MainWindow = mainWindow;
-                    mainWindow.Closed += (s, args) => Shutdown();
-                    mainWindow.Show();
+
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        var mainWindow = new MainWindow();
+                        this.MainWindow = mainWindow;
+                        mainWindow.Closed += (s, args) => Shutdown();
+                        mainWindow.Show();
+                    });
                     return;
                 }
             }
@@ -363,7 +400,7 @@ namespace UniCast.App
         {
             Log.Information("Uygulama kapatılıyor. Çıkış Kodu: {ExitCode}", e.ApplicationExitCode);
 
-            // DÜZELTME v20: Diagnostics servislerini durdur
+            // DÜZELTME v24: Diagnostics servislerini durdur
             StopDiagnostics();
 
             // DÜZELTME v18: Gelişmiş graceful shutdown
@@ -384,15 +421,35 @@ namespace UniCast.App
         }
 
         /// <summary>
-        /// DÜZELTME v20: Diagnostics servislerini durdur
+        /// DÜZELTME v24: Diagnostics servislerini durdur ve event handler'ları temizle
         /// </summary>
         private void StopDiagnostics()
         {
             try
             {
+                // DÜZELTME v24: Event handler'ları temizle (memory leak önleme)
+                if (_memoryWarningHandler != null)
+                {
+                    DiagnosticsMemoryProfiler.Instance.OnMemoryWarning -= _memoryWarningHandler;
+                    _memoryWarningHandler = null;
+                }
+
+                if (_healthStatusHandler != null)
+                {
+                    DiagnosticsHealthCheck.Instance.OnStatusChanged -= _healthStatusHandler;
+                    _healthStatusHandler = null;
+                }
+
+                if (_performanceAlertHandler != null)
+                {
+                    DiagnosticsPerformanceMonitor.Instance.OnPerformanceAlert -= _performanceAlertHandler;
+                    _performanceAlertHandler = null;
+                }
+
                 DiagnosticsMemoryProfiler.Instance.StopMonitoring();
                 DiagnosticsHealthCheck.Instance.Stop();
                 DiagnosticsPerformanceMonitor.Instance.StopMonitoring();
+
                 Log.Debug("[Diagnostics] Servisler durduruldu");
             }
             catch (Exception ex)
@@ -410,7 +467,7 @@ namespace UniCast.App
 
             var logPath = Path.Combine(logFolder, "log-.txt");
 
-            // DÜZELTME v20: DynamicLogLevel ile runtime log level değiştirme
+            // DÜZELTME v24: DynamicLogLevel ile runtime log level değiştirme
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.ControlledBy(DynamicLogLevel.Instance.LevelSwitch)
                 .Enrich.With<StreamKeyMaskingEnricher>()
@@ -436,13 +493,16 @@ namespace UniCast.App
             {
                 Log.Fatal(e.Exception, "Kritik UI Hatası: {Message}", e.Exception.Message);
 
-                // DÜZELTME v20: Crash report kaydet
+                // DÜZELTME v24: Crash report kaydet
                 try
                 {
                     var report = Services.CrashReporter.CreateCrashReport(e.Exception, "UI", false);
                     _ = Services.CrashReporter.SaveReportAsync(report);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[CrashReporter] SaveReport error: {ex.Message}");
+                }
 
                 MessageBox.Show(
                     $"Bir hata oluştu:\n\n{e.Exception.Message}\n\nDetaylar log dosyasına kaydedildi.",
@@ -465,7 +525,10 @@ namespace UniCast.App
                         var report = Services.CrashReporter.CreateCrashReport(ex, "AppDomain", true);
                         _ = Services.CrashReporter.SaveReportAsync(report);
                     }
-                    catch { }
+                    catch (Exception repEx)
+                    {
+                        Debug.WriteLine($"[CrashReporter] SaveReport error: {repEx.Message}");
+                    }
 
                     MessageBox.Show(
                         $"Kritik bir hata oluştu:\n\n{ex.Message}\n\nUygulama kapatılacak.",
@@ -548,8 +611,9 @@ namespace UniCast.App
                     return obj["CommandLine"]?.ToString();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"[App] GetProcessCommandLine error: {ex.Message}");
             }
             return null;
         }

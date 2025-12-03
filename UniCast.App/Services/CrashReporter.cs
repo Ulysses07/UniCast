@@ -2,17 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Serilog;
+using UniCast.Core.Http;
 
 namespace UniCast.App.Services
 {
     /// <summary>
-    /// DÜZELTME v19: Çökme raporlama servisi
-    /// Unhandled exception'ları yakalar ve raporlar
+    /// DÜZELTME v24: Çökme raporlama servisi
+    /// - HttpClient socket exhaustion düzeltildi (SharedHttpClients)
+    /// - Boş catch bloklarına loglama eklendi
     /// </summary>
     public static class CrashReporter
     {
@@ -76,7 +79,7 @@ namespace UniCast.App.Services
         private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             var exception = e.ExceptionObject as Exception ?? new Exception("Unknown exception");
-            
+
             Log.Fatal(exception, "[CrashReporter] Unhandled exception! IsTerminating: {IsTerminating}", e.IsTerminating);
 
             var report = CreateCrashReport(exception, "UnhandledException", e.IsTerminating);
@@ -99,7 +102,7 @@ namespace UniCast.App.Services
             e.SetObserved();
         }
 
-        private static void OnDispatcherUnhandledException(object sender, 
+        private static void OnDispatcherUnhandledException(object sender,
             System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
             Log.Fatal(e.Exception, "[CrashReporter] Dispatcher unhandled exception");
@@ -171,8 +174,10 @@ namespace UniCast.App.Services
                 return System.Reflection.Assembly.GetExecutingAssembly()
                     .GetName().Version?.ToString() ?? "Unknown";
             }
-            catch
+            catch (Exception ex)
             {
+                // DÜZELTME v24: Boş catch yerine debug log
+                Debug.WriteLine($"[CrashReporter] GetAppVersion error: {ex.Message}");
                 return "Unknown";
             }
         }
@@ -198,15 +203,16 @@ namespace UniCast.App.Services
                 // Son N satırı al
                 var allLines = File.ReadAllLines(latestLog);
                 var startIndex = Math.Max(0, allLines.Length - Config.MaxLogLinesInReport);
-                
+
                 for (int i = startIndex; i < allLines.Length; i++)
                 {
                     logs.Add(allLines[i]);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Log okuma hatası
+                // DÜZELTME v24: Boş catch yerine debug log
+                Debug.WriteLine($"[CrashReporter] GetRecentLogs error: {ex.Message}");
             }
 
             return logs;
@@ -233,14 +239,14 @@ namespace UniCast.App.Services
                     WriteIndented = true
                 });
 
-                await File.WriteAllTextAsync(filePath, json);
+                await File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
 
                 Log.Information("[CrashReporter] Rapor kaydedildi: {Path}", filePath);
 
                 // Opsiyonel: Sunucuya gönder
                 if (!string.IsNullOrEmpty(Config.ReportEndpoint))
                 {
-                    await SendReportToServerAsync(report);
+                    await SendReportToServerAsync(report).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -268,25 +274,30 @@ namespace UniCast.App.Services
 
                 File.WriteAllText(filePath, json);
             }
-            catch
+            catch (Exception ex)
             {
-                // Crash anında hata loglanamaz
+                // DÜZELTME v24: Crash anında bile debug log yaz
+                Debug.WriteLine($"[CrashReporter] SaveReportSync error: {ex.Message}");
             }
         }
 
+        /// <summary>
+        /// DÜZELTME v24: SharedHttpClients kullan - socket exhaustion önleme
+        /// </summary>
         private static async Task SendReportToServerAsync(CrashReport report)
         {
             try
             {
-                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+                // DÜZELTME v24: using var client = new HttpClient yerine SharedHttpClients
                 var json = JsonSerializer.Serialize(report);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                await client.PostAsync(Config.ReportEndpoint, content);
+                await SharedHttpClients.Default.PostAsync(Config.ReportEndpoint, content).ConfigureAwait(false);
             }
-            catch
+            catch (Exception ex)
             {
-                // Sunucu gönderimi başarısız
+                // DÜZELTME v24: Boş catch yerine debug log
+                Debug.WriteLine($"[CrashReporter] SendReportToServer error: {ex.Message}");
             }
         }
 
@@ -314,9 +325,10 @@ namespace UniCast.App.Services
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Error);
             }
-            catch
+            catch (Exception ex)
             {
-                // Dialog gösterilemedi
+                // DÜZELTME v24: Boş catch yerine debug log
+                Debug.WriteLine($"[CrashReporter] ShowCrashDialog error: {ex.Message}");
             }
         }
 
@@ -352,9 +364,10 @@ namespace UniCast.App.Services
                         };
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Rapor okunamadı
+                    // DÜZELTME v24: Boş catch yerine debug log
+                    Debug.WriteLine($"[CrashReporter] GetReportSummaries read error: {ex.Message}");
                 }
 
                 if (summary != null)
@@ -372,8 +385,10 @@ namespace UniCast.App.Services
                 var json = File.ReadAllText(filePath);
                 return JsonSerializer.Deserialize<CrashReport>(json);
             }
-            catch
+            catch (Exception ex)
             {
+                // DÜZELTME v24: Boş catch yerine debug log
+                Debug.WriteLine($"[CrashReporter] LoadReport error: {ex.Message}");
                 return null;
             }
         }
@@ -387,7 +402,15 @@ namespace UniCast.App.Services
 
             foreach (var file in Directory.GetFiles(CrashFolder, "crash_*.json"))
             {
-                try { File.Delete(file); } catch { }
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v24: Boş catch yerine debug log
+                    Debug.WriteLine($"[CrashReporter] ClearAllReports delete error: {ex.Message}");
+                }
             }
         }
 
@@ -403,12 +426,21 @@ namespace UniCast.App.Services
 
                 foreach (var file in reports)
                 {
-                    try { File.Delete(file); } catch { }
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch (Exception ex)
+                    {
+                        // DÜZELTME v24: Boş catch yerine debug log
+                        Debug.WriteLine($"[CrashReporter] CleanupOldReports delete error: {ex.Message}");
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Temizlik hatası
+                // DÜZELTME v24: Boş catch yerine debug log
+                Debug.WriteLine($"[CrashReporter] CleanupOldReports error: {ex.Message}");
             }
         }
 

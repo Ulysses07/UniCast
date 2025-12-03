@@ -13,8 +13,10 @@ using Timer = System.Threading.Timer;
 namespace UniCast.App.Diagnostics
 {
     /// <summary>
-    /// DÜZELTME v19: Health Check servisi
-    /// Sistem, network ve uygulama bileşenlerinin sağlık durumunu kontrol eder
+    /// DÜZELTME v24: Health Check servisi
+    /// - async void kaldırıldı
+    /// - HttpClient SocketsHttpHandler ile düzeltildi
+    /// - Magic numbers AppConstants'a taşındı
     /// </summary>
     public sealed class HealthCheckService : IDisposable
     {
@@ -27,26 +29,13 @@ namespace UniCast.App.Diagnostics
 
         #endregion
 
-        #region Configuration
-
-        private static class Config
-        {
-            public const int CheckIntervalMs = 30000;          // 30 saniye
-            public const int HttpTimeoutMs = 5000;             // 5 saniye
-            public const int DiskSpaceWarningGB = 5;           // 5 GB
-            public const int MemoryWarningPercent = 85;        // %85
-            public const int CpuWarningPercent = 80;           // %80
-        }
-
-        #endregion
-
         #region Fields
 
         private readonly Timer _checkTimer;
         private readonly HttpClient _httpClient;
         private readonly List<IHealthCheck> _checks = new();
         private HealthStatus _lastStatus = HealthStatus.Unknown;
-        private bool _isRunning;
+        private volatile bool _isRunning;
         private bool _disposed;
 
         #endregion
@@ -62,9 +51,18 @@ namespace UniCast.App.Diagnostics
 
         private HealthCheckService()
         {
-            _httpClient = new HttpClient
+            // DÜZELTME v24: SocketsHttpHandler ile proper HttpClient
+            var handler = new SocketsHttpHandler
             {
-                Timeout = TimeSpan.FromMilliseconds(Config.HttpTimeoutMs)
+                PooledConnectionLifetime = TimeSpan.FromMinutes(AppConstants.HttpClient.PooledConnectionLifetimeMinutes),
+                PooledConnectionIdleTimeout = TimeSpan.FromMinutes(AppConstants.HttpClient.PooledConnectionIdleTimeoutMinutes),
+                MaxConnectionsPerServer = AppConstants.HttpClient.MaxConnectionsPerServer,
+                ConnectTimeout = TimeSpan.FromSeconds(AppConstants.HttpClient.ConnectTimeoutSeconds)
+            };
+
+            _httpClient = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromMilliseconds(AppConstants.Timeouts.HealthCheckMs)
             };
 
             _checkTimer = new Timer(RunChecksCallback, null, Timeout.Infinite, Timeout.Infinite);
@@ -85,7 +83,7 @@ namespace UniCast.App.Diagnostics
             if (_isRunning) return;
 
             _isRunning = true;
-            _checkTimer.Change(0, Config.CheckIntervalMs);
+            _checkTimer.Change(0, AppConstants.Intervals.HealthCheckSeconds * 1000);
 
             Log.Information("[HealthCheck] Başlatıldı");
         }
@@ -124,7 +122,7 @@ namespace UniCast.App.Diagnostics
             {
                 try
                 {
-                    var result = await check.CheckAsync(ct);
+                    var result = await check.CheckAsync(ct).ConfigureAwait(false);
                     results.Add(result);
 
                     if (result.Status == HealthStatus.Unhealthy)
@@ -138,6 +136,7 @@ namespace UniCast.App.Diagnostics
                 }
                 catch (Exception ex)
                 {
+                    Log.Debug(ex, "[HealthCheck] Check failed: {Name}", check.Name);
                     results.Add(new HealthCheckResult
                     {
                         Name = check.Name,
@@ -177,7 +176,7 @@ namespace UniCast.App.Diagnostics
         }
 
         /// <summary>
-        /// Son health report'u al
+        /// Son health status'u al
         /// </summary>
         public HealthStatus GetLastStatus() => _lastStatus;
 
@@ -194,16 +193,25 @@ namespace UniCast.App.Diagnostics
             _checks.Add(new LicenseServerCheck(_httpClient));
         }
 
-        private async void RunChecksCallback(object? state)
+        /// <summary>
+        /// DÜZELTME v24: async void kaldırıldı - Timer callback sync, içeride Task başlatılıyor
+        /// </summary>
+        private void RunChecksCallback(object? state)
         {
-            try
+            if (_disposed) return;
+
+            // DÜZELTME v24: Task.Run ile async işlemi başlat, exception'ı logla
+            _ = Task.Run(async () =>
             {
-                await CheckAllAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "[HealthCheck] Kontrol döngüsü hatası");
-            }
+                try
+                {
+                    await CheckAllAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "[HealthCheck] Kontrol döngüsü hatası");
+                }
+            });
         }
 
         private HealthStatus DetermineOverallStatus(List<HealthCheckResult> results)
@@ -260,7 +268,7 @@ namespace UniCast.App.Diagnostics
         public HealthStatus Status { get; init; }
         public string Description { get; init; } = "";
         public TimeSpan Duration { get; init; }
-        public Dictionary<string, object> Data { get; init; } = new();
+        public Dictionary<string, object>? Data { get; init; }
     }
 
     public class HealthReport
@@ -270,11 +278,9 @@ namespace UniCast.App.Diagnostics
         public TimeSpan TotalDuration { get; init; }
         public List<HealthCheckResult> Results { get; init; } = new();
 
-        public override string ToString()
+        public string GetSummary()
         {
-            var healthy = Results.Count(r => r.Status == HealthStatus.Healthy);
-            var total = Results.Count;
-            return $"Health: {Status} ({healthy}/{total} checks passed)";
+            return $"[{Timestamp:HH:mm:ss}] Status: {Status}, Checks: {Results.Count}, Duration: {TotalDuration.TotalMilliseconds:F0}ms";
         }
     }
 
@@ -282,13 +288,13 @@ namespace UniCast.App.Diagnostics
     {
         public HealthStatus OldStatus { get; init; }
         public HealthStatus NewStatus { get; init; }
-        public HealthReport Report { get; init; } = null!;
+        public HealthReport? Report { get; init; }
     }
 
     public class HealthCheckFailedEventArgs : EventArgs
     {
         public string CheckName { get; init; } = "";
-        public HealthCheckResult Result { get; init; } = null!;
+        public HealthCheckResult? Result { get; init; }
     }
 
     #endregion
@@ -308,25 +314,26 @@ namespace UniCast.App.Diagnostics
 
             try
             {
-                var drive = new DriveInfo(Path.GetPathRoot(Environment.CurrentDirectory) ?? "C:");
-                var freeGB = drive.AvailableFreeSpace / (1024 * 1024 * 1024);
+                var drive = new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\");
+                var freeGB = drive.AvailableFreeSpace / (1024.0 * 1024 * 1024);
 
                 sw.Stop();
 
-                var status = freeGB < 1 ? HealthStatus.Unhealthy :
-                             freeGB < 5 ? HealthStatus.Degraded :
+                var status = freeGB < AppConstants.Limits.DiskWarningGB ? HealthStatus.Unhealthy :
+                             freeGB < AppConstants.Limits.DiskWarningGB * 2 ? HealthStatus.Degraded :
                              HealthStatus.Healthy;
 
                 return Task.FromResult(new HealthCheckResult
                 {
                     Name = Name,
                     Status = status,
-                    Description = $"{freeGB} GB boş alan",
+                    Description = $"{freeGB:F1} GB boş alan ({drive.Name})",
                     Duration = sw.Elapsed,
                     Data = new Dictionary<string, object>
                     {
                         ["FreeSpaceGB"] = freeGB,
-                        ["TotalSpaceGB"] = drive.TotalSize / (1024 * 1024 * 1024)
+                        ["DriveName"] = drive.Name,
+                        ["TotalSizeGB"] = drive.TotalSize / (1024.0 * 1024 * 1024)
                     }
                 });
             }
@@ -344,7 +351,7 @@ namespace UniCast.App.Diagnostics
     }
 
     /// <summary>
-    /// Bellek kullanımı kontrolü
+    /// Memory kullanım kontrolü
     /// </summary>
     public class MemoryCheck : IHealthCheck
     {
@@ -356,21 +363,20 @@ namespace UniCast.App.Diagnostics
 
             try
             {
-                var process = Process.GetCurrentProcess();
-                var workingSetMB = process.WorkingSet64 / (1024 * 1024);
-                var managedMB = GC.GetTotalMemory(false) / (1024 * 1024);
+                var managedMB = GC.GetTotalMemory(false) / (1024.0 * 1024);
+                var workingSetMB = Process.GetCurrentProcess().WorkingSet64 / (1024.0 * 1024);
 
                 sw.Stop();
 
-                var status = managedMB > 1000 ? HealthStatus.Unhealthy :
-                             managedMB > 500 ? HealthStatus.Degraded :
+                var status = managedMB > AppConstants.Limits.MemoryCriticalMB ? HealthStatus.Unhealthy :
+                             managedMB > AppConstants.Limits.MemoryWarningMB ? HealthStatus.Degraded :
                              HealthStatus.Healthy;
 
                 return Task.FromResult(new HealthCheckResult
                 {
                     Name = Name,
                     Status = status,
-                    Description = $"{managedMB} MB managed, {workingSetMB} MB working set",
+                    Description = $"{managedMB:F0} MB managed, {workingSetMB:F0} MB working set",
                     Duration = sw.Elapsed,
                     Data = new Dictionary<string, object>
                     {
@@ -409,7 +415,7 @@ namespace UniCast.App.Diagnostics
             try
             {
                 var ffmpegPath = FindFFmpeg();
-                
+
                 if (string.IsNullOrEmpty(ffmpegPath))
                 {
                     return new HealthCheckResult
@@ -443,8 +449,8 @@ namespace UniCast.App.Diagnostics
                     };
                 }
 
-                var output = await process.StandardOutput.ReadLineAsync(ct);
-                await process.WaitForExitAsync(ct);
+                var output = await process.StandardOutput.ReadLineAsync(ct).ConfigureAwait(false);
+                await process.WaitForExitAsync(ct).ConfigureAwait(false);
 
                 sw.Stop();
 
@@ -479,7 +485,7 @@ namespace UniCast.App.Diagnostics
             {
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe"),
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg", "ffmpeg.exe"),
-                "ffmpeg.exe" // PATH'te ara
+                "ffmpeg.exe"
             };
 
             foreach (var path in paths)
@@ -488,7 +494,6 @@ namespace UniCast.App.Diagnostics
                     return path;
             }
 
-            // PATH'te ara
             var envPath = Environment.GetEnvironmentVariable("PATH");
             if (envPath != null)
             {
@@ -517,7 +522,6 @@ namespace UniCast.App.Diagnostics
 
             try
             {
-                // Temel ağ kontrolü
                 if (!NetworkInterface.GetIsNetworkAvailable())
                 {
                     return new HealthCheckResult
@@ -529,9 +533,8 @@ namespace UniCast.App.Diagnostics
                     };
                 }
 
-                // Ping testi
                 using var ping = new Ping();
-                var reply = await ping.SendPingAsync("8.8.8.8", 3000);
+                var reply = await ping.SendPingAsync("8.8.8.8", 3000).ConfigureAwait(false);
 
                 sw.Stop();
 
@@ -541,7 +544,7 @@ namespace UniCast.App.Diagnostics
                 {
                     Name = Name,
                     Status = status,
-                    Description = reply.Status == IPStatus.Success 
+                    Description = reply.Status == IPStatus.Success
                         ? $"Ping: {reply.RoundtripTime}ms"
                         : $"Ping failed: {reply.Status}",
                     Duration = sw.Elapsed,
@@ -585,10 +588,13 @@ namespace UniCast.App.Diagnostics
 
             try
             {
-                var serverUrl = Environment.GetEnvironmentVariable("UNICAST_LICENSE_SERVER") 
+                var serverUrl = Environment.GetEnvironmentVariable("UNICAST_LICENSE_SERVER")
                                ?? "https://license.unicast.app";
 
-                var response = await _httpClient.GetAsync($"{serverUrl}/health", ct);
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                cts.CancelAfter(TimeSpan.FromSeconds(AppConstants.Timeouts.CancellationTimeoutSeconds));
+
+                var response = await _httpClient.GetAsync($"{serverUrl}/health", cts.Token).ConfigureAwait(false);
 
                 sw.Stop();
 
@@ -596,7 +602,7 @@ namespace UniCast.App.Diagnostics
                 {
                     Name = Name,
                     Status = response.IsSuccessStatusCode ? HealthStatus.Healthy : HealthStatus.Degraded,
-                    Description = response.IsSuccessStatusCode 
+                    Description = response.IsSuccessStatusCode
                         ? "License server erişilebilir"
                         : $"HTTP {(int)response.StatusCode}",
                     Duration = sw.Elapsed,

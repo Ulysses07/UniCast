@@ -1,5 +1,6 @@
 ﻿using Serilog;
 using System;
+using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -11,8 +12,9 @@ using Color = System.Windows.Media.Color;
 namespace UniCast.App
 {
     /// <summary>
-    /// DÜZELTME v18: Platform Connection Status UI yönetimi
-    /// MainWindow partial class - Status bar güncellemeleri
+    /// DÜZELTME v24: Platform Connection Status UI yönetimi
+    /// - Thread safety düzeltildi (Interlocked)
+    /// - Magic numbers AppConstants'a taşındı
     /// </summary>
     public partial class MainWindow
     {
@@ -29,20 +31,22 @@ namespace UniCast.App
         #region Platform Status Fields
 
         private DispatcherTimer? _statusUpdateTimer;
+
+        // DÜZELTME v24: Thread-safe counters
         private int _messagesPerMinute;
         private int _messageCountThisMinute;
         private DateTime _lastMinuteReset = DateTime.UtcNow;
+        private readonly object _statsLock = new();
 
         #endregion
 
         #region Status Initialization
 
         /// <summary>
-        /// DÜZELTME v18: Status bar'ı başlat
+        /// Status bar'ı başlat
         /// </summary>
         private void InitializeStatusBar()
         {
-            // DÜZELTME v20: AppConstants kullanımı
             _statusUpdateTimer = new DispatcherTimer
             {
                 Interval = TimeSpan.FromSeconds(AppConstants.Intervals.StatusUpdateSeconds)
@@ -122,7 +126,7 @@ namespace UniCast.App
         }
 
         /// <summary>
-        /// DÜZELTME v18: Platform göstergesini güncelle
+        /// Platform göstergesini güncelle
         /// </summary>
         private void UpdatePlatformIndicator(ChatPlatform platform, ConnectionState state, string? error)
         {
@@ -157,21 +161,26 @@ namespace UniCast.App
         }
 
         /// <summary>
-        /// Mesaj istatistiklerini güncelle
+        /// DÜZELTME v24: Mesaj istatistiklerini thread-safe güncelle
         /// </summary>
         private void UpdateMessageStats()
         {
             var now = DateTime.UtcNow;
+            int currentRate;
 
-            // Dakika reset
-            if ((now - _lastMinuteReset).TotalMinutes >= 1)
+            lock (_statsLock)
             {
-                _messagesPerMinute = _messageCountThisMinute;
-                _messageCountThisMinute = 0;
-                _lastMinuteReset = now;
+                // Dakika reset
+                if ((now - _lastMinuteReset).TotalMinutes >= 1)
+                {
+                    _messagesPerMinute = _messageCountThisMinute;
+                    _messageCountThisMinute = 0;
+                    _lastMinuteReset = now;
+                }
+                currentRate = _messagesPerMinute;
             }
 
-            ChatStatsText.Text = $"💬 {_messagesPerMinute} mesaj/dk";
+            ChatStatsText.Text = $"💬 {currentRate} mesaj/dk";
         }
 
         /// <summary>
@@ -196,18 +205,19 @@ namespace UniCast.App
                     StreamStatusText.Foreground = (SolidColorBrush)FindResource("TextMuted");
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // StreamController erişim hatası - sessizce devam et
+                // DÜZELTME v24: Boş catch yerine debug log
+                Log.Debug(ex, "[MainWindow] StreamController erişim hatası");
             }
         }
 
         /// <summary>
-        /// Chat mesajı alındığında sayacı artır
+        /// DÜZELTME v24: Chat mesajı alındığında thread-safe sayacı artır
         /// </summary>
         private void OnChatMessageReceivedForStats(ChatMessage message)
         {
-            _messageCountThisMinute++;
+            Interlocked.Increment(ref _messageCountThisMinute);
         }
 
         #endregion

@@ -3,8 +3,7 @@ using System;
 namespace UniCast.App
 {
     /// <summary>
-    /// DÜZELTME v20: Merkezi sabitler
-    /// Tüm magic number'lar burada tanımlanmalı
+    /// DÜZELTME v24: Merkezi sabitler - Tüm magic number'lar
     /// </summary>
     public static class AppConstants
     {
@@ -14,6 +13,12 @@ namespace UniCast.App
         {
             /// <summary>HTTP istek timeout'u</summary>
             public const int HttpRequestMs = 30000;
+
+            /// <summary>HTTP istek timeout'u (kısa)</summary>
+            public const int HttpRequestShortMs = 10000;
+
+            /// <summary>HTTP istek timeout'u (uzun)</summary>
+            public const int HttpRequestLongMs = 15000;
 
             /// <summary>WebSocket bağlantı timeout'u</summary>
             public const int WebSocketConnectMs = 15000;
@@ -53,6 +58,18 @@ namespace UniCast.App
 
             /// <summary>Retry maksimum delay'i</summary>
             public const int RetryMaxMs = 30000;
+
+            /// <summary>Ingestor task wait timeout (saniye)</summary>
+            public const int IngestorTaskWaitSeconds = 5;
+
+            /// <summary>Ingestor stop wait timeout (saniye)</summary>
+            public const int IngestorStopWaitSeconds = 2;
+
+            /// <summary>Monitor task timeout (saniye)</summary>
+            public const int MonitorTaskTimeoutSeconds = 5;
+
+            /// <summary>CTS timeout (saniye)</summary>
+            public const int CancellationTimeoutSeconds = 5;
         }
 
         #endregion
@@ -79,11 +96,17 @@ namespace UniCast.App
             /// <summary>Auto-update kontrol interval'ı (saat)</summary>
             public const int AutoUpdateCheckHours = 6;
 
+            /// <summary>Auto-update ilk kontrol delay'i (dakika)</summary>
+            public const int AutoUpdateInitialDelayMinutes = 5;
+
             /// <summary>Metrics flush interval'ı (dakika)</summary>
             public const int MetricsFlushMinutes = 1;
 
             /// <summary>Resource cleanup interval'ı (dakika)</summary>
             public const int ResourceCleanupMinutes = 1;
+
+            /// <summary>Resource leak check interval'ı (dakika)</summary>
+            public const int ResourceLeakCheckMinutes = 30;
 
             /// <summary>Status bar güncelleme interval'ı (saniye)</summary>
             public const int StatusUpdateSeconds = 1;
@@ -99,6 +122,15 @@ namespace UniCast.App
 
             /// <summary>Chat polling interval'ı (saniye)</summary>
             public const int ChatPollingSeconds = 4;
+
+            /// <summary>Settings auto-save interval'ı (saniye)</summary>
+            public const int SettingsAutoSaveSeconds = 30;
+
+            /// <summary>Token refresh timer (dakika)</summary>
+            public const int TokenRefreshTimerMinutes = 1;
+
+            /// <summary>Auto-update check interval (saat)</summary>
+            public const int AutoUpdateCheckIntervalHours = 24;
         }
 
         #endregion
@@ -151,6 +183,34 @@ namespace UniCast.App
 
             /// <summary>Overlay chat maksimum mesaj sayısı</summary>
             public const int MaxOverlayChatMessages = 30;
+        }
+
+        #endregion
+
+        #region HttpClient Settings
+
+        public static class HttpClient
+        {
+            /// <summary>Pooled connection lifetime (dakika)</summary>
+            public const int PooledConnectionLifetimeMinutes = 5;
+
+            /// <summary>Pooled connection idle timeout (dakika)</summary>
+            public const int PooledConnectionIdleTimeoutMinutes = 2;
+
+            /// <summary>Max connections per server</summary>
+            public const int MaxConnectionsPerServer = 5;
+
+            /// <summary>Connect timeout (saniye)</summary>
+            public const int ConnectTimeoutSeconds = 10;
+
+            /// <summary>Default request timeout (saniye)</summary>
+            public const int DefaultTimeoutSeconds = 30;
+
+            /// <summary>Short request timeout (saniye)</summary>
+            public const int ShortTimeoutSeconds = 10;
+
+            /// <summary>Long request timeout (saniye)</summary>
+            public const int LongTimeoutSeconds = 60;
         }
 
         #endregion
@@ -351,6 +411,37 @@ namespace UniCast.App
 
             /// <summary>Jitter faktörü</summary>
             public const double JitterFactor = 0.1;
+
+            /// <summary>Retry delay (milisaniye)</summary>
+            public const int RetryDelayMs = 1000;
+        }
+
+        #endregion
+
+        #region Shutdown Settings
+
+        public static class Shutdown
+        {
+            /// <summary>Toplam shutdown timeout (milisaniye)</summary>
+            public const int TotalTimeoutMs = 10000;
+
+            /// <summary>Stream durdurma timeout (milisaniye)</summary>
+            public const int StreamStopTimeoutMs = 5000;
+
+            /// <summary>Ingestor durdurma timeout (milisaniye)</summary>
+            public const int IngestorStopTimeoutMs = 3000;
+
+            /// <summary>Settings kaydetme timeout (milisaniye)</summary>
+            public const int SaveSettingsTimeoutMs = 2000;
+
+            /// <summary>Overlay kapatma timeout (milisaniye)</summary>
+            public const int OverlayCloseTimeoutMs = 1000;
+
+            /// <summary>Log flush timeout (milisaniye)</summary>
+            public const int LogFlushTimeoutMs = 1000;
+
+            /// <summary>Stop sonrası bekleme (milisaniye)</summary>
+            public const int PostStopDelayMs = 500;
         }
 
         #endregion
