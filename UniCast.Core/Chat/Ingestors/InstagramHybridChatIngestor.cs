@@ -171,7 +171,11 @@ namespace UniCast.Core.Chat.Ingestors
                             _isPrivateApiLoggedIn = true;
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        // DÜZELTME v26: Boş catch'e loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[InstagramHybridChatIngestor] Session yükleme hatası: {ex.Message}");
+                    }
                 }
 
                 // Login
@@ -307,7 +311,11 @@ namespace UniCast.Core.Chat.Ingestors
                     return data[0].GetProperty("id").GetString();
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[InstagramHybridChatIngestor.GetBroadcastId] Hata: {ex.Message}");
+            }
             return null;
         }
 
@@ -318,7 +326,11 @@ namespace UniCast.Core.Chat.Ingestors
                 var sessionJson = _instaApi!.GetStateDataAsString();
                 await File.WriteAllTextAsync(_sessionFile, sessionJson);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[InstagramHybridChatIngestor.SaveSessionAsync] Hata: {ex.Message}");
+            }
         }
 
         #endregion
@@ -463,7 +475,11 @@ namespace UniCast.Core.Chat.Ingestors
                         _privateApiEnabled = false;
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[InstagramHybridChatIngestor] Heartbeat kontrolü hatası: {ex.Message}");
+                }
             }
             catch (Exception ex)
             {

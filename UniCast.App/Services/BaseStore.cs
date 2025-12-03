@@ -238,7 +238,8 @@ namespace UniCast.App.Services
             {
                 if (File.Exists(tempPath))
                 {
-                    try { File.Delete(tempPath); } catch { }
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    try { File.Delete(tempPath); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[BaseStore] Temp dosya silme hatası: {ex.Message}"); }
                 }
                 throw;
             }
@@ -255,7 +256,11 @@ namespace UniCast.App.Services
                     Log.Information("[{StoreName}] Bozuk dosya yedeklendi: {Path}", GetType().Name, corruptPath);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[BaseStore.BackupCorruptedFile] Yedekleme hatası: {ex.Message}");
+            }
         }
 
         /// <summary>

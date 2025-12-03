@@ -135,7 +135,11 @@ namespace UniCast.App.Services
                 {
                     _cts.Cancel();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] CTS cancel hatası: {ex.Message}");
+                }
             }
 
             if (_previewTask != null)
@@ -144,7 +148,11 @@ namespace UniCast.App.Services
                 {
                     await _previewTask.ConfigureAwait(false);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] Task bekleme hatası: {ex.Message}");
+                }
                 _previewTask = null;
             }
 
@@ -154,7 +162,11 @@ namespace UniCast.App.Services
                 {
                     _frame.Dispose();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] Frame dispose hatası: {ex.Message}");
+                }
                 _frame = null;
             }
 
@@ -165,7 +177,11 @@ namespace UniCast.App.Services
                     _capture.Release();
                     _capture.Dispose();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] Capture dispose hatası: {ex.Message}");
+                }
                 _capture = null;
             }
 
@@ -175,7 +191,11 @@ namespace UniCast.App.Services
                 {
                     _cts.Dispose();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] CTS dispose hatası: {ex.Message}");
+                }
                 _cts = null;
             }
         }
@@ -194,12 +214,16 @@ namespace UniCast.App.Services
                 _cts?.Cancel();
                 _previewTask?.Wait(TimeSpan.FromSeconds(1));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[PreviewService.Dispose] Senkron temizlik hatası: {ex.Message}");
+            }
 
             // Kaynakları temizle
-            try { _frame?.Dispose(); } catch { }
-            try { _capture?.Release(); _capture?.Dispose(); } catch { }
-            try { _cts?.Dispose(); } catch { }
+            try { _frame?.Dispose(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[PreviewService.Dispose] Frame dispose hatası: {ex.Message}"); }
+            try { _capture?.Release(); _capture?.Dispose(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[PreviewService.Dispose] Capture dispose hatası: {ex.Message}"); }
+            try { _cts?.Dispose(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[PreviewService.Dispose] CTS dispose hatası: {ex.Message}"); }
 
             _frame = null;
             _capture = null;

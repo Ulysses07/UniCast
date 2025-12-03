@@ -314,7 +314,11 @@ namespace UniCast.App.Services
                             Log.Debug("[AutoUpdate] Eski dosya silindi: {File}", file);
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        // DÜZELTME v26: Boş catch'e loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[AutoUpdateService.CleanupOldInstallersAsync] Dosya silme hatası: {ex.Message}");
+                    }
                 }
             }
             catch (Exception ex)

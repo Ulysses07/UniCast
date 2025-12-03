@@ -202,7 +202,11 @@ namespace UniCast.Licensing.Protection
                     if (isRemoteDebugger)
                         return true;
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[RuntimeProtection.CheckDebugger] Remote debugger kontrolü hatası: {ex.Message}");
+                }
 
                 // Yöntem 4: NtQueryInformationProcess (ProcessDebugPort)
                 try
@@ -220,7 +224,11 @@ namespace UniCast.Licensing.Protection
                     if (status == 0 && debugPort != IntPtr.Zero)
                         return true;
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[RuntimeProtection.CheckDebugger] NtQuery kontrolü hatası: {ex.Message}");
+                }
 
                 return false;
             }
@@ -311,9 +319,11 @@ namespace UniCast.Licensing.Protection
                         }
                         proc.Dispose();
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        try { proc.Dispose(); } catch { }
+                        // DÜZELTME v26: Boş catch'e loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[RuntimeProtection.CheckSandbox] Process kontrolü hatası: {ex.Message}");
+                        try { proc.Dispose(); } catch (Exception disposeEx) { System.Diagnostics.Debug.WriteLine($"[RuntimeProtection.CheckSandbox] Process dispose hatası: {disposeEx.Message}"); }
                     }
                 }
 
@@ -329,12 +339,18 @@ namespace UniCast.Licensing.Protection
                     if (key != null)
                         return true;
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[RuntimeProtection.CheckSandbox] Registry kontrolü hatası: {ex.Message}");
+                }
 
                 return false;
             }
-            catch
+            catch (Exception ex)
             {
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[RuntimeProtection.CheckSandbox] Genel hata: {ex.Message}");
                 return false;
             }
         }
@@ -408,16 +424,20 @@ namespace UniCast.Licensing.Protection
                         }
                         proc.Dispose();
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        try { proc.Dispose(); } catch { }
+                        // DÜZELTME v26: Boş catch'e loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[RuntimeProtection.CheckCrackTools] Process kontrolü hatası: {ex.Message}");
+                        try { proc.Dispose(); } catch (Exception disposeEx) { System.Diagnostics.Debug.WriteLine($"[RuntimeProtection.CheckCrackTools] Process dispose hatası: {disposeEx.Message}"); }
                     }
                 }
 
                 return false;
             }
-            catch
+            catch (Exception ex)
             {
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[RuntimeProtection.CheckCrackTools] Genel hata: {ex.Message}");
                 return false;
             }
         }

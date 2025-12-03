@@ -237,7 +237,11 @@ namespace UniCast.Core.Chat.Ingestors
                     _cts?.Cancel();
                     _cts?.Dispose();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[BaseChatIngestor.Dispose] CTS temizleme hatası: {ex.Message}");
+                }
 
                 StateChanged = null;
             }

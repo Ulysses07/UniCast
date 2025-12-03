@@ -241,7 +241,8 @@ pwIDAQAB
             {
                 if (File.Exists(tempPath))
                 {
-                    try { File.Delete(tempPath); } catch { }
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    try { File.Delete(tempPath); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[LicenseCrypto] Temp dosya silme hatası: {ex.Message}"); }
                 }
                 throw;
             }
@@ -366,7 +367,8 @@ pwIDAQAB
                 System.Diagnostics.Debug.WriteLine($"[LicenseEncryption] SecureDelete hatası: {ex.Message}");
 
                 // Fallback: Normal silme
-                try { File.Delete(filePath); } catch { }
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                try { File.Delete(filePath); } catch (Exception deleteEx) { System.Diagnostics.Debug.WriteLine($"[LicenseCrypto] Normal silme de başarısız: {deleteEx.Message}"); }
             }
         }
 

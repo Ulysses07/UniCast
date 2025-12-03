@@ -67,7 +67,8 @@ namespace UniCast.App.DirectX
             {
                 if (_isLocked)
                 {
-                    try { Unlock(); } catch { }
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    try { Unlock(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[D3DImageSource.ClearBackBuffer] Unlock hatası: {ex.Message}"); }
                     _isLocked = false;
                 }
             }
@@ -98,7 +99,8 @@ namespace UniCast.App.DirectX
             {
                 if (_isLocked)
                 {
-                    try { Unlock(); } catch { }
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    try { Unlock(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[D3DImageSource.Invalidate] Unlock hatası: {ex.Message}"); }
                     _isLocked = false;
                 }
             }
@@ -137,7 +139,8 @@ namespace UniCast.App.DirectX
             {
                 if (_isLocked)
                 {
-                    try { Unlock(); } catch { }
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    try { Unlock(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[D3DImageSource.InvalidateRect] Unlock hatası: {ex.Message}"); }
                     _isLocked = false;
                 }
             }
@@ -172,7 +175,11 @@ namespace UniCast.App.DirectX
                     {
                         ClearBackBuffer();
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        // DÜZELTME v26: Boş catch'e loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[D3DImageSource.Dispose] ClearBackBuffer hatası: {ex.Message}");
+                    }
                 }
             }
 

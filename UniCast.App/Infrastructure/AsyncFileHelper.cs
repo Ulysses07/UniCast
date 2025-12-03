@@ -238,8 +238,9 @@ namespace UniCast.App.Infrastructure
                 // Cleanup temp file on error
                 if (File.Exists(tempPath))
                 {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
                     try { File.Delete(tempPath); }
-                    catch { }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AsyncFileHelper] Temp dosya silme hatası: {ex.Message}"); }
                 }
                 throw;
             }
@@ -390,7 +391,11 @@ namespace UniCast.App.Infrastructure
                         var info = new FileInfo(file);
                         size += info.Length;
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        // DÜZELTME v26: Boş catch'e loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[AsyncFileHelper.GetDirectorySizeAsync] Dosya bilgisi alınamadı: {ex.Message}");
+                    }
                 }
 
                 return size;

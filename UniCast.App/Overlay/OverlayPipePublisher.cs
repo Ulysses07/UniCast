@@ -82,7 +82,11 @@ namespace UniCast.App.Overlay
             {
                 _cts?.Cancel();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[OverlayPipePublisher.StopAsync] CTS cancel hatası: {ex.Message}");
+            }
 
             if (_runner != null)
             {
@@ -91,7 +95,11 @@ namespace UniCast.App.Overlay
                     await _runner.ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) { }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[OverlayPipePublisher.StopAsync] Runner bekleme hatası: {ex.Message}");
+                }
             }
 
             IsRunning = false;
@@ -175,7 +183,11 @@ namespace UniCast.App.Overlay
                     {
                         server?.Dispose();
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        // DÜZELTME v26: Boş catch'e loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[OverlayPipePublisher] Server dispose hatası: {ex.Message}");
+                    }
                 }
 
                 if (!ct.IsCancellationRequested && reconnectAttempts < Constants.Overlay.MaxPipeReconnectAttempts)

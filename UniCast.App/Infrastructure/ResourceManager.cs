@@ -140,7 +140,11 @@ namespace UniCast.App.Infrastructure
                         resource.Dispose();
                         return true;
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        // DÜZELTME v26: Boş catch'e loglama eklendi
+                        System.Diagnostics.Debug.WriteLine($"[ResourceManager.TryRelease] Resource dispose hatası: {ex.Message}");
+                    }
                 }
             }
 

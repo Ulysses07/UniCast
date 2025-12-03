@@ -225,7 +225,11 @@ namespace UniCast.Core.Chat.Ingestors
                             CancellationToken.None);
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[TikTokChatIngestor.DisconnectAsync] WebSocket kapatma hatası: {ex.Message}");
+                }
                 finally
                 {
                     _webSocket.Dispose();

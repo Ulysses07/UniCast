@@ -129,7 +129,11 @@ namespace UniCast.Core.Chat.Ingestors
                     await _writer.WriteLineAsync("QUIT");
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[TwitchChatIngestor.DisconnectAsync] Bağlantı kesme hatası: {ex.Message}");
+            }
 
             _reader?.Dispose();
             _writer?.Dispose();

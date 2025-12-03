@@ -156,7 +156,11 @@ namespace UniCast.App.Views
                     UseShellExecute = true
                 });
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[ActivationWindow.BuyNow_Click] URL açma hatası: {ex.Message}");
+            }
         }
 
         private void TrialMode_Click(object sender, RoutedEventArgs e)

@@ -271,7 +271,11 @@ namespace UniCast.App.ViewModels
                 {
                     _cts?.Cancel();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // DÜZELTME v26: Boş catch'e loglama eklendi
+                    System.Diagnostics.Debug.WriteLine($"[ControlViewModel.StopAsync] CTS cancel hatası: {ex.Message}");
+                }
 
                 await _stream.StopAsync();
             }
@@ -312,7 +316,11 @@ namespace UniCast.App.ViewModels
                 _cts?.Cancel();
                 _cts?.Dispose();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // DÜZELTME v26: Boş catch'e loglama eklendi
+                System.Diagnostics.Debug.WriteLine($"[ControlViewModel.Dispose] CTS temizleme hatası: {ex.Message}");
+            }
             _cts = null;
 
             // PropertyChanged'i temizle
