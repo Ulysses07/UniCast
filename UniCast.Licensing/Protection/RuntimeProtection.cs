@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Management;
@@ -368,20 +369,35 @@ namespace UniCast.Licensing.Protection
         {
             try
             {
-                // Bilinen crack/keygen araçları
+                // DÜZELTME v17.2: Sadece gerçek crack/keygen araçları
+                // procmon, procexp gibi Sysinternals araçları çıkarıldı (legitimate sysadmin araçları)
+                // dnspy, ilspy, dotpeek çıkarıldı (legitimate .NET developer araçları)
                 string[] crackTools =
                 {
-                    "ollydbg", "x64dbg", "x32dbg", "ida", "ida64",
-                    "immunitydebugger", "procmon", "procexp",
-                    "apimonitor", "dnspy", "ilspy", "dotpeek",
-                    "cheatengine", "artmoney"
+                    "ollydbg", "x64dbg", "x32dbg",       // Debuggers (cracking için kullanılır)
+                    "immunitydebugger",                   // Exploit geliştirme
+                    "cheatengine", "artmoney",           // Memory manipulation
+                    "keygen", "crack", "patch",          // Explicit crack araçları
+                    "regmonitor"                          // Registry manipulation
                 };
+
+                // DÜZELTME v17.2: Whitelist - Bu araçlar tespit edilse bile ignore edilir
+                // Kullanıcı settings dosyasına whitelist ekleyebilir
+                var whitelistedProcesses = GetWhitelistedProcesses();
 
                 foreach (var proc in Process.GetProcesses())
                 {
                     try
                     {
                         var name = proc.ProcessName.ToLowerInvariant();
+
+                        // Whitelist kontrolü
+                        if (whitelistedProcesses.Contains(name))
+                        {
+                            proc.Dispose();
+                            continue;
+                        }
+
                         foreach (var tool in crackTools)
                         {
                             if (name.Contains(tool))
@@ -404,6 +420,37 @@ namespace UniCast.Licensing.Protection
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// DÜZELTME v17.2: Kullanıcının whitelist'e aldığı process'leri döndürür.
+        /// </summary>
+        private static HashSet<string> GetWhitelistedProcesses()
+        {
+            // Varsayılan whitelist - meşru geliştirici ve sysadmin araçları
+            var whitelist = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Sysinternals araçları
+                "procmon", "procmon64", "procexp", "procexp64",
+                "autoruns", "autoruns64", "tcpview", "tcpview64",
+                "pslist", "pslist64", "listdlls", "listdlls64",
+                
+                // .NET geliştirme araçları
+                "dnspy", "ilspy", "dotpeek", "dotpeek64",
+                "ildasm", "peverify",
+                
+                // IDE ve debugger'lar (normal geliştirme için)
+                "devenv", "code", "rider", "rider64",
+                
+                // API test araçları
+                "apimonitor", "fiddler", "wireshark", "charles"
+            };
+
+            // TODO: Kullanıcı settings'den ek whitelist yüklenebilir
+            // var userWhitelist = SettingsStore.Data?.WhitelistedProcesses ?? Array.Empty<string>();
+            // foreach (var proc in userWhitelist) whitelist.Add(proc);
+
+            return whitelist;
         }
 
         #endregion

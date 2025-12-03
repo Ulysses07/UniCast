@@ -139,11 +139,26 @@
 
                     <Expander Header="Instagram Ayarları" Margin="0,0,0,10" Foreground="{StaticResource TextMain}">
                         <StackPanel Margin="10">
-                            <TextBlock Text="User ID" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
-                            <TextBox Text="{Binding InstagramUserId, UpdateSourceTrigger=PropertyChanged}" Height="30"/>
+                            <!-- KRİTİK UYARI -->
+                            <Border Background="#FFF3CD" BorderBrush="#FFE69C" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,15">
+                                <StackPanel>
+                                    <TextBlock Text="⚠️ ÖNEMLİ GÜVENLİK UYARISI" FontWeight="Bold" Foreground="#856404" FontSize="12"/>
+                                    <TextBlock TextWrapping="Wrap" Foreground="#856404" FontSize="11" Margin="0,5,0,0">
+                                        Instagram Private API kullanımı hesap yasaklanmasına yol açabilir!
+                                        Ana hesabınızı DEĞİL, sadece chat okumak için oluşturduğunuz
+                                        AYRI BİR OKUYUCU HESAP kullanın. UniCast bu hesabın
+                                        yasaklanmasından sorumlu değildir.
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
 
-                            <TextBlock Text="Session ID" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
-                            <PasswordBox x:Name="PwdInstagramSession" PasswordChanged="PwdInstagramSession_PasswordChanged" Height="30"/>
+                            <TextBlock Text="Okuyucu Hesap Kullanıcı Adı" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
+                            <TextBox Text="{Binding InstagramUserId, UpdateSourceTrigger=PropertyChanged}" Height="30"
+                                     ToolTip="Ana hesabınız DEĞİL, ayrı bir okuyucu hesap kullanın!"/>
+
+                            <TextBlock Text="Okuyucu Hesap Şifresi" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
+                            <PasswordBox x:Name="PwdInstagramSession" PasswordChanged="PwdInstagramSession_PasswordChanged" Height="30"
+                                        ToolTip="Private API için gerekli. Ana hesap şifrenizi GİRMEYİN!"/>
 
                             <TextBlock Text="Not: Instagram canlı chat için hesapta aktif canlı yayın gerekir." 
                                        Foreground="Orange" FontSize="10" Margin="0,5,0,0"/>

@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
+using UniCast.Core.Http;
 
 namespace UniCast.Core.Chat.Ingestors
 {
@@ -19,13 +20,19 @@ namespace UniCast.Core.Chat.Ingestors
     /// - Live Video ID
     /// 
     /// SSE Endpoint: https://streaming-graph.facebook.com/{live-video-id}/live_comments
+    /// 
+    /// DÜZELTME v17.1:
+    /// - SharedHttpClients kullanılarak socket exhaustion önlendi
     /// </summary>
     public sealed class FacebookChatIngestor : BaseChatIngestor
     {
         private const string StreamingGraphUrl = "https://streaming-graph.facebook.com";
         private const string GraphApiUrl = "https://graph.facebook.com/v19.0";
 
-        private readonly HttpClient _httpClient;
+        // DÜZELTME: Shared HttpClient - socket exhaustion önleme
+        private HttpClient HttpClient => SharedHttpClients.Facebook;
+        private HttpClient GraphApiClient => SharedHttpClients.GraphApi;
+
         private CancellationTokenSource? _sseCts;
 
         public override ChatPlatform Platform => ChatPlatform.Facebook;
@@ -54,13 +61,8 @@ namespace UniCast.Core.Chat.Ingestors
         /// <param name="pageIdOrVideoId">Facebook Page ID veya Live Video ID</param>
         public FacebookChatIngestor(string pageIdOrVideoId) : base(pageIdOrVideoId)
         {
-            _httpClient = new HttpClient
-            {
-                Timeout = Timeout.InfiniteTimeSpan // SSE için timeout yok
-            };
-
-            _httpClient.DefaultRequestHeaders.Add("Accept", "text/event-stream");
-            _httpClient.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+            // DÜZELTME: HttpClient artık SharedHttpClients'dan alınıyor
+            // Bu sayede socket exhaustion önleniyor
         }
 
         protected override async Task ConnectAsync(CancellationToken ct)
@@ -111,7 +113,7 @@ namespace UniCast.Core.Chat.Ingestors
                          $"&fields=id,status,title,live_views" +
                          $"&broadcast_status=[\"LIVE\"]";
 
-                var response = await _httpClient.GetStringAsync(url, ct);
+                var response = await HttpClient.GetStringAsync(url, ct);
                 using var doc = JsonDocument.Parse(response);
 
                 if (doc.RootElement.TryGetProperty("data", out var data) &&
@@ -138,7 +140,7 @@ namespace UniCast.Core.Chat.Ingestors
                      $"&fields=id,live_status,title" +
                      $"&limit=10";
 
-                response = await _httpClient.GetStringAsync(url, ct);
+                response = await HttpClient.GetStringAsync(url, ct);
                 using var doc2 = JsonDocument.Parse(response);
 
                 if (doc2.RootElement.TryGetProperty("data", out var videos))
@@ -171,7 +173,7 @@ namespace UniCast.Core.Chat.Ingestors
                          $"?input_token={AccessToken}" +
                          $"&access_token={AccessToken}";
 
-                var response = await _httpClient.GetStringAsync(url, ct);
+                var response = await HttpClient.GetStringAsync(url, ct);
                 using var doc = JsonDocument.Parse(response);
 
                 if (doc.RootElement.TryGetProperty("data", out var data))
@@ -255,7 +257,7 @@ namespace UniCast.Core.Chat.Ingestors
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Add("Accept", "text/event-stream");
 
-            using var response = await _httpClient.SendAsync(
+            using var response = await HttpClient.SendAsync(
                 request,
                 HttpCompletionOption.ResponseHeadersRead,
                 ct);
@@ -402,7 +404,7 @@ namespace UniCast.Core.Chat.Ingestors
                     ["access_token"] = AccessToken
                 });
 
-                var response = await _httpClient.PostAsync(url, content, ct);
+                var response = await HttpClient.PostAsync(url, content, ct);
                 response.EnsureSuccessStatusCode();
 
                 Log.Debug("[Facebook] Yorum gönderildi");
@@ -418,7 +420,8 @@ namespace UniCast.Core.Chat.Ingestors
             if (disposing)
             {
                 _sseCts?.Dispose();
-                _httpClient.Dispose();
+                // DÜZELTME: SharedHttpClients dispose EDİLMEMELİ!
+                // Shared client tüm uygulama ömrü boyunca yaşar
             }
             base.Dispose(disposing);
         }

@@ -27,6 +27,9 @@ namespace UniCast.App
             Log.Information($"UniCast Başlatılıyor... Versiyon: {GetType().Assembly.GetName().Version}");
             Log.Information("===================================================");
 
+            // DÜZELTME v17.1: Önceki oturumdan kalan orphan FFmpeg process'leri temizle
+            CleanupOrphanFfmpegProcesses();
+
             // 3. Splash Screen
             SplashWindow? splash = null;
             try
@@ -318,6 +321,87 @@ namespace UniCast.App
                 Log.Error(e.Exception, "Arka plan Task hatası: {Message}", e.Exception.Message);
                 e.SetObserved();
             };
+        }
+
+        /// <summary>
+        /// DÜZELTME v17.1: Önceki oturumdan kalan orphan FFmpeg process'leri temizler.
+        /// Uygulama crash olduğunda veya düzgün kapatılmadığında FFmpeg arka planda çalışmaya devam edebilir.
+        /// Bu metod başlangıçta bu tür orphan process'leri temizler.
+        /// </summary>
+        private void CleanupOrphanFfmpegProcesses()
+        {
+            try
+            {
+                var ffmpegProcesses = System.Diagnostics.Process.GetProcessesByName("ffmpeg");
+
+                if (ffmpegProcesses.Length == 0)
+                {
+                    Log.Debug("[App] Orphan FFmpeg process bulunamadı");
+                    return;
+                }
+
+                Log.Warning("[App] {Count} adet orphan FFmpeg process bulundu, temizleniyor...", ffmpegProcesses.Length);
+
+                foreach (var proc in ffmpegProcesses)
+                {
+                    try
+                    {
+                        // Process'in UniCast tarafından başlatılıp başlatılmadığını kontrol et
+                        // (Kullanıcının başka FFmpeg işlemi olabilir)
+                        var commandLine = GetProcessCommandLine(proc);
+
+                        // UniCast'e ait olduğunu anlamak için bazı ipuçları
+                        bool isUniCastProcess = commandLine?.Contains("UniCast") == true ||
+                                                commandLine?.Contains("\\Temp\\") == true ||
+                                                proc.StartTime < DateTime.Now.AddHours(-24); // 24 saatten eski
+
+                        if (isUniCastProcess || proc.StartTime < DateTime.Now.AddMinutes(-30))
+                        {
+                            Log.Information("[App] Orphan FFmpeg process sonlandırılıyor: PID={PID}, StartTime={StartTime}",
+                                proc.Id, proc.StartTime);
+
+                            proc.Kill();
+                            proc.WaitForExit(2000);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Debug(ex, "[App] FFmpeg process sonlandırma hatası: PID={PID}", proc.Id);
+                    }
+                    finally
+                    {
+                        proc.Dispose();
+                    }
+                }
+
+                Log.Information("[App] Orphan FFmpeg process temizliği tamamlandı");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[App] Orphan FFmpeg temizliği sırasında hata");
+            }
+        }
+
+        /// <summary>
+        /// Process'in komut satırı argümanlarını almaya çalışır.
+        /// </summary>
+        private string? GetProcessCommandLine(System.Diagnostics.Process process)
+        {
+            try
+            {
+                using var searcher = new System.Management.ManagementObjectSearcher(
+                    $"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {process.Id}");
+
+                foreach (System.Management.ManagementObject obj in searcher.Get())
+                {
+                    return obj["CommandLine"]?.ToString();
+                }
+            }
+            catch
+            {
+                // WMI erişimi başarısız olabilir
+            }
+            return null;
         }
     }
 }

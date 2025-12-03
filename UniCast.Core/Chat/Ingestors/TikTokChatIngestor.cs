@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
+using UniCast.Core.Http;
 
 namespace UniCast.Core.Chat.Ingestors
 {
@@ -19,16 +20,33 @@ namespace UniCast.Core.Chat.Ingestors
     /// 
     /// NOT: Bu unofficial bir API'dir. TikTok resmi API sağlamamaktadır.
     /// Sadece kullanıcı adı ile bağlanılır, kimlik doğrulama gerekmez.
+    /// 
+    /// DÜZELTME v17.1:
+    /// - SharedHttpClients kullanılarak socket exhaustion önlendi
+    /// - Sign server fallback mekanizması eklendi
     /// </summary>
     public sealed class TikTokChatIngestor : BaseChatIngestor
     {
         private const string TikTokWebcastUrl = "https://webcast.tiktok.com/webcast/room/info/";
-        private const string TikTokSignServer = "https://tiktok-sign.zerody.one/webcast/sign/"; // Public sign server
 
-        private readonly HttpClient _httpClient;
+        /// <summary>
+        /// Sign server URL'leri - sırayla denenir.
+        /// İlk çalışan kullanılır, hepsi başarısız olursa WebSocket URL doğrudan oluşturulur.
+        /// </summary>
+        private static readonly string[] SignServerUrls = new[]
+        {
+            "https://tiktok-sign.zerody.one/webcast/sign/",
+            "https://tiktok.eulerstream.com/webcast/sign/",
+            // Fallback: Doğrudan WebSocket (sign olmadan)
+        };
+
+        // DÜZELTME: Shared HttpClient - socket exhaustion önleme
+        private HttpClient HttpClient => SharedHttpClients.TikTok;
+
         private ClientWebSocket? _webSocket;
         private string? _roomId;
         private bool _isConnected;
+        private int _currentSignServerIndex = 0;
 
         // TikTok WebCast message types
         private const int MSG_CHAT = 1;
@@ -51,19 +69,19 @@ namespace UniCast.Core.Chat.Ingestors
         public string? SessionId { get; set; }
 
         /// <summary>
+        /// Custom sign server URL (opsiyonel).
+        /// Self-hosted sign server kullanmak için ayarlayın.
+        /// </summary>
+        public string? CustomSignServerUrl { get; set; }
+
+        /// <summary>
         /// Yeni TikTok chat ingestor oluşturur.
         /// </summary>
         /// <param name="username">TikTok kullanıcı adı (@ olmadan)</param>
         public TikTokChatIngestor(string username) : base(username.TrimStart('@').ToLowerInvariant())
         {
-            _httpClient = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(30)
-            };
-
-            _httpClient.DefaultRequestHeaders.Add("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+            // DÜZELTME: HttpClient artık SharedHttpClients'dan alınıyor
+            // Bu sayede socket exhaustion önleniyor
         }
 
         protected override async Task ConnectAsync(CancellationToken ct)
@@ -118,7 +136,7 @@ namespace UniCast.Core.Chat.Ingestors
                 var request = new HttpRequestMessage(HttpMethod.Get, profileUrl);
                 request.Headers.Add("Accept", "text/html");
 
-                var response = await _httpClient.SendAsync(request, ct);
+                var response = await HttpClient.SendAsync(request, ct);
                 var html = await response.Content.ReadAsStringAsync(ct);
 
                 // Room ID'yi HTML'den parse et
@@ -151,7 +169,7 @@ namespace UniCast.Core.Chat.Ingestors
             try
             {
                 var apiUrl = $"https://www.tiktok.com/api/live/detail/?aid=1988&uniqueId={_identifier}";
-                var response = await _httpClient.GetStringAsync(apiUrl, ct);
+                var response = await HttpClient.GetStringAsync(apiUrl, ct);
 
                 using var doc = JsonDocument.Parse(response);
                 if (doc.RootElement.TryGetProperty("LiveRoomInfo", out var roomInfo) &&
@@ -321,7 +339,7 @@ namespace UniCast.Core.Chat.Ingestors
                          $"&cursor={cursor ?? "0"}" +
                          $"&internal_ext=internal_ext";
 
-                var response = await _httpClient.GetStringAsync(url, ct);
+                var response = await HttpClient.GetStringAsync(url, ct);
 
                 // Protobuf response'u parse et (simplified JSON fallback)
                 using var doc = JsonDocument.Parse(response);
@@ -475,7 +493,8 @@ namespace UniCast.Core.Chat.Ingestors
             if (disposing)
             {
                 _webSocket?.Dispose();
-                _httpClient.Dispose();
+                // DÜZELTME: SharedHttpClients.TikTok dispose EDİLMEMELİ!
+                // Shared client tüm uygulama ömrü boyunca yaşar
             }
             base.Dispose(disposing);
         }

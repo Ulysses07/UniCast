@@ -47,3 +47,55 @@
 2025-12-03 10:33:58.034 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
 2025-12-03 10:33:58.051 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
 2025-12-03 10:33:58.052 +03:00 [DBG] [LicenseManager] Disposed
+2025-12-03 10:53:11.230 +03:00 [INF] ===================================================
+2025-12-03 10:53:11.254 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-03 10:53:11.255 +03:00 [INF] ===================================================
+2025-12-03 10:53:11.264 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-03 10:53:11.627 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-03 10:53:11.766 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-03 10:53:11.810 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-03 10:53:11.813 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-03 10:53:11.890 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-03 10:53:11.895 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-03 10:53:11.898 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-03 10:53:11.938 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-03 10:53:11.940 +03:00 [DBG] [ChatBus] Initialized
+2025-12-03 10:53:11.941 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-03 10:53:11.942 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-03 10:53:11.943 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-03 10:53:11.999 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-03 10:53:17.496 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-03 10:53:27.870 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-03 10:53:27.873 +03:00 [DBG] [MainWindow] PreviewViewModel disposed
+2025-12-03 10:53:28.368 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-03 10:53:28.370 +03:00 [DBG] [MainWindow] SettingsViewModel disposed
+2025-12-03 10:53:28.376 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-03 10:53:28.377 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-03 10:53:28.392 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-03 10:53:28.394 +03:00 [DBG] [LicenseManager] Disposed
+2025-12-03 10:59:32.521 +03:00 [INF] ===================================================
+2025-12-03 10:59:32.541 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-03 10:59:32.542 +03:00 [INF] ===================================================
+2025-12-03 10:59:32.551 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-03 10:59:32.899 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-03 10:59:33.031 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-03 10:59:33.036 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-03 10:59:33.038 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-03 10:59:33.086 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-03 10:59:33.101 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-03 10:59:33.106 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-03 10:59:33.135 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-03 10:59:33.137 +03:00 [DBG] [ChatBus] Initialized
+2025-12-03 10:59:33.138 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-03 10:59:33.139 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-03 10:59:33.140 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-03 10:59:33.199 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-03 10:59:37.561 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-03 11:04:26.251 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-03 11:04:26.748 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-03 11:04:26.750 +03:00 [DBG] [MainWindow] ChatViewModel disposed
+2025-12-03 11:04:26.751 +03:00 [DBG] [MainWindow] SettingsViewModel disposed
+2025-12-03 11:04:26.757 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-03 11:04:26.758 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-03 11:04:26.775 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-03 11:04:26.777 +03:00 [DBG] [LicenseManager] Disposed

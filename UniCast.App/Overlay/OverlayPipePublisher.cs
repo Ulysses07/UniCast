@@ -12,7 +12,10 @@ namespace UniCast.App.Overlay
 {
     /// <summary>
     /// Overlay frame'lerini named pipe üzerinden FFmpeg'e gönderir.
-    /// DÜZELTME: Raw BGRA32 pixel data kullanarak CPU yükü %30'dan %5'e düşürüldü.
+    /// 
+    /// DÜZELTME v17.1:
+    /// - Double buffering ile race condition önlendi
+    /// - Raw BGRA32 pixel data kullanarak CPU yükü %30'dan %5'e düşürüldü
     /// </summary>
     public sealed class OverlayPipePublisher : IAsyncDisposable
     {
@@ -27,7 +30,11 @@ namespace UniCast.App.Overlay
 
         private volatile bool _isDirty = true;
         private RenderTargetBitmap? _bmp;
-        private byte[]? _pixelBuffer;
+
+        // DÜZELTME: Double buffering - race condition önleme
+        private byte[]? _frontBuffer;
+        private byte[]? _backBuffer;
+        private readonly object _bufferLock = new();
 
         private DateTime _lastRender = DateTime.MinValue;
         private bool _disposed;
@@ -43,7 +50,10 @@ namespace UniCast.App.Overlay
 
             // DÜZELTME: Stride hesapla (BGRA32 = 4 byte per pixel)
             _stride = _width * 4;
-            _pixelBuffer = new byte[_stride * _height];
+
+            // DÜZELTME: Double buffering için iki buffer oluştur
+            _frontBuffer = new byte[_stride * _height];
+            _backBuffer = new byte[_stride * _height];
         }
 
         public void Invalidate()
@@ -92,7 +102,13 @@ namespace UniCast.App.Overlay
             await StopAsync();
             _cts?.Dispose();
             _bmp = null;
-            _pixelBuffer = null;
+
+            // DÜZELTME: Her iki buffer'ı da temizle
+            lock (_bufferLock)
+            {
+                _frontBuffer = null;
+                _backBuffer = null;
+            }
 
             GC.SuppressFinalize(this);
         }
@@ -242,7 +258,8 @@ namespace UniCast.App.Overlay
         }
 
         /// <summary>
-        /// DÜZELTME: Raw BGRA32 pixel data döndürür (PNG encode yerine).
+        /// DÜZELTME v17.1: Double buffering ile race condition önlendi.
+        /// Raw BGRA32 pixel data döndürür (PNG encode yerine).
         /// CPU kullanımı ~%30'dan ~%5'e düşer.
         /// </summary>
         private byte[]? RenderFrameRaw()
@@ -252,17 +269,30 @@ namespace UniCast.App.Overlay
                 if (_bmp == null || _bmp.PixelWidth != _width || _bmp.PixelHeight != _height)
                 {
                     _bmp = new RenderTargetBitmap(_width, _height, 96, 96, PixelFormats.Pbgra32);
-                    _pixelBuffer = new byte[_stride * _height];
+
+                    lock (_bufferLock)
+                    {
+                        _frontBuffer = new byte[_stride * _height];
+                        _backBuffer = new byte[_stride * _height];
+                    }
                 }
 
                 _bmp.Clear();
                 _bmp.Render(_visual);
 
-                // DÜZELTME: PNG encode yerine raw pixel copy
-                if (_pixelBuffer != null)
+                // DÜZELTME: Double buffering - back buffer'a yaz, sonra swap et
+                lock (_bufferLock)
                 {
-                    _bmp.CopyPixels(_pixelBuffer, _stride, 0);
-                    return _pixelBuffer;
+                    if (_backBuffer != null)
+                    {
+                        _bmp.CopyPixels(_backBuffer, _stride, 0);
+
+                        // Buffer swap
+                        (_frontBuffer, _backBuffer) = (_backBuffer, _frontBuffer);
+
+                        // Front buffer'ın KOPYASINI döndür (consumer bunu okurken producer yazmaz)
+                        return _frontBuffer?.ToArray();
+                    }
                 }
 
                 return null;

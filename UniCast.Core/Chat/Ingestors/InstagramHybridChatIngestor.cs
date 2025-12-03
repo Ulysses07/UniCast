@@ -13,6 +13,7 @@ using InstagramApiSharp.Classes;
 using InstagramApiSharp.Classes.Models;
 using InstagramApiSharp.Logger;
 using Serilog;
+using UniCast.Core.Http;
 
 namespace UniCast.Core.Chat.Ingestors
 {
@@ -22,6 +23,12 @@ namespace UniCast.Core.Chat.Ingestors
     /// - Her API 4 saniyede bir çağrılır (güvenli)
     /// - Kullanıcı 2 saniyede bir yeni yorum görür (hızlı)
     /// - Bir API fail ederse diğeri devam eder (redundant)
+    /// 
+    /// ⚠️ UYARI: Instagram Private API kullanımı hesap yasaklanmasına yol açabilir!
+    /// Ana hesabınız yerine AYRI BİR OKUYUCU HESAP kullanmanız şiddetle önerilir.
+    /// 
+    /// DÜZELTME v17.1:
+    /// - SharedHttpClients kullanılarak socket exhaustion önlendi
     /// </summary>
     public sealed class InstagramHybridChatIngestor : BaseChatIngestor
     {
@@ -48,7 +55,9 @@ namespace UniCast.Core.Chat.Ingestors
 
         #region Graph API Fields
 
-        private readonly HttpClient _httpClient;
+        // DÜZELTME: Shared HttpClient - socket exhaustion önleme
+        private HttpClient HttpClient => SharedHttpClients.GraphApi;
+
         private string? _liveMediaId;
         private string? _lastGraphCommentCursor;
 
@@ -91,7 +100,8 @@ namespace UniCast.Core.Chat.Ingestors
             Directory.CreateDirectory(unicastFolder);
             _sessionFile = Path.Combine(unicastFolder, $"instagram_hybrid_{Username}.session");
 
-            _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            // DÜZELTME: HttpClient artık SharedHttpClients'dan alınıyor
+            // Bu sayede socket exhaustion önleniyor
         }
 
         #endregion
@@ -288,7 +298,7 @@ namespace UniCast.Core.Chat.Ingestors
             try
             {
                 var url = $"{GraphApiUrl}/me/live_media?access_token={GraphApiAccessToken}&fields=id";
-                var response = await _httpClient.GetStringAsync(url, ct);
+                var response = await HttpClient.GetStringAsync(url, ct);
 
                 using var doc = JsonDocument.Parse(response);
                 if (doc.RootElement.TryGetProperty("data", out var data) && data.GetArrayLength() > 0)
@@ -484,7 +494,7 @@ namespace UniCast.Core.Chat.Ingestors
                 if (!string.IsNullOrEmpty(_lastGraphCommentCursor))
                     url += $"&after={_lastGraphCommentCursor}";
 
-                using var response = await _httpClient.GetAsync(url, ct);
+                using var response = await HttpClient.GetAsync(url, ct);
                 _graphApiRequestsThisHour++;
 
                 if (!response.IsSuccessStatusCode)
@@ -559,7 +569,8 @@ namespace UniCast.Core.Chat.Ingestors
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing) _httpClient.Dispose();
+            // DÜZELTME: SharedHttpClients dispose EDİLMEMELİ!
+            // Shared client tüm uygulama ömrü boyunca yaşar
             base.Dispose(disposing);
         }
 
