@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
@@ -225,23 +224,32 @@ namespace UniCast.Core.Chat.Ingestors
 
                 // Kullanıcıyı bul
                 var userResult = await _instaApi!.UserProcessor.GetUserAsync(targetUser);
-                if (!userResult.Succeeded) return null;
+                if (!userResult.Succeeded)
+                {
+                    Log.Warning("[Instagram Private] Kullanıcı bulunamadı: @{Username}", targetUser);
+                    return null;
+                }
+
+                // Kullanıcı PK'sını string'e çevir
+                var userPkStr = userResult.Value.Pk.ToString();
 
                 // Yayın bilgisini al
-                var infoResult = await _instaApi.LiveProcessor.GetInfoAsync(userResult.Value.Pk.ToString());
-                if (infoResult.Succeeded && infoResult.Value != null)
+                try
                 {
-                    return infoResult.Value.Id;
+                    var infoResult = await _instaApi.LiveProcessor.GetInfoAsync(userPkStr);
+                    if (infoResult.Succeeded && infoResult.Value != null)
+                    {
+                        // Id long tipinde, string'e çevir
+                        return infoResult.Value.Id.ToString();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "[Instagram Private] GetInfoAsync hatası");
                 }
 
-                // Suggested broadcasts'dan ara
-                var suggestedResult = await _instaApi.LiveProcessor.GetSuggestedBroadcastsAsync();
-                if (suggestedResult.Succeeded && suggestedResult.Value?.Broadcasts != null)
-                {
-                    var broadcast = suggestedResult.Value.Broadcasts
-                        .FirstOrDefault(b => b.BroadcastOwner?.UserName?.Equals(targetUser, StringComparison.OrdinalIgnoreCase) == true);
-                    if (broadcast != null) return broadcast.Id;
-                }
+                // Not: GetSuggestedBroadcastsAsync API versiyonuna göre farklı çalışabilir
+                // Bu yüzden sadece GetInfoAsync kullanıyoruz
 
                 return null;
             }
@@ -400,7 +408,9 @@ namespace UniCast.Core.Chat.Ingestors
                 {
                     foreach (var comment in commentsResult.Value.Comments)
                     {
-                        var commentKey = $"p_{comment.Pk}";
+                        // Pk long tipinde, string'e çevir
+                        var commentPkStr = comment.Pk.ToString();
+                        var commentKey = $"p_{commentPkStr}";
 
                         if (_processedComments.TryAdd(commentKey, 0))
                         {
@@ -416,7 +426,7 @@ namespace UniCast.Core.Chat.Ingestors
                                 Metadata = new Dictionary<string, string>
                                 {
                                     ["source"] = "private_api",
-                                    ["comment_pk"] = comment.Pk.ToString()
+                                    ["comment_pk"] = commentPkStr
                                 }
                             };
                             PublishMessage(chatMessage);
@@ -430,12 +440,16 @@ namespace UniCast.Core.Chat.Ingestors
                 }
 
                 // Heartbeat
-                var heartbeat = await _instaApi.LiveProcessor.GetHeartBeatAndViewerCountAsync(_broadcastId!);
-                if (!heartbeat.Succeeded || heartbeat.Value?.BroadcastStatus == "stopped")
+                try
                 {
-                    Log.Information("[Instagram Private] Yayın sona erdi");
-                    _privateApiEnabled = false;
+                    var heartbeat = await _instaApi.LiveProcessor.GetHeartBeatAndViewerCountAsync(_broadcastId!);
+                    if (!heartbeat.Succeeded || heartbeat.Value?.BroadcastStatus == "stopped")
+                    {
+                        Log.Information("[Instagram Private] Yayın sona erdi");
+                        _privateApiEnabled = false;
+                    }
                 }
+                catch { }
             }
             catch (Exception ex)
             {
