@@ -309,15 +309,45 @@ namespace UniCast.App.Services
         public string VideoEncoder { get; set; } = "libx264";
         public string VideoPreset { get; set; } = "veryfast";
 
+        // Video ayarları için alias property'ler (eski kod uyumluluğu)
+        [System.Text.Json.Serialization.JsonIgnore]
+        public int Width { get => VideoWidth; set => VideoWidth = value; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public int Height { get => VideoHeight; set => VideoHeight = value; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string Encoder { get => VideoEncoder; set => VideoEncoder = value; }
+
         // Audio Ayarları
         public int AudioKbps { get; set; } = 128;
         public string AudioEncoder { get; set; } = "aac";
         public int AudioSampleRate { get; set; } = 44100;
         public int AudioChannels { get; set; } = 2;
+        public int AudioDelayMs { get; set; } = 0;
 
         // Cihaz Seçimleri
         public string SelectedCamera { get; set; } = "";
         public string SelectedMicrophone { get; set; } = "";
+
+        // Cihaz alias'ları (eski kod uyumluluğu)
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string DefaultCamera { get => SelectedCamera; set => SelectedCamera = value; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string DefaultMicrophone { get => SelectedMicrophone; set => SelectedMicrophone = value; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string SelectedVideoDevice { get => SelectedCamera; set => SelectedCamera = value; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string SelectedAudioDevice { get => SelectedMicrophone; set => SelectedMicrophone = value; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string VideoDevice { get => SelectedCamera; set => SelectedCamera = value; }
+
+        // Scene/Overlay Items
+        public List<OverlayItem> SceneItems { get; set; } = new();
         public string SelectedDesktopAudio { get; set; } = "";
         public string SelectedScreen { get; set; } = "";
         public string CaptureMode { get; set; } = "Camera"; // "Camera", "Screen", "Both"
