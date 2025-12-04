@@ -16,7 +16,7 @@ namespace UniCast.Encoder.Hardware
     /// NVENC (NVIDIA), QSV (Intel), AMF (AMD) desteği.
     /// </summary>
     [SupportedOSPlatform("windows")]
-    public sealed class HardwareEncoderService : IDisposable
+    public sealed class HardwareEncoderService : IHardwareEncoderService
     {
         #region Singleton
 

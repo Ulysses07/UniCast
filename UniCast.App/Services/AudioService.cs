@@ -7,7 +7,7 @@ using UniCast.App.Services.Capture;
 
 namespace UniCast.App.Services
 {
-    public sealed class AudioService : IDisposable
+    public sealed class AudioService : IAudioService
     {
         private MMDevice? _selectedDevice;
         private readonly MMDeviceEnumerator _enumerator;

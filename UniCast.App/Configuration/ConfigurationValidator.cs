@@ -11,7 +11,7 @@ namespace UniCast.App.Configuration
     /// DÜZELTME v31: FFmpeg path'leri güncellendi
     /// Gerekli dosyalar, ayarlar ve izinleri kontrol eder
     /// </summary>
-    public sealed class ConfigurationValidator
+    public sealed class ConfigurationValidator : IConfigurationValidator
     {
         #region Singleton
 

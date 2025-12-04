@@ -28,10 +28,12 @@ namespace UniCast.App.Infrastructure
             services.AddSingleton(ChatBus.Instance);
 
             // Audio Service - Ses seviyesi izleme
-            services.AddSingleton<AudioService>();
+            // DÜZELTME v22: Interface kullanımı eklendi
+            services.AddSingleton<IAudioService, AudioService>();
 
             // Preview Service - Kamera önizleme (Singleton - tek kamera kaynağı)
-            services.AddSingleton<PreviewService>();
+            // DÜZELTME v22: Interface kullanımı eklendi
+            services.AddSingleton<IPreviewService, PreviewService>();
 
             // --- Transient Servisler (Her istekte yeni instance) ---
 
@@ -55,8 +57,8 @@ namespace UniCast.App.Infrastructure
             // PreviewViewModel - DI'dan PreviewService alıyor
             services.AddTransient<PreviewViewModel>(sp =>
             {
-                var previewService = sp.GetRequiredService<PreviewService>();
-                return new PreviewViewModel(previewService);
+                var previewService = sp.GetRequiredService<IPreviewService>();
+                return new PreviewViewModel((PreviewService)previewService);
             });
 
             // ControlViewModel - Ana kontrol paneli

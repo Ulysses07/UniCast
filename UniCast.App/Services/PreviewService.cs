@@ -13,7 +13,7 @@ namespace UniCast.App.Services
     /// OpenCV kullanarak kameradan frame alır ve WPF'e aktarır.
     /// DÜZELTME: Thread.Sleep yerine async-friendly Task.Delay kullanımı.
     /// </summary>
-    public sealed class PreviewService : IDisposable
+    public sealed class PreviewService : IPreviewService
     {
         public event Action<ImageSource>? OnFrame;
         public bool IsRunning { get; private set; }

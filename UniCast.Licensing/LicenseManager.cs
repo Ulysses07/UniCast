@@ -18,7 +18,7 @@ namespace UniCast.Licensing
     /// Tüm koruma katmanlarını koordine eder.
     /// Thread-safe, proper dispose pattern.
     /// </summary>
-    public sealed class LicenseManager : IDisposable
+    public sealed class LicenseManager : ILicenseManager
     {
         private static readonly Lazy<LicenseManager> _instance = new(() => new LicenseManager(), LazyThreadSafetyMode.ExecutionAndPublication);
         public static LicenseManager Instance => _instance.Value;
