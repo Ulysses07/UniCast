@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
@@ -16,15 +16,7 @@
 		<NoWarn>$(NoWarn);NU1701</NoWarn>
 	</PropertyGroup>
 
-	<ItemGroup>
-	  <None Remove="External\ffmpeg.exe" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Content Include="External\ffmpeg.exe">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-	</ItemGroup>
+	
 
 	<ItemGroup>
 		<PackageReference Include="DirectShowLib" Version="1.0.0" />
