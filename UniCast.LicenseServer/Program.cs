@@ -731,27 +731,19 @@ static string GetUptime(DateTime startTime)
 // ==================== SWAGGER OPERATION FILTER ====================
 
 /// <summary>Admin endpoint'lerine security requirement ekler</summary>
-/// <summary>Admin endpoint'lerine security requirement ekler</summary>
 public class AdminSecurityOperationFilter : Swashbuckle.AspNetCore.SwaggerGen.IOperationFilter
 {
     public void Apply(Microsoft.OpenApi.OpenApiOperation operation, Swashbuckle.AspNetCore.SwaggerGen.OperationFilterContext context)
     {
         if (context.ApiDescription.RelativePath?.Contains("admin") == true)
         {
-            var securityScheme = new Microsoft.OpenApi.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.BaseOpenApiReference
-                {
-                    Type = Microsoft.OpenApi.ReferenceType.SecurityScheme,
-                    Id = "AdminKey"
-                }
-            };
+            var securitySchemeRef = new Microsoft.OpenApi.OpenApiSecuritySchemeReference("AdminKey");
 
             operation.Security = new List<Microsoft.OpenApi.OpenApiSecurityRequirement>
             {
                 new Microsoft.OpenApi.OpenApiSecurityRequirement
                 {
-                    { securityScheme, Array.Empty<string>() }
+                    { securitySchemeRef, new List<string>() }
                 }
             };
         }
