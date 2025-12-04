@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing.Drawing2D;
-using System.IO;
 using System.Numerics;
-using System.Threading;
 using UniCast.Encoder.Memory;
-using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
+using Vortice.D3DCompiler;
+using Vortice.Direct3D;
 
 namespace UniCast.Encoder.Compositing
 {
