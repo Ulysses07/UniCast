@@ -46,6 +46,14 @@ namespace UniCast.LicenseServer.Services
         /// </summary>
         public bool TryAcquire(string clientId, string operation)
         {
+            return TryAcquire(clientId, operation, out _, out _);
+        }
+
+        /// <summary>
+        /// IP bazlı rate limit kontrolü (kalan istek ve reset zamanı ile)
+        /// </summary>
+        public bool TryAcquire(string clientId, string operation, out int remaining, out DateTime resetTime)
+        {
             var config = _configs.GetValueOrDefault(operation, _configs["default"]);
             var key = $"{clientId}:{operation}";
             var now = DateTime.UtcNow;
@@ -58,6 +66,14 @@ namespace UniCast.LicenseServer.Services
                 var cutoff = now - config.Window;
                 entry.Requests.RemoveAll(t => t < cutoff);
 
+                // Reset zamanını hesapla
+                resetTime = entry.Requests.Count > 0
+                    ? entry.Requests.Min() + config.Window
+                    : now + config.Window;
+
+                // Kalan istekleri hesapla
+                remaining = Math.Max(0, config.MaxRequests - entry.Requests.Count);
+
                 // Limit kontrolü
                 if (entry.Requests.Count >= config.MaxRequests)
                 {
@@ -65,6 +81,7 @@ namespace UniCast.LicenseServer.Services
                 }
 
                 entry.Requests.Add(now);
+                remaining = Math.Max(0, config.MaxRequests - entry.Requests.Count);
                 return true;
             }
         }

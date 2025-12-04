@@ -19,6 +19,7 @@ namespace UniCast.LicenseServer.Services
         Task SaveAsync(LicenseData license);
         Task DeleteAsync(string licenseId);
         Task<IEnumerable<LicenseData>> GetAllAsync();
+        Task<bool> HealthCheckAsync();
     }
 
     /// <summary>
@@ -118,6 +119,23 @@ namespace UniCast.LicenseServer.Services
         {
             await EnsureLoadedAsync();
             return _cache.Values.ToList();
+        }
+
+        public async Task<bool> HealthCheckAsync()
+        {
+            try
+            {
+                await EnsureLoadedAsync();
+                // Verify we can read/write to data directory
+                var testPath = Path.Combine(Path.GetDirectoryName(_dataPath)!, ".health");
+                await File.WriteAllTextAsync(testPath, DateTime.UtcNow.ToString("O"));
+                File.Delete(testPath);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 
