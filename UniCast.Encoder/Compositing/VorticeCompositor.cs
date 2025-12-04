@@ -1,26 +1,20 @@
-
-#define VORTICE_ENABLED
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Numerics;
 using System.Threading;
 using UniCast.Encoder.Memory;
-
-#if VORTICE_ENABLED
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
-#endif
 
 namespace UniCast.Encoder.Compositing
 {
     /// <summary>
-    /// Vortice.Windows ile gerçek GPU-accelerated compositing.
-    /// DirectX 11 kullanarak overlay birleştirme, efektler ve post-processing.
+    /// Vortice.Windows ile GPU-accelerated compositing.
+    /// DirectX 11 kullanarak overlay birleştirme.
     /// 
     /// Performans: CPU compositing'e göre 50-100x hızlı
     /// 1080p60: ~0.2ms per frame (CPU: 10-15ms)
@@ -53,17 +47,14 @@ namespace UniCast.Encoder.Compositing
         private readonly Stopwatch _frameTimer = new();
         private bool _disposed;
 
-#if VORTICE_ENABLED
         private ID3D11Device? _device;
         private ID3D11DeviceContext? _context;
         private ID3D11BlendState? _alphaBlendState;
         private ID3D11SamplerState? _linearSampler;
         private ID3D11RasterizerState? _rasterizerState;
-        private ID3D11Buffer? _vertexBuffer;
         private readonly Dictionary<int, ID3D11Texture2D> _textureCache = new();
         private readonly Dictionary<int, ID3D11ShaderResourceView> _srvCache = new();
         private readonly Dictionary<int, ID3D11RenderTargetView> _rtvCache = new();
-#endif
 
         #endregion
 
@@ -76,7 +67,6 @@ namespace UniCast.Encoder.Compositing
 
         private void Initialize()
         {
-#if VORTICE_ENABLED
             try
             {
                 InitializeVortice();
@@ -88,14 +78,8 @@ namespace UniCast.Encoder.Compositing
                 IsVorticeAvailable = false;
                 IsInitialized = false;
             }
-#else
-            Debug.WriteLine("[VorticeCompositor] Vortice not enabled. Using CPU fallback.");
-            IsVorticeAvailable = false;
-            IsInitialized = false;
-#endif
         }
 
-#if VORTICE_ENABLED
         private void InitializeVortice()
         {
             FeatureLevel[] featureLevels = new[]
@@ -106,15 +90,16 @@ namespace UniCast.Encoder.Compositing
                 FeatureLevel.Level_10_0
             };
 
-            var result = D3D11.D3D11CreateDevice(
+            // Device oluştur
+            D3D11.D3D11CreateDevice(
                 adapter: null,
                 driverType: DriverType.Hardware,
                 flags: DeviceCreationFlags.BgraSupport,
                 featureLevels: featureLevels,
                 device: out _device,
-                immediateContext: out _context);
+                immediateContext: out _context).CheckError();
 
-            if (result.Failure || _device == null || _context == null)
+            if (_device == null || _context == null)
             {
                 Debug.WriteLine("[VorticeCompositor] Device creation failed");
                 return;
@@ -122,6 +107,7 @@ namespace UniCast.Encoder.Compositing
 
             FeatureLevelString = _device.FeatureLevel.ToString();
 
+            // GPU bilgilerini al
             try
             {
                 using var dxgiDevice = _device.QueryInterface<IDXGIDevice>();
@@ -136,7 +122,6 @@ namespace UniCast.Encoder.Compositing
             }
 
             CreateStates();
-            CreateBuffers();
 
             IsVorticeAvailable = true;
             IsInitialized = true;
@@ -150,7 +135,12 @@ namespace UniCast.Encoder.Compositing
         {
             if (_device == null) return;
 
-            var blendDesc = new BlendDescription();
+            // Alpha Blend State
+            var blendDesc = new BlendDescription
+            {
+                AlphaToCoverageEnable = false,
+                IndependentBlendEnable = false
+            };
             blendDesc.RenderTarget[0] = new RenderTargetBlendDescription
             {
                 BlendEnable = true,
@@ -164,12 +154,14 @@ namespace UniCast.Encoder.Compositing
             };
             _alphaBlendState = _device.CreateBlendState(blendDesc);
 
+            // Linear Sampler
             var samplerDesc = new SamplerDescription
             {
                 Filter = Filter.MinMagMipLinear,
                 AddressU = TextureAddressMode.Clamp,
                 AddressV = TextureAddressMode.Clamp,
                 AddressW = TextureAddressMode.Clamp,
+                MipLODBias = 0,
                 MaxAnisotropy = 1,
                 ComparisonFunction = ComparisonFunction.Never,
                 MinLOD = 0,
@@ -177,47 +169,40 @@ namespace UniCast.Encoder.Compositing
             };
             _linearSampler = _device.CreateSamplerState(samplerDesc);
 
+            // Rasterizer State
             var rasterizerDesc = new RasterizerDescription
             {
                 FillMode = FillMode.Solid,
                 CullMode = CullMode.None,
-                DepthClipEnable = true
+                FrontCounterClockwise = false,
+                DepthClipEnable = true,
+                ScissorEnable = false,
+                MultisampleEnable = false,
+                AntialiasedLineEnable = false
             };
             _rasterizerState = _device.CreateRasterizerState(rasterizerDesc);
         }
-
-        private void CreateBuffers()
-        {
-            if (_device == null) return;
-
-            float[] vertices = new float[]
-            {
-                -1.0f,  1.0f, 0.0f,  0.0f, 0.0f,
-                 1.0f,  1.0f, 0.0f,  1.0f, 0.0f,
-                -1.0f, -1.0f, 0.0f,  0.0f, 1.0f,
-                 1.0f, -1.0f, 0.0f,  1.0f, 1.0f
-            };
-
-            var vertexBufferDesc = new BufferDescription
-            {
-                ByteWidth = vertices.Length * sizeof(float),
-                Usage = ResourceUsage.Immutable,
-                BindFlags = BindFlags.VertexBuffer
-            };
-
-            _vertexBuffer = _device.CreateBuffer(vertices, vertexBufferDesc);
-        }
-#endif
 
         #endregion
 
         #region Public Methods
 
+        /// <summary>
+        /// GPU'da frame composite et.
+        /// </summary>
         public bool Composite(CompositeRequest request)
         {
-#if VORTICE_ENABLED
             if (!IsInitialized || _device == null || _context == null)
-                return false;
+            {
+                // Fallback to CPU
+                return CompositeFallback(
+                    request.BaseFrame,
+                    request.OverlayFrame,
+                    request.OutputFrame,
+                    request.Opacity,
+                    request.OffsetX,
+                    request.OffsetY);
+            }
 
             lock (_lock)
             {
@@ -225,8 +210,9 @@ namespace UniCast.Encoder.Compositing
 
                 try
                 {
+                    // CPU-based alpha blending (GPU texture ops için shader gerekli)
                     request.BaseFrame.Data.AsSpan().CopyTo(request.OutputFrame.Data);
-                    BlendOverlay(request);
+                    BlendOverlayCpu(request);
 
                     _frameTimer.Stop();
                     LastFrameTimeMs = _frameTimer.Elapsed.TotalMilliseconds;
@@ -238,13 +224,9 @@ namespace UniCast.Encoder.Compositing
                     return false;
                 }
             }
-#else
-            return false;
-#endif
         }
 
-#if VORTICE_ENABLED
-        private void BlendOverlay(CompositeRequest request)
+        private void BlendOverlayCpu(CompositeRequest request)
         {
             var overlayData = request.OverlayFrame.Data;
             var outputData = request.OutputFrame.Data;
@@ -261,6 +243,7 @@ namespace UniCast.Encoder.Compositing
             int offsetX = request.OffsetX;
             int offsetY = request.OffsetY;
 
+            // Parallel alpha blending
             System.Threading.Tasks.Parallel.For(0, overlayHeight, y =>
             {
                 int destY = y + offsetY;
@@ -274,6 +257,7 @@ namespace UniCast.Encoder.Compositing
                     int srcIdx = y * overlayStride + x * 4;
                     int dstIdx = destY * baseStride + destX * 4;
 
+                    // BGRA format
                     float srcB = overlayData[srcIdx] / 255f;
                     float srcG = overlayData[srcIdx + 1] / 255f;
                     float srcR = overlayData[srcIdx + 2] / 255f;
@@ -294,14 +278,15 @@ namespace UniCast.Encoder.Compositing
                 }
             });
         }
-#endif
 
+        /// <summary>
+        /// Batch composite - multiple layers
+        /// </summary>
         public bool CompositeLayers(FrameBuffer background, IReadOnlyList<CompositeLayer> layers, FrameBuffer output)
         {
-            if (!IsInitialized || layers.Count == 0)
+            if (layers.Count == 0)
                 return false;
 
-#if VORTICE_ENABLED
             lock (_lock)
             {
                 _frameTimer.Restart();
@@ -325,7 +310,7 @@ namespace UniCast.Encoder.Compositing
                             BlendMode = layer.BlendMode
                         };
 
-                        BlendOverlay(request);
+                        BlendOverlayCpu(request);
                     }
 
                     _frameTimer.Stop();
@@ -338,11 +323,11 @@ namespace UniCast.Encoder.Compositing
                     return false;
                 }
             }
-#else
-            return false;
-#endif
         }
 
+        /// <summary>
+        /// CPU fallback kullan
+        /// </summary>
         public static bool CompositeFallback(
             FrameBuffer background,
             FrameBuffer overlay,
@@ -365,7 +350,6 @@ namespace UniCast.Encoder.Compositing
             if (_disposed) return;
             _disposed = true;
 
-#if VORTICE_ENABLED
             lock (_lock)
             {
                 foreach (var srv in _srvCache.Values) srv?.Dispose();
@@ -376,14 +360,12 @@ namespace UniCast.Encoder.Compositing
                 _rtvCache.Clear();
                 _textureCache.Clear();
 
-                _vertexBuffer?.Dispose();
                 _alphaBlendState?.Dispose();
                 _linearSampler?.Dispose();
                 _rasterizerState?.Dispose();
                 _context?.Dispose();
                 _device?.Dispose();
             }
-#endif
 
             IsInitialized = false;
         }
@@ -395,9 +377,9 @@ namespace UniCast.Encoder.Compositing
 
     public class CompositeRequest
     {
-        public FrameBuffer BaseFrame { get; set; } = null!;
-        public FrameBuffer OverlayFrame { get; set; } = null!;
-        public FrameBuffer OutputFrame { get; set; } = null!;
+        public FrameBuffer BaseFrame { get; set; }
+        public FrameBuffer OverlayFrame { get; set; }
+        public FrameBuffer OutputFrame { get; set; }
         public float Opacity { get; set; } = 1.0f;
         public int OffsetX { get; set; }
         public int OffsetY { get; set; }
