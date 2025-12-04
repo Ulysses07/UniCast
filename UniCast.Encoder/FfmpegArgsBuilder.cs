@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UniCast.Core;
 using UniCast.Core.Core;
 using UniCast.Core.Settings;
 using UniCast.Core.Streaming;
+using UniCast.Encoder.Hardware;
 
 namespace UniCast.Encoder
 {
@@ -16,6 +18,49 @@ namespace UniCast.Encoder
         // DÜZELTME: Yapılandırılabilir buffer boyutları
         private const string DEFAULT_RTBUF_SIZE = "500M";
         private const int DEFAULT_THREAD_QUEUE_SIZE = 2048;
+
+        /// <summary>
+        /// v29: Hardware encoder kullanarak en iyi encoder parametrelerini al
+        /// </summary>
+        private static string GetOptimalEncoderParams(string? encoderName, int bitrate, int fps)
+        {
+            // Eğer manuel encoder belirtilmişse ve "auto" değilse, onu kullan
+            if (!string.IsNullOrWhiteSpace(encoderName) && encoderName != "auto")
+            {
+                return encoderName switch
+                {
+                    var e when e.Contains("nvenc") => $"-c:v h264_nvenc -preset p1 -tune ll -rc cbr -b:v {bitrate}k",
+                    var e when e.Contains("amf") => $"-c:v h264_amf -usage ultralowlatency -quality speed -rc cbr -b:v {bitrate}k",
+                    var e when e.Contains("qsv") => $"-c:v h264_qsv -preset veryfast -b:v {bitrate}k",
+                    _ => $"-c:v libx264 -preset ultrafast -tune zerolatency -b:v {bitrate}k"
+                };
+            }
+
+            // v29: HardwareEncoderService ile otomatik en iyi encoder seçimi
+            try
+            {
+                if (HardwareEncoderService.Instance.IsDetectionComplete &&
+                    HardwareEncoderService.Instance.BestEncoder != null)
+                {
+                    var best = HardwareEncoderService.Instance.BestEncoder;
+                    var parameters = HardwareEncoderService.Instance.GetEncoderParameters(
+                        best.Type,
+                        EncoderPreset.LowLatency,
+                        bitrate,
+                        fps);
+
+                    System.Diagnostics.Debug.WriteLine($"[FfmpegArgsBuilder] Using hardware encoder: {best.Name}");
+                    return parameters.ToFfmpegArgs();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FfmpegArgsBuilder] Hardware encoder error: {ex.Message}");
+            }
+
+            // Fallback: Software encoding
+            return $"-c:v libx264 -preset ultrafast -tune zerolatency -b:v {bitrate}k";
+        }
 
         public static string BuildFfmpegArgs(
             Profile profile,
@@ -36,26 +81,8 @@ namespace UniCast.Encoder
             var bufSize = rtbufSize ?? DEFAULT_RTBUF_SIZE;
             var queueSize = threadQueueSize ?? DEFAULT_THREAD_QUEUE_SIZE;
 
-            // Encoder Ayarları
-            string encoder = string.IsNullOrWhiteSpace(encoderName) || encoderName == "auto" ? "libx264" : encoderName;
-            string encParams = "";
-
-            if (encoder.Contains("nvenc"))
-            {
-                encParams = "-c:v h264_nvenc -preset p1 -tune zerolatency -rc cbr";
-            }
-            else if (encoder.Contains("amf"))
-            {
-                encParams = "-c:v h264_amf -usage ultralowlatency -quality speed";
-            }
-            else if (encoder.Contains("qsv"))
-            {
-                encParams = "-c:v h264_qsv -preset veryfast";
-            }
-            else
-            {
-                encParams = "-c:v libx264 -preset ultrafast -tune zerolatency";
-            }
+            // v29: Optimal encoder parametrelerini al (hardware destekli)
+            string encParams = GetOptimalEncoderParams(encoderName, profile.VideoBitrateKbps, profile.Fps);
 
             // --- 1. GİRİŞLER ---
             sb.Append($"-f dshow -rtbufsize {bufSize} -thread_queue_size {queueSize} ");

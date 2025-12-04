@@ -175,16 +175,68 @@ namespace UniCast.App
 
         /// <summary>
         /// DÜZELTME v24: Diagnostics servislerini arka planda başlat
+        /// DÜZELTME v29: Professional features (hardware encoder, memory pool) eklendi
         /// - Lambda yerine named handler'lar kullanıldı (memory leak önleme)
         /// </summary>
         private async Task StartDiagnosticsAsync()
         {
             try
             {
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
                     try
                     {
+                        // DÜZELTME v29: Hardware encoder detection (arka planda)
+                        try
+                        {
+                            var encoders = await UniCast.Encoder.Hardware.HardwareEncoderService.Instance.DetectEncodersAsync();
+                            if (encoders.Count > 0)
+                            {
+                                var best = UniCast.Encoder.Hardware.HardwareEncoderService.Instance.BestEncoder;
+                                Log.Information("[HardwareEncoder] Tespit edildi: {Name} ({Count} encoder mevcut)",
+                                    best?.Name ?? "Unknown", encoders.Count);
+                            }
+                            else
+                            {
+                                Log.Information("[HardwareEncoder] Hardware encoder bulunamadı, software encoding kullanılacak");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "[HardwareEncoder] Detection hatası");
+                        }
+
+                        // DÜZELTME v29: Memory pool pre-allocation
+                        try
+                        {
+                            UniCast.Encoder.Memory.FrameBufferPool.Instance.PreAllocate(
+                                UniCast.Encoder.Memory.FrameBufferPool.FrameSizes.Size1080p, 4);
+                            Log.Debug("[MemoryPool] 1080p buffer'lar pre-allocate edildi");
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "[MemoryPool] Pre-allocation hatası");
+                        }
+
+                        // DÜZELTME v29: GPU Compositor check
+                        try
+                        {
+                            if (UniCast.Encoder.Compositing.GpuCompositor.Instance.IsAvailable)
+                            {
+                                Log.Information("[GpuCompositor] GPU: {Gpu}, DirectX {Level}",
+                                    UniCast.Encoder.Compositing.GpuCompositor.Instance.GpuName,
+                                    UniCast.Encoder.Compositing.GpuCompositor.Instance.FeatureLevel);
+                            }
+                            else
+                            {
+                                Log.Debug("[GpuCompositor] GPU compositing kullanılamıyor, CPU fallback aktif");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Debug(ex, "[GpuCompositor] Initialization check hatası");
+                        }
+
                         // DÜZELTME v24: Named handler'lar oluştur
                         _memoryWarningHandler = OnMemoryWarning;
                         _healthStatusHandler = OnHealthStatusChanged;

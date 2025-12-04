@@ -1,17 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.0.20250507" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.0.20250507" />
+		<PackageReference Include="System.Management" Version="8.0.0" />
 
-  <ItemGroup>
-    <ProjectReference Include="..\UniCast.Core\UniCast.Core.csproj" />
-  </ItemGroup>
+		<!-- Vortice DirectX bindings for GPU compositing -->
+		<PackageReference Include="Vortice.Direct3D11" Version="3.8.1" />
+		<PackageReference Include="Vortice.DXGI" Version="3.8.1" />
+		<PackageReference Include="Vortice.D3DCompiler" Version="3.8.1" />
+		<PackageReference Include="Vortice.Mathematics" Version="1.7.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\UniCast.Core\UniCast.Core.csproj" />
+	</ItemGroup>
 
 </Project>

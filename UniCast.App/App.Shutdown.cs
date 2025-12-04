@@ -37,6 +37,7 @@ namespace UniCast.App
 
         /// <summary>
         /// DÜZELTME v18: Gelişmiş graceful shutdown
+        /// DÜZELTME v29: Professional services cleanup eklendi
         /// Bu metod App.xaml.cs OnExit'ten çağrılmalıdır
         /// </summary>
         public void PerformGracefulShutdown()
@@ -63,6 +64,7 @@ namespace UniCast.App
                 {
                     ("Stream Durdurma", StopStreamingAsync, ShutdownConfig.StreamStopTimeoutMs),
                     ("Chat Sistemi", StopChatSystemAsync, ShutdownConfig.IngestorStopTimeoutMs),
+                    ("Professional Services", CleanupProfessionalServicesAsync, 2000), // v29
                     ("Ayarları Kaydet", SaveSettingsAsync, ShutdownConfig.SaveSettingsTimeoutMs),
                     ("Overlay Kapatma", CloseOverlayAsync, 1000),
                     ("Log Flush", FlushLogsAsync, 1000)
@@ -205,6 +207,82 @@ namespace UniCast.App
                 // DÜZELTME v25: Boş catch'e loglama eklendi
                 System.Diagnostics.Debug.WriteLine($"[App.Shutdown] Log flush hatası: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// DÜZELTME v29: Professional services cleanup
+        /// Hardware encoder, memory pool, GPU compositor, frame timing temizliği
+        /// </summary>
+        private Task CleanupProfessionalServicesAsync()
+        {
+            return Task.Run(() =>
+            {
+                try
+                {
+                    // Frame Timing Service
+                    try
+                    {
+                        UniCast.Encoder.Timing.FrameTimingService.Instance.Dispose();
+                        Log.Debug("[Shutdown] FrameTimingService disposed");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Shutdown] FrameTimingService dispose hatası: {ex.Message}");
+                    }
+
+                    // Memory Pool
+                    try
+                    {
+                        var stats = UniCast.Encoder.Memory.FrameBufferPool.Instance.GetStats();
+                        Log.Debug("[Shutdown] MemoryPool stats: {Stats}", stats.ToString());
+                        UniCast.Encoder.Memory.FrameBufferPool.Instance.Dispose();
+                        Log.Debug("[Shutdown] FrameBufferPool disposed");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Shutdown] FrameBufferPool dispose hatası: {ex.Message}");
+                    }
+
+                    // Native Memory Pool
+                    try
+                    {
+                        UniCast.Encoder.Memory.NativeMemoryPool.Instance.Dispose();
+                        Log.Debug("[Shutdown] NativeMemoryPool disposed");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Shutdown] NativeMemoryPool dispose hatası: {ex.Message}");
+                    }
+
+                    // GPU Compositor
+                    try
+                    {
+                        UniCast.Encoder.Compositing.GpuCompositor.Instance.Dispose();
+                        Log.Debug("[Shutdown] GpuCompositor disposed");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Shutdown] GpuCompositor dispose hatası: {ex.Message}");
+                    }
+
+                    // Hardware Encoder Service
+                    try
+                    {
+                        UniCast.Encoder.Hardware.HardwareEncoderService.Instance.Dispose();
+                        Log.Debug("[Shutdown] HardwareEncoderService disposed");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Shutdown] HardwareEncoderService dispose hatası: {ex.Message}");
+                    }
+
+                    Log.Information("[Shutdown] Professional services cleanup tamamlandı");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "[Shutdown] Professional services cleanup hatası");
+                }
+            });
         }
 
         #endregion
