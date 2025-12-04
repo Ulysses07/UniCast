@@ -153,19 +153,33 @@ namespace UniCast.Encoder.Memory
 
         /// <summary>
         /// FrameBuffer al (struct wrapper)
+        /// DÜZELTME v32: NV12/YUV420 için doğru buffer boyutu ve stride hesaplama
         /// </summary>
         public FrameBuffer RentFrame(int width, int height, PixelFormat format = PixelFormat.BGRA)
         {
-            var bytesPerPixel = format switch
-            {
-                PixelFormat.BGRA => 4,
-                PixelFormat.BGR => 3,
-                PixelFormat.NV12 => 3 / 2, // Approximation
-                PixelFormat.YUV420 => 3 / 2,
-                _ => 4
-            };
+            int size;
+            int stride;
 
-            var size = width * height * bytesPerPixel;
+            // DÜZELTME v32: NV12/YUV420 için özel hesaplama
+            // YUV 4:2:0 formatı: Y plane (w*h) + UV interleaved (w*h/2) = w*h*1.5
+            // Not: C#'ta 3/2 = 1 (integer division), bu yüzden w*h*3/2 kullanıyoruz
+            if (format == PixelFormat.NV12 || format == PixelFormat.YUV420)
+            {
+                size = width * height * 3 / 2;  // 1.5 bytes per pixel average
+                stride = width;                  // NV12/YUV420'de stride = width (Y plane)
+            }
+            else
+            {
+                var bytesPerPixel = format switch
+                {
+                    PixelFormat.BGRA => 4,
+                    PixelFormat.BGR => 3,
+                    _ => 4
+                };
+                size = width * height * bytesPerPixel;
+                stride = width * bytesPerPixel;
+            }
+
             var buffer = Rent(size);
 
             return new FrameBuffer
@@ -173,7 +187,7 @@ namespace UniCast.Encoder.Memory
                 Data = buffer,
                 Width = width,
                 Height = height,
-                Stride = width * bytesPerPixel,
+                Stride = stride,
                 Format = format,
                 Pool = this
             };
@@ -289,30 +303,44 @@ namespace UniCast.Encoder.Memory
         public Memory<byte> AsMemory() => Data.AsMemory();
 
         /// <summary>
-        /// Belirli satırı al
+        /// Belirli bir bölgeyi Span olarak al
         /// </summary>
-        public Span<byte> GetRow(int y)
-        {
-            if (y < 0 || y >= Height)
-                throw new ArgumentOutOfRangeException(nameof(y));
+        public Span<byte> AsSpan(int start, int length) => Data.AsSpan(start, length);
 
-            return Data.AsSpan(y * Stride, Stride);
+        /// <summary>
+        /// Y plane'i al (NV12/YUV420 için)
+        /// </summary>
+        public Span<byte> GetYPlane()
+        {
+            if (Format != PixelFormat.NV12 && Format != PixelFormat.YUV420)
+                throw new InvalidOperationException("Y plane only available for YUV formats");
+
+            return Data.AsSpan(0, Width * Height);
         }
 
         /// <summary>
-        /// Buffer'ı temizle (zero fill)
+        /// UV plane'i al (NV12 için)
+        /// </summary>
+        public Span<byte> GetUVPlane()
+        {
+            if (Format != PixelFormat.NV12)
+                throw new InvalidOperationException("UV plane only available for NV12 format");
+
+            return Data.AsSpan(Width * Height, Width * Height / 2);
+        }
+
+        /// <summary>
+        /// Total buffer size in bytes
+        /// </summary>
+        public int TotalSize => Data?.Length ?? 0;
+
+        /// <summary>
+        /// Buffer'ı sıfırla (debug için)
         /// </summary>
         public void Clear()
         {
-            Array.Clear(Data);
-        }
-
-        /// <summary>
-        /// Başka buffer'dan kopyala
-        /// </summary>
-        public void CopyFrom(ReadOnlySpan<byte> source)
-        {
-            source.CopyTo(Data);
+            if (Data != null)
+                Array.Clear(Data, 0, Data.Length);
         }
 
         /// <summary>
@@ -320,7 +348,7 @@ namespace UniCast.Encoder.Memory
         /// </summary>
         public void Dispose()
         {
-            if (Data != null && Pool != null)
+            if (Pool != null && Data != null)
             {
                 Pool.Return(Data);
                 Data = null!;

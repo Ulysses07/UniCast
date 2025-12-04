@@ -12,6 +12,7 @@
 		<PackageReference Include="System.Management" Version="8.0.0" />
 		<PackageReference Include="Vortice.D3DCompiler" Version="3.6.2" />
 		<PackageReference Include="Vortice.Direct3D11" Version="3.6.2" />
+		<PackageReference Include="Vortice.DXGI" Version="3.6.2" />
 
 		<!-- Vortice DirectX bindings for GPU compositing -->
 		<PackageReference Include="Vortice.Mathematics" Version="1.9.2" />

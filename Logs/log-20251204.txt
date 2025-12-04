@@ -353,3 +353,234 @@
 2025-12-04 12:33:38.051 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
 2025-12-04 12:33:38.052 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
 2025-12-04 12:33:38.053 +03:00 [DBG] [App] Log Flush başlatılıyor...
+2025-12-04 12:45:04.227 +03:00 [INF] ===================================================
+2025-12-04 12:45:04.246 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-04 12:45:04.247 +03:00 [INF] ===================================================
+2025-12-04 12:45:04.256 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-04 12:45:04.263 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-04 12:45:04.590 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-04 12:45:04.711 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-04 12:45:04.793 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-04 12:45:04.794 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-04 12:45:04.824 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-04 12:45:04.829 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-04 12:45:04.831 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-04 12:45:04.864 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-04 12:45:04.866 +03:00 [DBG] [ChatBus] Initialized
+2025-12-04 12:45:04.868 +03:00 [DBG] [MainWindow] 0 adet chat ingestor başlatıldı
+2025-12-04 12:45:04.868 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-04 12:45:04.869 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-04 12:45:04.870 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-04 12:45:04.942 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-04 12:45:04.949 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-04 12:45:04.950 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-04 12:45:04.951 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-04 12:45:04.952 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-04 12:45:04.953 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-04 12:45:04.954 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-04 12:45:04.955 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-04 12:45:04.956 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-04 12:45:04.957 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-04 12:45:04.958 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-04 12:45:04.959 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-04 12:45:04.959 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-04 12:45:04.960 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-04 12:45:04.961 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-04 12:45:04.962 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-04 12:45:04.964 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-04 12:45:04.964 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-04 12:45:04.970 +03:00 [INF] [Startup] Toplam süre: 766ms
+2025-12-04 12:45:04.971 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-04 12:45:05.213 +03:00 [INF] [HardwareEncoder] Hardware encoder bulunamadı, software encoding kullanılacak
+2025-12-04 12:45:05.223 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-04 12:45:05.295 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-04 12:45:05.297 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-04 12:45:05.298 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#1)
+2025-12-04 12:45:05.302 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-04 12:45:05.304 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-04 12:45:05.305 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-04 12:45:33.510 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-04 12:45:34.010 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-04 12:45:34.019 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-04 12:45:34.026 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-04 12:45:34.037 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-04 12:45:34.039 +03:00 [INF] [MemoryProfiler] Monitoring durduruldu
+2025-12-04 12:45:34.040 +03:00 [INF] [HealthCheck] Durduruldu
+2025-12-04 12:45:34.041 +03:00 [INF] [PerfMonitor] Durduruldu
+2025-12-04 12:45:34.041 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-04 12:45:34.043 +03:00 [INF] ===================================================
+2025-12-04 12:45:34.043 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-04 12:45:34.044 +03:00 [INF] ===================================================
+2025-12-04 12:45:34.046 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-04 12:45:34.047 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-04 12:45:34.048 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-04 12:45:34.048 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-04 12:45:34.049 +03:00 [DBG] [App] Chat Sistemi tamamlandı
+2025-12-04 12:45:34.050 +03:00 [DBG] [App] Professional Services başlatılıyor...
+2025-12-04 12:45:34.054 +03:00 [DBG] [Shutdown] FrameTimingService disposed
+2025-12-04 12:45:34.056 +03:00 [DBG] [Shutdown] MemoryPool stats: Pool: 123,0 MB | Active: 0 | Pooled: 20 | Hit Rate: 100,0%
+2025-12-04 12:45:34.057 +03:00 [DBG] [Shutdown] FrameBufferPool disposed
+2025-12-04 12:45:34.059 +03:00 [DBG] [Shutdown] NativeMemoryPool disposed
+2025-12-04 12:45:34.067 +03:00 [DBG] [Shutdown] GpuCompositor disposed
+2025-12-04 12:45:34.068 +03:00 [DBG] [Shutdown] HardwareEncoderService disposed
+2025-12-04 12:45:34.069 +03:00 [INF] [Shutdown] Professional services cleanup tamamlandı
+2025-12-04 12:45:34.070 +03:00 [DBG] [App] Professional Services tamamlandı
+2025-12-04 12:45:34.070 +03:00 [DBG] [App] Ayarları Kaydet başlatılıyor...
+2025-12-04 12:45:34.072 +03:00 [DBG] [App] Ayarları Kaydet tamamlandı
+2025-12-04 12:45:34.072 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
+2025-12-04 12:45:34.073 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
+2025-12-04 12:45:34.074 +03:00 [DBG] [App] Log Flush başlatılıyor...
+2025-12-04 12:47:35.489 +03:00 [INF] ===================================================
+2025-12-04 12:47:35.509 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-04 12:47:35.510 +03:00 [INF] ===================================================
+2025-12-04 12:47:35.520 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-04 12:47:35.528 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-04 12:47:35.875 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-04 12:47:36.012 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-04 12:47:36.014 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-04 12:47:36.015 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-04 12:47:36.068 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-04 12:47:36.087 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-04 12:47:36.092 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-04 12:47:36.125 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-04 12:47:36.127 +03:00 [DBG] [ChatBus] Initialized
+2025-12-04 12:47:36.130 +03:00 [DBG] [MainWindow] 0 adet chat ingestor başlatıldı
+2025-12-04 12:47:36.131 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-04 12:47:36.132 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-04 12:47:36.133 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-04 12:47:36.200 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-04 12:47:36.207 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-04 12:47:36.208 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-04 12:47:36.209 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-04 12:47:36.210 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-04 12:47:36.211 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-04 12:47:36.212 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-04 12:47:36.213 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-04 12:47:36.213 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-04 12:47:36.215 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-04 12:47:36.216 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-04 12:47:36.216 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-04 12:47:36.217 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-04 12:47:36.218 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-04 12:47:36.218 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-04 12:47:36.219 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-04 12:47:36.221 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-04 12:47:36.221 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-04 12:47:36.227 +03:00 [INF] [Startup] Toplam süre: 764ms
+2025-12-04 12:47:36.228 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-04 12:47:36.288 +03:00 [INF] [HardwareEncoder] Hardware encoder bulunamadı, software encoding kullanılacak
+2025-12-04 12:47:36.309 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-04 12:47:36.390 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-04 12:47:36.392 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-04 12:47:36.394 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#2)
+2025-12-04 12:47:36.396 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-04 12:47:36.398 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-04 12:47:36.399 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-04 12:47:44.872 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-04 12:47:45.375 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-04 12:47:45.384 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-04 12:47:45.385 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-04 12:47:45.400 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-04 12:47:45.402 +03:00 [INF] [MemoryProfiler] Monitoring durduruldu
+2025-12-04 12:47:45.403 +03:00 [INF] [HealthCheck] Durduruldu
+2025-12-04 12:47:45.404 +03:00 [INF] [PerfMonitor] Durduruldu
+2025-12-04 12:47:45.405 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-04 12:47:45.406 +03:00 [INF] ===================================================
+2025-12-04 12:47:45.407 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-04 12:47:45.408 +03:00 [INF] ===================================================
+2025-12-04 12:47:45.410 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-04 12:47:45.412 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-04 12:47:45.413 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-04 12:47:45.414 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-04 12:47:45.415 +03:00 [DBG] [App] Chat Sistemi tamamlandı
+2025-12-04 12:47:45.416 +03:00 [DBG] [App] Professional Services başlatılıyor...
+2025-12-04 12:47:45.420 +03:00 [DBG] [Shutdown] FrameTimingService disposed
+2025-12-04 12:47:45.422 +03:00 [DBG] [Shutdown] MemoryPool stats: Pool: 123,0 MB | Active: 0 | Pooled: 20 | Hit Rate: 100,0%
+2025-12-04 12:47:45.424 +03:00 [DBG] [Shutdown] FrameBufferPool disposed
+2025-12-04 12:47:45.426 +03:00 [DBG] [Shutdown] NativeMemoryPool disposed
+2025-12-04 12:47:45.438 +03:00 [DBG] [Shutdown] GpuCompositor disposed
+2025-12-04 12:47:45.439 +03:00 [DBG] [Shutdown] HardwareEncoderService disposed
+2025-12-04 12:47:45.440 +03:00 [INF] [Shutdown] Professional services cleanup tamamlandı
+2025-12-04 12:47:45.441 +03:00 [DBG] [App] Professional Services tamamlandı
+2025-12-04 12:47:45.443 +03:00 [DBG] [App] Ayarları Kaydet başlatılıyor...
+2025-12-04 12:47:45.444 +03:00 [DBG] [App] Ayarları Kaydet tamamlandı
+2025-12-04 12:47:45.445 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
+2025-12-04 12:47:45.446 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
+2025-12-04 12:47:45.447 +03:00 [DBG] [App] Log Flush başlatılıyor...
+2025-12-04 12:50:18.886 +03:00 [INF] ===================================================
+2025-12-04 12:50:18.912 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-04 12:50:18.913 +03:00 [INF] ===================================================
+2025-12-04 12:50:18.924 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-04 12:50:18.932 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-04 12:50:19.285 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-04 12:50:19.426 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-04 12:50:19.428 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-04 12:50:19.430 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-04 12:50:19.477 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-04 12:50:19.494 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-04 12:50:19.498 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-04 12:50:19.525 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-04 12:50:19.528 +03:00 [DBG] [ChatBus] Initialized
+2025-12-04 12:50:19.530 +03:00 [DBG] [MainWindow] 0 adet chat ingestor başlatıldı
+2025-12-04 12:50:19.531 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-04 12:50:19.532 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-04 12:50:19.533 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-04 12:50:19.610 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-04 12:50:19.618 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-04 12:50:19.619 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-04 12:50:19.620 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-04 12:50:19.620 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-04 12:50:19.621 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-04 12:50:19.622 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-04 12:50:19.623 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-04 12:50:19.623 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-04 12:50:19.624 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-04 12:50:19.625 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-04 12:50:19.626 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-04 12:50:19.626 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-04 12:50:19.627 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-04 12:50:19.628 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-04 12:50:19.629 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-04 12:50:19.630 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-04 12:50:19.631 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-04 12:50:19.633 +03:00 [INF] [Startup] Toplam süre: 775ms
+2025-12-04 12:50:19.634 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-04 12:50:19.763 +03:00 [INF] [HardwareEncoder] Hardware encoder bulunamadı, software encoding kullanılacak
+2025-12-04 12:50:19.783 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-04 12:50:19.858 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-04 12:50:19.859 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-04 12:50:19.861 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#2)
+2025-12-04 12:50:19.862 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-04 12:50:19.863 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-04 12:50:19.864 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-04 12:50:21.813 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-04 12:50:22.309 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-04 12:50:22.316 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-04 12:50:22.317 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-04 12:50:22.334 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-04 12:50:22.335 +03:00 [INF] [MemoryProfiler] Monitoring durduruldu
+2025-12-04 12:50:22.336 +03:00 [INF] [HealthCheck] Durduruldu
+2025-12-04 12:50:22.337 +03:00 [INF] [PerfMonitor] Durduruldu
+2025-12-04 12:50:22.338 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-04 12:50:22.339 +03:00 [INF] ===================================================
+2025-12-04 12:50:22.340 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-04 12:50:22.341 +03:00 [INF] ===================================================
+2025-12-04 12:50:22.342 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-04 12:50:22.343 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-04 12:50:22.344 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-04 12:50:22.345 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-04 12:50:22.346 +03:00 [DBG] [App] Chat Sistemi tamamlandı
+2025-12-04 12:50:22.347 +03:00 [DBG] [App] Professional Services başlatılıyor...
+2025-12-04 12:50:22.351 +03:00 [DBG] [Shutdown] FrameTimingService disposed
+2025-12-04 12:50:22.353 +03:00 [DBG] [Shutdown] MemoryPool stats: Pool: 123,0 MB | Active: 0 | Pooled: 20 | Hit Rate: 100,0%
+2025-12-04 12:50:22.354 +03:00 [DBG] [Shutdown] FrameBufferPool disposed
+2025-12-04 12:50:22.356 +03:00 [DBG] [Shutdown] NativeMemoryPool disposed
+2025-12-04 12:50:22.363 +03:00 [DBG] [Shutdown] GpuCompositor disposed
+2025-12-04 12:50:22.364 +03:00 [DBG] [Shutdown] HardwareEncoderService disposed
+2025-12-04 12:50:22.365 +03:00 [INF] [Shutdown] Professional services cleanup tamamlandı
+2025-12-04 12:50:22.366 +03:00 [DBG] [App] Professional Services tamamlandı
+2025-12-04 12:50:22.367 +03:00 [DBG] [App] Ayarları Kaydet başlatılıyor...
+2025-12-04 12:50:22.368 +03:00 [DBG] [App] Ayarları Kaydet tamamlandı
+2025-12-04 12:50:22.369 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
+2025-12-04 12:50:22.370 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
+2025-12-04 12:50:22.371 +03:00 [DBG] [App] Log Flush başlatılıyor...
