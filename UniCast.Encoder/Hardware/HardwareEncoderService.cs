@@ -729,7 +729,7 @@ namespace UniCast.Encoder.Hardware
                 await process.WaitForExitAsync(ct);
 
                 // V..... h264_nvenc           NVIDIA NVENC H.264 encoder (codec h264)
-                var regex = new Regex(@"V\.{5}\s+(\w+)\s+", RegexOptions.Multiline);
+                var regex = new Regex(@"^\s*V.{5}\s+(\w+)", RegexOptions.Multiline);
                 foreach (Match match in regex.Matches(output))
                 {
                     encoders.Add(match.Groups[1].Value);
