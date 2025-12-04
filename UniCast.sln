@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniCast.Capture", "Unicast.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniCast.LicenseServer", "UniCast.LicenseServer\UniCast.LicenseServer.csproj", "{C8FF8E41-F545-488E-AAFE-56C7F53E41EB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniCast.Tests", "UniCast.Tests\UniCast.Tests.csproj", "{91DD831F-9834-45C7-AB98-9EC44FF464EF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,14 @@ Global
 		{C8FF8E41-F545-488E-AAFE-56C7F53E41EB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C8FF8E41-F545-488E-AAFE-56C7F53E41EB}.Release|x64.ActiveCfg = Release|Any CPU
 		{C8FF8E41-F545-488E-AAFE-56C7F53E41EB}.Release|x64.Build.0 = Release|Any CPU
+		{91DD831F-9834-45C7-AB98-9EC44FF464EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91DD831F-9834-45C7-AB98-9EC44FF464EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91DD831F-9834-45C7-AB98-9EC44FF464EF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{91DD831F-9834-45C7-AB98-9EC44FF464EF}.Debug|x64.Build.0 = Debug|Any CPU
+		{91DD831F-9834-45C7-AB98-9EC44FF464EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91DD831F-9834-45C7-AB98-9EC44FF464EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91DD831F-9834-45C7-AB98-9EC44FF464EF}.Release|x64.ActiveCfg = Release|Any CPU
+		{91DD831F-9834-45C7-AB98-9EC44FF464EF}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
