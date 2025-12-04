@@ -503,7 +503,7 @@ namespace UniCast.Encoder.Effects
                         if (!isLast)
                         {
                             current = next;
-                            next = (next == temp1) ? temp2 : temp1;
+                            next = (ReferenceEquals(next.Data, temp1.Data)) ? temp2 : temp1;
                         }
                     }
 

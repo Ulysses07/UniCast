@@ -79,3 +79,83 @@
 2025-12-04 09:59:12.668 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
 2025-12-04 09:59:12.669 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
 2025-12-04 09:59:12.670 +03:00 [DBG] [App] Log Flush başlatılıyor...
+2025-12-04 11:12:15.533 +03:00 [INF] ===================================================
+2025-12-04 11:12:15.552 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-04 11:12:15.553 +03:00 [INF] ===================================================
+2025-12-04 11:12:15.562 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-04 11:12:15.569 +03:00 [ERR] [ConfigValidator] Konfigürasyon hataları: 1 error, 1 warning
+2025-12-04 11:12:15.571 +03:00 [FTL] [Config] Kritik hata: FFmpeg bulunamadı
+2025-12-04 11:12:21.414 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 1
+2025-12-04 11:12:21.426 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-04 11:12:21.428 +03:00 [INF] ===================================================
+2025-12-04 11:12:21.429 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-04 11:12:21.430 +03:00 [INF] ===================================================
+2025-12-04 11:12:21.431 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-04 11:12:21.434 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-04 11:12:21.435 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-04 11:12:21.488 +03:00 [DBG] [ChatBus] Initialized
+2025-12-04 11:12:21.489 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-04 11:13:18.134 +03:00 [INF] ===================================================
+2025-12-04 11:13:18.157 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-04 11:13:18.158 +03:00 [INF] ===================================================
+2025-12-04 11:13:18.167 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-04 11:13:18.177 +03:00 [ERR] [ConfigValidator] Konfigürasyon hataları: 1 error, 1 warning
+2025-12-04 11:13:18.179 +03:00 [FTL] [Config] Kritik hata: FFmpeg bulunamadı
+2025-12-04 11:13:21.845 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 1
+2025-12-04 11:13:21.859 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-04 11:13:21.860 +03:00 [INF] ===================================================
+2025-12-04 11:13:21.861 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-04 11:13:21.862 +03:00 [INF] ===================================================
+2025-12-04 11:13:21.863 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-04 11:13:21.866 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-04 11:13:21.867 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-04 11:13:21.873 +03:00 [DBG] [ChatBus] Initialized
+2025-12-04 11:13:21.874 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-04 11:13:24.885 +03:00 [WRN] [App] Chat Sistemi timeout (3000ms)
+2025-12-04 11:13:24.886 +03:00 [DBG] [App] Professional Services başlatılıyor...
+2025-12-04 11:13:24.972 +03:00 [DBG] [Shutdown] FrameTimingService disposed
+2025-12-04 11:13:24.983 +03:00 [DBG] [Shutdown] MemoryPool stats: Pool: 91,4 MB | Active: 0 | Pooled: 16 | Hit Rate: 100,0%
+2025-12-04 11:13:24.984 +03:00 [DBG] [Shutdown] FrameBufferPool disposed
+2025-12-04 11:13:24.986 +03:00 [DBG] [Shutdown] NativeMemoryPool disposed
+2025-12-04 11:13:25.138 +03:00 [DBG] [Shutdown] GpuCompositor disposed
+2025-12-04 11:13:25.140 +03:00 [DBG] [Shutdown] HardwareEncoderService disposed
+2025-12-04 11:13:25.141 +03:00 [INF] [Shutdown] Professional services cleanup tamamlandı
+2025-12-04 11:13:25.142 +03:00 [DBG] [App] Professional Services tamamlandı
+2025-12-04 11:13:25.143 +03:00 [DBG] [App] Ayarları Kaydet başlatılıyor...
+2025-12-04 11:13:25.899 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#2)
+2025-12-04 11:13:27.134 +03:00 [WRN] [App] Ayarları Kaydet timeout (2000ms)
+2025-12-04 11:13:27.136 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
+2025-12-04 11:13:27.137 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
+2025-12-04 11:13:27.138 +03:00 [DBG] [App] Log Flush başlatılıyor...
+2025-12-04 11:13:43.563 +03:00 [INF] ===================================================
+2025-12-04 11:13:43.584 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-04 11:13:43.585 +03:00 [INF] ===================================================
+2025-12-04 11:13:43.594 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-04 11:13:43.602 +03:00 [ERR] [ConfigValidator] Konfigürasyon hataları: 1 error, 1 warning
+2025-12-04 11:13:43.605 +03:00 [FTL] [Config] Kritik hata: FFmpeg bulunamadı
+2025-12-04 11:13:44.715 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 1
+2025-12-04 11:13:44.728 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-04 11:13:44.729 +03:00 [INF] ===================================================
+2025-12-04 11:13:44.731 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-04 11:13:44.731 +03:00 [INF] ===================================================
+2025-12-04 11:13:44.733 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-04 11:13:44.735 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-04 11:13:44.736 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-04 11:13:44.741 +03:00 [DBG] [ChatBus] Initialized
+2025-12-04 11:13:44.743 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-04 11:13:47.756 +03:00 [WRN] [App] Chat Sistemi timeout (3000ms)
+2025-12-04 11:13:47.757 +03:00 [DBG] [App] Professional Services başlatılıyor...
+2025-12-04 11:13:47.767 +03:00 [DBG] [Shutdown] FrameTimingService disposed
+2025-12-04 11:13:47.780 +03:00 [DBG] [Shutdown] MemoryPool stats: Pool: 91,4 MB | Active: 0 | Pooled: 16 | Hit Rate: 100,0%
+2025-12-04 11:13:47.781 +03:00 [DBG] [Shutdown] FrameBufferPool disposed
+2025-12-04 11:13:47.784 +03:00 [DBG] [Shutdown] NativeMemoryPool disposed
+2025-12-04 11:13:47.940 +03:00 [DBG] [Shutdown] GpuCompositor disposed
+2025-12-04 11:13:47.942 +03:00 [DBG] [Shutdown] HardwareEncoderService disposed
+2025-12-04 11:13:47.943 +03:00 [INF] [Shutdown] Professional services cleanup tamamlandı
+2025-12-04 11:13:47.944 +03:00 [DBG] [App] Professional Services tamamlandı
+2025-12-04 11:13:47.945 +03:00 [DBG] [App] Ayarları Kaydet başlatılıyor...
+2025-12-04 11:13:48.769 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#2)
+2025-12-04 11:13:49.955 +03:00 [WRN] [App] Ayarları Kaydet timeout (2000ms)
+2025-12-04 11:13:49.956 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
+2025-12-04 11:13:49.957 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
+2025-12-04 11:13:49.958 +03:00 [DBG] [App] Log Flush başlatılıyor...

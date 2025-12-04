@@ -159,7 +159,7 @@ namespace UniCast.Encoder.Compositing
                 AddressW = TextureAddressMode.Clamp,
                 MipLODBias = 0,
                 MaxAnisotropy = 1,
-                ComparisonFunction = ComparisonFunction.Never,
+                ComparisonFunc = ComparisonFunction.Never,
                 MinLOD = 0,
                 MaxLOD = float.MaxValue
             };
