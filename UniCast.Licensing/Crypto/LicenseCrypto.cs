@@ -69,7 +69,7 @@ pwIDAQAB
                     eventLog.Source = "UniCast";
                     eventLog.WriteEntry(errorMessage, System.Diagnostics.EventLogEntryType.Error);
                 }
-                catch { /* Event log yazılamazsa devam et */ }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[LicenseCrypto] Event log yazma hatası (beklenen): {ex.Message}"); }
 #endif
             }
         }

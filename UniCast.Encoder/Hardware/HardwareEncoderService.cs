@@ -699,7 +699,7 @@ namespace UniCast.Encoder.Hardware
                         return true;
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HardwareEncoder] Intel iGPU detection hatası: {ex.Message}"); }
 
             return false;
         }

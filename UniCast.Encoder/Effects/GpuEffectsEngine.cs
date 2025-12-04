@@ -174,7 +174,7 @@ namespace UniCast.Encoder.Effects
         public bool GaussianBlur(FrameBuffer input, FrameBuffer output, float radius, float sigma = 0)
         {
             if (sigma <= 0) sigma = radius / 3f;
-            
+
             return ApplyEffect(input, output, new GaussianBlurEffect
             {
                 Radius = radius,
@@ -614,9 +614,9 @@ namespace UniCast.Encoder.Effects
     public class RadialBlurEffect : IEffect { public float CenterX, CenterY, Strength; }
 
     // Color Effects
-    public class ColorCorrectionEffect : IEffect 
-    { 
-        public float Brightness, Contrast, Saturation, Gamma, Temperature, Tint; 
+    public class ColorCorrectionEffect : IEffect
+    {
+        public float Brightness, Contrast, Saturation, Gamma, Temperature, Tint;
     }
     public class HSLEffect : IEffect { public float HueShift, Saturation, Lightness; }
     public class LUTEffect : IEffect { public byte[]? LutData; public float Intensity; }
@@ -629,10 +629,10 @@ namespace UniCast.Encoder.Effects
     public class NoiseReductionEffect : IEffect { public float Strength; }
 
     // Special Effects
-    public class ChromaKeyEffect : IEffect 
-    { 
-        public Vector3 KeyColor; 
-        public float Tolerance, Softness, SpillReduction; 
+    public class ChromaKeyEffect : IEffect
+    {
+        public Vector3 KeyColor;
+        public float Tolerance, Softness, SpillReduction;
     }
     public class VignetteEffect : IEffect { public float Intensity, Radius; }
     public class FilmGrainEffect : IEffect { public float Intensity, Size; public int Seed; }
@@ -766,7 +766,7 @@ namespace UniCast.Encoder.Effects
             Parallel.For(0, src.Length / 4, i =>
             {
                 int idx = i * 4;
-                
+
                 float b = src[idx] / 255f;
                 float g = src[idx + 1] / 255f;
                 float r = src[idx + 2] / 255f;
@@ -804,7 +804,7 @@ namespace UniCast.Encoder.Effects
             Parallel.For(0, src.Length / 4, i =>
             {
                 int idx = i * 4;
-                
+
                 float b = src[idx] / 255f;
                 float g = src[idx + 1] / 255f;
                 float r = src[idx + 2] / 255f;
@@ -843,11 +843,11 @@ namespace UniCast.Encoder.Effects
             Parallel.For(0, h, y =>
             {
                 int srcY = flip.Vertical ? (h - 1 - y) : y;
-                
+
                 for (int x = 0; x < w; x++)
                 {
                     int srcX = flip.Horizontal ? (w - 1 - x) : x;
-                    
+
                     int srcIdx = srcY * stride + srcX * 4;
                     int dstIdx = y * stride + x * 4;
 
@@ -937,7 +937,7 @@ namespace UniCast.Encoder.Effects
                     return true;
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[GpuEffects] Native check hatası: {ex.Message}"); }
             return false;
         }
 
@@ -952,7 +952,7 @@ namespace UniCast.Encoder.Effects
                     return true;
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[GpuEffects] Native check hatası: {ex.Message}"); }
             return false;
         }
 

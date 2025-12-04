@@ -13,6 +13,7 @@ namespace UniCast.App
 {
     /// <summary>
     /// DÜZELTME v18: Gelişmiş Graceful Shutdown
+    /// DÜZELTME v31: Timeout ve async pattern düzeltmeleri
     /// App partial class - Kapatma işlemleri
     /// </summary>
     public partial class App
@@ -23,7 +24,7 @@ namespace UniCast.App
         {
             public const int TotalTimeoutMs = 10000;      // Toplam max bekleme
             public const int StreamStopTimeoutMs = 5000;  // Stream durdurma timeout
-            public const int IngestorStopTimeoutMs = 3000; // Ingestor durdurma timeout
+            public const int IngestorStopTimeoutMs = 1000; // DÜZELTME v31: 3000 -> 1000ms
             public const int SaveSettingsTimeoutMs = 2000; // Ayar kaydetme timeout
         }
 
@@ -38,6 +39,7 @@ namespace UniCast.App
         /// <summary>
         /// DÜZELTME v18: Gelişmiş graceful shutdown
         /// DÜZELTME v29: Professional services cleanup eklendi
+        /// DÜZELTME v31: Timeout ve async pattern düzeltmeleri
         /// Bu metod App.xaml.cs OnExit'ten çağrılmalıdır
         /// </summary>
         public void PerformGracefulShutdown()
@@ -97,6 +99,7 @@ namespace UniCast.App
 
         /// <summary>
         /// Shutdown task'ı timeout ile çalıştır
+        /// DÜZELTME v31: Task.WaitAny ile doğru async pattern
         /// </summary>
         private void ExecuteShutdownTask(string name, Func<Task> action, int timeoutMs)
         {
@@ -104,19 +107,25 @@ namespace UniCast.App
             {
                 Log.Debug("[App] {TaskName} başlatılıyor...", name);
 
-                using var cts = new CancellationTokenSource(timeoutMs);
                 var task = action();
 
-                if (!task.Wait(timeoutMs))
+                // DÜZELTME v31: Task.WaitAny kullanarak timeout kontrolü
+                var completedIndex = Task.WaitAny(new[] { task }, timeoutMs);
+
+                if (completedIndex == -1) // -1 = timeout
                 {
                     Log.Warning("[App] {TaskName} timeout ({TimeoutMs}ms)", name, timeoutMs);
+                }
+                else if (task.IsFaulted)
+                {
+                    Log.Warning(task.Exception?.InnerException, "[App] {TaskName} hata ile tamamlandı", name);
                 }
                 else
                 {
                     Log.Debug("[App] {TaskName} tamamlandı", name);
                 }
             }
-            catch (AggregateException ae) when (ae.InnerException is TaskCanceledException)
+            catch (AggregateException ae) when (ae.InnerException is TaskCanceledException or OperationCanceledException)
             {
                 Log.Debug("[App] {TaskName} iptal edildi", name);
             }
@@ -152,36 +161,43 @@ namespace UniCast.App
 
         /// <summary>
         /// Chat sistemini durdur
+        /// DÜZELTME v31: Task.Run ile sarmalama ve gereksiz delay kaldırıldı
         /// </summary>
-        private async Task StopChatSystemAsync()
+        private Task StopChatSystemAsync()
         {
-            try
+            return Task.Run(() =>
             {
-                // ChatBus'u temizle
-                ChatBus.Instance.ClearSubscribers();
-                await Task.Delay(100);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "[App] Chat sistemi durdurma hatası");
-            }
+                try
+                {
+                    // ChatBus'u temizle
+                    ChatBus.Instance.ClearSubscribers();
+                    // DÜZELTME v31: Task.Delay kaldırıldı - gereksiz bekleme
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "[App] Chat sistemi durdurma hatası");
+                }
+            });
         }
 
         /// <summary>
         /// Ayarları kaydet
+        /// DÜZELTME v31: Task.Run ile senkron Save sarmalandı
         /// </summary>
-        private async Task SaveSettingsAsync()
+        private Task SaveSettingsAsync()
         {
-            try
+            return Task.Run(() =>
             {
-                // Pending değişiklikleri kaydet
-                SettingsStore.Save();
-                await Task.Delay(100);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "[App] Ayar kaydetme hatası");
-            }
+                try
+                {
+                    // Cleanup hem timer'ı durdurur hem de kaydeder
+                    SettingsStore.Cleanup();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "[App] Ayar kaydetme hatası");
+                }
+            });
         }
 
         /// <summary>

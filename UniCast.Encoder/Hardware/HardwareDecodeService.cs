@@ -393,7 +393,7 @@ namespace UniCast.Encoder.Hardware
                     foreach (System.Management.ManagementObject obj in searcher.Get())
                     {
                         var name = obj["Name"]?.ToString()?.ToLowerInvariant() ?? "";
-                        
+
                         if (name.Contains("nvidia"))
                             return GpuVendor.Nvidia;
                         if (name.Contains("amd") || name.Contains("radeon"))
@@ -402,7 +402,7 @@ namespace UniCast.Encoder.Hardware
                             return GpuVendor.Intel;
                     }
                 }
-                catch { }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HardwareDecode] Detection hatası: {ex.Message}"); }
 
                 return GpuVendor.Unknown;
             });
@@ -422,7 +422,7 @@ namespace UniCast.Encoder.Hardware
                         return true;
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HardwareDecode] Detection hatası: {ex.Message}"); }
 
             return false;
         }

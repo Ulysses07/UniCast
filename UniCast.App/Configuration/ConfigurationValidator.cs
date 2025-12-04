@@ -8,6 +8,7 @@ namespace UniCast.App.Configuration
 {
     /// <summary>
     /// DÜZELTME v19: Uygulama başlangıcında konfigürasyon doğrulama
+    /// DÜZELTME v31: FFmpeg path'leri güncellendi
     /// Gerekli dosyalar, ayarlar ve izinleri kontrol eder
     /// </summary>
     public sealed class ConfigurationValidator
@@ -184,6 +185,7 @@ namespace UniCast.App.Configuration
 
     /// <summary>
     /// FFmpeg varlık kontrolü
+    /// DÜZELTME v31: External/ ve Externals/ klasörleri eklendi
     /// </summary>
     public class FFmpegExistsRule : IConfigurationRule
     {
@@ -193,10 +195,13 @@ namespace UniCast.App.Configuration
         {
             var result = new RuleResult();
 
+            // DÜZELTME v31: FfmpegProcess.cs ile uyumlu tüm path'ler
             var ffmpegPaths = new[]
             {
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg", "ffmpeg.exe")
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg", "ffmpeg.exe"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "External", "ffmpeg.exe"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Externals", "ffmpeg.exe")
             };
 
             var found = ffmpegPaths.Any(File.Exists);
@@ -216,7 +221,8 @@ namespace UniCast.App.Configuration
                     Rule = Name,
                     Message = "FFmpeg bulunamadı",
                     IsCritical = true,
-                    Suggestion = "FFmpeg'i indirin ve uygulama klasörüne koyun veya PATH'e ekleyin"
+                    Suggestion = "FFmpeg'i indirin ve uygulama klasörüne (External/) koyun veya PATH'e ekleyin.\n" +
+                                "NVENC için: https://github.com/BtbN/FFmpeg-Builds/releases"
                 });
             }
 

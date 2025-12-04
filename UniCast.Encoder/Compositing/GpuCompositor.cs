@@ -550,7 +550,7 @@ namespace UniCast.Encoder.Compositing
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[GpuCompositor] WMI query hatası: {ex.Message}"); }
 
             return "Unknown GPU";
         }
