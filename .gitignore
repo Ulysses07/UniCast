@@ -4,3 +4,5 @@ obj/
 External/
 /UniCast.App/Properties/PublishProfiles/FolderProfile.pubxml
 /UniCast.App/Properties/PublishProfiles/FolderProfile.pubxml.user
+
+ffmpeg.exe
