@@ -5,8 +5,10 @@ using MockFactory = UniCast.Tests.Helpers.MockFactory;
 namespace UniCast.Tests.Core;
 
 /// <summary>
-/// ChatBus unit testleri
+/// ChatBus unit testleri.
+/// Collection attribute ile sequential çalıştırılır çünkü ChatBus singleton.
 /// </summary>
+[Collection("ChatBus")]
 public class ChatBusTests : TestBase
 {
     #region Publish Tests
@@ -17,9 +19,7 @@ public class ChatBusTests : TestBase
         // Arrange
         var bus = ChatBus.Instance;
         bus.ClearSubscribers();
-        bus.ResetStatistics(); // Rate limiting'i de temizler
-
-        Thread.Sleep(200); // Paralel testlerden izolasyon için bekle
+        bus.ResetStatistics();
 
         ChatMessage? receivedMessage = null;
         bus.MessageReceived += (sender, e) => receivedMessage = e.Message;
@@ -66,14 +66,8 @@ public class ChatBusTests : TestBase
         bus.ClearSubscribers();
         bus.ResetStatistics();
 
-        Thread.Sleep(200); // Paralel testlerden izolasyon için bekle
-
         ChatMessage? mergedMessage = null;
-        bus.OnMerged += msg =>
-        {
-            if (msg.Username == "twitchuser")
-                mergedMessage = msg;
-        };
+        bus.OnMerged += msg => mergedMessage = msg;
 
         var message = new ChatMessage
         {
@@ -87,7 +81,7 @@ public class ChatBusTests : TestBase
 
         // Assert
         mergedMessage.Should().NotBeNull();
-        mergedMessage!.Username.Should().Be("twitchuser");
+        mergedMessage!.Platform.Should().Be(ChatPlatform.Twitch);
 
         // Cleanup
         bus.ClearSubscribers();
@@ -105,8 +99,6 @@ public class ChatBusTests : TestBase
         bus.ClearSubscribers();
         bus.ResetStatistics();
 
-        Thread.Sleep(200); // Paralel testlerden izolasyon için bekle
-
         var message = new ChatMessage
         {
             Platform = ChatPlatform.TikTok,
@@ -119,7 +111,7 @@ public class ChatBusTests : TestBase
         var stats = bus.GetStatistics();
 
         // Assert
-        stats.TotalMessagesReceived.Should().BeGreaterOrEqualTo(1);
+        stats.TotalMessagesReceived.Should().Be(1);
     }
 
     [Fact]
@@ -150,8 +142,6 @@ public class ChatBusTests : TestBase
         bus.ClearSubscribers();
         bus.ResetStatistics();
 
-        Thread.Sleep(200); // Paralel testlerden izolasyon için bekle
-
         var receivedCount = 0;
         bus.MessageReceived += (sender, e) => Interlocked.Increment(ref receivedCount);
 
@@ -180,9 +170,7 @@ public class ChatBusTests : TestBase
         // Arrange
         var bus = ChatBus.Instance;
         bus.ClearSubscribers();
-        bus.ResetStatistics(); // Bu artık rate limiting'i de temizliyor
-
-        Thread.Sleep(150); // Önceki testlerden kalan rate limit için bekle
+        bus.ResetStatistics();
 
         var receivedCount = 0;
         bus.MessageReceived += (sender, e) => Interlocked.Increment(ref receivedCount);
@@ -192,8 +180,8 @@ public class ChatBusTests : TestBase
         bus.Publish(new ChatMessage { Platform = ChatPlatform.Twitch, Message = "Twitch" });
         bus.Publish(new ChatMessage { Platform = ChatPlatform.TikTok, Message = "TikTok" });
 
-        // Assert - Parallel test execution nedeniyle en az 2 mesaj gelmeli
-        receivedCount.Should().BeGreaterOrEqualTo(2);
+        // Assert - Sequential çalışır, 3 mesaj gelmeli
+        receivedCount.Should().Be(3);
 
         // Cleanup
         bus.ClearSubscribers();
@@ -229,18 +217,11 @@ public class ChatBusTests : TestBase
     {
         // Arrange
         var bus = ChatBus.Instance;
-        bus.ClearSubscribers(); // Önceki handler'ları temizle
+        bus.ClearSubscribers();
         bus.ResetStatistics();
 
-        Thread.Sleep(200); // Paralel testlerden izolasyon için bekle
-
         var tcs = new TaskCompletionSource<ChatMessage>();
-        // Sadece beklenen mesajı al (diğer testlerden gelen mesajları filtrele)
-        bus.MessageReceived += (sender, e) =>
-        {
-            if (e.Message.Username == "instauser")
-                tcs.TrySetResult(e.Message);
-        };
+        bus.MessageReceived += (sender, e) => tcs.TrySetResult(e.Message);
 
         var message = new ChatMessage
         {
@@ -255,7 +236,7 @@ public class ChatBusTests : TestBase
         // Assert
         var received = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
         received.Should().NotBeNull();
-        received.Username.Should().Be("instauser");
+        received.Platform.Should().Be(ChatPlatform.Instagram);
 
         // Cleanup
         bus.ClearSubscribers();
@@ -269,21 +250,15 @@ public class ChatBusTests : TestBase
         bus.ClearSubscribers();
         bus.ResetStatistics();
 
-        Thread.Sleep(200); // Paralel testlerden izolasyon için bekle
-
         var receivedCount = 0;
-        bus.MessageReceived += (sender, e) =>
-        {
-            if (e.Message.Message == "cancelled_test_message")
-                Interlocked.Increment(ref receivedCount);
-        };
+        bus.MessageReceived += (sender, e) => Interlocked.Increment(ref receivedCount);
 
         var cancelledToken = MockFactory.CreateCancelledToken();
 
         // Act
-        await bus.PublishAsync(new ChatMessage { Message = "cancelled_test_message" }, cancelledToken);
+        await bus.PublishAsync(new ChatMessage { Message = "test" }, cancelledToken);
 
-        // Assert - Cancelled token ile mesaj gelmemeli
+        // Assert
         receivedCount.Should().Be(0);
 
         // Cleanup
@@ -300,9 +275,7 @@ public class ChatBusTests : TestBase
         // Arrange
         var bus = ChatBus.Instance;
         bus.ClearSubscribers();
-        bus.ResetStatistics(); // Bu artık rate limiting'i de temizliyor
-
-        Thread.Sleep(150); // Önceki testlerden kalan rate limit için bekle
+        bus.ResetStatistics();
 
         var receivedMessages = new List<ChatMessage>();
         bus.MessageReceived += (sender, e) => receivedMessages.Add(e.Message);
@@ -317,8 +290,8 @@ public class ChatBusTests : TestBase
         // Act
         bus.PublishBatch(messages);
 
-        // Assert - Parallel test execution nedeniyle en az 2 mesaj gelmeli
-        receivedMessages.Should().HaveCountGreaterOrEqualTo(2);
+        // Assert - Sequential çalışır, 3 mesaj gelmeli
+        receivedMessages.Should().HaveCount(3);
 
         // Cleanup
         bus.ClearSubscribers();

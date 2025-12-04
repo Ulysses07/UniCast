@@ -10,9 +10,9 @@ namespace UniCast.Tests.Integration
 {
     /// <summary>
     /// Integration tests for streaming pipeline.
-    /// Tests end-to-end scenarios without actual network calls.
+    /// ChatBus singleton olduğu için aynı collection'da sequential çalıştırılır.
     /// </summary>
-    [Collection("Integration")]
+    [Collection("ChatBus")]
     public class StreamingPipelineTests : IDisposable
     {
         private readonly CancellationTokenSource _cts;
@@ -33,9 +33,7 @@ namespace UniCast.Tests.Integration
             // Arrange
             var bus = ChatBus.Instance;
             bus.ClearSubscribers();
-            bus.ResetStatistics(); // Rate limiting'i de temizler
-
-            Thread.Sleep(200); // Rate limit state temizlenmesi için bekle
+            bus.ResetStatistics();
 
             var receivedMessages = new System.Collections.Concurrent.ConcurrentBag<ChatMessage>();
 
@@ -44,7 +42,7 @@ namespace UniCast.Tests.Integration
 
             try
             {
-                // Act - Simulate messages from multiple platforms (farklı platformlar rate limit'e takılmaz)
+                // Act - Farklı platformlardan mesaj (rate limit'e takılmaz)
                 bus.Publish(new ChatMessage
                 {
                     Platform = ChatPlatform.YouTube,
@@ -69,8 +67,11 @@ namespace UniCast.Tests.Integration
                     Timestamp = DateTime.UtcNow
                 });
 
-                // Assert - Parallel test execution nedeniyle en az 2 mesaj gelmeli
-                receivedMessages.Should().HaveCountGreaterOrEqualTo(2);
+                // Assert - Sequential çalıştığı için 3 mesaj gelmeli
+                receivedMessages.Should().HaveCount(3);
+                receivedMessages.Should().Contain(m => m.Platform == ChatPlatform.YouTube);
+                receivedMessages.Should().Contain(m => m.Platform == ChatPlatform.Twitch);
+                receivedMessages.Should().Contain(m => m.Platform == ChatPlatform.TikTok);
             }
             finally
             {
@@ -85,19 +86,18 @@ namespace UniCast.Tests.Integration
             // Arrange
             var bus = ChatBus.Instance;
             bus.ClearSubscribers();
-            bus.ResetStatistics(); // Rate limiting'i de temizler
+            bus.ResetStatistics();
 
-            Thread.Sleep(200); // Rate limit state temizlenmesi için bekle
-
-            // Act - Farklı platformlardan mesaj gönder (rate limit'e takılmaz)
+            // Act - Farklı platformlardan mesaj gönder
             bus.Publish(new ChatMessage { Platform = ChatPlatform.YouTube, Username = "A", Message = "1", Timestamp = DateTime.UtcNow });
             bus.Publish(new ChatMessage { Platform = ChatPlatform.Twitch, Username = "B", Message = "2", Timestamp = DateTime.UtcNow });
             bus.Publish(new ChatMessage { Platform = ChatPlatform.Instagram, Username = "C", Message = "3", Timestamp = DateTime.UtcNow });
 
             var stats = bus.GetStatistics();
 
-            // Assert - Parallel test execution nedeniyle en az 1 mesaj takip edilmeli
-            stats.TotalMessagesReceived.Should().BeGreaterOrEqualTo(1);
+            // Assert - Sequential çalıştığı için 3 mesaj takip edilmeli
+            stats.TotalMessagesReceived.Should().Be(3);
+            stats.ActivePlatforms.Should().Be(3);
         }
 
         [Fact]
