@@ -378,7 +378,11 @@ namespace UniCast.App
                 return;
 
             _controlViewModel = new ControlViewModel();
-            _controlView = new ControlView { DataContext = _controlViewModel };
+            _chatViewModel = new ChatViewModel();
+            _controlView = new ControlView(_controlViewModel, _chatViewModel);
+
+            // ChatBus'ı bağla
+            _controlView.BindChatBus(ChatBus.Instance);
 
             if (ControlTabContent != null)
                 ControlTabContent.Content = _controlView;

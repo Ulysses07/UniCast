@@ -5,105 +5,169 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              d:DesignHeight="500" d:DesignWidth="900">
 
-    <Grid Margin="30">
+    <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+        <!-- ÜST BAR: Durum + Toggle Buton + Metrikler -->
+        <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="15" Margin="0,0,0,15">
             <Grid>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="DURUM:" FontWeight="Bold" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding Status}" FontSize="20" FontWeight="Bold" Margin="10,0,0,0" Foreground="{StaticResource Primary}"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Durum -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="DURUM:" FontWeight="Bold" Foreground="{StaticResource TextMuted}" 
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding Status}" FontSize="16" FontWeight="Bold" 
+                               Foreground="{StaticResource Primary}" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <TextBlock Text="{Binding Advisory}" HorizontalAlignment="Right" VerticalAlignment="Center" 
-                           Foreground="Orange" FontWeight="SemiBold" TextWrapping="Wrap" MaxWidth="400"/>
+                <!-- Toggle Yayın Butonu -->
+                <ToggleButton x:Name="StreamToggleButton" Grid.Column="1" 
+                              IsChecked="{Binding IsRunning, Mode=OneWay}"
+                              Width="160" Height="38" Margin="190,0,0,0"
+                              Cursor="Hand" Click="StreamToggle_Click">
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="border" CornerRadius="6" 
+                                                Background="#2E7D32" BorderThickness="0">
+                                            <StackPanel Orientation="Horizontal" 
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock x:Name="icon" Text="▶" FontSize="14" 
+                                                           Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="text" Text="YAYINI BAŞLAT" 
+                                                           FontSize="13" FontWeight="Bold" 
+                                                           Foreground="White" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="#C62828"/>
+                                                <Setter TargetName="icon" Property="Text" Value="⏹"/>
+                                                <Setter TargetName="text" Property="Text" Value="YAYINI DURDUR"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                                            </Trigger>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter TargetName="border" Property="Background" Value="#555"/>
+                                                <Setter TargetName="border" Property="Opacity" Value="0.6"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+
+                <!-- Uyarı Mesajı (varsa) -->
+                <TextBlock Grid.Column="2" Text="{Binding Advisory}" 
+                           HorizontalAlignment="Center" VerticalAlignment="Center" 
+                           Foreground="Orange" FontWeight="SemiBold" 
+                           TextWrapping="Wrap" MaxWidth="300" Margin="15,0"/>
+
+                <!-- Metrikler -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- FPS/Bitrate -->
+                    <Border Background="#1a1a1a" CornerRadius="4" Padding="10,5" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📊" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding Metric, TargetNullValue='-- FPS'}" 
+                                       Foreground="{StaticResource TextMain}" FontSize="12" 
+                                       VerticalAlignment="Center" MinWidth="80"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Audio Level -->
+                    <Border Background="#1a1a1a" CornerRadius="4" Padding="8,5">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Command="{Binding ToggleMuteCommand}" 
+                                    Width="24" Height="24" Margin="0,0,8,0"
+                                    Background="Transparent" BorderThickness="0" 
+                                    Cursor="Hand" ToolTip="Sesi Aç/Kapat">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Content" Value="🎤"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                                                <Setter Property="Content" Value="🔇"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <ProgressBar Value="{Binding AudioLevel, Mode=OneWay}" 
+                                         Maximum="100" Width="80" Height="8" 
+                                         VerticalAlignment="Center" 
+                                         Background="#333" BorderThickness="0">
+                                <ProgressBar.Foreground>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#4CAF50" Offset="0.6"/>
+                                        <GradientStop Color="#FFEB3B" Offset="0.8"/>
+                                        <GradientStop Color="#F44336" Offset="1.0"/>
+                                    </LinearGradientBrush>
+                                </ProgressBar.Foreground>
+                            </ProgressBar>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </Grid>
         </Border>
 
-        <Grid Grid.Row="1" Margin="0,0,10,0">
+        <!-- ANA İÇERİK: 3 Kolonlu Layout -->
+        <Grid Grid.Row="1" x:Name="MainContentGrid">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="18*"/>
-                <ColumnDefinition Width="18*"/>
-                <ColumnDefinition Width="47*"/>
+                <!-- Mola Kolonu -->
+                <ColumnDefinition x:Name="MolaColumn" Width="120" MinWidth="100" MaxWidth="300"/>
+                <!-- Splitter 1 -->
+                <ColumnDefinition Width="5"/>
+                <!-- Kamera Kolonu -->
+                <ColumnDefinition x:Name="CameraColumn" Width="*" MinWidth="200"/>
+                <!-- Splitter 2 -->
+                <ColumnDefinition Width="5"/>
+                <!-- Chat Kolonu -->
+                <ColumnDefinition x:Name="ChatColumn" Width="300" MinWidth="200" MaxWidth="600"/>
             </Grid.ColumnDefinitions>
 
-            <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="15" Margin="0,0,10,20">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+            <!-- MOLA PANELİ -->
+            <Border Grid.Column="0" Background="{StaticResource BgLight}" CornerRadius="8" Padding="12">
+                <StackPanel VerticalAlignment="Top">
+                    <TextBlock Text="☕ Mola" FontSize="14" FontWeight="Bold" 
+                               Foreground="{StaticResource Primary}" 
+                               HorizontalAlignment="Center" Margin="0,0,0,15"/>
 
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="📊 Yayın Verileri" Foreground="{StaticResource TextMuted}" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                        <TextBlock Text="{Binding Metric}" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                        <TextBlock Text="FPS / Bitrate" FontSize="11" Foreground="Gray" HorizontalAlignment="Center" Margin="0,5,0,0"/>
-                    </StackPanel>
+                    <TextBlock Text="Süre (dk):" Foreground="{StaticResource TextMuted}" 
+                               FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                    <TextBox Text="{Binding BreakDuration}" Width="50" Height="28" 
+                             VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                             Background="#111" Foreground="White" BorderBrush="#444" 
+                             HorizontalAlignment="Center" Margin="0,0,0,15"/>
 
-                    <Grid Grid.Row="1" Margin="0,15,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <Button Command="{Binding ToggleMuteCommand}" Width="40" Height="35" Margin="0,0,10,0"
-                                Background="Transparent" BorderBrush="#444" ToolTip="Sesi Aç/Kapat">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="Content" Value="🎤"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsMuted}" Value="True">
-                                            <Setter Property="Content" Value="🔇"/>
-                                            <Setter Property="Foreground" Value="Red"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-
-                        <ProgressBar Grid.Column="1" 
-                                     Value="{Binding AudioLevel, Mode=OneWay}" Maximum="100" Height="10" 
-                                     VerticalAlignment="Center" Background="#222" BorderThickness="0">
-                            <ProgressBar.Foreground>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#4CAF50" Offset="0.5"/>
-                                    <GradientStop Color="#FFEB3B" Offset="0.8"/>
-                                    <GradientStop Color="#F44336" Offset="1.0"/>
-                                </LinearGradientBrush>
-                            </ProgressBar.Foreground>
-                        </ProgressBar>
-                    </Grid>
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="1" Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="5,0,5,20">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="☕ Mola Modu" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Primary}" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
-                        <TextBlock Text="Süre (dk):" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Margin="0,0,10,0"/>
-                        <TextBox Text="{Binding BreakDuration}" Width="50" Height="30" 
-                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
-                                 Background="#111" Foreground="White" BorderBrush="#444"/>
-                    </StackPanel>
-
-                    <ToggleButton Command="{Binding ToggleBreakCommand}" IsChecked="{Binding IsOnBreak}"
-                                  Width="140" Height="40" BorderThickness="0" Cursor="Hand">
+                    <ToggleButton Command="{Binding ToggleBreakCommand}" 
+                                  IsChecked="{Binding IsOnBreak}"
+                                  Height="32" BorderThickness="0" Cursor="Hand">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
                                 <Setter Property="Content" Value="Mola Ver"/>
                                 <Setter Property="Background" Value="#444"/>
                                 <Setter Property="Foreground" Value="White"/>
-                                <Setter Property="FontSize" Value="14"/>
+                                <Setter Property="FontSize" Value="12"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="ToggleButton">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                         </ControlTemplate>
@@ -124,36 +188,124 @@
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="2" Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="10,0,0,20" RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <TransformGroup>
-                        <ScaleTransform/>
-                        <SkewTransform/>
-                        <RotateTransform Angle="-0.159"/>
-                        <TranslateTransform/>
-                    </TransformGroup>
-                </Border.RenderTransform>
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="👁️ Önizleme" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextMuted}" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                    <Button Content="Aç / Kapat" Command="{Binding StartPreviewCommand}" 
-                            Width="140" Height="40" FontWeight="SemiBold"/>
-                </StackPanel>
+            <!-- SPLITTER 1 -->
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" 
+                          Background="Transparent" Cursor="SizeWE"
+                          DragCompleted="GridSplitter_DragCompleted"/>
+
+            <!-- KAMERA ÖNİZLEME PANELİ -->
+            <Border Grid.Column="2" Background="{StaticResource BgLight}" CornerRadius="8" Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Başlık -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                        <TextBlock Text="📷 Kamera Önizleme" FontSize="13" FontWeight="Bold" 
+                                   Foreground="{StaticResource TextMuted}"/>
+                    </StackPanel>
+
+                    <!-- Preview Image -->
+                    <Border Grid.Row="1" Background="#0a0a0a" CornerRadius="6">
+                        <Grid>
+                            <Image Source="{Binding PreviewImage}" Stretch="Uniform" 
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                            <!-- Placeholder (görüntü yokken) -->
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Visibility="{Binding PreviewImage, Converter={StaticResource NullToVisibleConverter}}">
+                                <TextBlock Text="📷" FontSize="48" Foreground="#333" HorizontalAlignment="Center"/>
+                                <TextBlock Text="Önizleme kapalı" FontSize="11" Foreground="#444" 
+                                           HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Önizleme Butonu -->
+                    <Button Grid.Row="2" Content="Önizleme Aç/Kapat" 
+                            Command="{Binding StartPreviewCommand}" 
+                            Height="28" Margin="0,8,0,0" FontSize="11"/>
+                </Grid>
             </Border>
-        </Grid>
 
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <!-- SPLITTER 2 -->
+            <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" 
+                          Background="Transparent" Cursor="SizeWE"
+                          DragCompleted="GridSplitter_DragCompleted"/>
 
-            <Button Content="▶ YAYINI BAŞLAT" Command="{Binding StartCommand}" 
-                    Height="70" Margin="0,0,10,0" FontSize="20" FontWeight="Bold"
-                    Background="#2E7D32" BorderBrush="#1B5E20"/>
+            <!-- CHAT PANELİ -->
+            <Border Grid.Column="4" Background="{StaticResource BgLight}" CornerRadius="8" Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-            <Button Grid.Column="1" Content="⏹ YAYINI DURDUR" Command="{Binding StopCommand}" 
-                    Height="70" Margin="10,0,0,0" FontSize="20" FontWeight="Bold"
-                    Background="#C62828" BorderBrush="#B71C1C"/>
+                    <!-- Başlık -->
+                    <TextBlock Text="💬 Canlı Sohbet" FontSize="13" FontWeight="Bold" 
+                               Foreground="{StaticResource TextMuted}" 
+                               HorizontalAlignment="Center" Margin="0,0,0,8"/>
+
+                    <!-- Platform Filtreleri -->
+                    <WrapPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,0,0,8">
+                        <CheckBox Content="YT" IsChecked="{Binding ChatViewModel.ShowYouTube}" 
+                                  Foreground="{StaticResource TextMuted}" FontSize="10" Margin="4,0"/>
+                        <CheckBox Content="TT" IsChecked="{Binding ChatViewModel.ShowTikTok}" 
+                                  Foreground="{StaticResource TextMuted}" FontSize="10" Margin="4,0"/>
+                        <CheckBox Content="IG" IsChecked="{Binding ChatViewModel.ShowInstagram}" 
+                                  Foreground="{StaticResource TextMuted}" FontSize="10" Margin="4,0"/>
+                        <CheckBox Content="FB" IsChecked="{Binding ChatViewModel.ShowFacebook}" 
+                                  Foreground="{StaticResource TextMuted}" FontSize="10" Margin="4,0"/>
+                    </WrapPanel>
+
+                    <!-- Chat Listesi -->
+                    <ListView Grid.Row="2" x:Name="ChatListView"
+                              ItemsSource="{Binding ChatViewModel.View}"
+                              Background="Transparent" BorderThickness="0"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#1a1a1a" CornerRadius="5" Padding="8,5" Margin="0,1">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Author}" FontWeight="SemiBold" 
+                                                       Foreground="{StaticResource Primary}" FontSize="11"/>
+                                            <TextBlock Text=" • " Foreground="#555" FontSize="10"/>
+                                            <TextBlock Text="{Binding Source}" Foreground="#555" 
+                                                       FontSize="9" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" 
+                                                   Foreground="{StaticResource TextMain}" FontSize="11" 
+                                                   Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListViewItem">
+                                            <ContentPresenter/>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                    </ListView>
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

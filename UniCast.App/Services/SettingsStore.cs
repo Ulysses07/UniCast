@@ -422,6 +422,11 @@ namespace UniCast.App.Services
         public string FacebookLiveVideoId { get; set; } = "";
         public string CustomRtmpUrl { get; set; } = "";
 
+        // Layout Ayarları (ControlView panel genişlikleri)
+        public double LayoutMolaColumnWidth { get; set; } = 120;
+        public double LayoutCameraColumnWidth { get; set; } = 350;
+        public double LayoutChatColumnWidth { get; set; } = 300;
+
         // Overlay Ayarları
         public bool OverlayEnabled { get; set; } = true;
         public double OverlayOpacity { get; set; } = 0.9;
@@ -720,6 +725,11 @@ namespace UniCast.App.Services
             VideoKbps = Math.Clamp(VideoKbps, 500, 50000);
             AudioKbps = Math.Clamp(AudioKbps, 64, 320);
             Fps = Math.Clamp(Fps, 15, 120);
+
+            // Layout (minimum genişlikler)
+            LayoutMolaColumnWidth = Math.Clamp(LayoutMolaColumnWidth, 100, 300);
+            LayoutCameraColumnWidth = Math.Clamp(LayoutCameraColumnWidth, 200, 800);
+            LayoutChatColumnWidth = Math.Clamp(LayoutChatColumnWidth, 200, 600);
 
             // Overlay
             OverlayOpacity = Math.Clamp(OverlayOpacity, 0.1, 1.0);
