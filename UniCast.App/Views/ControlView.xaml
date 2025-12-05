@@ -12,33 +12,34 @@
         </Grid.RowDefinitions>
 
         <!-- ÜST BAR: Durum + Toggle Buton + Metrikler -->
-        <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+        <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="10" Margin="0,0,0,15">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto" MaxWidth="350"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Durum -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" MaxWidth="340">
                     <TextBlock Text="DURUM:" FontWeight="Bold" Foreground="{StaticResource TextMuted}" 
                                VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock Text="{Binding Status}" FontSize="16" FontWeight="Bold" 
-                               Foreground="{StaticResource Primary}" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Status}" FontSize="13" FontWeight="Bold" 
+                               Foreground="{StaticResource Primary}" VerticalAlignment="Center"
+                               MaxWidth="280" TextTrimming="CharacterEllipsis" 
+                               ToolTip="{Binding Status}"/>
                 </StackPanel>
 
-                <!-- Toggle Yayın Butonu -->
-                <ToggleButton x:Name="StreamToggleButton" Grid.Column="1" 
-                              IsChecked="{Binding IsRunning, Mode=OneWay}"
-                              Width="160" Height="38" Margin="190,0,0,0"
-                              Cursor="Hand" Click="StreamToggle_Click">
-                    <ToggleButton.Style>
-                        <Style TargetType="ToggleButton">
+                <!-- Yayın Başlat/Durdur Butonu -->
+                <Button x:Name="StreamButton" Grid.Column="2" 
+                        Width="150" Height="36" Margin="35,0,0,0"
+                        Cursor="Hand" Click="StreamButton_Click">
+                    <Button.Style>
+                        <Style TargetType="Button">
                             <Setter Property="Template">
                                 <Setter.Value>
-                                    <ControlTemplate TargetType="ToggleButton">
+                                    <ControlTemplate TargetType="Button">
                                         <Border x:Name="border" CornerRadius="6" 
                                                 Background="#2E7D32" BorderThickness="0">
                                             <StackPanel Orientation="Horizontal" 
@@ -51,11 +52,11 @@
                                             </StackPanel>
                                         </Border>
                                         <ControlTemplate.Triggers>
-                                            <Trigger Property="IsChecked" Value="True">
+                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
                                                 <Setter TargetName="border" Property="Background" Value="#C62828"/>
                                                 <Setter TargetName="icon" Property="Text" Value="⏹"/>
                                                 <Setter TargetName="text" Property="Text" Value="YAYINI DURDUR"/>
-                                            </Trigger>
+                                            </DataTrigger>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter TargetName="border" Property="Opacity" Value="0.9"/>
                                             </Trigger>
@@ -68,8 +69,8 @@
                                 </Setter.Value>
                             </Setter>
                         </Style>
-                    </ToggleButton.Style>
-                </ToggleButton>
+                    </Button.Style>
+                </Button>
 
                 <!-- Uyarı Mesajı (varsa) -->
                 <TextBlock Grid.Column="2" Text="{Binding Advisory}" 

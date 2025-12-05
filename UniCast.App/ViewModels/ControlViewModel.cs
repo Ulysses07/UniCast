@@ -40,7 +40,7 @@ namespace UniCast.App.ViewModels
 
         public ControlViewModel() : this(
             _defaultAdapter.Value,
-            () => (new ObservableCollection<TargetItem>(), SettingsStore.Data))
+            () => (new ObservableCollection<TargetItem>(TargetsStore.Load()), SettingsStore.Data))
         {
         }
 

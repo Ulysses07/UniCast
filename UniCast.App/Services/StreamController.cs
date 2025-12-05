@@ -447,8 +447,22 @@ namespace UniCast.Core.Services
         {
             var args = new System.Text.StringBuilder();
 
-            // Input
-            args.Append($"-re -i \"{config.InputSource}\" ");
+            // Input source analizi
+            var inputSource = config.InputSource ?? "";
+
+            // Windows DirectShow cihazı mı kontrol et
+            bool isDirectShowDevice = inputSource.StartsWith("video=") ||
+                                       inputSource.StartsWith("audio=") ||
+                                       inputSource.Contains("@device");
+
+            if (isDirectShowDevice)
+            {
+                // DirectShow formatı: -f dshow -i video="Cihaz Adı"
+                args.Append("-f dshow ");
+            }
+
+            // Real-time input flag ve input source
+            args.Append($"-re -i \"{inputSource}\" ");
 
             // Video encoding
             args.Append($"-c:v libx264 -preset {config.Preset} ");

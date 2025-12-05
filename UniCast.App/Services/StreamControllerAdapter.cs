@@ -74,8 +74,17 @@ namespace UniCast.App.Services
         {
             try
             {
+                // DEBUG: Gelen hedefleri logla
+                var targetList = targets.ToList();
+                Log.Debug("[StreamControllerAdapter] Gelen hedef sayısı: {Count}", targetList.Count);
+                foreach (var t in targetList)
+                {
+                    Log.Debug("[StreamControllerAdapter] Hedef: Platform={Platform}, Url={Url}, Enabled={Enabled}",
+                        t.Platform, t.Url ?? "(null)", t.Enabled);
+                }
+
                 // TargetItem'ları StreamTarget'a dönüştür
-                var streamTargets = targets
+                var streamTargets = targetList
                     .Where(t => t.Enabled && !string.IsNullOrWhiteSpace(t.Url))
                     .Select(t => new StreamTarget
                     {
@@ -87,12 +96,18 @@ namespace UniCast.App.Services
                     })
                     .ToList();
 
+                Log.Debug("[StreamControllerAdapter] Filtrelenmiş hedef sayısı: {Count}", streamTargets.Count);
+
                 if (!streamTargets.Any())
                 {
                     return StreamStartResult.Fail(
                         StreamErrorCode.InvalidConfig,
-                        "Aktif hedef bulunamadı. En az bir yayın hedefi ekleyin.");
+                        "Aktif hedef bulunamadı. En az bir yayın hedefi ekleyin ve etkinleştirin.");
                 }
+
+                // DÜZELTME: Hedefleri _targets'a kaydet
+                _targets.Clear();
+                _targets.AddRange(streamTargets);
 
                 // Profil oluştur
                 var profile = new Profile
@@ -242,13 +257,54 @@ namespace UniCast.App.Services
         {
             var settings = SettingsStore.Data;
 
-            // Video cihazı adı veya indeksi
-            if (!string.IsNullOrWhiteSpace(settings.VideoDevice))
+            // SelectedCamera'yı kullan (VideoDevice, SelectedVideoDevice bunun alias'ı)
+            var deviceValue = settings.SelectedCamera;
+
+            if (!string.IsNullOrWhiteSpace(deviceValue))
             {
-                return $"video=\"{settings.VideoDevice}\"";
+                // Eğer cihaz değeri zaten "video=" ile başlıyorsa olduğu gibi kullan
+                if (deviceValue.StartsWith("video=", StringComparison.OrdinalIgnoreCase))
+                {
+                    return deviceValue;
+                }
+
+                // Windows device path formatı (\\?\..., GUID, ROOT#MEDIA) ise
+                // Bu ID formatı - FFmpeg için uygun değil
+                if (deviceValue.Contains("\\\\?\\") || deviceValue.Contains(@"\\?\") ||
+                    deviceValue.Contains("{") || deviceValue.Contains("ROOT#MEDIA") ||
+                    deviceValue.Contains("#GLOBAL"))
+                {
+                    Log.Warning("[StreamControllerAdapter] Ayarlardaki kamera ID formatında: {Device}. " +
+                        "FFmpeg için cihaz adı çözümlenecek.", deviceValue);
+
+                    // DeviceService ile ID'den Name'e çevir
+                    try
+                    {
+                        var deviceService = new UniCast.App.Services.Capture.DeviceService();
+                        var nameTask = deviceService.GetDeviceNameByIdAsync(deviceValue);
+                        nameTask.Wait(TimeSpan.FromSeconds(2)); // Timeout ile bekle
+
+                        if (nameTask.IsCompletedSuccessfully && !string.IsNullOrEmpty(nameTask.Result))
+                        {
+                            var deviceName = nameTask.Result;
+                            Log.Information("[StreamControllerAdapter] Cihaz adı çözümlendi: {Name}", deviceName);
+                            return $"video={deviceName}";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "[StreamControllerAdapter] Cihaz adı çözümlenemedi");
+                    }
+
+                    // Çözümlenemezse varsayılana dön
+                    return "video=0";
+                }
+
+                // Normal cihaz adı
+                return $"video={deviceValue}";
             }
 
-            // Varsayılan: ilk kamera
+            // Varsayılan: indeks 0 (ilk kamera) - FFmpeg bunu destekler
             return "video=0";
         }
 
@@ -268,7 +324,21 @@ namespace UniCast.App.Services
 
         private void OnLogMessage(string level, string message)
         {
-            _lastMessage = message;
+            // FFmpeg Stats mesajlarını Status'a yazmayalım, sadece log'a gönderelim
+            // Stats mesajları "[FFmpeg Stats]" ile başlar veya "frame=" içerir
+            bool isStatsMessage = message.Contains("[FFmpeg Stats]") ||
+                                  message.Contains("frame=") ||
+                                  message.Contains("fps=") ||
+                                  message.Contains("bitrate=") ||
+                                  message.Contains("time=") ||
+                                  message.StartsWith("[FFmpeg]");
+
+            if (!isStatsMessage)
+            {
+                // Sadece durum mesajlarını göster
+                _lastMessage = message;
+            }
+
             OnLog?.Invoke(this, message);
         }
 

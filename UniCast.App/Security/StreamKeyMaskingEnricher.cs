@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Serilog.Core;
 using Serilog.Events;
@@ -56,8 +57,10 @@ namespace UniCast.App.Security
                 }
             }
 
-            // Rendered message'ı kontrol et (property değerleri dahil)
-            foreach (var property in logEvent.Properties)
+            // DÜZELTME: Collection modification hatasını önlemek için önce ToList() ile kopyala
+            var propertiesToMask = new System.Collections.Generic.List<LogEventProperty>();
+
+            foreach (var property in logEvent.Properties.ToList()) // ToList() ile snapshot al
             {
                 if (property.Value is ScalarValue scalarValue &&
                     scalarValue.Value is string stringValue)
@@ -65,13 +68,19 @@ namespace UniCast.App.Security
                     var masked = MaskSensitiveData(stringValue);
                     if (masked != stringValue)
                     {
-                        // Maskelenmiş property'yi ekle
+                        // Maskelenmiş property'yi listeye ekle
                         var prop = propertyFactory.CreateProperty(
                             property.Key + "_Masked",
                             masked);
-                        logEvent.AddPropertyIfAbsent(prop);
+                        propertiesToMask.Add(prop);
                     }
                 }
+            }
+
+            // Şimdi güvenli bir şekilde property'leri ekle
+            foreach (var prop in propertiesToMask)
+            {
+                logEvent.AddPropertyIfAbsent(prop);
             }
         }
 

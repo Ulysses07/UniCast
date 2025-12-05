@@ -73,21 +73,30 @@ namespace UniCast.App.Views
         }
 
         /// <summary>
-        /// Toggle buton click handler - Yayın başlat/durdur
+        /// Yayın butonu click handler - Yayın başlat/durdur
         /// </summary>
-        private void StreamToggle_Click(object sender, RoutedEventArgs e)
+        private void StreamButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_vm.IsRunning)
+            try
             {
-                // Durdur
-                if (_vm.StopCommand.CanExecute(null))
-                    _vm.StopCommand.Execute(null);
+                if (_vm.IsRunning)
+                {
+                    // Durdur
+                    Log.Debug("[ControlView] Yayın durdurma komutu tetikleniyor...");
+                    if (_vm.StopCommand.CanExecute(null))
+                        _vm.StopCommand.Execute(null);
+                }
+                else
+                {
+                    // Başlat
+                    Log.Debug("[ControlView] Yayın başlatma komutu tetikleniyor...");
+                    if (_vm.StartCommand.CanExecute(null))
+                        _vm.StartCommand.Execute(null);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // Başlat
-                if (_vm.StartCommand.CanExecute(null))
-                    _vm.StartCommand.Execute(null);
+                Log.Error(ex, "[ControlView] Yayın butonu hatası");
             }
         }
 
@@ -166,16 +175,26 @@ namespace UniCast.App.Views
     /// <summary>
     /// ControlView için combined DataContext.
     /// Hem ControlViewModel hem ChatViewModel property'lerini expose eder.
+    /// INotifyPropertyChanged ile UI güncellemelerini destekler.
     /// </summary>
-    public class ControlViewDataContext
+    public class ControlViewDataContext : System.ComponentModel.INotifyPropertyChanged
     {
         public ControlViewModel ControlViewModel { get; }
         public ChatViewModel ChatViewModel { get; }
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
 
         public ControlViewDataContext(ControlViewModel controlVm, ChatViewModel chatVm)
         {
             ControlViewModel = controlVm;
             ChatViewModel = chatVm;
+
+            // ControlViewModel'den gelen property değişikliklerini forward et
+            ControlViewModel.PropertyChanged += (s, e) =>
+            {
+                // Tüm property değişikliklerini forward et
+                PropertyChanged?.Invoke(this, e);
+            };
         }
 
         // ControlViewModel property'lerini doğrudan expose et (binding kolaylığı için)
