@@ -304,65 +304,108 @@ namespace UniCast.Core.Chat.Ingestors
         {
             try
             {
-                // mbasic formatı daha basit, regex ile parse edilebilir
-                // <div class="..comment..">
-                //   <a href="/profile.php?id=123">UserName</a>
-                //   <div>Comment text</div>
-                // </div>
+                // Debug: HTML uzunluğunu logla
+                Log.Debug("[Facebook Scraper] HTML alındı, uzunluk: {Length}", html.Length);
 
-                // Yorum bloklarını bul
-                var commentPattern = @"<div[^>]*(?:comment|_2b1j)[^>]*>.*?<a[^>]*href=""([^""]*?)""[^>]*>([^<]+)</a>.*?<div[^>]*>([^<]+)</div>";
-                var matches = Regex.Matches(html, commentPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-                foreach (Match match in matches)
+                // Birden fazla pattern dene
+                var patterns = new[]
                 {
+                    // Pattern 1: Standart comment div
+                    @"<div[^>]*(?:comment|_2b1j)[^>]*>.*?<a[^>]*href=""([^""]*?)""[^>]*>([^<]+)</a>.*?<div[^>]*>([^<]+)</div>",
+                    // Pattern 2: Live chat formatı - data-commentid ile
+                    @"data-commentid=""([^""]+)""[^>]*>.*?<a[^>]*>([^<]+)</a>.*?<span[^>]*>([^<]+)</span>",
+                    // Pattern 3: Basit format - herhangi bir yorum bloğu
+                    @"<div[^>]*class=""[^""]*(?:comment|_4eek)[^""]*""[^>]*>.*?<span[^>]*>([^<]+)</span>.*?<span[^>]*>([^<]+)</span>",
+                    // Pattern 4: mbasic özel format
+                    @"<div[^>]*id=""[uc]_[^""]+""[^>]*>.*?<a[^>]*href=""(/[^""]+)""[^>]*>([^<]+)</a>.*?</h3>.*?<div[^>]*>([^<]+)</div>"
+                };
+
+                var totalMatches = 0;
+                foreach (var pattern in patterns)
+                {
+                    var matches = Regex.Matches(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                    totalMatches += matches.Count;
+
+                    if (matches.Count > 0)
+                    {
+                        Log.Debug("[Facebook Scraper] Pattern eşleşti: {Count} yorum bulundu", matches.Count);
+                        ProcessMatches(matches);
+                    }
+                }
+
+                if (totalMatches == 0)
+                {
+                    // HTML'in bir kısmını logla (debug için)
+                    var preview = html.Length > 500 ? html.Substring(0, 500) : html;
+                    Log.Debug("[Facebook Scraper] Hiç yorum bulunamadı. HTML preview: {Preview}", preview);
+
+                    // Debug: HTML'i dosyaya yaz (sadece ilk seferde)
+                    var debugPath = System.IO.Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "UniCast", "fb_debug.html");
                     try
                     {
-                        var profileUrl = match.Groups[1].Value;
-                        var userName = WebUtility.HtmlDecode(match.Groups[2].Value.Trim());
-                        var messageText = WebUtility.HtmlDecode(match.Groups[3].Value.Trim());
-
-                        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(messageText))
-                            continue;
-
-                        // User ID'yi URL'den çıkar
-                        var userId = ExtractUserIdFromUrl(profileUrl) ?? userName;
-
-                        // Benzersiz ID oluştur
-                        var messageId = $"{userId}_{messageText.GetHashCode()}";
-
-                        if (_seenMessageIds.Contains(messageId))
-                            continue;
-
-                        _seenMessageIds.Add(messageId);
-
-                        // Eski mesajları temizle (memory leak önleme)
-                        if (_seenMessageIds.Count > 1000)
-                        {
-                            _seenMessageIds.Clear();
-                        }
-
-                        var chatMessage = new ChatMessage
-                        {
-                            Platform = ChatPlatform.Facebook,
-                            Username = userId,
-                            DisplayName = userName,
-                            Message = messageText,
-                            Timestamp = DateTime.UtcNow
-                        };
-
-                        PublishMessage(chatMessage);
-                        Log.Debug("[Facebook Scraper] Yeni mesaj: {User}: {Message}", userName, messageText);
+                        var dir = System.IO.Path.GetDirectoryName(debugPath);
+                        if (!System.IO.Directory.Exists(dir))
+                            System.IO.Directory.CreateDirectory(dir!);
+                        System.IO.File.WriteAllText(debugPath, html);
+                        Log.Debug("[Facebook Scraper] HTML kaydedildi: {Path}", debugPath);
                     }
-                    catch (Exception ex)
-                    {
-                        Log.Debug(ex, "[Facebook Scraper] Yorum parse hatası");
-                    }
+                    catch { }
                 }
             }
             catch (Exception ex)
             {
                 Log.Warning(ex, "[Facebook Scraper] HTML parse hatası");
+            }
+        }
+
+        private void ProcessMatches(MatchCollection matches)
+        {
+            foreach (Match match in matches)
+            {
+                try
+                {
+                    var profileUrl = match.Groups[1].Value;
+                    var userName = WebUtility.HtmlDecode(match.Groups[2].Value.Trim());
+                    var messageText = WebUtility.HtmlDecode(match.Groups[3].Value.Trim());
+
+                    if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(messageText))
+                        continue;
+
+                    // User ID'yi URL'den çıkar
+                    var userId = ExtractUserIdFromUrl(profileUrl) ?? userName;
+
+                    // Benzersiz ID oluştur
+                    var messageId = $"{userId}_{messageText.GetHashCode()}";
+
+                    if (_seenMessageIds.Contains(messageId))
+                        continue;
+
+                    _seenMessageIds.Add(messageId);
+
+                    // Eski mesajları temizle (memory leak önleme)
+                    if (_seenMessageIds.Count > 1000)
+                    {
+                        _seenMessageIds.Clear();
+                    }
+
+                    var chatMessage = new ChatMessage
+                    {
+                        Platform = ChatPlatform.Facebook,
+                        Username = userId,
+                        DisplayName = userName,
+                        Message = messageText,
+                        Timestamp = DateTime.UtcNow
+                    };
+
+                    PublishMessage(chatMessage);
+                    Log.Debug("[Facebook Scraper] Yeni mesaj: {User}: {Message}", userName, messageText);
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "[Facebook Scraper] Yorum parse hatası");
+                }
             }
         }
 

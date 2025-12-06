@@ -29,7 +29,7 @@ namespace UniCast.Core.Chat.Ingestors
         private string? _continuation;
         private string? _apiKey; // YouTube'un kendi internal API key'i (sayfadan alınır)
         private string? _clientVersion;
-        private int _pollingIntervalMs = 3000;
+        private int _pollingIntervalMs = 2000; // 2 saniye varsayılan, max 5 saniye
         private readonly HashSet<string> _seenMessageIds = new();
 
         public override ChatPlatform Platform => ChatPlatform.YouTube;
@@ -302,7 +302,8 @@ namespace UniCast.Core.Chat.Ingestors
                             }
                             if (invalidation.TryGetProperty("timeoutMs", out var timeout))
                             {
-                                _pollingIntervalMs = Math.Max(timeout.GetInt32(), 1000);
+                                // YouTube'un önerdiği değeri kullan ama max 5 saniye
+                                _pollingIntervalMs = Math.Clamp(timeout.GetInt32(), 1000, 5000);
                             }
                         }
                         else if (cont.TryGetProperty("timedContinuationData", out var timed))
@@ -313,7 +314,8 @@ namespace UniCast.Core.Chat.Ingestors
                             }
                             if (timed.TryGetProperty("timeoutMs", out var timeout))
                             {
-                                _pollingIntervalMs = Math.Max(timeout.GetInt32(), 1000);
+                                // YouTube'un önerdiği değeri kullan ama max 5 saniye
+                                _pollingIntervalMs = Math.Clamp(timeout.GetInt32(), 1000, 5000);
                             }
                         }
                     }
