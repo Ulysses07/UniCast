@@ -46,12 +46,21 @@ namespace UniCast.App.ViewModels
             _recordFolder = _settings.RecordFolder ?? "";
             _enableLocalRecord = _settings.EnableLocalRecord;
 
+            // YouTube
+            _youTubeApiKey = _settings.YouTubeApiKey ?? "";
+            _youTubeVideoId = _settings.YouTubeVideoId ?? "";
+
+            // Twitch
+            _twitchChannelName = _settings.TwitchChannelName ?? "";
+            _twitchOAuthToken = _settings.TwitchOAuthToken ?? "";
+            _twitchBotUsername = _settings.TwitchBotUsername ?? "";
+
             // Sosyal Medya
-            _instagramUserId = _settings.InstagramUserId ?? "";
-            _instagramSessionId = _settings.InstagramSessionId ?? "";
+            _instagramUserId = _settings.InstagramUsername ?? "";
+            _instagramSessionId = _settings.InstagramPassword ?? "";
             _facebookPageId = _settings.FacebookPageId ?? "";
             _facebookLiveVideoId = _settings.FacebookLiveVideoId ?? "";
-            _facebookAccessToken = _settings.FacebookAccessToken ?? "";
+            _facebookAccessToken = _settings.FacebookPageAccessToken ?? "";
 
             // Komutlar
             SaveCommand = new RelayCommand(_ => Save());
@@ -206,6 +215,43 @@ namespace UniCast.App.ViewModels
             set { _enableLocalRecord = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
 
+        // YouTube
+        private string _youTubeApiKey;
+        public string YouTubeApiKey
+        {
+            get => _youTubeApiKey;
+            set { _youTubeApiKey = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _youTubeVideoId;
+        public string YouTubeVideoId
+        {
+            get => _youTubeVideoId;
+            set { _youTubeVideoId = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        // Twitch
+        private string _twitchChannelName;
+        public string TwitchChannelName
+        {
+            get => _twitchChannelName;
+            set { _twitchChannelName = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _twitchOAuthToken;
+        public string TwitchOAuthToken
+        {
+            get => _twitchOAuthToken;
+            set { _twitchOAuthToken = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _twitchBotUsername;
+        public string TwitchBotUsername
+        {
+            get => _twitchBotUsername;
+            set { _twitchBotUsername = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
         // Sosyal Alanlar
         private string _instagramUserId;
         public string InstagramUserId
@@ -280,9 +326,21 @@ namespace UniCast.App.ViewModels
                     s.Height = Height;
                     s.RecordFolder = (RecordFolder ?? "").Trim();
                     s.EnableLocalRecord = EnableLocalRecord;
+
+                    // YouTube
+                    s.YouTubeApiKey = (YouTubeApiKey ?? "").Trim();
+                    s.YouTubeVideoId = (YouTubeVideoId ?? "").Trim();
+
+                    // Twitch
+                    s.TwitchChannelName = (TwitchChannelName ?? "").Trim();
+                    s.TwitchOAuthToken = (TwitchOAuthToken ?? "").Trim();
+                    s.TwitchBotUsername = (TwitchBotUsername ?? "").Trim();
+
+                    // Sosyal Medya
                     s.InstagramUsername = (InstagramUserId ?? "").Trim();
+                    s.InstagramPassword = (InstagramSessionId ?? "").Trim();
                     s.FacebookPageId = (FacebookPageId ?? "").Trim();
-                    s.FacebookAccessToken = (FacebookAccessToken ?? "").Trim();
+                    s.FacebookPageAccessToken = (FacebookAccessToken ?? "").Trim();
                 });
 
                 SettingsStore.Save();

@@ -30,7 +30,7 @@ namespace UniCast.App
         private readonly List<Task> _ingestorTasks = new();
 
         // Chat Ingestors
-        private YouTubeChatIngestor? _ytIngestor;
+        private YouTubeChatScraper? _ytIngestor;  // Scraper kullanıyoruz (API key gerektirmez)
         private TwitchChatIngestor? _twitchIngestor;
         private TikTokChatIngestor? _tikTokIngestor;
         private InstagramHybridChatIngestor? _instagramIngestor;  // DEĞİŞTİ
@@ -151,12 +151,12 @@ namespace UniCast.App
                 // DÜZELTME v17.3: Task'ları takip et (fire-and-forget yerine)
                 _ingestorTasks.Clear();
 
-                // YouTube
+                // YouTube - Scraper (API key gerektirmez!)
                 if (!string.IsNullOrWhiteSpace(settings.YouTubeVideoId))
                 {
-                    _ytIngestor = new YouTubeChatIngestor(settings.YouTubeVideoId);
-                    _ytIngestor.ApiKey = settings.YouTubeApiKey;
+                    _ytIngestor = new YouTubeChatScraper(settings.YouTubeVideoId);
                     _ingestorTasks.Add(StartIngestorSafeAsync(_ytIngestor, "YouTube", ct));
+                    Log.Information("[MainWindow] YouTube Chat Scraper aktif - API key gerektirmez");
                 }
 
                 // Twitch - YENİ!
