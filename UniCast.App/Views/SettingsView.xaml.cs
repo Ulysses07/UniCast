@@ -1,6 +1,8 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using UniCast.App.ViewModels;
+using Button = System.Windows.Controls.Button;
+using MessageBox = System.Windows.MessageBox;
 
 namespace UniCast.App.Views
 {
@@ -26,10 +28,31 @@ namespace UniCast.App.Views
                 if (igPwd != null && igPwd.Password != vm.InstagramSessionId)
                     igPwd.Password = vm.InstagramSessionId ?? "";
 
-                // Facebook
-                var fbPwd = this.FindName("PwdFacebookToken") as PasswordBox;
-                if (fbPwd != null && fbPwd.Password != vm.FacebookAccessToken)
-                    fbPwd.Password = vm.FacebookAccessToken ?? "";
+                // Facebook bağlantı durumunu güncelle
+                UpdateFacebookStatus(vm);
+            }
+        }
+
+        private void UpdateFacebookStatus(SettingsViewModel vm)
+        {
+            var statusText = this.FindName("TxtFacebookStatus") as TextBlock;
+            var loginBtn = this.FindName("BtnFacebookLogin") as Button;
+            var logoutBtn = this.FindName("BtnFacebookLogout") as Button;
+
+            if (statusText != null && loginBtn != null && logoutBtn != null)
+            {
+                if (!string.IsNullOrEmpty(vm.FacebookCookies))
+                {
+                    statusText.Text = "🟢 Bağlı";
+                    loginBtn.Content = "🔄 Yeniden Bağlan";
+                    logoutBtn.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    statusText.Text = "⚪ Bağlı Değil";
+                    loginBtn.Content = "🔵 Facebook'a Giriş Yap";
+                    logoutBtn.Visibility = Visibility.Collapsed;
+                }
             }
         }
 
@@ -49,11 +72,42 @@ namespace UniCast.App.Views
             }
         }
 
-        private void PwdFacebookToken_PasswordChanged(object sender, RoutedEventArgs e)
+        private void BtnFacebookLogin_Click(object sender, RoutedEventArgs e)
         {
-            if (DataContext is SettingsViewModel vm && sender is PasswordBox pb)
+            var loginWindow = new FacebookLoginWindow
             {
-                vm.FacebookAccessToken = pb.Password ?? "";
+                Owner = Window.GetWindow(this)
+            };
+
+            var result = loginWindow.ShowDialog();
+
+            if (result == true && DataContext is SettingsViewModel vm)
+            {
+                // Cookie'leri kaydet
+                vm.FacebookCookies = loginWindow.FacebookCookies ?? "";
+                vm.FacebookUserId = loginWindow.FacebookUserId ?? "";
+
+                // UI'ı güncelle
+                UpdateFacebookStatus(vm);
+            }
+        }
+
+        private void BtnFacebookLogout_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                var result = MessageBox.Show(
+                    "Facebook bağlantısını kaldırmak istediğinize emin misiniz?",
+                    "Çıkış",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    vm.FacebookCookies = "";
+                    vm.FacebookUserId = "";
+                    UpdateFacebookStatus(vm);
+                }
             }
         }
     }

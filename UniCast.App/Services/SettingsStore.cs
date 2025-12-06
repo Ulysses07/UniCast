@@ -420,6 +420,12 @@ namespace UniCast.App.Services
         // FacebookStreamKey - Tam tanım aşağıda (Facebook Stream Key bölümünde)
 
         public string FacebookLiveVideoId { get; set; } = "";
+
+        // Yeni WebView2 tabanlı Facebook ayarları
+        public string FacebookCookies { get; set; } = "";
+        public string FacebookUserId { get; set; } = "";
+        public string FacebookLiveVideoUrl { get; set; } = "";
+
         public string CustomRtmpUrl { get; set; } = "";
 
         // Layout Ayarları (ControlView panel genişlikleri)

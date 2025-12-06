@@ -52,6 +52,10 @@ namespace UniCast.App.Views
             // Layout ayarlarını yükle
             LoadLayoutSettings();
 
+            // ChatBus'a bağlan (her Loaded'da yeniden bağlan)
+            _chatVm.Bind(ChatBus.Instance);
+            Log.Debug("[ControlView] ChatBus'a bağlandı");
+
             // Preview başlat
             AsyncVoidHandler.Handle(
                 async () => await _vm.StartPreviewAsync(),

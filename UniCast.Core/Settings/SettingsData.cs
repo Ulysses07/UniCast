@@ -39,6 +39,7 @@ namespace UniCast.Core.Settings
         // --- Sosyal/Platform Alanları ---
         public string? YouTubeApiKey { get; set; }
         public string? YouTubeChannelId { get; set; }
+        public string? YouTubeVideoId { get; set; }
         public string? TikTokRoomId { get; set; }
         public string? InstagramUserId { get; set; }
         public string? InstagramSessionId { get; set; }
@@ -46,6 +47,16 @@ namespace UniCast.Core.Settings
         public string? FacebookPageId { get; set; }
         public string? FacebookLiveVideoId { get; set; }
         public string? TikTokSessionCookie { get; set; }
+
+        // Twitch Chat Ayarları
+        public string? TwitchChannelName { get; set; }
+        public string? TwitchOAuthToken { get; set; }
+        public string? TwitchBotUsername { get; set; }
+
+        // Yeni WebView2 tabanlı Facebook ayarları
+        public string? FacebookCookies { get; set; }
+        public string? FacebookUserId { get; set; }
+        public string? FacebookLiveVideoUrl { get; set; }
 
         // --- Overlay Ayarları ---
         public bool ShowOverlay { get; set; } = false;

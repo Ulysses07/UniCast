@@ -55,6 +55,7 @@ namespace UniCast.Core.Chat
                 return;
 
             Interlocked.Increment(ref _totalMessagesReceived);
+            Log.Debug("[ChatBus] Mesaj alındı: {Platform} - {User}: {Content}", message.Platform, message.Username, message.Message);
 
             // Rate limiting kontrolü
             var platformKey = message.Platform.ToString();
@@ -75,6 +76,10 @@ namespace UniCast.Core.Chat
             // Event'i tetikle
             try
             {
+                var hasSubscribers = MessageReceived != null || OnMerged != null;
+                Log.Debug("[ChatBus] Event tetikleniyor - Subscribers: MessageReceived={MR}, OnMerged={OM}",
+                    MessageReceived != null, OnMerged != null);
+
                 MessageReceived?.Invoke(this, new ChatMessageEventArgs(message));
                 OnMerged?.Invoke(message);
             }

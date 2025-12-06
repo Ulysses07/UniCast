@@ -143,26 +143,26 @@ namespace UniCast.Core.Services
         /// <summary>
         /// Stream'i başlatır.
         /// </summary>
-        public async Task<bool> StartAsync(StreamConfiguration config, CancellationToken ct = default)
+        public Task<bool> StartAsync(StreamConfiguration config, CancellationToken ct = default)
         {
             ThrowIfDisposed();
 
             if (IsRunning)
             {
                 RaiseLog("warning", "Stream zaten çalışıyor");
-                return false;
+                return Task.FromResult(false);
             }
 
             if (string.IsNullOrEmpty(FfmpegPath) || !File.Exists(FfmpegPath))
             {
                 RaiseLog("error", "FFmpeg bulunamadı");
-                return false;
+                return Task.FromResult(false);
             }
 
             lock (_stateLock)
             {
                 if (_isRunning)
-                    return false;
+                    return Task.FromResult(false);
 
                 _cts?.Dispose();
                 _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -204,7 +204,7 @@ namespace UniCast.Core.Services
                 if (!_ffmpegProcess.Start())
                 {
                     RaiseLog("error", "FFmpeg başlatılamadı");
-                    return false;
+                    return Task.FromResult(false);
                 }
 
                 _ffmpegProcess.BeginOutputReadLine();
@@ -225,7 +225,7 @@ namespace UniCast.Core.Services
                 _monitorTask = MonitorProcessAsync(_cts.Token);
 
                 RaiseLog("info", "Stream başarıyla başlatıldı");
-                return true;
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
@@ -233,7 +233,7 @@ namespace UniCast.Core.Services
                 Log.Error(ex, "[StreamController] Start hatası");
 
                 CleanupProcess();
-                return false;
+                return Task.FromResult(false);
             }
         }
 

@@ -29,6 +29,10 @@ namespace UniCast.App.ViewModels
         private Task? _statusMonitorTask;
         private bool _disposed;
 
+        // Events for stream state changes
+        public event Action<ObservableCollection<TargetItem>>? StreamStarted;
+        public event Action? StreamStopped;
+
         // DÜZELTME: Event handler'ları field olarak tut (unsubscribe için)
         private readonly Action<ImageSource> _onFrameHandler;
         private readonly Action<float> _onLevelChangeHandler;
@@ -228,6 +232,9 @@ namespace UniCast.App.ViewModels
                     IsRunning = true;
                     Status = "Yayında";
 
+                    // Chat ingestors için event fırlat
+                    StreamStarted?.Invoke(targets);
+
                     // DÜZELTME v27: Task referansını tut (fire-and-forget yerine tracked task)
                     var token = _cts.Token;
                     _statusMonitorTask = Task.Run(async () =>
@@ -295,6 +302,9 @@ namespace UniCast.App.ViewModels
                 IsRunning = false;
                 Status = "Durduruldu";
                 Metric = "";
+
+                // Chat ingestors için event fırlat
+                StreamStopped?.Invoke();
             }
         }
 

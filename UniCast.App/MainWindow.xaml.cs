@@ -1,5 +1,7 @@
 ﻿using Serilog;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using UniCast.App.Overlay;
@@ -8,7 +10,9 @@ using UniCast.App.ViewModels;
 using UniCast.App.Views;
 using UniCast.Core.Chat;
 using UniCast.Core.Chat.Ingestors;
+using UniCast.Core.Models;
 using UniCast.Core.Services;
+using UniCast.Core.Streaming;
 using MessageBox = System.Windows.MessageBox;
 
 namespace UniCast.App
@@ -243,6 +247,184 @@ namespace UniCast.App
             }
         }
 
+        /// <summary>
+        /// Stream başladığında çağrılır - aktif platformların chat'lerini başlatır
+        /// </summary>
+        private void OnStreamStarted(ObservableCollection<TargetItem> targets)
+        {
+            try
+            {
+                // Önce mevcut ingestor'ları durdur
+                StopAllChatIngestors();
+
+                var ct = _cts?.Token ?? CancellationToken.None;
+                _ingestorTasks.Clear();
+
+                foreach (var target in targets.Where(t => t.Enabled))
+                {
+                    switch (target.Platform)
+                    {
+                        case StreamPlatform.YouTube:
+                            // YouTube Video ID'yi ayarlardan veya URL'den çıkar
+                            var videoId = ExtractYouTubeVideoId(target.Url, target.StreamKey);
+                            if (!string.IsNullOrWhiteSpace(videoId))
+                            {
+                                _ytIngestor = new YouTubeChatScraper(videoId);
+                                _ingestorTasks.Add(StartIngestorSafeAsync(_ytIngestor, "YouTube", ct));
+                                Log.Information("[MainWindow] YouTube Chat başlatıldı - VideoId: {VideoId}", videoId);
+                            }
+                            else
+                            {
+                                Log.Warning("[MainWindow] YouTube Video ID bulunamadı - Chat başlatılamadı");
+                            }
+                            break;
+
+                        case StreamPlatform.Twitch:
+                            var channelName = SettingsStore.Data.TwitchChannelName;
+                            if (!string.IsNullOrWhiteSpace(channelName))
+                            {
+                                _twitchIngestor = new TwitchChatIngestor(channelName);
+                                if (!string.IsNullOrWhiteSpace(SettingsStore.Data.TwitchOAuthToken))
+                                {
+                                    _twitchIngestor.OAuthToken = SettingsStore.Data.TwitchOAuthToken;
+                                    _twitchIngestor.BotUsername = SettingsStore.Data.TwitchBotUsername;
+                                }
+                                _ingestorTasks.Add(StartIngestorSafeAsync(_twitchIngestor, "Twitch", ct));
+                                Log.Information("[MainWindow] Twitch Chat başlatıldı - Kanal: {Channel}", channelName);
+                            }
+                            break;
+
+                        case StreamPlatform.Facebook:
+                            // Facebook için cookie tabanlı scraper kullan
+                            var cookies = SettingsStore.Data.FacebookCookies;
+                            var liveUrl = SettingsStore.Data.FacebookLiveVideoUrl;
+                            if (!string.IsNullOrWhiteSpace(cookies))
+                            {
+                                // FacebookChatScraper varsa kullan
+                                Log.Information("[MainWindow] Facebook Chat - Cookie mevcut ama scraper henüz entegre edilmedi");
+                            }
+                            break;
+
+                        case StreamPlatform.TikTok:
+                            var tikTokUsername = SettingsStore.Data.TikTokUsername;
+                            if (!string.IsNullOrWhiteSpace(tikTokUsername))
+                            {
+                                _tikTokIngestor = new TikTokChatIngestor(tikTokUsername);
+                                _ingestorTasks.Add(StartIngestorSafeAsync(_tikTokIngestor, "TikTok", ct));
+                                Log.Warning("[MainWindow] TikTok Chat - Mock modda");
+                            }
+                            break;
+
+                        case StreamPlatform.Instagram:
+                            // Instagram hibrit ingestor
+                            var instaUsername = SettingsStore.Data.InstagramUsername;
+                            if (!string.IsNullOrWhiteSpace(instaUsername))
+                            {
+                                var hasPassword = !string.IsNullOrWhiteSpace(SettingsStore.Data.InstagramPassword);
+                                var hasToken = !string.IsNullOrWhiteSpace(SettingsStore.Data.InstagramAccessToken);
+                                if (hasPassword || hasToken)
+                                {
+                                    _instagramIngestor = new InstagramHybridChatIngestor(instaUsername)
+                                    {
+                                        Username = instaUsername,
+                                        Password = SettingsStore.Data.InstagramPassword ?? "",
+                                        GraphApiAccessToken = SettingsStore.Data.InstagramAccessToken
+                                    };
+                                    _ingestorTasks.Add(StartIngestorSafeAsync(_instagramIngestor, "Instagram", ct));
+                                    Log.Information("[MainWindow] Instagram Chat başlatıldı");
+                                }
+                            }
+                            break;
+                    }
+                }
+
+                Log.Information("[MainWindow] Stream başladı - {Count} chat ingestor aktif", _ingestorTasks.Count);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] OnStreamStarted hatası");
+            }
+        }
+
+        /// <summary>
+        /// Stream durduğunda çağrılır - tüm chat ingestor'ları durdurur
+        /// </summary>
+        private void OnStreamStopped()
+        {
+            try
+            {
+                StopAllChatIngestors();
+                Log.Information("[MainWindow] Stream durdu - Chat ingestor'lar kapatıldı");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] OnStreamStopped hatası");
+            }
+        }
+
+        /// <summary>
+        /// Tüm chat ingestor'ları durdurur
+        /// </summary>
+        private void StopAllChatIngestors()
+        {
+            try
+            {
+                _ytIngestor?.StopAsync();
+                _twitchIngestor?.StopAsync();
+                _tikTokIngestor?.StopAsync();
+                _instagramIngestor?.StopAsync();
+                _facebookIngestor?.StopAsync();
+
+                _ytIngestor = null;
+                _twitchIngestor = null;
+                _tikTokIngestor = null;
+                _instagramIngestor = null;
+                _facebookIngestor = null;
+
+                _ingestorTasks.Clear();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] StopAllChatIngestors hatası");
+            }
+        }
+
+        /// <summary>
+        /// YouTube Video ID'yi çeşitli kaynaklardan çıkarmaya çalışır
+        /// </summary>
+        private string? ExtractYouTubeVideoId(string? url, string? streamKey)
+        {
+            // Önce ayarlarda kayıtlı Video ID'ye bak
+            var settingsVideoId = SettingsStore.Data.YouTubeVideoId;
+            if (!string.IsNullOrWhiteSpace(settingsVideoId))
+                return settingsVideoId;
+
+            // URL veya Stream Key'den çıkarmaya çalış
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                // youtube.com/watch?v=VIDEO_ID formatı
+                var watchMatch = Regex.Match(url, @"[?&]v=([a-zA-Z0-9_-]{11})");
+                if (watchMatch.Success)
+                    return watchMatch.Groups[1].Value;
+
+                // youtu.be/VIDEO_ID formatı
+                var shortMatch = Regex.Match(url, @"youtu\.be/([a-zA-Z0-9_-]{11})");
+                if (shortMatch.Success)
+                    return shortMatch.Groups[1].Value;
+
+                // youtube.com/live/VIDEO_ID formatı
+                var liveMatch = Regex.Match(url, @"youtube\.com/live/([a-zA-Z0-9_-]{11})");
+                if (liveMatch.Success)
+                    return liveMatch.Groups[1].Value;
+            }
+
+            // Stream key genellikle video ID değil, ama bazen olabilir
+            if (!string.IsNullOrWhiteSpace(streamKey) && Regex.IsMatch(streamKey, @"^[a-zA-Z0-9_-]{11}$"))
+                return streamKey;
+
+            return null;
+        }
+
         private void WireUpLogging()
         {
             try
@@ -380,6 +562,10 @@ namespace UniCast.App
             _controlViewModel = new ControlViewModel();
             _chatViewModel = new ChatViewModel();
             _controlView = new ControlView(_controlViewModel, _chatViewModel);
+
+            // Stream eventlerine abone ol - chat'leri yönet
+            _controlViewModel.StreamStarted += OnStreamStarted;
+            _controlViewModel.StreamStopped += OnStreamStopped;
 
             // ChatBus'ı bağla
             _controlView.BindChatBus(ChatBus.Instance);

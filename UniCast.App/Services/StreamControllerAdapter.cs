@@ -330,43 +330,29 @@ namespace UniCast.App.Services
         {
             var settings = SettingsStore.Data;
 
-            // SelectedCamera'yı kullan (VideoDevice, SelectedVideoDevice bunun alias'ı)
-            var deviceValue = settings.SelectedCamera;
+            // SelectedCamera artık direkt cihaz adı olarak kaydediliyor
+            var deviceName = settings.SelectedCamera;
 
-            if (!string.IsNullOrWhiteSpace(deviceValue))
+            if (!string.IsNullOrWhiteSpace(deviceName))
             {
                 // Eğer cihaz değeri zaten "video=" ile başlıyorsa olduğu gibi kullan
-                if (deviceValue.StartsWith("video=", StringComparison.OrdinalIgnoreCase))
+                if (deviceName.StartsWith("video=", StringComparison.OrdinalIgnoreCase))
                 {
-                    return deviceValue;
+                    return deviceName;
                 }
 
-                // Windows device path formatı (\\?\..., GUID, ROOT#MEDIA) ise
-                // Bu ID formatı - FFmpeg için uygun değil
-                if (deviceValue.Contains("\\\\?\\") || deviceValue.Contains(@"\\?\") ||
-                    deviceValue.Contains("{") || deviceValue.Contains("ROOT#MEDIA") ||
-                    deviceValue.Contains("#GLOBAL") || deviceValue.Contains("ROOT#"))
+                // Eski format (ID) kontrolü - geriye uyumluluk için
+                if (deviceName.Contains("\\\\?\\") || deviceName.Contains(@"\\?\") ||
+                    deviceName.Contains("{") || deviceName.Contains("ROOT#MEDIA") ||
+                    deviceName.Contains("#GLOBAL") || deviceName.Contains("ROOT#"))
                 {
-                    Log.Warning("[StreamControllerAdapter] Ayarlardaki kamera ID formatında: {Device}. " +
-                        "FFmpeg için cihaz adı çözümlenecek.", deviceValue);
+                    Log.Warning("[StreamControllerAdapter] Eski format ID tespit edildi: {Device}. " +
+                        "Lütfen Ayarlar'dan kamerayı yeniden seçin.", deviceName);
 
-                    // DeviceService ile ID'den Name'e çevir - senkron çağrı
+                    // Eski ID formatı - ilk kamerayı kullan
                     try
                     {
                         var deviceService = new UniCast.App.Services.Capture.DeviceService();
-
-                        // Task.Run ile ayrı thread'de çalıştır ve bekle
-                        var deviceName = Task.Run(async () => await deviceService.GetDeviceNameByIdAsync(deviceValue))
-                            .GetAwaiter().GetResult();
-
-                        if (!string.IsNullOrEmpty(deviceName))
-                        {
-                            Log.Information("[StreamControllerAdapter] Cihaz adı çözümlendi: {Name}", deviceName);
-                            return $"video={deviceName}";
-                        }
-
-                        // ID ile bulunamadıysa, ilk kamerayı al
-                        Log.Warning("[StreamControllerAdapter] ID ile cihaz bulunamadı, ilk kamera aranıyor...");
                         var devices = Task.Run(async () => await deviceService.GetVideoDevicesAsync())
                             .GetAwaiter().GetResult();
 
@@ -379,19 +365,19 @@ namespace UniCast.App.Services
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning(ex, "[StreamControllerAdapter] Cihaz adı çözümlenemedi");
+                        Log.Warning(ex, "[StreamControllerAdapter] Cihaz listesi alınamadı");
                     }
 
-                    // Hiçbir şey bulunamadı - varsayılan deneme
-                    Log.Error("[StreamControllerAdapter] Hiçbir kamera bulunamadı!");
                     return "video=Integrated Camera";
                 }
 
                 // Normal cihaz adı - doğrudan kullan
-                return $"video={deviceValue}";
+                Log.Debug("[StreamControllerAdapter] Kamera: {Name}", deviceName);
+                return $"video={deviceName}";
             }
 
             // Ayarlarda cihaz yok - ilk kamerayı bulmaya çalış
+            Log.Warning("[StreamControllerAdapter] Kamera ayarlanmamış, ilk kamera aranıyor...");
             try
             {
                 var deviceService = new UniCast.App.Services.Capture.DeviceService();
@@ -411,6 +397,7 @@ namespace UniCast.App.Services
             }
 
             // Son çare
+            Log.Error("[StreamControllerAdapter] Hiçbir kamera bulunamadı!");
             return "video=Integrated Camera";
         }
 
@@ -418,36 +405,24 @@ namespace UniCast.App.Services
         {
             var settings = SettingsStore.Data;
 
-            // SelectedMicrophone'u kullan
-            var deviceValue = settings.SelectedMicrophone;
+            // SelectedMicrophone artık direkt cihaz adı olarak kaydediliyor
+            var deviceName = settings.SelectedMicrophone;
 
-            if (!string.IsNullOrWhiteSpace(deviceValue))
+            if (!string.IsNullOrWhiteSpace(deviceName))
             {
-                // Windows device path formatı ise çözümlemeye çalış
-                if (deviceValue.Contains("\\\\?\\") || deviceValue.Contains(@"\\?\") ||
-                    deviceValue.Contains("{") || deviceValue.Contains("ROOT#") ||
-                    deviceValue.Contains("#GLOBAL") || deviceValue.Contains("SWD#") ||
-                    deviceValue.Contains("MMDEVAPI"))
+                // Eski format (ID) kontrolü - geriye uyumluluk için
+                if (deviceName.Contains("\\\\?\\") || deviceName.Contains(@"\\?\") ||
+                    deviceName.Contains("{") || deviceName.Contains("ROOT#") ||
+                    deviceName.Contains("#GLOBAL") || deviceName.Contains("SWD#") ||
+                    deviceName.Contains("MMDEVAPI"))
                 {
-                    Log.Warning("[StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: {Device}. " +
-                        "FFmpeg için cihaz adı çözümlenecek.", deviceValue);
+                    Log.Warning("[StreamControllerAdapter] Eski format mikrofon ID tespit edildi: {Device}. " +
+                        "Lütfen Ayarlar'dan mikrofonu yeniden seçin.", deviceName);
 
+                    // Eski ID formatı - ilk mikrofonu kullan
                     try
                     {
                         var deviceService = new UniCast.App.Services.Capture.DeviceService();
-
-                        // Task.Run ile ayrı thread'de çalıştır ve bekle
-                        var deviceName = Task.Run(async () => await deviceService.GetDeviceNameByIdAsync(deviceValue))
-                            .GetAwaiter().GetResult();
-
-                        if (!string.IsNullOrEmpty(deviceName))
-                        {
-                            Log.Information("[StreamControllerAdapter] Mikrofon adı çözümlendi: {Name}", deviceName);
-                            return deviceName;
-                        }
-
-                        // ID ile bulunamadıysa, ilk mikrofonu al
-                        Log.Warning("[StreamControllerAdapter] ID ile mikrofon bulunamadı, ilk mikrofon aranıyor...");
                         var devices = Task.Run(async () => await deviceService.GetAudioDevicesAsync())
                             .GetAwaiter().GetResult();
 
@@ -460,19 +435,19 @@ namespace UniCast.App.Services
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning(ex, "[StreamControllerAdapter] Mikrofon adı çözümlenemedi");
+                        Log.Warning(ex, "[StreamControllerAdapter] Mikrofon listesi alınamadı");
                     }
 
-                    // Çözümlenemezse null dön (sessiz audio kullanılacak)
-                    Log.Warning("[StreamControllerAdapter] Mikrofon bulunamadı, sessiz audio kullanılacak");
                     return null;
                 }
 
                 // Normal cihaz adı
-                return deviceValue;
+                Log.Debug("[StreamControllerAdapter] Mikrofon: {Name}", deviceName);
+                return deviceName;
             }
 
             // Ayarlarda mikrofon yok - ilk mikrofonu bulmaya çalış
+            Log.Warning("[StreamControllerAdapter] Mikrofon ayarlanmamış, ilk mikrofon aranıyor...");
             try
             {
                 var deviceService = new UniCast.App.Services.Capture.DeviceService();
@@ -492,6 +467,7 @@ namespace UniCast.App.Services
             }
 
             // Mikrofon bulunamadı - sessiz audio kullanılacak
+            Log.Warning("[StreamControllerAdapter] Hiçbir mikrofon bulunamadı, sessiz audio kullanılacak");
             return null;
         }
 

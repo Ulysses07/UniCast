@@ -24,7 +24,7 @@
 
                         <ComboBox Grid.Column="1" ItemsSource="{Binding VideoDevices}"
                                   SelectedValue="{Binding DefaultCamera, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  SelectedValuePath="Id" 
+                                  SelectedValuePath="Name" 
                                   Height="35">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
@@ -46,7 +46,7 @@
 
                         <ComboBox Grid.Column="1" ItemsSource="{Binding AudioDevices}"
                                   SelectedValue="{Binding DefaultMicrophone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  SelectedValuePath="Id"
+                                  SelectedValuePath="Name"
                                   Height="35">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
@@ -133,6 +133,40 @@
                 </StackPanel>
             </Border>
 
+            <!-- YouTube Chat Ayarları -->
+            <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="YouTube Chat Ayarları" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
+
+                    <TextBlock Text="YouTube Yayın Linki veya Video ID" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
+                    <TextBox Text="{Binding YouTubeVideoId, UpdateSourceTrigger=PropertyChanged}" Height="30"
+                             ToolTip="Örnek: https://youtube.com/watch?v=XXXXX veya sadece XXXXX"/>
+                    <TextBlock Text="Örnek: https://youtube.com/watch?v=abc123 veya sadece abc123" 
+                               FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Twitch Chat Ayarları -->
+            <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Twitch Chat Ayarları" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
+
+                    <TextBlock Text="Kanal Adı" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
+                    <TextBox Text="{Binding TwitchChannelName, UpdateSourceTrigger=PropertyChanged}" Height="30"
+                             ToolTip="Twitch kanal adınız (örn: ninja)"/>
+
+                    <TextBlock Text="Bot Kullanıcı Adı (Opsiyonel)" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
+                    <TextBox Text="{Binding TwitchBotUsername, UpdateSourceTrigger=PropertyChanged}" Height="30"
+                             ToolTip="Chat botu kullanıcı adı (boş bırakılabilir)"/>
+
+                    <TextBlock Text="OAuth Token" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
+                    <PasswordBox x:Name="PwdTwitchOAuth" PasswordChanged="PwdTwitchOAuth_PasswordChanged" Height="30"
+                                ToolTip="https://twitchapps.com/tmi/ adresinden alabilirsiniz"/>
+                    <TextBlock Text="Token almak için: https://twitchapps.com/tmi/" 
+                               FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+
             <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
                 <StackPanel>
                     <TextBlock Text="Sosyal Medya Entegrasyonu" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
@@ -167,11 +201,39 @@
 
                     <Expander Header="Facebook Ayarları" Foreground="{StaticResource TextMain}">
                         <StackPanel Margin="10">
-                            <TextBlock Text="Page Access Token" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
-                            <PasswordBox x:Name="PwdFacebookToken" PasswordChanged="PwdFacebookToken_PasswordChanged" Height="30"/>
 
-                            <TextBlock Text="Page ID" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
-                            <TextBox Text="{Binding FacebookPageId, UpdateSourceTrigger=PropertyChanged}" Height="30"/>
+                            <!-- Bağlantı Durumu -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock x:Name="TxtFacebookStatus" Text="⚪ Bağlı Değil" 
+                                               FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <Button x:Name="BtnFacebookLogin" Grid.Column="1" 
+                                        Content="🔵 Facebook'a Giriş Yap" 
+                                        Click="BtnFacebookLogin_Click"
+                                        Background="#1877F2" Foreground="White"
+                                        Padding="15,8" FontWeight="SemiBold"
+                                        BorderThickness="0" Cursor="Hand"/>
+                            </Grid>
+
+                            <!-- Canlı Yayın Linki -->
+                            <TextBlock Text="Facebook Canlı Yayın Linki" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
+                            <TextBox Text="{Binding FacebookLiveVideoUrl, UpdateSourceTrigger=PropertyChanged}" Height="30"
+                                     ToolTip="Örnek: https://www.facebook.com/sayfa/videos/123456789"/>
+                            <TextBlock Text="Örnek: https://facebook.com/sayfa/videos/123456789 veya sadece video ID" 
+                                       FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,5,0,0"/>
+
+                            <!-- Çıkış Butonu -->
+                            <Button x:Name="BtnFacebookLogout" Content="Çıkış Yap" 
+                                    Click="BtnFacebookLogout_Click"
+                                    HorizontalAlignment="Left" Margin="0,15,0,0"
+                                    Padding="10,5" Visibility="Collapsed"/>
                         </StackPanel>
                     </Expander>
                 </StackPanel>

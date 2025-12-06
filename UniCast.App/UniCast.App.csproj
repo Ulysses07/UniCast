@@ -21,6 +21,7 @@
 	<ItemGroup>
 		<PackageReference Include="DirectShowLib" Version="1.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3595.46" />
 		<PackageReference Include="NAudio" Version="2.2.1" />
 
 		<PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />

@@ -62,6 +62,11 @@ namespace UniCast.App.ViewModels
             _facebookLiveVideoId = _settings.FacebookLiveVideoId ?? "";
             _facebookAccessToken = _settings.FacebookPageAccessToken ?? "";
 
+            // Yeni WebView2 tabanlı Facebook
+            _facebookCookies = _settings.FacebookCookies ?? "";
+            _facebookUserId = _settings.FacebookUserId ?? "";
+            _facebookLiveVideoUrl = _settings.FacebookLiveVideoUrl ?? "";
+
             // Komutlar
             SaveCommand = new RelayCommand(_ => Save());
             BrowseRecordFolderCommand = new RelayCommand(_ => BrowseFolder());
@@ -288,6 +293,28 @@ namespace UniCast.App.ViewModels
             set { _facebookAccessToken = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
 
+        // Yeni WebView2 tabanlı Facebook ayarları
+        private string _facebookCookies = "";
+        public string FacebookCookies
+        {
+            get => _facebookCookies;
+            set { _facebookCookies = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _facebookUserId = "";
+        public string FacebookUserId
+        {
+            get => _facebookUserId;
+            set { _facebookUserId = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _facebookLiveVideoUrl = "";
+        public string FacebookLiveVideoUrl
+        {
+            get => _facebookLiveVideoUrl;
+            set { _facebookLiveVideoUrl = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
         public ICommand SaveCommand { get; }
         public ICommand BrowseRecordFolderCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
@@ -341,6 +368,11 @@ namespace UniCast.App.ViewModels
                     s.InstagramPassword = (InstagramSessionId ?? "").Trim();
                     s.FacebookPageId = (FacebookPageId ?? "").Trim();
                     s.FacebookPageAccessToken = (FacebookAccessToken ?? "").Trim();
+
+                    // Yeni WebView2 tabanlı Facebook
+                    s.FacebookCookies = (FacebookCookies ?? "").Trim();
+                    s.FacebookUserId = (FacebookUserId ?? "").Trim();
+                    s.FacebookLiveVideoUrl = (FacebookLiveVideoUrl ?? "").Trim();
                 });
 
                 SettingsStore.Save();

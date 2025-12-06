@@ -322,10 +322,20 @@ namespace UniCast.Core.Chat.Ingestors
                 // Mesajları al
                 if (TryGetNestedProperty(root, "continuationContents.liveChatContinuation.actions", out var actions))
                 {
+                    var actionCount = 0;
                     foreach (var action in actions.EnumerateArray())
                     {
+                        actionCount++;
                         ProcessAction(action);
                     }
+                    if (actionCount > 0)
+                    {
+                        Log.Debug("[YouTube Scraper] {Count} action işlendi", actionCount);
+                    }
+                }
+                else
+                {
+                    Log.Debug("[YouTube Scraper] Yeni mesaj yok (actions bulunamadı)");
                 }
             }
             catch (Exception ex)
@@ -341,6 +351,9 @@ namespace UniCast.Core.Chat.Ingestors
                 if (!action.TryGetProperty("replayChatItemAction", out var replayAction) &&
                     !action.TryGetProperty("addChatItemAction", out var addAction))
                 {
+                    // Action tipi ne olduğunu logla
+                    var props = string.Join(", ", action.EnumerateObject().Select(p => p.Name));
+                    Log.Debug("[YouTube Scraper] Bilinmeyen action tipi: {Props}", props);
                     return;
                 }
 
@@ -360,6 +373,7 @@ namespace UniCast.Core.Chat.Ingestors
                     if (message != null && !_seenMessageIds.Contains(message.Username + message.Timestamp.Ticks))
                     {
                         _seenMessageIds.Add(message.Username + message.Timestamp.Ticks);
+                        Log.Debug("[YouTube Scraper] Mesaj alındı: {User}: {Msg}", message.Username, message.Message);
                         PublishMessage(message);
                     }
                 }
