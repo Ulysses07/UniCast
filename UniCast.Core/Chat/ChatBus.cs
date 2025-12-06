@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
@@ -55,28 +57,33 @@ namespace UniCast.Core.Chat
                 return;
 
             Interlocked.Increment(ref _totalMessagesReceived);
-            Log.Debug("[ChatBus] Mesaj alındı: {Platform} - {User}: {Content}", message.Platform, message.Username, message.Message);
+            Log.Debug("[ChatBus] Mesaj alındı: {Platform} - {User}: {Content}", message.Platform, message.DisplayName, message.Message);
 
-            // Rate limiting kontrolü
-            var platformKey = message.Platform.ToString();
+            // Rate limiting kontrolü - Kullanıcı + Platform bazlı (aynı kullanıcıdan spam önleme)
+            var userKey = $"{message.Platform}:{message.Username}";
             var now = DateTime.UtcNow;
 
-            if (_lastMessageTime.TryGetValue(platformKey, out var lastTime))
+            if (_lastMessageTime.TryGetValue(userKey, out var lastTime))
             {
                 if ((now - lastTime).TotalMilliseconds < MinMessageIntervalMs)
                 {
                     Interlocked.Increment(ref _totalMessagesDropped);
-                    Log.Verbose("[ChatBus] Message rate limited: {Platform}", message.Platform);
+                    Log.Verbose("[ChatBus] Message rate limited: {User} on {Platform}", message.Username, message.Platform);
                     return;
                 }
             }
 
-            _lastMessageTime[platformKey] = now;
+            _lastMessageTime[userKey] = now;
+
+            // Memory leak önleme: Dictionary çok büyürse eski entry'leri temizle
+            if (_lastMessageTime.Count > 5000)
+            {
+                CleanupOldEntries();
+            }
 
             // Event'i tetikle
             try
             {
-                var hasSubscribers = MessageReceived != null || OnMerged != null;
                 Log.Debug("[ChatBus] Event tetikleniyor - Subscribers: MessageReceived={MR}, OnMerged={OM}",
                     MessageReceived != null, OnMerged != null);
 
@@ -87,6 +94,26 @@ namespace UniCast.Core.Chat
             {
                 Log.Error(ex, "[ChatBus] MessageReceived event handler hatası");
             }
+        }
+
+        /// <summary>
+        /// 5 dakikadan eski rate limit entry'lerini temizler.
+        /// </summary>
+        private void CleanupOldEntries()
+        {
+            var cutoff = DateTime.UtcNow.AddMinutes(-5);
+            var keysToRemove = _lastMessageTime
+                .Where(kvp => kvp.Value < cutoff)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var key in keysToRemove)
+            {
+                _lastMessageTime.TryRemove(key, out _);
+            }
+
+            Log.Debug("[ChatBus] Rate limit cache temizlendi: {Removed} entry silindi, {Remaining} kaldı",
+                keysToRemove.Count, _lastMessageTime.Count);
         }
 
         /// <summary>

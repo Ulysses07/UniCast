@@ -102,9 +102,17 @@ namespace UniCast.App.ViewModels
         {
             if (_disposed || _incomingBuffer.IsEmpty) return;
 
+            int processedCount = 0;
             while (_incomingBuffer.TryDequeue(out var m))
             {
                 Feed.Add(m);
+                processedCount++;
+            }
+
+            if (processedCount > 0)
+            {
+                Serilog.Log.Debug("[ChatViewModel] {Count} mesaj Feed'e eklendi. Toplam: {Total}",
+                    processedCount, Feed.Count);
             }
 
             // DÜZELTME v20: AppConstants kullanımı

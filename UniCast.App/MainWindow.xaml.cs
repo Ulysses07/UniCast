@@ -38,7 +38,7 @@ namespace UniCast.App
         private TwitchChatIngestor? _twitchIngestor;
         private TikTokChatIngestor? _tikTokIngestor;
         private InstagramHybridChatIngestor? _instagramIngestor;  // DEĞİŞTİ
-        private FacebookChatIngestor? _facebookIngestor;
+        private FacebookChatScraper? _facebookIngestor;  // Cookie tabanlı scraper
 
         // ViewModels (IDisposable olanlar)
         private PreviewViewModel? _previewViewModel;
@@ -214,13 +214,8 @@ namespace UniCast.App
                     }
                 }
 
-                // Facebook (Mock - API henüz implement edilmedi)
-                if (!string.IsNullOrWhiteSpace(settings.FacebookPageId))
-                {
-                    _facebookIngestor = new FacebookChatIngestor(settings.FacebookPageId);
-                    _ingestorTasks.Add(StartIngestorSafeAsync(_facebookIngestor, "Facebook", ct));
-                    Log.Warning("[MainWindow] Facebook chat sadece mock modda çalışıyor - gerçek API henüz entegre edilmedi");
-                }
+                // Facebook - Yeni scraper bazlı sistem OnStreamStarted'da başlatılıyor
+                // Eski mock ingestor artık kullanılmıyor
 
                 Log.Debug("[MainWindow] {Count} adet chat ingestor başlatıldı", _ingestorTasks.Count);
             }
@@ -298,10 +293,20 @@ namespace UniCast.App
                             // Facebook için cookie tabanlı scraper kullan
                             var cookies = SettingsStore.Data.FacebookCookies;
                             var liveUrl = SettingsStore.Data.FacebookLiveVideoUrl;
-                            if (!string.IsNullOrWhiteSpace(cookies))
+                            if (!string.IsNullOrWhiteSpace(cookies) && !string.IsNullOrWhiteSpace(liveUrl))
                             {
-                                // FacebookChatScraper varsa kullan
-                                Log.Information("[MainWindow] Facebook Chat - Cookie mevcut ama scraper henüz entegre edilmedi");
+                                _facebookIngestor = new FacebookChatScraper(liveUrl)
+                                {
+                                    Cookies = cookies,
+                                    UserId = SettingsStore.Data.FacebookUserId
+                                };
+                                _ingestorTasks.Add(StartIngestorSafeAsync(_facebookIngestor, "Facebook", ct));
+                                Log.Information("[MainWindow] Facebook Chat başlatıldı - VideoUrl: {Url}",
+                                    liveUrl.Length > 50 ? liveUrl.Substring(0, 50) + "..." : liveUrl);
+                            }
+                            else if (!string.IsNullOrWhiteSpace(cookies))
+                            {
+                                Log.Warning("[MainWindow] Facebook Chat - Cookie var ama Live Video URL eksik");
                             }
                             break;
 
