@@ -1,0 +1,1072 @@
+2025-12-06 09:58:51.527 +03:00 [INF] ===================================================
+2025-12-06 09:58:51.559 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-06 09:58:51.560 +03:00 [INF] ===================================================
+2025-12-06 09:58:51.568 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-06 09:58:51.575 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-06 09:58:51.920 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-06 09:58:52.048 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-06 09:58:52.065 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-06 09:58:52.066 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-06 09:58:52.177 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-06 09:58:52.187 +03:00 [DBG] [ChatBus] Initialized
+2025-12-06 09:58:52.188 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-06 09:58:52.190 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-06 09:58:52.233 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-06 09:58:52.235 +03:00 [DBG] [MainWindow] 0 adet chat ingestor başlatıldı
+2025-12-06 09:58:52.235 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-06 09:58:52.236 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-06 09:58:52.237 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-06 09:58:52.262 +03:00 [DBG] [ControlView] Layout ayarları yüklendi: Mola=100, Camera=350, Chat=600
+2025-12-06 09:58:52.588 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-06 09:58:52.594 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-06 09:58:52.595 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-06 09:58:52.595 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-06 09:58:52.596 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-06 09:58:52.597 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-06 09:58:52.597 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-06 09:58:52.598 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-06 09:58:52.598 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-06 09:58:52.599 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-06 09:58:52.600 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-06 09:58:52.600 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-06 09:58:52.601 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-06 09:58:52.602 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-06 09:58:52.602 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-06 09:58:52.603 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-06 09:58:52.604 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-06 09:58:52.605 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-06 09:58:52.606 +03:00 [INF] [Startup] Toplam süre: 1169ms
+2025-12-06 09:58:52.607 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-06 09:58:53.595 +03:00 [INF] [HardwareEncoder] Tespit edildi: NVIDIA NVENC H.264 (2 encoder mevcut)
+2025-12-06 09:58:53.605 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-06 09:58:53.680 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-06 09:58:53.682 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-06 09:58:53.683 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#1)
+2025-12-06 09:58:53.684 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-06 09:58:53.685 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-06 09:58:53.686 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-06 09:58:59.284 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-06 09:58:59.322 +03:00 [DBG] [ControlView] Layout ayarları kaydedildi: Mola=100, Camera=350, Chat=600
+2025-12-06 09:59:22.186 +03:00 [DBG] [SettingsStore] Ayarlar kaydedildi
+2025-12-06 10:01:50.717 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#2)
+2025-12-06 10:02:24.874 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:02:24.888 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:02:24.889 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:02:24.892 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:02:24.896 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:02:24.898 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:02:24.899 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:02:24.900 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:02:24.901 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_pnp_\\?\root#media#0001#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:02:24.967 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: DroidCam Video
+2025-12-06 10:02:24.968 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:02:24.970 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:02:24.972 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:02:24.977 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=DroidCam Video" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:02:24.984 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:02:25.000 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:02:25.001 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:02:25.002 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:02:25.003 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:02:25.003 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:02:25.004 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:02:25.005 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:02:25.006 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:02:25.007 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:02:25.008 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:02:25.270 +03:00 [DBG] [StreamController] [FFmpeg] Input #0, dshow, from 'video=DroidCam Video':
+2025-12-06 10:02:25.271 +03:00 [DBG] [StreamController] [FFmpeg]   Duration: N/A, start: 72940.267586, bitrate: N/A
+2025-12-06 10:02:25.272 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #0:0: Video: rawvideo (YUY2 / 0x32595559), yuyv422, 640x480, 29.97 fps, 29.97 tbr, 10000k tbn, start 72940.267586
+2025-12-06 10:02:25.979 +03:00 [DBG] [StreamController] [FFmpeg] [aist#1:0/pcm_s16le @ 000002020311ce40] Guessed Channel Layout: stereo
+2025-12-06 10:02:25.980 +03:00 [DBG] [StreamController] [FFmpeg] Input #1, dshow, from 'audio=Mikrofon (HyperX Cloud III Wireless)':
+2025-12-06 10:02:25.981 +03:00 [DBG] [StreamController] [FFmpeg]   Duration: N/A, start: 72940.457000, bitrate: 1411 kb/s
+2025-12-06 10:02:25.982 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #1:0: Audio: pcm_s16le, 44100 Hz, stereo, s16, 1411 kb/s, start 72940.457000
+2025-12-06 10:02:25.983 +03:00 [DBG] [StreamController] [FFmpeg] Stream mapping:
+2025-12-06 10:02:25.984 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #0:0 -> #0:0 (rawvideo (native) -> h264 (libx264))
+2025-12-06 10:02:25.984 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #1:0 -> #0:1 (pcm_s16le (native) -> aac (native))
+2025-12-06 10:02:25.985 +03:00 [DBG] [StreamController] [FFmpeg] Press [q] to stop, [?] for help
+2025-12-06 10:02:25.988 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-12-06 10:02:25.989 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] profile High, level 3.1, 4:2:0, 8-bit
+2025-12-06 10:02:27.488 +03:00 [ERR] [StreamController] [FFmpeg] [tee @ 0000020203238b00] Slave '[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm': error opening: I/O error
+2025-12-06 10:02:27.488 +03:00 [ERR] [StreamController] [FFmpeg] [tee @ 0000020203238b00] Slave muxer #1 failed: I/O error, continuing with 1/2 slaves.
+2025-12-06 10:02:27.489 +03:00 [DBG] [StreamController] [FFmpeg] Output #0, tee, to '[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4|[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm':
+2025-12-06 10:02:27.490 +03:00 [DBG] [StreamController] [FFmpeg]   Metadata:
+2025-12-06 10:02:27.491 +03:00 [DBG] [StreamController] [FFmpeg]     encoder         : Lavf62.6.103
+2025-12-06 10:02:27.491 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #0:0: Video: h264, yuv420p(tv, progressive), 1280x720, q=2-31, 2500 kb/s, 30 fps, 30 tbn
+2025-12-06 10:02:27.492 +03:00 [DBG] [StreamController] [FFmpeg]     Metadata:
+2025-12-06 10:02:27.493 +03:00 [DBG] [StreamController] [FFmpeg]       encoder         : Lavc62.21.100 libx264
+2025-12-06 10:02:27.494 +03:00 [DBG] [StreamController] [FFmpeg]     Side data:
+2025-12-06 10:02:27.495 +03:00 [DBG] [StreamController] [FFmpeg]       CPB properties: bitrate max/min/avg: 2500000/0/2500000 buffer size: 10000000 vbv_delay: N/A
+2025-12-06 10:02:27.496 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #0:1: Audio: aac (LC), 44100 Hz, stereo, fltp, 128 kb/s
+2025-12-06 10:02:27.497 +03:00 [DBG] [StreamController] [FFmpeg]     Metadata:
+2025-12-06 10:02:27.498 +03:00 [DBG] [StreamController] [FFmpeg]       encoder         : Lavc62.21.100 aac
+2025-12-06 10:02:27.521 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=   15 fps=9.7 q=7.0 size=N/A time=00:00:00.50 bitrate=N/A speed=0.325x elapsed=0:00:01.54    
+2025-12-06 10:02:28.036 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=   81 fps= 39 q=0.0 size=N/A time=00:00:02.45 bitrate=N/A speed= 1.2x elapsed=0:00:02.05    
+2025-12-06 10:02:28.551 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=   96 fps= 37 q=0.0 size=N/A time=00:00:02.96 bitrate=N/A speed=1.15x elapsed=0:00:02.57    
+2025-12-06 10:02:29.067 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  112 fps= 36 q=0.0 size=N/A time=00:00:03.45 bitrate=N/A speed=1.12x elapsed=0:00:03.08    
+2025-12-06 10:02:29.582 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  126 fps= 35 q=0.0 size=N/A time=00:00:03.96 bitrate=N/A speed= 1.1x elapsed=0:00:03.60    
+2025-12-06 10:02:30.098 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  142 fps= 34 q=0.0 size=N/A time=00:00:04.45 bitrate=N/A speed=1.08x elapsed=0:00:04.11    
+2025-12-06 10:02:30.614 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  156 fps= 34 q=0.0 size=N/A time=00:00:04.96 bitrate=N/A speed=1.07x elapsed=0:00:04.63    
+2025-12-06 10:02:31.130 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  172 fps= 33 q=0.0 size=N/A time=00:00:05.45 bitrate=N/A speed=1.06x elapsed=0:00:05.14    
+2025-12-06 10:02:31.524 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:02:31.533 +03:00 [INF] [StreamController] Stream durduruluyor...
+2025-12-06 10:02:31.644 +03:00 [DBG] [StreamController] [FFmpeg] [q] command received. Exiting.
+2025-12-06 10:02:31.983 +03:00 [DBG] [StreamController] [FFmpeg] [out#0/tee @ 0000020203198800] video:74KiB audio:94KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+2025-12-06 10:02:31.984 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  187 fps= 31 q=0.0 Lsize=N/A time=00:00:06.02 bitrate=N/A speed=   1x elapsed=0:00:06.00    
+2025-12-06 10:02:31.985 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] frame I:4     Avg QP: 3.01  size:  2287
+2025-12-06 10:02:31.986 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] frame P:183   Avg QP: 0.38  size:   366
+2025-12-06 10:02:31.987 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] mb I  I16..4: 97.6%  0.9%  1.5%
+2025-12-06 10:02:31.988 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] mb P  I16..4:  0.8%  0.0%  0.0%  P16..4:  0.5%  0.0%  0.0%  0.0%  0.0%    skip:98.7%
+2025-12-06 10:02:31.989 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] 8x8 transform intra:0.7% inter:14.0%
+2025-12-06 10:02:31.989 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] coded y,uvDC,uvAC intra: 1.4% 1.1% 0.5% inter: 0.2% 0.1% 0.1%
+2025-12-06 10:02:31.990 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] i16 v,h,dc,p: 73%  5% 22%  0%
+2025-12-06 10:02:31.991 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 21% 30% 24%  7%  2%  4%  1%  5%  6%
+2025-12-06 10:02:31.992 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 27% 16% 38%  2%  5%  4%  3%  2%  2%
+2025-12-06 10:02:31.993 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] i8c dc,h,v,p: 99%  0%  1%  0%
+2025-12-06 10:02:31.994 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] Weighted P-Frames: Y:0.0% UV:0.0%
+2025-12-06 10:02:31.995 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000020203228740] kb/s:97.67
+2025-12-06 10:02:31.995 +03:00 [DBG] [StreamController] [FFmpeg] [aac @ 0000020203354840] Qavg: 331.751
+2025-12-06 10:02:32.017 +03:00 [INF] [StreamController] Stream durduruldu
+2025-12-06 10:18:34.583 +03:00 [INF] ===================================================
+2025-12-06 10:18:34.625 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-06 10:18:34.626 +03:00 [INF] ===================================================
+2025-12-06 10:18:34.634 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-06 10:18:34.647 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-06 10:18:35.038 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-06 10:18:35.190 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-06 10:18:35.287 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-06 10:18:35.288 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-06 10:18:35.414 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-06 10:18:35.424 +03:00 [DBG] [ChatBus] Initialized
+2025-12-06 10:18:35.426 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-06 10:18:35.429 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-06 10:18:35.469 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-06 10:18:35.471 +03:00 [DBG] [MainWindow] 0 adet chat ingestor başlatıldı
+2025-12-06 10:18:35.472 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-06 10:18:35.472 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-06 10:18:35.473 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-06 10:18:35.503 +03:00 [DBG] [ControlView] Layout ayarları yüklendi: Mola=100, Camera=350, Chat=600
+2025-12-06 10:18:37.528 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-06 10:18:37.537 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-06 10:18:37.537 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-06 10:18:37.538 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-06 10:18:37.539 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-06 10:18:37.539 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-06 10:18:37.540 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-06 10:18:37.541 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-06 10:18:37.560 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-06 10:18:37.561 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-06 10:18:37.562 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-06 10:18:37.562 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-06 10:18:37.563 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-06 10:18:37.564 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-06 10:18:37.564 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-06 10:18:37.565 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-06 10:18:37.566 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-06 10:18:37.567 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-06 10:18:37.568 +03:00 [INF] [Startup] Toplam süre: 3081ms
+2025-12-06 10:18:37.569 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-06 10:18:38.891 +03:00 [INF] [HardwareEncoder] Tespit edildi: NVIDIA NVENC H.264 (2 encoder mevcut)
+2025-12-06 10:18:38.917 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-06 10:18:39.012 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-06 10:18:39.015 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-06 10:18:39.016 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#8)
+2025-12-06 10:18:39.017 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-06 10:18:39.019 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-06 10:18:39.020 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-06 10:18:39.486 +03:00 [DBG] [ControlView] Layout ayarları kaydedildi: Mola=100, Camera=350, Chat=600
+2025-12-06 10:18:39.960 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-06 10:18:40.018 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#9)
+2025-12-06 10:19:04.088 +03:00 [DBG] [SettingsStore] Ayarlar kaydedildi
+2025-12-06 10:19:06.572 +03:00 [DBG] [SettingsStore] Ayarlar kaydedildi
+2025-12-06 10:19:06.732 +03:00 [DBG] [SettingsStore] Ayarlar kaydedildi
+2025-12-06 10:19:13.020 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#11)
+2025-12-06 10:19:14.021 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#14)
+2025-12-06 10:19:15.020 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#17)
+2025-12-06 10:19:16.021 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#20)
+2025-12-06 10:19:17.021 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#24)
+2025-12-06 10:19:18.022 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#25)
+2025-12-06 10:19:21.022 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#26)
+2025-12-06 10:19:22.021 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#29)
+2025-12-06 10:19:23.022 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#31)
+2025-12-06 10:19:24.816 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:19:24.830 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:19:24.831 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:19:24.834 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:19:24.837 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:19:24.840 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:19:24.840 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:19:24.841 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:19:24.843 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_pnp_\\?\root#eoswebcamsource#0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\eoswebcamcamerasource. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:19:25.242 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility
+2025-12-06 10:19:25.243 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:19:25.245 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:19:25.247 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:19:25.252 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:19:25.259 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:19:25.264 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:19:25.272 +03:00 [INF] [StreamController] Stream durduruluyor...
+2025-12-06 10:19:25.276 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:19:25.277 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:19:25.278 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:19:25.279 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:19:25.280 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:19:25.281 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:19:25.281 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:19:25.282 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:19:25.283 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:19:25.284 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:19:25.548 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000016d0f73f200] Could not run graph (sometimes caused by a device already in use by other application)
+2025-12-06 10:19:25.758 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 0000016d0f73ef00] Error opening input: I/O error
+2025-12-06 10:19:25.759 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility.
+2025-12-06 10:19:25.760 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:19:25.775 +03:00 [INF] [StreamController] Stream durduruldu
+2025-12-06 10:19:25.776 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:19:25.777 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:19:25.778 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:19:25.779 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:19:25.780 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:19:25.781 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:19:25.781 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:19:25.782 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:19:25.783 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_pnp_\\?\root#eoswebcamsource#0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\eoswebcamcamerasource. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:19:25.783 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility
+2025-12-06 10:19:25.784 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:19:25.786 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:19:25.787 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:19:25.790 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:19:25.794 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:19:25.812 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:19:25.813 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:19:25.814 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:19:25.815 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:19:25.816 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:19:25.817 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:19:25.818 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:19:25.818 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:19:25.819 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:19:25.820 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:19:26.021 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#32)
+2025-12-06 10:19:26.056 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 000001fe4a4ee940] Could not run graph (sometimes caused by a device already in use by other application)
+2025-12-06 10:19:26.265 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 000001fe4a4ef800] Error opening input: I/O error
+2025-12-06 10:19:26.266 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility.
+2025-12-06 10:19:26.267 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:19:26.794 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:19:27.022 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#36)
+2025-12-06 10:19:28.022 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#39)
+2025-12-06 10:19:29.023 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#42)
+2025-12-06 10:19:30.023 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#45)
+2025-12-06 10:19:31.024 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#48)
+2025-12-06 10:19:32.025 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#51)
+2025-12-06 10:19:52.245 +03:00 [INF] ===================================================
+2025-12-06 10:19:52.264 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-06 10:19:52.265 +03:00 [INF] ===================================================
+2025-12-06 10:19:52.272 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-06 10:19:52.278 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-06 10:19:52.624 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-06 10:19:52.745 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-06 10:19:52.813 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-06 10:19:52.814 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-06 10:19:52.843 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-06 10:19:52.852 +03:00 [DBG] [ChatBus] Initialized
+2025-12-06 10:19:52.853 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-06 10:19:52.856 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-06 10:19:52.889 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-06 10:19:52.891 +03:00 [DBG] [MainWindow] 0 adet chat ingestor başlatıldı
+2025-12-06 10:19:52.892 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-06 10:19:52.892 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-06 10:19:52.893 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-06 10:19:52.918 +03:00 [DBG] [ControlView] Layout ayarları yüklendi: Mola=100, Camera=350, Chat=600
+2025-12-06 10:19:54.494 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-06 10:19:54.501 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-06 10:19:54.502 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-06 10:19:54.502 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-06 10:19:54.503 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-06 10:19:54.504 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-06 10:19:54.504 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-06 10:19:54.505 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-06 10:19:54.505 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-06 10:19:54.506 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-06 10:19:54.507 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-06 10:19:54.507 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-06 10:19:54.508 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-06 10:19:54.508 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-06 10:19:54.509 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-06 10:19:54.510 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-06 10:19:54.511 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-06 10:19:54.512 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-06 10:19:54.516 +03:00 [INF] [Startup] Toplam süre: 2292ms
+2025-12-06 10:19:54.517 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-06 10:19:55.055 +03:00 [INF] [HardwareEncoder] Tespit edildi: NVIDIA NVENC H.264 (2 encoder mevcut)
+2025-12-06 10:19:55.064 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-06 10:19:55.131 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-06 10:19:55.133 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-06 10:19:55.135 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#4)
+2025-12-06 10:19:55.137 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-06 10:19:55.141 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-06 10:19:55.142 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-06 10:19:56.137 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#7)
+2025-12-06 10:19:57.138 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#10)
+2025-12-06 10:19:58.139 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#13)
+2025-12-06 10:19:59.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#16)
+2025-12-06 10:20:00.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#19)
+2025-12-06 10:20:00.257 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:20:00.265 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:20:00.267 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:20:00.269 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:20:00.273 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:20:00.275 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:20:00.276 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:20:00.277 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:20:00.278 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_pnp_\\?\root#eoswebcamsource#0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\eoswebcamcamerasource. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:20:00.693 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility
+2025-12-06 10:20:00.694 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:20:00.696 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:20:00.698 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:20:00.703 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:20:00.709 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:20:00.727 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:20:00.728 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:20:00.730 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:20:00.730 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:20:00.732 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:20:00.732 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:20:00.733 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:20:00.734 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:20:00.735 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:20:00.736 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:20:00.994 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 000001e8aceef7c0] Could not run graph (sometimes caused by a device already in use by other application)
+2025-12-06 10:20:01.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#21)
+2025-12-06 10:20:01.209 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 000001e8aceeef40] Error opening input: I/O error
+2025-12-06 10:20:01.210 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility.
+2025-12-06 10:20:01.211 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:20:01.708 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:20:02.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#24)
+2025-12-06 10:20:03.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#27)
+2025-12-06 10:20:04.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#31)
+2025-12-06 10:20:05.139 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#34)
+2025-12-06 10:20:06.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#37)
+2025-12-06 10:20:07.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#40)
+2025-12-06 10:20:08.141 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#44)
+2025-12-06 10:20:09.141 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#47)
+2025-12-06 10:20:10.142 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#50)
+2025-12-06 10:20:11.142 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#53)
+2025-12-06 10:20:11.400 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:20:12.141 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#57)
+2025-12-06 10:20:13.142 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#60)
+2025-12-06 10:20:13.913 +03:00 [DBG] [ControlView] Layout ayarları kaydedildi: Mola=100, Camera=350, Chat=600
+2025-12-06 10:20:14.141 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#62)
+2025-12-06 10:20:22.851 +03:00 [DBG] [SettingsStore] Ayarlar kaydedildi
+2025-12-06 10:20:25.201 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-06 10:20:29.143 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#63)
+2025-12-06 10:20:30.144 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#66)
+2025-12-06 10:20:31.143 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#69)
+2025-12-06 10:20:32.144 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#72)
+2025-12-06 10:20:32.261 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:20:32.262 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:20:32.262 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:20:32.263 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:20:32.264 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:20:32.265 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:20:32.265 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:20:32.266 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:20:32.267 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_pnp_\\?\root#eoswebcamsource#0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\eoswebcamcamerasource. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:20:32.666 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility
+2025-12-06 10:20:32.667 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:20:32.667 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:20:32.668 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:20:32.671 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:20:32.673 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:20:32.693 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:20:32.694 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:20:32.695 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:20:32.696 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:20:32.697 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:20:32.697 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:20:32.698 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:20:32.699 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:20:32.700 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:20:32.701 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:20:32.963 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 00000244d5a7c140] Could not run graph (sometimes caused by a device already in use by other application)
+2025-12-06 10:20:33.144 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#74)
+2025-12-06 10:20:33.180 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 00000244d5a7a8c0] Error opening input: I/O error
+2025-12-06 10:20:33.181 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility.
+2025-12-06 10:20:33.182 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:20:33.671 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:20:34.144 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#78)
+2025-12-06 10:20:35.144 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#81)
+2025-12-06 10:20:36.145 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#84)
+2025-12-06 10:20:37.145 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#87)
+2025-12-06 10:20:38.145 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#90)
+2025-12-06 10:20:39.146 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#92)
+2025-12-06 10:20:40.145 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#95)
+2025-12-06 10:20:41.146 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#98)
+2025-12-06 10:20:42.148 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#102)
+2025-12-06 10:20:43.149 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#105)
+2025-12-06 10:20:43.741 +03:00 [DBG] [ControlView] Layout ayarları kaydedildi: Mola=100, Camera=350, Chat=600
+2025-12-06 10:20:44.149 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#107)
+2025-12-06 10:20:46.808 +03:00 [DBG] [SettingsStore] Ayarlar kaydedildi
+2025-12-06 10:20:50.151 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#108)
+2025-12-06 10:20:50.458 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:20:51.059 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:20:51.060 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:20:51.060 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:20:51.061 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:20:51.062 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:20:51.062 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:20:51.063 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:20:51.064 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:20:51.064 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_sw_{860BB310-5D01-11D0-BD3B-00A0C911CE86}\{C8B1B2BB-014B-4DF5-ADDC-F6391CEF3FE8}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:20:51.065 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility Pro
+2025-12-06 10:20:51.066 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:20:51.066 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:20:51.067 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:20:51.070 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility Pro" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:20:51.074 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:20:51.095 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:20:51.095 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:20:51.096 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:20:51.097 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:20:51.098 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:20:51.099 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:20:51.100 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:20:51.101 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:20:51.101 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:20:51.102 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:20:51.150 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#111)
+2025-12-06 10:20:51.156 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 000001b23a429c00] Could not find output pin from video capture device.
+2025-12-06 10:20:51.159 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 000001b23a429340] Error opening input: I/O error
+2025-12-06 10:20:51.159 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility Pro.
+2025-12-06 10:20:51.160 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:20:52.073 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:20:52.151 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#115)
+2025-12-06 10:20:53.150 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#118)
+2025-12-06 10:20:54.152 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#121)
+2025-12-06 10:20:55.151 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#124)
+2025-12-06 10:20:56.153 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#128)
+2025-12-06 10:20:57.153 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#131)
+2025-12-06 10:20:58.153 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#134)
+2025-12-06 10:20:59.154 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#137)
+2025-12-06 10:21:00.153 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#140)
+2025-12-06 10:21:01.154 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#143)
+2025-12-06 10:21:02.095 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-06 10:21:02.155 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#146)
+2025-12-06 10:21:03.950 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-06 10:21:03.952 +03:00 [DBG] [MainWindow] ChatViewModel disposed
+2025-12-06 10:21:03.955 +03:00 [DBG] [MainWindow] SettingsViewModel disposed
+2025-12-06 10:21:03.958 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-06 10:21:03.959 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-06 10:21:03.969 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-06 10:21:03.970 +03:00 [INF] [MemoryProfiler] Monitoring durduruldu
+2025-12-06 10:21:03.971 +03:00 [INF] [HealthCheck] Durduruldu
+2025-12-06 10:21:03.971 +03:00 [INF] [PerfMonitor] Durduruldu
+2025-12-06 10:21:03.972 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-06 10:21:03.973 +03:00 [INF] ===================================================
+2025-12-06 10:21:03.974 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-06 10:21:03.974 +03:00 [INF] ===================================================
+2025-12-06 10:21:03.976 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-06 10:21:03.976 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-06 10:21:03.977 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-06 10:21:03.978 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-06 10:21:03.979 +03:00 [DBG] [App] Chat Sistemi tamamlandı
+2025-12-06 10:21:03.980 +03:00 [DBG] [App] Professional Services başlatılıyor...
+2025-12-06 10:21:03.984 +03:00 [DBG] [Shutdown] FrameTimingService disposed
+2025-12-06 10:21:03.985 +03:00 [DBG] [Shutdown] MemoryPool stats: Pool: 123,0 MB | Active: 0 | Pooled: 20 | Hit Rate: 100,0%
+2025-12-06 10:21:03.986 +03:00 [DBG] [Shutdown] FrameBufferPool disposed
+2025-12-06 10:21:03.989 +03:00 [DBG] [Shutdown] NativeMemoryPool disposed
+2025-12-06 10:21:03.998 +03:00 [DBG] [Shutdown] GpuCompositor disposed
+2025-12-06 10:21:03.999 +03:00 [DBG] [Shutdown] HardwareEncoderService disposed
+2025-12-06 10:21:03.999 +03:00 [INF] [Shutdown] Professional services cleanup tamamlandı
+2025-12-06 10:21:04.000 +03:00 [DBG] [App] Professional Services tamamlandı
+2025-12-06 10:21:04.001 +03:00 [DBG] [App] Ayarları Kaydet başlatılıyor...
+2025-12-06 10:21:04.002 +03:00 [DBG] [App] Ayarları Kaydet tamamlandı
+2025-12-06 10:21:04.003 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
+2025-12-06 10:21:04.003 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
+2025-12-06 10:21:04.004 +03:00 [DBG] [App] Log Flush başlatılıyor...
+2025-12-06 10:24:03.458 +03:00 [INF] ===================================================
+2025-12-06 10:24:03.477 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-06 10:24:03.478 +03:00 [INF] ===================================================
+2025-12-06 10:24:03.485 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-06 10:24:03.491 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-06 10:24:03.821 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-06 10:24:03.951 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-06 10:24:03.974 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-06 10:24:03.975 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-06 10:24:04.004 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-06 10:24:04.014 +03:00 [DBG] [ChatBus] Initialized
+2025-12-06 10:24:04.015 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-06 10:24:04.018 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-06 10:24:04.054 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-06 10:24:04.056 +03:00 [DBG] [MainWindow] 0 adet chat ingestor başlatıldı
+2025-12-06 10:24:04.057 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-06 10:24:04.058 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-06 10:24:04.059 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-06 10:24:04.085 +03:00 [DBG] [ControlView] Layout ayarları yüklendi: Mola=100, Camera=350, Chat=600
+2025-12-06 10:24:05.574 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-06 10:24:05.582 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-06 10:24:05.583 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-06 10:24:05.583 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-06 10:24:05.584 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-06 10:24:05.584 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-06 10:24:05.585 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-06 10:24:05.586 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-06 10:24:05.587 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-06 10:24:05.587 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-06 10:24:05.588 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-06 10:24:05.589 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-06 10:24:05.589 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-06 10:24:05.590 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-06 10:24:05.590 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-06 10:24:05.591 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-06 10:24:05.593 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-06 10:24:05.593 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-06 10:24:05.599 +03:00 [INF] [Startup] Toplam süre: 2162ms
+2025-12-06 10:24:05.599 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-06 10:24:06.149 +03:00 [INF] [HardwareEncoder] Tespit edildi: NVIDIA NVENC H.264 (2 encoder mevcut)
+2025-12-06 10:24:06.157 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-06 10:24:06.231 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-06 10:24:06.233 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-06 10:24:06.234 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#14)
+2025-12-06 10:24:06.235 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-06 10:24:06.237 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-06 10:24:06.238 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-06 10:24:07.234 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#17)
+2025-12-06 10:24:08.235 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#20)
+2025-12-06 10:24:09.237 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#24)
+2025-12-06 10:24:10.238 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#27)
+2025-12-06 10:24:11.238 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#30)
+2025-12-06 10:24:12.239 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#33)
+2025-12-06 10:24:13.238 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#37)
+2025-12-06 10:24:14.240 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#40)
+2025-12-06 10:24:15.169 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:24:15.178 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:24:15.179 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:24:15.182 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:24:15.186 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:24:15.188 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:24:15.189 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:24:15.190 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:24:15.192 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_sw_{860BB310-5D01-11D0-BD3B-00A0C911CE86}\{C8B1B2BB-014B-4DF5-ADDC-F6391CEF3FE8}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:24:15.240 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#43)
+2025-12-06 10:24:15.603 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility Pro
+2025-12-06 10:24:15.604 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:24:15.606 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:24:15.608 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:24:15.613 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility Pro" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:24:15.619 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:24:15.638 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:24:15.639 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:24:15.640 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:24:15.641 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:24:15.642 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:24:15.643 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:24:15.644 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:24:15.644 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:24:15.645 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:24:15.646 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:24:15.699 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 00000279471ba400] Could not find output pin from video capture device.
+2025-12-06 10:24:15.703 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 00000279471b8b80] Error opening input: I/O error
+2025-12-06 10:24:15.703 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility Pro.
+2025-12-06 10:24:15.705 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:24:16.241 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#45)
+2025-12-06 10:24:16.619 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:24:17.241 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#47)
+2025-12-06 10:24:18.243 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#50)
+2025-12-06 10:24:19.243 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#54)
+2025-12-06 10:24:19.690 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:24:20.244 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#57)
+2025-12-06 10:24:21.243 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#60)
+2025-12-06 10:24:22.245 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#63)
+2025-12-06 10:24:23.244 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#67)
+2025-12-06 10:24:24.245 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#70)
+2025-12-06 10:24:25.245 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#73)
+2025-12-06 10:24:26.246 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#76)
+2025-12-06 10:24:27.246 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#80)
+2025-12-06 10:24:28.247 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#83)
+2025-12-06 10:24:29.247 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#86)
+2025-12-06 10:24:30.247 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#89)
+2025-12-06 10:24:31.246 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#93)
+2025-12-06 10:24:32.247 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#96)
+2025-12-06 10:24:33.246 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#99)
+2025-12-06 10:24:34.247 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#102)
+2025-12-06 10:24:35.247 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#106)
+2025-12-06 10:24:36.246 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#109)
+2025-12-06 10:24:37.247 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#112)
+2025-12-06 10:24:38.246 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#115)
+2025-12-06 10:24:39.247 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#119)
+2025-12-06 10:24:40.247 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#122)
+2025-12-06 10:24:41.248 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#125)
+2025-12-06 10:24:42.249 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#128)
+2025-12-06 10:24:43.217 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:24:43.218 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:24:43.219 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:24:43.220 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:24:43.220 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:24:43.221 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:24:43.222 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:24:43.222 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:24:43.223 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_sw_{860BB310-5D01-11D0-BD3B-00A0C911CE86}\{C8B1B2BB-014B-4DF5-ADDC-F6391CEF3FE8}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:24:43.224 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility Pro
+2025-12-06 10:24:43.225 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:24:43.226 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:24:43.226 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:24:43.230 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility Pro" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:24:43.232 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:24:43.250 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#132)
+2025-12-06 10:24:43.255 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:24:43.255 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:24:43.256 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:24:43.257 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:24:43.258 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:24:43.258 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:24:43.259 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:24:43.260 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:24:43.261 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:24:43.262 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:24:43.316 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 00000217fff49d80] Could not find output pin from video capture device.
+2025-12-06 10:24:43.319 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 00000217fff49480] Error opening input: I/O error
+2025-12-06 10:24:43.320 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility Pro.
+2025-12-06 10:24:43.321 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:24:44.232 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:24:44.251 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#135)
+2025-12-06 10:24:45.251 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#138)
+2025-12-06 10:24:45.857 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:24:46.252 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#141)
+2025-12-06 10:24:47.252 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#144)
+2025-12-06 10:24:48.251 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#146)
+2025-12-06 10:24:49.252 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#149)
+2025-12-06 10:24:50.251 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#152)
+2025-12-06 10:24:51.252 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#155)
+2025-12-06 10:24:52.253 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#159)
+2025-12-06 10:24:53.254 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#162)
+2025-12-06 10:24:54.255 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#165)
+2025-12-06 10:24:55.255 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#168)
+2025-12-06 10:24:56.255 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#172)
+2025-12-06 10:24:57.255 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#175)
+2025-12-06 10:24:58.254 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#178)
+2025-12-06 10:24:59.255 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#181)
+2025-12-06 10:25:00.256 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#184)
+2025-12-06 10:25:01.257 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#188)
+2025-12-06 10:25:02.257 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#191)
+2025-12-06 10:25:03.258 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#194)
+2025-12-06 10:25:04.258 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#197)
+2025-12-06 10:25:05.257 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#201)
+2025-12-06 10:25:06.258 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#204)
+2025-12-06 10:25:07.257 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#207)
+2025-12-06 10:25:08.258 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#210)
+2025-12-06 10:25:09.257 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#214)
+2025-12-06 10:25:10.258 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#217)
+2025-12-06 10:25:11.258 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#220)
+2025-12-06 10:25:12.257 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#223)
+2025-12-06 10:25:13.258 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#227)
+2025-12-06 10:25:14.257 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#230)
+2025-12-06 10:25:15.259 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#233)
+2025-12-06 10:25:16.258 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#236)
+2025-12-06 10:25:17.259 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#240)
+2025-12-06 10:25:18.258 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#243)
+2025-12-06 10:25:19.259 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#246)
+2025-12-06 10:25:21.258 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#247)
+2025-12-06 10:25:23.137 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:25:23.138 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:25:23.138 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:25:23.139 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:25:23.140 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:25:23.140 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:25:23.141 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:25:23.142 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:25:23.142 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_sw_{860BB310-5D01-11D0-BD3B-00A0C911CE86}\{C8B1B2BB-014B-4DF5-ADDC-F6391CEF3FE8}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:25:23.260 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#248)
+2025-12-06 10:25:23.771 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility Pro
+2025-12-06 10:25:23.771 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:25:23.772 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:25:23.773 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:25:23.776 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility Pro" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:25:23.778 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:25:23.800 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:25:23.800 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:25:23.801 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:25:23.803 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:25:23.803 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:25:23.804 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:25:23.805 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:25:23.806 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:25:23.806 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:25:23.807 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:25:23.860 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 000001bff84aa340] Could not find output pin from video capture device.
+2025-12-06 10:25:23.863 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 000001bff84a9b00] Error opening input: I/O error
+2025-12-06 10:25:23.864 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility Pro.
+2025-12-06 10:25:23.864 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:25:24.261 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#249)
+2025-12-06 10:25:24.804 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:25:26.262 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#250)
+2025-12-06 10:25:27.262 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#251)
+2025-12-06 10:25:27.272 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:25:29.262 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#252)
+2025-12-06 10:25:30.262 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#253)
+2025-12-06 10:25:32.262 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#254)
+2025-12-06 10:25:33.261 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#255)
+2025-12-06 10:25:35.261 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#256)
+2025-12-06 10:25:36.262 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#257)
+2025-12-06 10:25:38.262 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#258)
+2025-12-06 10:25:39.262 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#259)
+2025-12-06 10:25:41.262 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#260)
+2025-12-06 10:25:43.262 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#261)
+2025-12-06 10:25:44.263 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#262)
+2025-12-06 10:25:45.263 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#263)
+2025-12-06 10:25:47.264 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#264)
+2025-12-06 10:25:48.939 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:25:48.940 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:25:48.941 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:25:48.941 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:25:48.942 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:25:48.943 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:25:48.943 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:25:48.944 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:25:48.945 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_sw_{860BB310-5D01-11D0-BD3B-00A0C911CE86}\{C8B1B2BB-014B-4DF5-ADDC-F6391CEF3FE8}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:25:48.946 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility Pro
+2025-12-06 10:25:48.946 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:25:48.947 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:25:48.948 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:25:48.951 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility Pro" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:25:48.954 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:25:48.973 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:25:48.974 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:25:48.975 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:25:48.976 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:25:48.977 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:25:48.977 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:25:48.978 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:25:48.979 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:25:48.979 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:25:48.980 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:25:50.268 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#265)
+2025-12-06 10:25:51.061 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 000002677d18be00] Could not find output pin from video capture device.
+2025-12-06 10:25:51.064 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 000002677d18b500] Error opening input: I/O error
+2025-12-06 10:25:51.065 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility Pro.
+2025-12-06 10:25:51.065 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:25:52.076 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:25:53.267 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#266)
+2025-12-06 10:25:56.267 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#267)
+2025-12-06 10:28:29.212 +03:00 [INF] ===================================================
+2025-12-06 10:28:29.246 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-06 10:28:29.247 +03:00 [INF] ===================================================
+2025-12-06 10:28:29.256 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-06 10:28:29.265 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-06 10:28:29.760 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-06 10:28:29.917 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-06 10:28:30.004 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-06 10:28:30.005 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-06 10:28:30.138 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-06 10:28:30.149 +03:00 [DBG] [ChatBus] Initialized
+2025-12-06 10:28:30.151 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-06 10:28:30.154 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-06 10:28:30.198 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-06 10:28:30.200 +03:00 [DBG] [MainWindow] 0 adet chat ingestor başlatıldı
+2025-12-06 10:28:30.201 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-06 10:28:30.202 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-06 10:28:30.203 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-06 10:28:30.228 +03:00 [DBG] [ControlView] Layout ayarları yüklendi: Mola=100, Camera=350, Chat=600
+2025-12-06 10:28:32.364 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-06 10:28:32.372 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-06 10:28:32.373 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-06 10:28:32.374 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-06 10:28:32.374 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-06 10:28:32.375 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-06 10:28:32.376 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-06 10:28:32.376 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-06 10:28:32.377 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-06 10:28:32.378 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-06 10:28:32.378 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-06 10:28:32.379 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-06 10:28:32.379 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-06 10:28:32.380 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-06 10:28:32.381 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-06 10:28:32.381 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-06 10:28:32.382 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-06 10:28:32.383 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-06 10:28:32.385 +03:00 [INF] [Startup] Toplam süre: 3284ms
+2025-12-06 10:28:32.385 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-06 10:28:33.520 +03:00 [INF] [HardwareEncoder] Tespit edildi: NVIDIA NVENC H.264 (2 encoder mevcut)
+2025-12-06 10:28:33.530 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-06 10:28:33.609 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-06 10:28:33.611 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-06 10:28:33.612 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#29)
+2025-12-06 10:28:33.614 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-06 10:28:33.615 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-06 10:28:33.617 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-06 10:28:34.612 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#32)
+2025-12-06 10:28:35.613 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#35)
+2025-12-06 10:28:35.737 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:28:35.753 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:28:35.754 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:28:35.757 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:28:35.761 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:28:35.764 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:28:35.765 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:28:35.765 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:28:35.767 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_sw_{860BB310-5D01-11D0-BD3B-00A0C911CE86}\{C8B1B2BB-014B-4DF5-ADDC-F6391CEF3FE8}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:28:36.363 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility Pro
+2025-12-06 10:28:36.364 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:28:36.365 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:28:36.368 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:28:36.372 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility Pro" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:28:36.381 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:28:36.398 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:28:36.399 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:28:36.400 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:28:36.401 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:28:36.402 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:28:36.403 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:28:36.403 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:28:36.404 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:28:36.405 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:28:36.406 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:28:36.462 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 00000172398fedc0] Could not find output pin from video capture device.
+2025-12-06 10:28:36.465 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 00000172398ffbc0] Error opening input: I/O error
+2025-12-06 10:28:36.466 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility Pro.
+2025-12-06 10:28:36.467 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:28:36.613 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#37)
+2025-12-06 10:28:37.381 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:28:37.613 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#40)
+2025-12-06 10:28:38.614 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#43)
+2025-12-06 10:28:39.615 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#46)
+2025-12-06 10:28:40.615 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#49)
+2025-12-06 10:28:41.616 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#52)
+2025-12-06 10:28:42.516 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:28:42.616 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#55)
+2025-12-06 10:28:43.616 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#58)
+2025-12-06 10:28:44.616 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#61)
+2025-12-06 10:28:45.616 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#64)
+2025-12-06 10:28:46.617 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#67)
+2025-12-06 10:28:47.618 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#70)
+2025-12-06 10:28:47.751 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-06 10:28:48.618 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#71)
+2025-12-06 10:28:49.540 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-06 10:28:49.542 +03:00 [DBG] [MainWindow] ChatViewModel disposed
+2025-12-06 10:28:49.545 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-06 10:28:49.546 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-06 10:28:49.556 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-06 10:28:49.557 +03:00 [INF] [MemoryProfiler] Monitoring durduruldu
+2025-12-06 10:28:49.558 +03:00 [INF] [HealthCheck] Durduruldu
+2025-12-06 10:28:49.559 +03:00 [INF] [PerfMonitor] Durduruldu
+2025-12-06 10:28:49.559 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-06 10:28:49.561 +03:00 [INF] ===================================================
+2025-12-06 10:28:49.561 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-06 10:28:49.562 +03:00 [INF] ===================================================
+2025-12-06 10:28:49.563 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-06 10:28:49.565 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-06 10:28:49.565 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-06 10:28:49.566 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-06 10:28:49.567 +03:00 [DBG] [App] Chat Sistemi tamamlandı
+2025-12-06 10:28:49.568 +03:00 [DBG] [App] Professional Services başlatılıyor...
+2025-12-06 10:28:49.571 +03:00 [DBG] [Shutdown] FrameTimingService disposed
+2025-12-06 10:28:49.573 +03:00 [DBG] [Shutdown] MemoryPool stats: Pool: 123,0 MB | Active: 0 | Pooled: 20 | Hit Rate: 100,0%
+2025-12-06 10:28:49.574 +03:00 [DBG] [Shutdown] FrameBufferPool disposed
+2025-12-06 10:28:49.577 +03:00 [DBG] [Shutdown] NativeMemoryPool disposed
+2025-12-06 10:28:49.585 +03:00 [DBG] [Shutdown] GpuCompositor disposed
+2025-12-06 10:28:49.586 +03:00 [DBG] [Shutdown] HardwareEncoderService disposed
+2025-12-06 10:28:49.587 +03:00 [INF] [Shutdown] Professional services cleanup tamamlandı
+2025-12-06 10:28:49.587 +03:00 [DBG] [App] Professional Services tamamlandı
+2025-12-06 10:28:49.588 +03:00 [DBG] [App] Ayarları Kaydet başlatılıyor...
+2025-12-06 10:28:49.589 +03:00 [DBG] [App] Ayarları Kaydet tamamlandı
+2025-12-06 10:28:49.590 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
+2025-12-06 10:28:49.591 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
+2025-12-06 10:28:49.591 +03:00 [DBG] [App] Log Flush başlatılıyor...
+2025-12-06 10:30:25.646 +03:00 [INF] ===================================================
+2025-12-06 10:30:25.681 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-06 10:30:25.682 +03:00 [INF] ===================================================
+2025-12-06 10:30:25.689 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-06 10:30:25.695 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-06 10:30:26.000 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-06 10:30:26.124 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-06 10:30:26.144 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-06 10:30:26.145 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-06 10:30:26.250 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-06 10:30:26.260 +03:00 [DBG] [ChatBus] Initialized
+2025-12-06 10:30:26.261 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-06 10:30:26.264 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-06 10:30:26.300 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-06 10:30:26.301 +03:00 [DBG] [MainWindow] 0 adet chat ingestor başlatıldı
+2025-12-06 10:30:26.302 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-06 10:30:26.303 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-06 10:30:26.303 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-06 10:30:26.328 +03:00 [DBG] [ControlView] Layout ayarları yüklendi: Mola=100, Camera=350, Chat=600
+2025-12-06 10:30:28.246 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-06 10:30:28.251 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-06 10:30:28.252 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-06 10:30:28.253 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-06 10:30:28.253 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-06 10:30:28.254 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-06 10:30:28.255 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-06 10:30:28.255 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-06 10:30:28.256 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-06 10:30:28.256 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-06 10:30:28.257 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-06 10:30:28.258 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-06 10:30:28.258 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-06 10:30:28.259 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-06 10:30:28.259 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-06 10:30:28.260 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-06 10:30:28.261 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-06 10:30:28.262 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-06 10:30:28.266 +03:00 [INF] [Startup] Toplam süre: 2685ms
+2025-12-06 10:30:28.267 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-06 10:30:28.823 +03:00 [INF] [HardwareEncoder] Tespit edildi: NVIDIA NVENC H.264 (2 encoder mevcut)
+2025-12-06 10:30:28.831 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-06 10:30:28.902 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-06 10:30:28.904 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-06 10:30:28.905 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#14)
+2025-12-06 10:30:28.906 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-06 10:30:28.907 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-06 10:30:28.909 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-06 10:30:29.094 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:30:29.102 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:30:29.103 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:30:29.106 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:30:29.110 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:30:29.112 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:30:29.113 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:30:29.113 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:30:29.115 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_sw_{860BB310-5D01-11D0-BD3B-00A0C911CE86}\{C8B1B2BB-014B-4DF5-ADDC-F6391CEF3FE8}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:30:29.514 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility Pro
+2025-12-06 10:30:29.516 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:30:29.517 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:30:29.519 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:30:29.524 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility Pro" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:30:29.532 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:30:29.550 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:30:29.551 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:30:29.552 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:30:29.553 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:30:29.554 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:30:29.555 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:30:29.555 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:30:29.556 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:30:29.557 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:30:29.558 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:30:29.613 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000023e8aafb080] Could not find output pin from video capture device.
+2025-12-06 10:30:29.616 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 0000023e8aafa7c0] Error opening input: I/O error
+2025-12-06 10:30:29.617 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility Pro.
+2025-12-06 10:30:29.618 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:30:29.905 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#16)
+2025-12-06 10:30:30.532 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:30:30.905 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#19)
+2025-12-06 10:30:31.905 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#22)
+2025-12-06 10:30:32.905 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#25)
+2025-12-06 10:30:33.905 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#29)
+2025-12-06 10:30:34.906 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#32)
+2025-12-06 10:30:35.906 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#35)
+2025-12-06 10:30:36.907 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#38)
+2025-12-06 10:30:37.908 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#41)
+2025-12-06 10:30:38.907 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#44)
+2025-12-06 10:30:39.907 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#47)
+2025-12-06 10:30:40.337 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:30:40.908 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#50)
+2025-12-06 10:30:41.530 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:30:41.531 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:30:41.532 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:30:41.533 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:30:41.533 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:30:41.534 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:30:41.535 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:30:41.536 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:30:41.536 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_sw_{860BB310-5D01-11D0-BD3B-00A0C911CE86}\{C8B1B2BB-014B-4DF5-ADDC-F6391CEF3FE8}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:30:41.537 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility Pro
+2025-12-06 10:30:41.538 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:30:41.539 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:30:41.540 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:30:41.543 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility Pro" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:30:41.551 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:30:41.568 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:30:41.569 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:30:41.570 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:30:41.571 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:30:41.572 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:30:41.573 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:30:41.574 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:30:41.575 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:30:41.576 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:30:41.576 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:30:41.631 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 00000145f8999f80] Could not find output pin from video capture device.
+2025-12-06 10:30:41.634 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 00000145f89986c0] Error opening input: I/O error
+2025-12-06 10:30:41.635 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility Pro.
+2025-12-06 10:30:41.635 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:30:41.909 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#53)
+2025-12-06 10:30:42.551 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:30:42.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#56)
+2025-12-06 10:30:43.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#59)
+2025-12-06 10:30:44.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#63)
+2025-12-06 10:30:45.826 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:30:45.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#66)
+2025-12-06 10:30:46.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#69)
+2025-12-06 10:30:47.815 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-06 10:30:47.817 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-06 10:30:47.817 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-06 10:30:47.818 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-06 10:30:47.819 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-06 10:30:47.820 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-06 10:30:47.821 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-06 10:30:47.821 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-06 10:30:47.822 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki kamera ID formatında: @device_sw_{860BB310-5D01-11D0-BD3B-00A0C911CE86}\{C8B1B2BB-014B-4DF5-ADDC-F6391CEF3FE8}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:30:47.823 +03:00 [INF] [StreamControllerAdapter] Cihaz adı çözümlendi: EOS Webcam Utility Pro
+2025-12-06 10:30:47.824 +03:00 [WRN] [StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: @device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{9314C6D1-29DD-4CA1-9C31-C79659610B11}. FFmpeg için cihaz adı çözümlenecek.
+2025-12-06 10:30:47.825 +03:00 [INF] [StreamControllerAdapter] Mikrofon adı çözümlendi: Mikrofon (HyperX Cloud III Wireless)
+2025-12-06 10:30:47.826 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-06 10:30:47.829 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=EOS Webcam Utility Pro" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 10000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-06 10:30:47.832 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-06 10:30:47.853 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-06 10:30:47.854 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-06 10:30:47.855 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-06 10:30:47.856 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-06 10:30:47.857 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-06 10:30:47.858 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-06 10:30:47.859 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-06 10:30:47.860 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-06 10:30:47.860 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-06 10:30:47.861 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-06 10:30:47.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#72)
+2025-12-06 10:30:47.917 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 000001fa8fbb10c0] Could not find output pin from video capture device.
+2025-12-06 10:30:47.920 +03:00 [ERR] [StreamController] [FFmpeg] [in#0 @ 000001fa8fbb0e80] Error opening input: I/O error
+2025-12-06 10:30:47.920 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input file video=EOS Webcam Utility Pro.
+2025-12-06 10:30:47.921 +03:00 [ERR] [StreamController] [FFmpeg] Error opening input files: I/O error
+2025-12-06 10:30:48.831 +03:00 [WRN] [StreamController] FFmpeg sonlandı. Exit code: -5
+2025-12-06 10:30:48.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#76)
+2025-12-06 10:30:49.880 +03:00 [DBG] [ControlView] Yayın durdurma komutu tetikleniyor...
+2025-12-06 10:30:49.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#79)
+2025-12-06 10:30:50.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#82)
+2025-12-06 10:30:51.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#85)
+2025-12-06 10:30:52.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#88)
+2025-12-06 10:30:53.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#92)
+2025-12-06 10:30:54.664 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-06 10:30:54.910 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#94)
+2025-12-06 10:30:56.446 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-06 10:30:56.448 +03:00 [DBG] [MainWindow] ChatViewModel disposed
+2025-12-06 10:30:56.453 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-06 10:30:56.454 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-06 10:30:56.466 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-06 10:30:56.467 +03:00 [INF] [MemoryProfiler] Monitoring durduruldu
+2025-12-06 10:30:56.468 +03:00 [INF] [HealthCheck] Durduruldu
+2025-12-06 10:30:56.469 +03:00 [INF] [PerfMonitor] Durduruldu
+2025-12-06 10:30:56.470 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-06 10:30:56.471 +03:00 [INF] ===================================================
+2025-12-06 10:30:56.472 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-06 10:30:56.472 +03:00 [INF] ===================================================
+2025-12-06 10:30:56.474 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-06 10:30:56.475 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-06 10:30:56.476 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-06 10:30:56.477 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-06 10:30:56.478 +03:00 [DBG] [App] Chat Sistemi tamamlandı
+2025-12-06 10:30:56.479 +03:00 [DBG] [App] Professional Services başlatılıyor...
+2025-12-06 10:30:56.483 +03:00 [DBG] [Shutdown] FrameTimingService disposed
+2025-12-06 10:30:56.484 +03:00 [DBG] [Shutdown] MemoryPool stats: Pool: 123,0 MB | Active: 0 | Pooled: 20 | Hit Rate: 100,0%
+2025-12-06 10:30:56.485 +03:00 [DBG] [Shutdown] FrameBufferPool disposed
+2025-12-06 10:30:56.487 +03:00 [DBG] [Shutdown] NativeMemoryPool disposed
+2025-12-06 10:30:56.496 +03:00 [DBG] [Shutdown] GpuCompositor disposed
+2025-12-06 10:30:56.497 +03:00 [DBG] [Shutdown] HardwareEncoderService disposed
+2025-12-06 10:30:56.497 +03:00 [INF] [Shutdown] Professional services cleanup tamamlandı
+2025-12-06 10:30:56.498 +03:00 [DBG] [App] Professional Services tamamlandı
+2025-12-06 10:30:56.499 +03:00 [DBG] [App] Ayarları Kaydet başlatılıyor...
+2025-12-06 10:30:56.500 +03:00 [DBG] [App] Ayarları Kaydet tamamlandı
+2025-12-06 10:30:56.500 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
+2025-12-06 10:30:56.501 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
+2025-12-06 10:30:56.502 +03:00 [DBG] [App] Log Flush başlatılıyor...

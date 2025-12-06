@@ -174,6 +174,15 @@ namespace UniCast.Core.Services
                 RaiseLog("info", $"Stream başlatılıyor: {MaskSensitiveUrl(config.OutputUrl)}");
 
                 var args = BuildFfmpegArgs(config);
+
+                // DEBUG: Tee muxer için gerçek args'ı kontrol et
+                if (config.UseTeeMuxer)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[StreamController] FULL TEE ARGS LENGTH: {args.Length}");
+                    System.Diagnostics.Debug.WriteLine($"[StreamController] TEE OUTPUT URL LENGTH: {config.OutputUrl.Length}");
+                    System.Diagnostics.Debug.WriteLine($"[StreamController] PIPE COUNT: {args.Count(c => c == '|')}");
+                }
+
                 // GÜVENLİK: FFmpeg args'da stream key'i maskele
                 RaiseLog("debug", $"FFmpeg args: {MaskSensitiveArgs(args)}");
 
@@ -448,37 +457,82 @@ namespace UniCast.Core.Services
             var args = new System.Text.StringBuilder();
 
             // Input source analizi
-            var inputSource = config.InputSource ?? "";
+            var videoSource = config.InputSource ?? "";
+            var audioSource = config.AudioSource;
 
             // Windows DirectShow cihazı mı kontrol et
-            bool isDirectShowDevice = inputSource.StartsWith("video=") ||
-                                       inputSource.StartsWith("audio=") ||
-                                       inputSource.Contains("@device");
+            bool isDirectShowVideo = videoSource.StartsWith("video=") ||
+                                      videoSource.Contains("@device");
 
-            if (isDirectShowDevice)
+            bool hasAudio = !string.IsNullOrWhiteSpace(audioSource);
+
+            // DirectShow video input
+            if (isDirectShowVideo)
             {
-                // DirectShow formatı: -f dshow -i video="Cihaz Adı"
                 args.Append("-f dshow ");
+                args.Append("-rtbufsize 100M ");
+                args.Append($"-i \"{videoSource}\" ");
+            }
+            else
+            {
+                args.Append($"-re -i \"{videoSource}\" ");
             }
 
-            // Real-time input flag ve input source
-            args.Append($"-re -i \"{inputSource}\" ");
+            // Audio input - ayrı olarak ekle
+            if (hasAudio)
+            {
+                // DirectShow audio ayrı input olarak
+                args.Append("-f dshow ");
+                args.Append($"-i audio=\"{audioSource}\" ");
+            }
+            else
+            {
+                // Sessiz audio üret (RTMP için gerekli) - süresiz
+                args.Append("-f lavfi -i anullsrc=r=44100:cl=stereo ");
+            }
 
             // Video encoding
             args.Append($"-c:v libx264 -preset {config.Preset} ");
             args.Append($"-b:v {config.VideoBitrate}k ");
-            args.Append($"-maxrate {config.VideoBitrate}k -bufsize {config.VideoBitrate * 2}k ");
-            args.Append($"-r {config.Fps} ");
-            args.Append($"-g {config.Fps * 2} "); // Keyframe interval
+            args.Append($"-maxrate {config.VideoBitrate}k -bufsize {config.VideoBitrate * 4}k ");
+            args.Append("-tune zerolatency ");
+            args.Append($"-g {config.Fps * 2} ");
+
+            // Video filtreleri
+            args.Append($"-vf \"fps={config.Fps},scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p\" ");
 
             // Audio encoding
-            args.Append($"-c:a aac -b:a {config.AudioBitrate}k -ar 44100 ");
+            args.Append($"-c:a aac -b:a {config.AudioBitrate}k -ar 44100 -ac 2 ");
 
-            // Output format
-            args.Append("-f flv ");
+            // Stream mapping
+            args.Append("-map 0:v:0 ");  // Video from first input
+            args.Append("-map 1:a:0 ");  // Audio from second input
 
-            // Output URL
-            args.Append($"\"{config.OutputUrl}\"");
+            // Tee muxer kullanılıyorsa özel output format
+            if (config.UseTeeMuxer && config.OutputUrl.StartsWith("tee:"))
+            {
+                // Tee muxer için -f tee kullan
+                args.Append("-f tee ");
+
+                // tee: prefix'ini kaldır
+                var teeOutputs = config.OutputUrl.Substring(4);  // "tee:" kısmını kaldır
+
+                // Windows'ta pipe karakteri özel karakter, escape etmeye gerek yok
+                // ama tırnak içinde olmalı
+                // Önemli: Her bir URL'in kendi tırnak içinde OLMAMASI gerekiyor
+                // Tüm tee string tek tırnak içinde olmalı
+                args.Append($"\"{teeOutputs}\"");
+            }
+            else
+            {
+                // Normal tek output
+                // RTMP flags
+                args.Append("-flvflags no_duration_filesize ");
+                args.Append("-f flv ");
+
+                // Output URL
+                args.Append($"\"{config.OutputUrl}\"");
+            }
 
             return args.ToString();
         }
@@ -563,11 +617,13 @@ namespace UniCast.Core.Services
     {
         public string StreamId { get; set; } = Guid.NewGuid().ToString("N");
         public string InputSource { get; set; } = "";
+        public string? AudioSource { get; set; }  // Ses kaynağı (mikrofon)
         public string OutputUrl { get; set; } = "";
         public int VideoBitrate { get; set; } = 2500;
         public int AudioBitrate { get; set; } = 128;
         public int Fps { get; set; } = 30;
         public string Preset { get; set; } = "veryfast";
+        public bool UseTeeMuxer { get; set; } = false;  // Multi-target için tee muxer kullan
     }
 
     public sealed class StreamInfo

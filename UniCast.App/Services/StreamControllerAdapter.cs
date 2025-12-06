@@ -145,24 +145,41 @@ namespace UniCast.App.Services
                 _lastMessage = "Başlatılıyor...";
                 _lastMetric = null;
 
-                // İlk hedefi al
-                var target = _targets.FirstOrDefault(t => t.Enabled);
-                if (target == null || string.IsNullOrWhiteSpace(target.Url))
+                // Aktif hedefleri al
+                var activeTargets = _targets.Where(t => t.Enabled && !string.IsNullOrWhiteSpace(t.Url)).ToList();
+
+                if (!activeTargets.Any())
                 {
                     return StreamStartResult.Fail(
                         StreamErrorCode.InvalidConfig,
                         "Geçerli yayın hedefi bulunamadı.");
                 }
 
+                // Multi-target için output URL'leri birleştir
+                string outputUrl;
+                if (activeTargets.Count == 1)
+                {
+                    // Tek hedef - normal output
+                    outputUrl = BuildOutputUrl(activeTargets[0]);
+                }
+                else
+                {
+                    // Çoklu hedef - tee muxer kullan
+                    outputUrl = BuildMultiTargetOutput(activeTargets);
+                    Log.Information("[StreamControllerAdapter] Multi-target: {Count} platforma yayın yapılacak", activeTargets.Count);
+                }
+
                 // StreamConfiguration oluştur
                 var config = new StreamConfiguration
                 {
                     InputSource = GetInputSource(),
-                    OutputUrl = BuildOutputUrl(target),
+                    AudioSource = GetAudioSource(),
+                    OutputUrl = outputUrl,
                     VideoBitrate = profile.VideoBitrateKbps,
                     AudioBitrate = profile.AudioBitrateKbps,
                     Fps = profile.Fps,
-                    Preset = profile.VideoPreset
+                    Preset = profile.VideoPreset,
+                    UseTeeMuxer = activeTargets.Count > 1  // Tee muxer flag
                 };
 
                 var success = await _inner.StartAsync(config, ct);
@@ -189,6 +206,62 @@ namespace UniCast.App.Services
                     $"Yayın başlatma hatası: {ex.Message}",
                     ex.ToString());
             }
+        }
+
+        /// <summary>
+        /// Çoklu hedef için tee muxer output string'i oluşturur
+        /// </summary>
+        private string BuildMultiTargetOutput(List<StreamTarget> targets)
+        {
+            // FFmpeg tee muxer formatı:
+            // "tee:[f=flv:onfail=ignore]rtmp://url1|[f=flv:onfail=ignore]rtmp://url2"
+            var outputs = new List<string>();
+
+            foreach (var target in targets)
+            {
+                var url = BuildOutputUrl(target);
+
+                // Facebook rtmps için özel handling
+                if (url.StartsWith("rtmps://"))
+                {
+                    // RTMPS için flvflags ekle
+                    outputs.Add($"[f=flv:flvflags=no_duration_filesize:onfail=ignore]{url}");
+                }
+                else
+                {
+                    outputs.Add($"[f=flv:flvflags=no_duration_filesize:onfail=ignore]{url}");
+                }
+
+                Log.Debug("[StreamControllerAdapter] Tee output eklendi: {Platform} -> {Url}",
+                    target.Platform, MaskStreamKey(url));
+            }
+
+            // tee: prefix'i ile birleştir
+            return "tee:" + string.Join("|", outputs);
+        }
+
+        /// <summary>
+        /// Stream key'i maskeler (güvenlik için)
+        /// </summary>
+        private string MaskStreamKey(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return url;
+
+            // Son 20 karakteri maskele
+            var uri = url;
+            if (uri.Length > 30)
+            {
+                var lastSlash = uri.LastIndexOf('/');
+                if (lastSlash > 0 && lastSlash < uri.Length - 10)
+                {
+                    var key = uri.Substring(lastSlash + 1);
+                    if (key.Length > 8)
+                    {
+                        return uri.Substring(0, lastSlash + 1) + key.Substring(0, 4) + "********";
+                    }
+                }
+            }
+            return uri;
         }
 
         public async Task StartAsync(Profile profile, CancellationToken ct = default)
@@ -272,23 +345,36 @@ namespace UniCast.App.Services
                 // Bu ID formatı - FFmpeg için uygun değil
                 if (deviceValue.Contains("\\\\?\\") || deviceValue.Contains(@"\\?\") ||
                     deviceValue.Contains("{") || deviceValue.Contains("ROOT#MEDIA") ||
-                    deviceValue.Contains("#GLOBAL"))
+                    deviceValue.Contains("#GLOBAL") || deviceValue.Contains("ROOT#"))
                 {
                     Log.Warning("[StreamControllerAdapter] Ayarlardaki kamera ID formatında: {Device}. " +
                         "FFmpeg için cihaz adı çözümlenecek.", deviceValue);
 
-                    // DeviceService ile ID'den Name'e çevir
+                    // DeviceService ile ID'den Name'e çevir - senkron çağrı
                     try
                     {
                         var deviceService = new UniCast.App.Services.Capture.DeviceService();
-                        var nameTask = deviceService.GetDeviceNameByIdAsync(deviceValue);
-                        nameTask.Wait(TimeSpan.FromSeconds(2)); // Timeout ile bekle
 
-                        if (nameTask.IsCompletedSuccessfully && !string.IsNullOrEmpty(nameTask.Result))
+                        // Task.Run ile ayrı thread'de çalıştır ve bekle
+                        var deviceName = Task.Run(async () => await deviceService.GetDeviceNameByIdAsync(deviceValue))
+                            .GetAwaiter().GetResult();
+
+                        if (!string.IsNullOrEmpty(deviceName))
                         {
-                            var deviceName = nameTask.Result;
                             Log.Information("[StreamControllerAdapter] Cihaz adı çözümlendi: {Name}", deviceName);
                             return $"video={deviceName}";
+                        }
+
+                        // ID ile bulunamadıysa, ilk kamerayı al
+                        Log.Warning("[StreamControllerAdapter] ID ile cihaz bulunamadı, ilk kamera aranıyor...");
+                        var devices = Task.Run(async () => await deviceService.GetVideoDevicesAsync())
+                            .GetAwaiter().GetResult();
+
+                        if (devices.Count > 0)
+                        {
+                            var firstDevice = devices[0];
+                            Log.Information("[StreamControllerAdapter] İlk kamera kullanılıyor: {Name}", firstDevice.Name);
+                            return $"video={firstDevice.Name}";
                         }
                     }
                     catch (Exception ex)
@@ -296,28 +382,148 @@ namespace UniCast.App.Services
                         Log.Warning(ex, "[StreamControllerAdapter] Cihaz adı çözümlenemedi");
                     }
 
-                    // Çözümlenemezse varsayılana dön
-                    return "video=0";
+                    // Hiçbir şey bulunamadı - varsayılan deneme
+                    Log.Error("[StreamControllerAdapter] Hiçbir kamera bulunamadı!");
+                    return "video=Integrated Camera";
                 }
 
-                // Normal cihaz adı
+                // Normal cihaz adı - doğrudan kullan
                 return $"video={deviceValue}";
             }
 
-            // Varsayılan: indeks 0 (ilk kamera) - FFmpeg bunu destekler
-            return "video=0";
+            // Ayarlarda cihaz yok - ilk kamerayı bulmaya çalış
+            try
+            {
+                var deviceService = new UniCast.App.Services.Capture.DeviceService();
+                var devices = Task.Run(async () => await deviceService.GetVideoDevicesAsync())
+                    .GetAwaiter().GetResult();
+
+                if (devices.Count > 0)
+                {
+                    var firstDevice = devices[0];
+                    Log.Information("[StreamControllerAdapter] İlk kamera kullanılıyor: {Name}", firstDevice.Name);
+                    return $"video={firstDevice.Name}";
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[StreamControllerAdapter] Varsayılan kamera bulunamadı");
+            }
+
+            // Son çare
+            return "video=Integrated Camera";
+        }
+
+        private string? GetAudioSource()
+        {
+            var settings = SettingsStore.Data;
+
+            // SelectedMicrophone'u kullan
+            var deviceValue = settings.SelectedMicrophone;
+
+            if (!string.IsNullOrWhiteSpace(deviceValue))
+            {
+                // Windows device path formatı ise çözümlemeye çalış
+                if (deviceValue.Contains("\\\\?\\") || deviceValue.Contains(@"\\?\") ||
+                    deviceValue.Contains("{") || deviceValue.Contains("ROOT#") ||
+                    deviceValue.Contains("#GLOBAL") || deviceValue.Contains("SWD#") ||
+                    deviceValue.Contains("MMDEVAPI"))
+                {
+                    Log.Warning("[StreamControllerAdapter] Ayarlardaki mikrofon ID formatında: {Device}. " +
+                        "FFmpeg için cihaz adı çözümlenecek.", deviceValue);
+
+                    try
+                    {
+                        var deviceService = new UniCast.App.Services.Capture.DeviceService();
+
+                        // Task.Run ile ayrı thread'de çalıştır ve bekle
+                        var deviceName = Task.Run(async () => await deviceService.GetDeviceNameByIdAsync(deviceValue))
+                            .GetAwaiter().GetResult();
+
+                        if (!string.IsNullOrEmpty(deviceName))
+                        {
+                            Log.Information("[StreamControllerAdapter] Mikrofon adı çözümlendi: {Name}", deviceName);
+                            return deviceName;
+                        }
+
+                        // ID ile bulunamadıysa, ilk mikrofonu al
+                        Log.Warning("[StreamControllerAdapter] ID ile mikrofon bulunamadı, ilk mikrofon aranıyor...");
+                        var devices = Task.Run(async () => await deviceService.GetAudioDevicesAsync())
+                            .GetAwaiter().GetResult();
+
+                        if (devices.Count > 0)
+                        {
+                            var firstDevice = devices[0];
+                            Log.Information("[StreamControllerAdapter] İlk mikrofon kullanılıyor: {Name}", firstDevice.Name);
+                            return firstDevice.Name;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "[StreamControllerAdapter] Mikrofon adı çözümlenemedi");
+                    }
+
+                    // Çözümlenemezse null dön (sessiz audio kullanılacak)
+                    Log.Warning("[StreamControllerAdapter] Mikrofon bulunamadı, sessiz audio kullanılacak");
+                    return null;
+                }
+
+                // Normal cihaz adı
+                return deviceValue;
+            }
+
+            // Ayarlarda mikrofon yok - ilk mikrofonu bulmaya çalış
+            try
+            {
+                var deviceService = new UniCast.App.Services.Capture.DeviceService();
+                var devices = Task.Run(async () => await deviceService.GetAudioDevicesAsync())
+                    .GetAwaiter().GetResult();
+
+                if (devices.Count > 0)
+                {
+                    var firstDevice = devices[0];
+                    Log.Information("[StreamControllerAdapter] İlk mikrofon kullanılıyor: {Name}", firstDevice.Name);
+                    return firstDevice.Name;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[StreamControllerAdapter] Varsayılan mikrofon bulunamadı");
+            }
+
+            // Mikrofon bulunamadı - sessiz audio kullanılacak
+            return null;
         }
 
         private string BuildOutputUrl(StreamTarget target)
         {
             var url = target.Url ?? "";
+            var streamKey = target.StreamKey ?? "";
 
-            if (!string.IsNullOrWhiteSpace(target.StreamKey))
+            // Stream key boşsa direkt URL'i döndür
+            if (string.IsNullOrWhiteSpace(streamKey))
             {
-                if (!url.EndsWith("/"))
-                    url += "/";
-                url += target.StreamKey;
+                return url;
             }
+
+            // URL zaten stream key içeriyor mu kontrol et
+            // Facebook gibi platformlar URL'in içinde key verir
+            if (url.Contains(streamKey))
+            {
+                // Key zaten URL'de var, duplikasyon yapma
+                return url;
+            }
+
+            // URL key ile bitiyorsa ekleme yapma
+            if (url.EndsWith(streamKey))
+            {
+                return url;
+            }
+
+            // Key'i ekle
+            if (!url.EndsWith("/"))
+                url += "/";
+            url += streamKey;
 
             return url;
         }
