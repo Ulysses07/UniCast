@@ -39,6 +39,7 @@ namespace UniCast.App
         private TikTokChatIngestor? _tikTokIngestor;
         private InstagramHybridChatIngestor? _instagramIngestor;  // DEĞİŞTİ
         private FacebookChatScraper? _facebookIngestor;  // Cookie tabanlı scraper
+        private FacebookChatHost? _facebookChatHost;  // WebView2 host for Facebook chat
 
         // ViewModels (IDisposable olanlar)
         private PreviewViewModel? _previewViewModel;
@@ -290,23 +291,79 @@ namespace UniCast.App
                             break;
 
                         case StreamPlatform.Facebook:
-                            // Facebook için cookie tabanlı scraper kullan
+                            // Facebook için WebView2 tabanlı FacebookChatHost kullan
                             var cookies = SettingsStore.Data.FacebookCookies;
                             var liveUrl = SettingsStore.Data.FacebookLiveVideoUrl;
                             if (!string.IsNullOrWhiteSpace(cookies) && !string.IsNullOrWhiteSpace(liveUrl))
                             {
-                                _facebookIngestor = new FacebookChatScraper(liveUrl)
+                                Log.Debug("[MainWindow] Facebook chat ingestor başlatılıyor...");
+
+                                // UI thread'de çalıştır (WebView2 gereksinimi)
+                                Dispatcher.InvokeAsync(async () =>
                                 {
-                                    Cookies = cookies,
-                                    UserId = SettingsStore.Data.FacebookUserId
-                                };
-                                _ingestorTasks.Add(StartIngestorSafeAsync(_facebookIngestor, "Facebook", ct));
-                                Log.Information("[MainWindow] Facebook Chat başlatıldı - VideoUrl: {Url}",
-                                    liveUrl.Length > 50 ? liveUrl.Substring(0, 50) + "..." : liveUrl);
+                                    try
+                                    {
+                                        // Cleanup old host
+                                        if (_facebookChatHost != null)
+                                        {
+                                            Log.Debug("[MainWindow] Eski FacebookChatHost temizleniyor...");
+                                            await _facebookChatHost.StopChatAsync();
+
+                                            var mainGrid = Content as Grid;
+                                            if (mainGrid != null && mainGrid.Children.Contains(_facebookChatHost))
+                                            {
+                                                mainGrid.Children.Remove(_facebookChatHost);
+                                            }
+
+                                            _facebookChatHost.Dispose();
+                                            _facebookChatHost = null;
+                                        }
+
+                                        // Yeni host oluştur
+                                        _facebookChatHost = new FacebookChatHost { Cookies = cookies };
+
+                                        // MainGrid'e ekle (WebView2 için gerekli)
+                                        var grid = Content as Grid;
+                                        if (grid != null)
+                                        {
+                                            grid.Children.Add(_facebookChatHost);
+                                            Log.Debug("[MainWindow] FacebookChatHost MainGrid'e eklendi");
+                                        }
+                                        else
+                                        {
+                                            Log.Warning("[MainWindow] MainGrid bulunamadı - FacebookChatHost eklenemedi");
+                                        }
+
+                                        // Chat başlat - bu SetWebViewControls() çağrısını içerir
+                                        _facebookIngestor = await _facebookChatHost.StartChatAsync(liveUrl);
+                                        Log.Information("[MainWindow] Facebook Chat başlatıldı (WebView2) - VideoUrl: {Url}",
+                                            liveUrl.Length > 50 ? liveUrl.Substring(0, 50) + "..." : liveUrl);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Log.Error(ex, "[MainWindow] Facebook chat başlatma hatası: {Message}", ex.Message);
+
+                                        // Cleanup on error
+                                        if (_facebookChatHost != null)
+                                        {
+                                            var mainGrid = Content as Grid;
+                                            if (mainGrid != null && mainGrid.Children.Contains(_facebookChatHost))
+                                            {
+                                                mainGrid.Children.Remove(_facebookChatHost);
+                                            }
+                                            _facebookChatHost.Dispose();
+                                            _facebookChatHost = null;
+                                        }
+                                    }
+                                });
                             }
                             else if (!string.IsNullOrWhiteSpace(cookies))
                             {
                                 Log.Warning("[MainWindow] Facebook Chat - Cookie var ama Live Video URL eksik");
+                            }
+                            else
+                            {
+                                Log.Warning("[MainWindow] Facebook Chat - Cookie eksik. Ayarlar'dan Facebook'a giriş yapın.");
                             }
                             break;
 
@@ -379,6 +436,32 @@ namespace UniCast.App
                 _tikTokIngestor?.StopAsync();
                 _instagramIngestor?.StopAsync();
                 _facebookIngestor?.StopAsync();
+
+                // FacebookChatHost'u UI thread'de temizle
+                if (_facebookChatHost != null)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        try
+                        {
+                            _facebookChatHost.StopChatAsync().Wait(TimeSpan.FromSeconds(3));
+
+                            var mainGrid = Content as Grid;
+                            if (mainGrid != null && mainGrid.Children.Contains(_facebookChatHost))
+                            {
+                                mainGrid.Children.Remove(_facebookChatHost);
+                            }
+
+                            _facebookChatHost.Dispose();
+                            Log.Debug("[MainWindow] FacebookChatHost temizlendi");
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "[MainWindow] FacebookChatHost temizleme hatası");
+                        }
+                    });
+                    _facebookChatHost = null;
+                }
 
                 _ytIngestor = null;
                 _twitchIngestor = null;
@@ -959,6 +1042,36 @@ namespace UniCast.App
                 {
                     Log.Error(ex, "[MainWindow] {Name} ingestor dispose hatası", name);
                 }
+            }
+
+            // FacebookChatHost'u ayrıca temizle
+            if (_facebookChatHost != null)
+            {
+                try
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        try
+                        {
+                            var mainGrid = Content as Grid;
+                            if (mainGrid != null && mainGrid.Children.Contains(_facebookChatHost))
+                            {
+                                mainGrid.Children.Remove(_facebookChatHost);
+                            }
+                            _facebookChatHost.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Debug(ex, "[MainWindow] FacebookChatHost UI cleanup hatası");
+                        }
+                    });
+                    Log.Debug("[MainWindow] FacebookChatHost disposed");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "[MainWindow] FacebookChatHost dispose hatası");
+                }
+                _facebookChatHost = null;
             }
 
             _ytIngestor = null;
