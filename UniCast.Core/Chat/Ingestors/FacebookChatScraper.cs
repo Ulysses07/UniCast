@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Text;
+using System.Collections.Concurrent;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
@@ -12,250 +8,608 @@ using Serilog;
 namespace UniCast.Core.Chat.Ingestors
 {
     /// <summary>
-    /// Facebook Live Chat Scraper.
-    /// WebView2'den alınan cookie'ler ile Facebook Live Chat'i scrape eder.
-    /// API key veya token gerektirmez - sadece kullanıcı login'i yeterli.
+    /// Facebook Live Chat Scraper - WebView2 + MutationObserver.
+    /// Real-time yorum yakalama - polling yok, anlık tespit.
+    /// 
+    /// Kullanım:
+    /// 1. FacebookLoginWindow ile cookie al
+    /// 2. SetWebViewControls() ile WebView2 kontrollerini ayarla
+    /// 3. Live video URL'sini ayarla
+    /// 4. StartAsync() çağır
+    /// 
+    /// WebView2 arka planda çalışır ve MutationObserver ile
+    /// yeni yorumları anında yakalar.
     /// </summary>
     public sealed class FacebookChatScraper : BaseChatIngestor
     {
-        private const string FacebookGraphQL = "https://www.facebook.com/api/graphql/";
-        private const string FacebookMBasic = "https://mbasic.facebook.com";
+        private readonly ConcurrentDictionary<string, bool> _seenCommentIds = new();
+        private TaskCompletionSource<bool>? _initTcs;
+        private bool _observerInjected;
 
-        private readonly HttpClient _httpClient;
-        private readonly HashSet<string> _seenMessageIds = new();
-
-        private string? _cookies;
-        private string? _fbDtsg;
-        private string? _userId;
-        private string? _liveVideoId;
-        private int _pollingIntervalMs = 3000;
+        // WebView2 kontrolü için callback'ler (UI thread'den set edilecek)
+        private Func<Task>? _ensureWebViewReady;
+        private Func<string, Task>? _navigateToUrl;
+        private Func<string, Task<string>>? _executeScript;
+        private Action<Action<string>>? _registerMessageHandler;
+        private Action? _unregisterMessageHandler;
 
         public override ChatPlatform Platform => ChatPlatform.Facebook;
 
         /// <summary>
-        /// Facebook cookie'leri (WebView2'den alınır).
+        /// Facebook Live Video URL veya ID.
         /// </summary>
-        public string? Cookies
+        public string? LiveVideoUrl { get; set; }
+
+        /// <summary>
+        /// Facebook cookie'leri (FacebookLoginWindow'dan alınır).
+        /// </summary>
+        public string? Cookies { get; set; }
+
+        /// <summary>
+        /// Facebook User ID (c_user cookie'sinden alınır).
+        /// </summary>
+        public string? UserId { get; set; }
+
+        public FacebookChatScraper(string liveVideoUrl) : base(liveVideoUrl)
         {
-            get => _cookies;
-            set => _cookies = value;
+            LiveVideoUrl = NormalizeUrl(liveVideoUrl);
         }
 
         /// <summary>
-        /// Facebook User ID (c_user cookie'sinden).
+        /// WebView2 kontrollerini ayarlar.
+        /// UI tarafından çağrılmalı (Dispatcher üzerinden).
         /// </summary>
-        public string? UserId
+        /// <param name="ensureReady">WebView2'nin hazır olmasını sağlayan fonksiyon</param>
+        /// <param name="navigate">URL'ye navigate eden fonksiyon</param>
+        /// <param name="executeScript">JavaScript çalıştıran fonksiyon</param>
+        /// <param name="registerHandler">WebMessage handler kaydeden fonksiyon</param>
+        /// <param name="unregisterHandler">WebMessage handler kaldıran fonksiyon</param>
+        public void SetWebViewControls(
+            Func<Task> ensureReady,
+            Func<string, Task> navigate,
+            Func<string, Task<string>> executeScript,
+            Action<Action<string>> registerHandler,
+            Action unregisterHandler)
         {
-            get => _userId;
-            set => _userId = value;
+            _ensureWebViewReady = ensureReady;
+            _navigateToUrl = navigate;
+            _executeScript = executeScript;
+            _registerMessageHandler = registerHandler;
+            _unregisterMessageHandler = unregisterHandler;
+
+            Log.Debug("[FB Scraper] WebView kontrolleri ayarlandı");
         }
 
-        /// <summary>
-        /// Live Video ID veya URL.
-        /// </summary>
-        public string? LiveVideoId
+        private string NormalizeUrl(string url)
         {
-            get => _liveVideoId;
-            set => _liveVideoId = ExtractVideoId(value);
-        }
+            if (string.IsNullOrWhiteSpace(url))
+                return url;
 
-        /// <summary>
-        /// Yeni Facebook chat scraper oluşturur.
-        /// </summary>
-        /// <param name="liveVideoIdOrUrl">Live Video ID veya URL</param>
-        public FacebookChatScraper(string liveVideoIdOrUrl) : base(liveVideoIdOrUrl)
-        {
-            _liveVideoId = ExtractVideoId(liveVideoIdOrUrl);
+            url = url.Trim();
 
-            var handler = new HttpClientHandler
-            {
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                UseCookies = false // Manuel cookie yönetimi
-            };
+            // fb.watch linklerini olduğu gibi bırak (redirect olacak)
+            if (url.Contains("fb.watch"))
+                return url;
 
-            _httpClient = new HttpClient(handler)
-            {
-                Timeout = TimeSpan.FromSeconds(30)
-            };
+            // Sadece ID verilmişse URL oluştur
+            if (System.Text.RegularExpressions.Regex.IsMatch(url, @"^\d+$"))
+                return $"https://www.facebook.com/watch/live/?v={url}";
 
-            // Browser gibi görünmek için header'lar
-            _httpClient.DefaultRequestHeaders.Add("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-            _httpClient.DefaultRequestHeaders.Add("Accept",
-                "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-            _httpClient.DefaultRequestHeaders.Add("Accept-Language", "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7");
-            _httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate");
-            _httpClient.DefaultRequestHeaders.Add("Sec-Fetch-Dest", "document");
-            _httpClient.DefaultRequestHeaders.Add("Sec-Fetch-Mode", "navigate");
-            _httpClient.DefaultRequestHeaders.Add("Sec-Fetch-Site", "same-origin");
-        }
+            // facebook.com içermiyorsa ID olarak kabul et
+            if (!url.Contains("facebook.com"))
+                return $"https://www.facebook.com/watch/live/?v={url}";
 
-        /// <summary>
-        /// Video ID'yi URL'den çıkarır.
-        /// </summary>
-        private string? ExtractVideoId(string? input)
-        {
-            if (string.IsNullOrWhiteSpace(input))
-                return null;
-
-            input = input.Trim();
-
-            // Zaten sadece ID ise
-            if (Regex.IsMatch(input, @"^\d+$"))
-                return input;
-
-            // URL formatları:
-            // https://www.facebook.com/pagename/videos/123456789/
-            // https://www.facebook.com/watch/live/?v=123456789
-            // https://www.facebook.com/watch/?v=123456789
-            // https://fb.watch/xxxxx/
-
-            // /videos/ID/ formatı
-            var match = Regex.Match(input, @"/videos/(\d+)");
-            if (match.Success)
-                return match.Groups[1].Value;
-
-            // ?v=ID formatı
-            match = Regex.Match(input, @"[?&]v=(\d+)");
-            if (match.Success)
-                return match.Groups[1].Value;
-
-            // fb.watch kısa link - bu durumda expand etmemiz gerekir
-            if (input.Contains("fb.watch"))
-            {
-                Log.Warning("[Facebook Scraper] fb.watch linkleri desteklenmiyor, tam URL kullanın");
-            }
-
-            return input;
+            return url;
         }
 
         protected override async Task ConnectAsync(CancellationToken ct)
         {
-            if (string.IsNullOrEmpty(_cookies))
+            if (_ensureWebViewReady == null || _navigateToUrl == null || _executeScript == null)
             {
                 throw new InvalidOperationException(
-                    "Facebook cookie'leri gerekli. Önce Facebook hesabınıza giriş yapın.");
+                    "WebView2 kontrolleri ayarlanmamış. SetWebViewControls() çağrılmalı.");
             }
 
-            if (string.IsNullOrEmpty(_liveVideoId))
+            if (string.IsNullOrEmpty(LiveVideoUrl))
             {
-                throw new InvalidOperationException(
-                    "Live Video ID gerekli. Facebook canlı yayın linkini girin.");
+                throw new InvalidOperationException("Live Video URL gerekli.");
             }
 
-            Log.Information("[Facebook Scraper] Bağlanılıyor. Video ID: {VideoId}", _liveVideoId);
+            Log.Information("[FB Scraper] Bağlanılıyor: {Url}", LiveVideoUrl);
 
-            // fb_dtsg token'ını al
-            await ExtractFbDtsgAsync(ct);
+            // WebView2 hazır olmasını bekle
+            await _ensureWebViewReady();
 
-            // Bağlantıyı test et
-            await VerifyConnectionAsync(ct);
+            // Message handler'ı kaydet
+            _registerMessageHandler?.Invoke(OnWebMessageReceived);
 
-            Log.Information("[Facebook Scraper] Bağlantı başarılı");
+            // Sayfaya git
+            _initTcs = new TaskCompletionSource<bool>();
+            await _navigateToUrl(LiveVideoUrl);
+
+            // Sayfa yüklenmesi için bekle
+            await Task.Delay(3000, ct);
+
+            // Observer'ı inject et
+            await InjectObserverAsync(ct);
+
+            Log.Information("[FB Scraper] Bağlantı başarılı");
         }
 
-        /// <summary>
-        /// Facebook'un CSRF token'ını (fb_dtsg) çıkarır.
-        /// </summary>
-        private async Task ExtractFbDtsgAsync(CancellationToken ct)
+        private void OnWebMessageReceived(string json)
         {
             try
             {
-                var request = new HttpRequestMessage(HttpMethod.Get, "https://www.facebook.com/");
-                request.Headers.Add("Cookie", _cookies);
-
-                var response = await _httpClient.SendAsync(request, ct);
-                var html = await response.Content.ReadAsStringAsync(ct);
-
-                // fb_dtsg token'ını bul
-                // "DTSGInitialData":[],{"token":"..."}
-                var dtsgMatch = Regex.Match(html, @"""DTSGInitialData""[^}]*""token"":""([^""]+)""");
-                if (dtsgMatch.Success)
-                {
-                    _fbDtsg = dtsgMatch.Groups[1].Value;
-                    Log.Debug("[Facebook Scraper] fb_dtsg token alındı");
-                    return;
-                }
-
-                // Alternatif format
-                dtsgMatch = Regex.Match(html, @"name=""fb_dtsg""\s+value=""([^""]+)""");
-                if (dtsgMatch.Success)
-                {
-                    _fbDtsg = dtsgMatch.Groups[1].Value;
-                    Log.Debug("[Facebook Scraper] fb_dtsg token alındı (alternatif)");
-                    return;
-                }
-
-                // Başka bir format
-                dtsgMatch = Regex.Match(html, @"""dtsg"":\{""token"":""([^""]+)""");
-                if (dtsgMatch.Success)
-                {
-                    _fbDtsg = dtsgMatch.Groups[1].Value;
-                    Log.Debug("[Facebook Scraper] fb_dtsg token alındı (json)");
-                    return;
-                }
-
-                Log.Warning("[Facebook Scraper] fb_dtsg token bulunamadı, GraphQL çalışmayabilir");
+                ProcessIncomingMessage(json);
             }
             catch (Exception ex)
             {
-                Log.Warning(ex, "[Facebook Scraper] fb_dtsg çıkarma hatası");
+                Log.Debug(ex, "[FB Scraper] WebMessage parse hatası");
             }
         }
 
-        /// <summary>
-        /// Bağlantıyı doğrular.
-        /// </summary>
-        private async Task VerifyConnectionAsync(CancellationToken ct)
+        private void ProcessIncomingMessage(string json)
         {
             try
             {
-                // Video sayfasına erişimi test et
-                var videoUrl = $"https://www.facebook.com/watch/live/?v={_liveVideoId}";
-                var request = new HttpRequestMessage(HttpMethod.Get, videoUrl);
-                request.Headers.Add("Cookie", _cookies);
-
-                var response = await _httpClient.SendAsync(request, ct);
-
-                if (!response.IsSuccessStatusCode)
+                // JSON string içinde escape karakterler olabilir
+                if (json.StartsWith("\"") && json.EndsWith("\""))
                 {
-                    throw new Exception($"Video sayfasına erişilemedi: {response.StatusCode}");
+                    json = JsonSerializer.Deserialize<string>(json) ?? json;
                 }
 
-                var html = await response.Content.ReadAsStringAsync(ct);
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
 
-                // Login kontrolü
-                if (html.Contains("login") && html.Contains("password") && !html.Contains("logout"))
+                if (!root.TryGetProperty("type", out var typeEl))
+                    return;
+
+                var type = typeEl.GetString();
+
+                switch (type)
                 {
-                    throw new Exception("Facebook oturumu geçersiz. Lütfen tekrar giriş yapın.");
-                }
+                    case "init":
+                        Log.Information("[FB Scraper] Observer başlatıldı");
+                        _initTcs?.TrySetResult(true);
+                        break;
 
-                Log.Debug("[Facebook Scraper] Video sayfasına erişim doğrulandı");
+                    case "comment":
+                        ProcessComment(root);
+                        break;
+
+                    case "batch":
+                        if (root.TryGetProperty("comments", out var comments))
+                        {
+                            foreach (var comment in comments.EnumerateArray())
+                            {
+                                ProcessComment(comment);
+                            }
+                        }
+                        break;
+
+                    case "error":
+                        var errorMsg = root.TryGetProperty("message", out var msgEl)
+                            ? msgEl.GetString() : "Unknown error";
+                        Log.Warning("[FB Scraper] JavaScript hatası: {Error}", errorMsg);
+                        break;
+
+                    case "debug":
+                        var debugMsg = root.TryGetProperty("message", out var dbgEl)
+                            ? dbgEl.GetString() : "";
+                        Log.Debug("[FB Scraper] JS Debug: {Message}", debugMsg);
+                        break;
+                }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[Facebook Scraper] Bağlantı doğrulama hatası");
+                Log.Debug(ex, "[FB Scraper] Message processing hatası: {Json}",
+                    json.Length > 200 ? json.Substring(0, 200) : json);
+            }
+        }
+
+        private void ProcessComment(JsonElement comment)
+        {
+            try
+            {
+                var id = comment.TryGetProperty("id", out var idEl)
+                    ? idEl.GetString() : null;
+
+                // Duplicate kontrolü
+                if (!string.IsNullOrEmpty(id))
+                {
+                    if (_seenCommentIds.ContainsKey(id))
+                        return;
+                    _seenCommentIds.TryAdd(id, true);
+                }
+
+                var author = comment.TryGetProperty("author", out var authorEl)
+                    ? authorEl.GetString() : "Unknown";
+                var authorId = comment.TryGetProperty("authorId", out var authorIdEl)
+                    ? authorIdEl.GetString() : author;
+                var text = comment.TryGetProperty("text", out var textEl)
+                    ? textEl.GetString() : "";
+                var avatarUrl = comment.TryGetProperty("avatar", out var avatarEl)
+                    ? avatarEl.GetString() : null;
+
+                if (string.IsNullOrWhiteSpace(text))
+                    return;
+
+                var chatMessage = new ChatMessage
+                {
+                    Platform = ChatPlatform.Facebook,
+                    Username = authorId ?? author ?? "unknown",
+                    DisplayName = author ?? "Unknown",
+                    Message = text,
+                    AvatarUrl = avatarUrl,
+                    Timestamp = DateTime.UtcNow,
+                    Metadata = string.IsNullOrEmpty(id)
+                        ? new System.Collections.Generic.Dictionary<string, string>()
+                        : new System.Collections.Generic.Dictionary<string, string> { ["comment_id"] = id }
+                };
+
+                PublishMessage(chatMessage);
+                Log.Debug("[FB Scraper] Yorum: {Author}: {Text}", author, text);
+            }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "[FB Scraper] Comment parse hatası");
+            }
+        }
+
+        private async Task InjectObserverAsync(CancellationToken ct)
+        {
+            if (_observerInjected || _executeScript == null)
+                return;
+
+            var script = GetObserverScript();
+
+            try
+            {
+                await _executeScript(script);
+                _observerInjected = true;
+
+                // Init mesajı bekle (timeout ile)
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                cts.CancelAfter(TimeSpan.FromSeconds(15));
+
+                try
+                {
+                    await _initTcs!.Task.WaitAsync(cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    Log.Warning("[FB Scraper] Observer init timeout - devam ediliyor");
+                }
+
+                Log.Debug("[FB Scraper] Observer inject edildi");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[FB Scraper] Observer inject hatası");
                 throw;
             }
         }
 
+        private string GetObserverScript()
+        {
+            return @"
+(function() {
+    'use strict';
+    
+    // Zaten çalışıyorsa çık
+    if (window.__fbLiveChatObserver) {
+        window.chrome.webview.postMessage(JSON.stringify({type: 'init', status: 'already_running'}));
+        return;
+    }
+    
+    const seenIds = new Set();
+    let commentContainer = null;
+    let observer = null;
+    let retryCount = 0;
+    const maxRetries = 30;
+    
+    function log(msg) {
+        window.chrome.webview.postMessage(JSON.stringify({type: 'debug', message: msg}));
+    }
+    
+    // Yorum container'ını bul
+    function findCommentContainer() {
+        const selectors = [
+            '[data-pagelet=""LiveVideoCommentList""]',
+            '[data-pagelet*=""Comment""]',
+            '[aria-label*=""Comment""]',
+            '[aria-label*=""comment""]',
+            '[role=""complementary""]',
+            '[data-testid=""UFI2CommentsList""]',
+            '[data-testid=""comments_list""]'
+        ];
+        
+        for (const selector of selectors) {
+            const el = document.querySelector(selector);
+            if (el) {
+                log('Container bulundu: ' + selector);
+                return el;
+            }
+        }
+        
+        // Live video sayfasında scrollable container ara
+        const scrollables = document.querySelectorAll('[style*=""overflow""], [class*=""scroll""]');
+        for (const el of scrollables) {
+            // İçinde yorum benzeri yapı var mı?
+            const hasComments = el.querySelector('[dir=""auto""]') && 
+                               (el.querySelector('a[href*=""/user/""]') || 
+                                el.querySelector('a[href*=""facebook.com""]'));
+            if (hasComments) {
+                log('Container bulundu (fallback scroll)');
+                return el;
+            }
+        }
+        
+        return null;
+    }
+    
+    // Tek bir yorum element'ini parse et
+    function parseComment(el) {
+        try {
+            let id = el.getAttribute('data-commentid') || 
+                     el.getAttribute('data-ft') ||
+                     el.getAttribute('id');
+            
+            if (!id) {
+                id = 'gen_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+            
+            if (seenIds.has(id)) return null;
+            
+            // Yazar bilgisi
+            let author = null;
+            let authorId = null;
+            let avatar = null;
+            
+            // Yazar linki bul
+            const authorLinks = el.querySelectorAll('a[role=""link""], a[href*=""facebook.com""], a[href*=""/user/""]');
+            for (const link of authorLinks) {
+                const text = link.textContent?.trim();
+                if (text && text.length > 0 && text.length < 100) {
+                    author = text;
+                    const href = link.getAttribute('href') || '';
+                    const idMatch = href.match(/(?:id=|\/user\/|facebook\.com\/)(\d+)/);
+                    if (idMatch) authorId = idMatch[1];
+                    break;
+                }
+            }
+            
+            // Avatar
+            const avatarImg = el.querySelector('image[href], img[src*=""fbcdn""]');
+            if (avatarImg) {
+                avatar = avatarImg.getAttribute('href') || avatarImg.getAttribute('src');
+            }
+            
+            // Mesaj metni - dir=""auto"" içeren span'ları tara
+            let text = null;
+            const textElements = el.querySelectorAll('[dir=""auto""] span, [dir=""auto""]');
+            
+            for (const span of textElements) {
+                const content = span.textContent?.trim();
+                // Yazar adı değilse ve makul uzunluktaysa
+                if (content && content !== author && content.length > 0 && content.length < 500) {
+                    // Link içinde değilse
+                    if (!span.closest('a')) {
+                        text = content;
+                        break;
+                    }
+                }
+            }
+            
+            if (!text || !author) return null;
+            
+            seenIds.add(id);
+            
+            return {
+                id: id,
+                author: author,
+                authorId: authorId || author,
+                text: text,
+                avatar: avatar
+            };
+        } catch (e) {
+            log('Parse hatası: ' + e.message);
+            return null;
+        }
+    }
+    
+    // Mevcut yorumları tara
+    function scanExistingComments() {
+        if (!commentContainer) return;
+        
+        const comments = [];
+        
+        // Tüm potansiyel yorum bloklarını bul
+        const blocks = commentContainer.querySelectorAll('[data-commentid], [role=""article""], [class*=""comment""]');
+        
+        for (const el of blocks) {
+            const comment = parseComment(el);
+            if (comment) {
+                comments.push(comment);
+            }
+        }
+        
+        // Alternatif: Her div'i dene
+        if (comments.length === 0) {
+            const divs = commentContainer.querySelectorAll(':scope > div > div');
+            for (const el of divs) {
+                const comment = parseComment(el);
+                if (comment) {
+                    comments.push(comment);
+                }
+            }
+        }
+        
+        if (comments.length > 0) {
+            window.chrome.webview.postMessage(JSON.stringify({
+                type: 'batch',
+                comments: comments
+            }));
+            log('Mevcut yorumlar: ' + comments.length);
+        }
+    }
+    
+    // MutationObserver callback
+    function handleMutations(mutations) {
+        for (const mutation of mutations) {
+            if (mutation.type === 'childList') {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType !== Node.ELEMENT_NODE) continue;
+                    
+                    // Yeni node'u parse et
+                    const comment = parseComment(node);
+                    if (comment) {
+                        window.chrome.webview.postMessage(JSON.stringify({
+                            type: 'comment',
+                            ...comment
+                        }));
+                        continue;
+                    }
+                    
+                    // İçindeki yorumları da kontrol et
+                    const innerBlocks = node.querySelectorAll('[data-commentid], [role=""article""]');
+                    for (const el of innerBlocks) {
+                        const c = parseComment(el);
+                        if (c) {
+                            window.chrome.webview.postMessage(JSON.stringify({
+                                type: 'comment',
+                                ...c
+                            }));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Observer'ı başlat
+    function startObserver() {
+        commentContainer = findCommentContainer();
+        
+        if (!commentContainer) {
+            retryCount++;
+            if (retryCount < maxRetries) {
+                log('Container bulunamadı, tekrar deneniyor... ' + retryCount);
+                setTimeout(startObserver, 1000);
+                return;
+            }
+            
+            window.chrome.webview.postMessage(JSON.stringify({
+                type: 'error',
+                message: 'Comment container bulunamadı (max retry)'
+            }));
+            
+            // Yine de init gönder, belki daha sonra bulunur
+            window.chrome.webview.postMessage(JSON.stringify({
+                type: 'init',
+                status: 'no_container'
+            }));
+            return;
+        }
+        
+        // Mevcut yorumları tara
+        scanExistingComments();
+        
+        // Observer kur
+        observer = new MutationObserver(handleMutations);
+        observer.observe(commentContainer, {
+            childList: true,
+            subtree: true
+        });
+        
+        // Body'yi de izle (container değişebilir)
+        const bodyObserver = new MutationObserver(() => {
+            if (!document.contains(commentContainer)) {
+                log('Container kayboldu, yeniden aranıyor...');
+                observer?.disconnect();
+                commentContainer = null;
+                retryCount = 0;
+                setTimeout(startObserver, 2000);
+            }
+        });
+        bodyObserver.observe(document.body, { childList: true, subtree: true });
+        
+        window.__fbLiveChatObserver = observer;
+        window.__fbLiveScanComments = scanExistingComments;
+        
+        window.chrome.webview.postMessage(JSON.stringify({
+            type: 'init',
+            status: 'started'
+        }));
+        
+        log('Observer başlatıldı');
+    }
+    
+    // Başlat
+    if (document.readyState === 'complete') {
+        setTimeout(startObserver, 1000);
+    } else {
+        window.addEventListener('load', () => setTimeout(startObserver, 1000));
+    }
+})();
+";
+        }
+
         protected override Task DisconnectAsync()
         {
-            _seenMessageIds.Clear();
-            Log.Debug("[Facebook Scraper] Bağlantı kapatıldı");
+            _observerInjected = false;
+            _seenCommentIds.Clear();
+
+            // Message handler'ı kaldır
+            _unregisterMessageHandler?.Invoke();
+
+            // Observer'ı temizle
+            try
+            {
+                _executeScript?.Invoke(@"
+                    if (window.__fbLiveChatObserver) {
+                        window.__fbLiveChatObserver.disconnect();
+                        window.__fbLiveChatObserver = null;
+                    }
+                ");
+            }
+            catch { }
+
+            Log.Debug("[FB Scraper] Bağlantı kapatıldı");
             return Task.CompletedTask;
         }
 
         protected override async Task RunMessageLoopAsync(CancellationToken ct)
         {
-            Log.Information("[Facebook Scraper] Mesaj döngüsü başladı");
+            // MutationObserver zaten çalışıyor
+            // Sadece periyodik sağlık kontrolü yap
 
             while (!ct.IsCancellationRequested && State == ConnectionState.Connected)
             {
                 try
                 {
-                    await FetchCommentsAsync(ct);
-                    await Task.Delay(_pollingIntervalMs, ct);
+                    await Task.Delay(30000, ct);
+
+                    // Observer hala çalışıyor mu?
+                    if (_executeScript != null)
+                    {
+                        var result = await _executeScript(
+                            "window.__fbLiveChatObserver ? 'active' : 'inactive'");
+
+                        if (result.Contains("inactive"))
+                        {
+                            Log.Warning("[FB Scraper] Observer durdu, yeniden başlatılıyor...");
+                            _observerInjected = false;
+                            await InjectObserverAsync(ct);
+                        }
+                    }
+
+                    // Bellek temizliği
+                    if (_seenCommentIds.Count > 5000)
+                    {
+                        _seenCommentIds.Clear();
+                        Log.Debug("[FB Scraper] Seen IDs temizlendi");
+                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -263,323 +617,42 @@ namespace UniCast.Core.Chat.Ingestors
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(ex, "[Facebook Scraper] Yorum çekme hatası");
-                    await Task.Delay(5000, ct);
+                    Log.Debug(ex, "[FB Scraper] Health check hatası");
                 }
             }
         }
 
         /// <summary>
-        /// Yorumları çeker - mbasic.facebook.com kullanır (daha basit HTML).
+        /// Manuel olarak mevcut yorumları yeniden tarar.
         /// </summary>
-        private async Task FetchCommentsAsync(CancellationToken ct)
+        public async Task RescanCommentsAsync()
         {
-            try
-            {
-                // mbasic.facebook.com daha basit HTML döndürür, parse etmesi kolay
-                var url = $"{FacebookMBasic}/video.php?v={_liveVideoId}";
-
-                var request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.Add("Cookie", _cookies);
-
-                var response = await _httpClient.SendAsync(request, ct);
-                var html = await response.Content.ReadAsStringAsync(ct);
-
-                // Yorumları parse et
-                ParseMBasicComments(html);
-            }
-            catch (Exception ex)
-            {
-                Log.Debug(ex, "[Facebook Scraper] mbasic fetch hatası, alternatif deneniyor");
-
-                // Alternatif: Normal Facebook
-                await FetchCommentsAlternativeAsync(ct);
-            }
-        }
-
-        /// <summary>
-        /// mbasic.facebook.com HTML'inden yorumları parse eder.
-        /// </summary>
-        private void ParseMBasicComments(string html)
-        {
-            try
-            {
-                // Debug: HTML uzunluğunu logla
-                Log.Debug("[Facebook Scraper] HTML alındı, uzunluk: {Length}", html.Length);
-
-                // Birden fazla pattern dene
-                var patterns = new[]
-                {
-                    // Pattern 1: Standart comment div
-                    @"<div[^>]*(?:comment|_2b1j)[^>]*>.*?<a[^>]*href=""([^""]*?)""[^>]*>([^<]+)</a>.*?<div[^>]*>([^<]+)</div>",
-                    // Pattern 2: Live chat formatı - data-commentid ile
-                    @"data-commentid=""([^""]+)""[^>]*>.*?<a[^>]*>([^<]+)</a>.*?<span[^>]*>([^<]+)</span>",
-                    // Pattern 3: Basit format - herhangi bir yorum bloğu
-                    @"<div[^>]*class=""[^""]*(?:comment|_4eek)[^""]*""[^>]*>.*?<span[^>]*>([^<]+)</span>.*?<span[^>]*>([^<]+)</span>",
-                    // Pattern 4: mbasic özel format
-                    @"<div[^>]*id=""[uc]_[^""]+""[^>]*>.*?<a[^>]*href=""(/[^""]+)""[^>]*>([^<]+)</a>.*?</h3>.*?<div[^>]*>([^<]+)</div>"
-                };
-
-                var totalMatches = 0;
-                foreach (var pattern in patterns)
-                {
-                    var matches = Regex.Matches(html, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
-                    totalMatches += matches.Count;
-
-                    if (matches.Count > 0)
-                    {
-                        Log.Debug("[Facebook Scraper] Pattern eşleşti: {Count} yorum bulundu", matches.Count);
-                        ProcessMatches(matches);
-                    }
-                }
-
-                if (totalMatches == 0)
-                {
-                    // HTML'in bir kısmını logla (debug için)
-                    var preview = html.Length > 500 ? html.Substring(0, 500) : html;
-                    Log.Debug("[Facebook Scraper] Hiç yorum bulunamadı. HTML preview: {Preview}", preview);
-
-                    // Debug: HTML'i dosyaya yaz (sadece ilk seferde)
-                    var debugPath = System.IO.Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "UniCast", "fb_debug.html");
-                    try
-                    {
-                        var dir = System.IO.Path.GetDirectoryName(debugPath);
-                        if (!System.IO.Directory.Exists(dir))
-                            System.IO.Directory.CreateDirectory(dir!);
-                        System.IO.File.WriteAllText(debugPath, html);
-                        Log.Debug("[Facebook Scraper] HTML kaydedildi: {Path}", debugPath);
-                    }
-                    catch { }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "[Facebook Scraper] HTML parse hatası");
-            }
-        }
-
-        private void ProcessMatches(MatchCollection matches)
-        {
-            foreach (Match match in matches)
-            {
-                try
-                {
-                    var profileUrl = match.Groups[1].Value;
-                    var userName = WebUtility.HtmlDecode(match.Groups[2].Value.Trim());
-                    var messageText = WebUtility.HtmlDecode(match.Groups[3].Value.Trim());
-
-                    if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(messageText))
-                        continue;
-
-                    // User ID'yi URL'den çıkar
-                    var userId = ExtractUserIdFromUrl(profileUrl) ?? userName;
-
-                    // Benzersiz ID oluştur
-                    var messageId = $"{userId}_{messageText.GetHashCode()}";
-
-                    if (_seenMessageIds.Contains(messageId))
-                        continue;
-
-                    _seenMessageIds.Add(messageId);
-
-                    // Eski mesajları temizle (memory leak önleme)
-                    if (_seenMessageIds.Count > 1000)
-                    {
-                        _seenMessageIds.Clear();
-                    }
-
-                    var chatMessage = new ChatMessage
-                    {
-                        Platform = ChatPlatform.Facebook,
-                        Username = userId,
-                        DisplayName = userName,
-                        Message = messageText,
-                        Timestamp = DateTime.UtcNow
-                    };
-
-                    PublishMessage(chatMessage);
-                    Log.Debug("[Facebook Scraper] Yeni mesaj: {User}: {Message}", userName, messageText);
-                }
-                catch (Exception ex)
-                {
-                    Log.Debug(ex, "[Facebook Scraper] Yorum parse hatası");
-                }
-            }
-        }
-
-        /// <summary>
-        /// Alternatif yorum çekme metodu - GraphQL.
-        /// </summary>
-        private async Task FetchCommentsAlternativeAsync(CancellationToken ct)
-        {
-            if (string.IsNullOrEmpty(_fbDtsg))
-            {
-                Log.Debug("[Facebook Scraper] fb_dtsg yok, GraphQL atlanıyor");
-                return;
-            }
+            if (_executeScript == null) return;
 
             try
             {
-                // GraphQL sorgusu
-                var variables = JsonSerializer.Serialize(new
-                {
-                    videoID = _liveVideoId,
-                    first = 50
-                });
-
-                var formData = new Dictionary<string, string>
-                {
-                    ["fb_dtsg"] = _fbDtsg,
-                    ["variables"] = variables,
-                    ["doc_id"] = "5765609026858656" // LiveVideoComments query ID
-                };
-
-                var request = new HttpRequestMessage(HttpMethod.Post, FacebookGraphQL)
-                {
-                    Content = new FormUrlEncodedContent(formData)
-                };
-                request.Headers.Add("Cookie", _cookies);
-                request.Headers.Add("X-FB-Friendly-Name", "LiveVideoCommentListQuery");
-
-                var response = await _httpClient.SendAsync(request, ct);
-                var json = await response.Content.ReadAsStringAsync(ct);
-
-                ParseGraphQLComments(json);
+                await _executeScript(@"
+                    if (typeof window.__fbLiveScanComments === 'function') {
+                        window.__fbLiveScanComments();
+                    }
+                ");
             }
             catch (Exception ex)
             {
-                Log.Debug(ex, "[Facebook Scraper] GraphQL fetch hatası");
+                Log.Debug(ex, "[FB Scraper] Rescan hatası");
             }
-        }
-
-        /// <summary>
-        /// GraphQL yanıtından yorumları parse eder.
-        /// </summary>
-        private void ParseGraphQLComments(string json)
-        {
-            try
-            {
-                using var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                // data.video.comment_rendering_instance.comments.edges
-                if (!root.TryGetProperty("data", out var data))
-                    return;
-
-                // JSON yapısı karmaşık olabilir, farklı yolları dene
-                JsonElement? comments = null;
-
-                if (data.TryGetProperty("video", out var video) &&
-                    video.TryGetProperty("comment_rendering_instance", out var cri) &&
-                    cri.TryGetProperty("comments", out var commentsEl) &&
-                    commentsEl.TryGetProperty("edges", out var edges))
-                {
-                    comments = edges;
-                }
-                else if (data.TryGetProperty("node", out var node) &&
-                         node.TryGetProperty("feedback", out var feedback) &&
-                         feedback.TryGetProperty("comment_rendering_instance", out var cri2) &&
-                         cri2.TryGetProperty("comments", out var commentsEl2) &&
-                         commentsEl2.TryGetProperty("edges", out var edges2))
-                {
-                    comments = edges2;
-                }
-
-                if (comments == null)
-                    return;
-
-                foreach (var edge in comments.Value.EnumerateArray())
-                {
-                    try
-                    {
-                        if (!edge.TryGetProperty("node", out var nodeEl))
-                            continue;
-
-                        var commentId = nodeEl.TryGetProperty("id", out var idEl)
-                            ? idEl.GetString() : null;
-
-                        if (string.IsNullOrEmpty(commentId) || _seenMessageIds.Contains(commentId))
-                            continue;
-
-                        _seenMessageIds.Add(commentId);
-
-                        string? userId = null;
-                        string? userName = null;
-                        string? avatarUrl = null;
-                        string? messageText = null;
-
-                        // Kullanıcı bilgisi
-                        if (nodeEl.TryGetProperty("author", out var author))
-                        {
-                            userId = author.TryGetProperty("id", out var uid) ? uid.GetString() : null;
-                            userName = author.TryGetProperty("name", out var name) ? name.GetString() : null;
-
-                            if (author.TryGetProperty("profile_picture", out var pic) &&
-                                pic.TryGetProperty("uri", out var uri))
-                            {
-                                avatarUrl = uri.GetString();
-                            }
-                        }
-
-                        // Mesaj
-                        if (nodeEl.TryGetProperty("body", out var body) &&
-                            body.TryGetProperty("text", out var text))
-                        {
-                            messageText = text.GetString();
-                        }
-
-                        if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(messageText))
-                            continue;
-
-                        var chatMessage = new ChatMessage
-                        {
-                            Platform = ChatPlatform.Facebook,
-                            Username = userId ?? userName,
-                            DisplayName = userName,
-                            Message = messageText,
-                            AvatarUrl = avatarUrl,
-                            Timestamp = DateTime.UtcNow
-                        };
-
-                        PublishMessage(chatMessage);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Debug(ex, "[Facebook Scraper] Comment node parse hatası");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Debug(ex, "[Facebook Scraper] GraphQL JSON parse hatası");
-            }
-        }
-
-        /// <summary>
-        /// Profil URL'sinden user ID'yi çıkarır.
-        /// </summary>
-        private string? ExtractUserIdFromUrl(string url)
-        {
-            // /profile.php?id=123456789
-            var match = Regex.Match(url, @"id=(\d+)");
-            if (match.Success)
-                return match.Groups[1].Value;
-
-            // /username
-            match = Regex.Match(url, @"/([^/?]+)(?:\?|$)");
-            if (match.Success)
-                return match.Groups[1].Value;
-
-            return null;
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _httpClient.Dispose();
+                _unregisterMessageHandler?.Invoke();
+                _ensureWebViewReady = null;
+                _navigateToUrl = null;
+                _executeScript = null;
+                _registerMessageHandler = null;
+                _unregisterMessageHandler = null;
             }
             base.Dispose(disposing);
         }

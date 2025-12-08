@@ -207,13 +207,14 @@ namespace UniCast.Core.Chat.Ingestors
             }
         }
 
-        protected override async Task DisconnectAsync()
+        protected override Task DisconnectAsync()
         {
             _sseCts?.Cancel();
             _sseCts?.Dispose();
             _sseCts = null;
 
             Log.Debug("[Facebook] Bağlantı kapatıldı");
+            return Task.CompletedTask;
         }
 
         protected override async Task RunMessageLoopAsync(CancellationToken ct)
