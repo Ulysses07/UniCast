@@ -2,6 +2,7 @@
 using Microsoft.Web.WebView2.Wpf;
 using Serilog;
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,22 +14,54 @@ namespace UniCast.App.Views
 {
     /// <summary>
     /// Facebook Live Chat için WebView2 Host kontrolü.
-    /// Arka planda çalışır ve chat yorumlarını scrape eder.
     /// 
-    /// DÜZELTME: WebView2 Collapsed durumda başlatılamaz!
-    /// - Visibility.Hidden kullanılmalı (Collapsed değil)
-    /// - Minimum 1x1 boyut gerekli
-    /// - Loaded event beklenmeli
+    /// YENİ YAKLAŞIM: Okuyucu Hesap Sistemi
+    /// =====================================
+    /// Instagram'da olduğu gibi, ana hesap yerine ayrı bir "okuyucu hesap" kullanılır.
+    /// Bu sayede:
+    /// - Ana hesap korunur (checkpoint riski yok)
+    /// - Tek WebView2 profili kullanılır (cookie transfer yok)
+    /// - Facebook aynı cihazı görür (güvenlik sorunu yok)
+    /// 
+    /// SHARED WEBVIEW2 PROFİL
+    /// ======================
+    /// Tüm Facebook işlemleri (login, chat scraping) aynı profili kullanır.
+    /// Profil yolu: %LOCALAPPDATA%\UniCast\WebView2
     /// </summary>
     public class FacebookChatHost : UserControl, IDisposable
     {
+        #region Constants
+
+        /// <summary>
+        /// Paylaşılan WebView2 profil klasörü.
+        /// TÜM Facebook işlemleri bu profili kullanır.
+        /// </summary>
+        public static readonly string SharedWebView2UserDataFolder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "UniCast", "WebView2");
+
+        private const string FacebookLoginUrl = "https://www.facebook.com/login";
+        private const string FacebookBaseUrl = "https://www.facebook.com";
+
+        #endregion
+
+        #region Fields
+
         private WebView2? _webView;
         private FacebookChatScraper? _scraper;
         private bool _isInitialized;
         private bool _disposed;
         private TaskCompletionSource<bool>? _loadedTcs;
-
+        private TaskCompletionSource<bool>? _loginTcs;
         private Action<string>? _messageHandler;
+
+        // Okuyucu hesap bilgileri
+        private readonly string? _readerEmail;
+        private readonly string? _readerPassword;
+
+        #endregion
+
+        #region Properties
 
         /// <summary>
         /// Chat scraper instance'ı.
@@ -41,26 +74,51 @@ namespace UniCast.App.Views
         public new bool IsInitialized => _isInitialized;
 
         /// <summary>
-        /// Facebook cookie'leri (login'den alınır).
+        /// Facebook'a giriş yapılmış mı?
         /// </summary>
-        public string? Cookies { get; set; }
+        public bool IsLoggedIn { get; private set; }
 
-        public FacebookChatHost()
+        /// <summary>
+        /// Okuyucu hesap e-postası.
+        /// </summary>
+        public string? ReaderEmail => _readerEmail;
+
+        #endregion
+
+        #region Constructor
+
+        /// <summary>
+        /// Varsayılan constructor.
+        /// </summary>
+        public FacebookChatHost() : this(null, null)
         {
-            // DÜZELTME: Hidden kullan (Collapsed değil!) 
+        }
+
+        /// <summary>
+        /// Okuyucu hesap bilgileri ile constructor.
+        /// </summary>
+        /// <param name="readerEmail">Okuyucu hesap e-posta/telefon</param>
+        /// <param name="readerPassword">Okuyucu hesap şifresi</param>
+        public FacebookChatHost(string? readerEmail, string? readerPassword)
+        {
+            _readerEmail = readerEmail;
+            _readerPassword = readerPassword;
+
+            // Hidden kullan (Collapsed değil!) 
             // Collapsed, kontrolü visual tree'den tamamen çıkarır ve WebView2 başlatılamaz
             Visibility = Visibility.Hidden;
 
-            // DÜZELTME: Minimum boyut gerekli (0x0 WebView2'yi kırar)
-            Width = 800;
-            Height = 600;
-
-            // Opacity 0 yaparak tamamen görünmez yap
-            this.Opacity = 100;
+            // Minimum boyut gerekli (0x0 WebView2'yi kırar)
+            Width = 1;
+            Height = 1;
 
             // Loaded event'ini dinle
             Loaded += OnLoaded;
         }
+
+        #endregion
+
+        #region Initialization
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
@@ -68,14 +126,21 @@ namespace UniCast.App.Views
             _loadedTcs?.TrySetResult(true);
         }
 
-        /// <summary>
-        /// Kontrolün yüklenmesini bekler
-        /// </summary>
-        private async Task WaitForLoadedAsync(int timeoutMs = 5000)
+        private async Task WaitForLoadedAsync(int timeoutMs = 10000)
         {
+            // Zaten yüklüyse hemen dön
             if (IsLoaded)
             {
                 Log.Debug("[FacebookChatHost] Kontrol zaten yüklü");
+                return;
+            }
+
+            // Visual tree'de mi kontrol et
+            if (System.Windows.Media.VisualTreeHelper.GetParent(this) != null)
+            {
+                Log.Debug("[FacebookChatHost] Kontrol visual tree'de - devam ediliyor");
+                // Kısa bir bekleme yap UI'ın yerleşmesi için
+                await Task.Delay(100);
                 return;
             }
 
@@ -88,12 +153,13 @@ namespace UniCast.App.Views
 
             if (!result)
             {
-                Log.Warning("[FacebookChatHost] Loaded event timeout ({Timeout}ms)", timeoutMs);
+                Log.Warning("[FacebookChatHost] Loaded event timeout ({Timeout}ms) - devam ediliyor", timeoutMs);
+                // Timeout olsa bile devam et, belki çalışır
             }
         }
 
         /// <summary>
-        /// WebView2'yi başlatır.
+        /// WebView2'yi başlatır. Shared profil kullanır.
         /// </summary>
         public async Task InitializeAsync()
         {
@@ -102,29 +168,22 @@ namespace UniCast.App.Views
 
             try
             {
-                Log.Debug("[FacebookChatHost] WebView2 başlatılıyor...");
+                Log.Debug("[FacebookChatHost] WebView2 başlatılıyor (Shared profil)...");
 
-                // Önce kontrol yüklenene kadar bekle
                 await WaitForLoadedAsync();
 
                 _webView = new WebView2
                 {
-                    // DÜZELTME: WebView2'nin kendisi de minimum boyutta olmalı
                     Width = 1,
                     Height = 1,
                     Visibility = Visibility.Hidden
                 };
-                Log.Debug("[FacebookChatHost] WebView2 kontrolü oluşturuldu");
 
                 Content = _webView;
 
-                // WebView2 ortamını oluştur
-                var userDataFolder = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "UniCast", "WebView2_Chat");
-                Log.Debug("[FacebookChatHost] UserDataFolder: {Folder}", userDataFolder);
-
-                System.IO.Directory.CreateDirectory(userDataFolder);
+                // SHARED PROFİL KULLAN
+                Log.Debug("[FacebookChatHost] Shared UserDataFolder: {Folder}", SharedWebView2UserDataFolder);
+                Directory.CreateDirectory(SharedWebView2UserDataFolder);
 
                 // WebView2 Runtime kontrolü
                 string? webView2Version = null;
@@ -136,19 +195,15 @@ namespace UniCast.App.Views
                 catch (Exception ex)
                 {
                     Log.Error(ex, "[FacebookChatHost] WebView2 Runtime BULUNAMADI!");
-                    throw new InvalidOperationException("WebView2 Runtime yüklü değil. Lütfen Microsoft Edge WebView2 Runtime'ı yükleyin: https://developer.microsoft.com/en-us/microsoft-edge/webview2/", ex);
+                    throw new InvalidOperationException(
+                        "WebView2 Runtime yüklü değil. Lütfen Microsoft Edge WebView2 Runtime'ı yükleyin.", ex);
                 }
 
-                Log.Debug("[FacebookChatHost] CoreWebView2Environment oluşturuluyor...");
                 var env = await CoreWebView2Environment.CreateAsync(
-                    userDataFolder: userDataFolder);
+                    userDataFolder: SharedWebView2UserDataFolder);
 
-                Log.Debug("[FacebookChatHost] EnsureCoreWebView2Async çağrılıyor...");
-
-                // DÜZELTME: Timeout ile çağır
                 var initTask = _webView.EnsureCoreWebView2Async(env);
 
-                // Timeout kontrolü - Task.WhenAny kullan
                 using var timeoutCts = new CancellationTokenSource();
                 var timeoutTask = Task.Delay(30000, timeoutCts.Token);
                 var completedTask = await Task.WhenAny(initTask, timeoutTask);
@@ -159,98 +214,315 @@ namespace UniCast.App.Views
                     throw new TimeoutException("WebView2 başlatma zaman aşımına uğradı");
                 }
 
-                // Timeout'u iptal et
                 timeoutCts.Cancel();
-
-                // initTask tamamlandıysa sonucu al (exception varsa fırlatılır)
                 await initTask;
-
-                Log.Debug("[FacebookChatHost] CoreWebView2 hazır, ayarlar yapılıyor...");
 
                 // Ayarlar
                 _webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
                 _webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
                 _webView.CoreWebView2.Settings.IsZoomControlEnabled = false;
-                _webView.CoreWebView2.Settings.AreDevToolsEnabled = true; // Debug için açık
+                _webView.CoreWebView2.Settings.AreDevToolsEnabled = false;
                 _webView.CoreWebView2.Settings.IsWebMessageEnabled = true;
 
+                // Navigation event'ini dinle (login kontrolü için)
+                _webView.CoreWebView2.NavigationCompleted += OnNavigationCompleted;
+
                 _isInitialized = true;
-                Log.Information("[FacebookChatHost] WebView2 hazır (version: {Version})", webView2Version);
+                Log.Information("[FacebookChatHost] WebView2 hazır (Shared profil, version: {Version})", webView2Version);
+
+                // Login durumunu kontrol et
+                await CheckLoginStatusAsync();
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[FacebookChatHost] WebView2 başlatma hatası: {Message}", ex.Message);
+                Log.Error(ex, "[FacebookChatHost] WebView2 başlatma hatası");
                 throw;
             }
         }
 
+        #endregion
+
+        #region Login Management
+
         /// <summary>
-        /// Facebook Live chat'i başlatır.
+        /// Facebook'a giriş yapılmış mı kontrol eder.
+        /// Cookie'lerde c_user ve xs olup olmadığına bakar.
         /// </summary>
-        public async Task<FacebookChatScraper> StartChatAsync(string liveVideoUrl, string? cookies = null)
+        public async Task<bool> CheckLoginStatusAsync()
+        {
+            if (_webView?.CoreWebView2 == null)
+            {
+                Log.Warning("[FacebookChatHost] CheckLoginStatus - CoreWebView2 null");
+                return false;
+            }
+
+            try
+            {
+                var cookieManager = _webView.CoreWebView2.CookieManager;
+                var cookies = await cookieManager.GetCookiesAsync(FacebookBaseUrl);
+
+                bool hasUserId = false;
+                bool hasSession = false;
+
+                foreach (var cookie in cookies)
+                {
+                    if (cookie.Name == "c_user" && !string.IsNullOrEmpty(cookie.Value))
+                        hasUserId = true;
+                    if (cookie.Name == "xs" && !string.IsNullOrEmpty(cookie.Value))
+                        hasSession = true;
+                }
+
+                IsLoggedIn = hasUserId && hasSession;
+                Log.Information("[FacebookChatHost] Login durumu: {Status} (c_user: {HasUser}, xs: {HasSession})",
+                    IsLoggedIn ? "GİRİŞ YAPILMIŞ" : "GİRİŞ YAPILMAMIŞ", hasUserId, hasSession);
+
+                return IsLoggedIn;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[FacebookChatHost] Login kontrolü hatası");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Facebook'a okuyucu hesap ile giriş yapar.
+        /// </summary>
+        /// <param name="email">E-posta veya telefon</param>
+        /// <param name="password">Şifre</param>
+        /// <returns>Başarılı mı?</returns>
+        public async Task<bool> LoginAsync(string email, string password)
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(FacebookChatHost));
 
-            Log.Debug("[FacebookChatHost] StartChatAsync başlıyor - URL: {Url}", liveVideoUrl);
+            if (!_isInitialized)
+                await InitializeAsync();
+
+            if (_webView?.CoreWebView2 == null)
+                throw new InvalidOperationException("WebView2 başlatılamadı");
+
+            Log.Information("[FacebookChatHost] Facebook login başlıyor...");
 
             try
             {
-                if (!_isInitialized)
+                _loginTcs = new TaskCompletionSource<bool>();
+
+                // Login sayfasına git
+                await NavigateAsync(FacebookLoginUrl);
+                await Task.Delay(2000); // Sayfa yüklensin
+
+                // Form doldur
+                var fillScript = $@"
+                    (function() {{
+                        var emailField = document.getElementById('email') || document.querySelector('input[name=""email""]');
+                        var passField = document.getElementById('pass') || document.querySelector('input[name=""pass""]');
+                        var loginBtn = document.querySelector('button[name=""login""]') || document.querySelector('button[type=""submit""]');
+                        
+                        if (emailField && passField) {{
+                            emailField.value = '{EscapeJsString(email)}';
+                            passField.value = '{EscapeJsString(password)}';
+                            
+                            // Input event'lerini tetikle (React için)
+                            emailField.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            passField.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            
+                            return 'fields_filled';
+                        }}
+                        return 'fields_not_found';
+                    }})();
+                ";
+
+                var fillResult = await ExecuteScriptAsync(fillScript);
+                Log.Debug("[FacebookChatHost] Form doldurma sonucu: {Result}", fillResult);
+
+                if (fillResult.Contains("fields_not_found"))
                 {
-                    Log.Debug("[FacebookChatHost] Henüz initialize edilmemiş, InitializeAsync çağrılıyor...");
-                    await InitializeAsync();
+                    Log.Warning("[FacebookChatHost] Login form alanları bulunamadı");
+                    return false;
                 }
 
-                if (_webView?.CoreWebView2 == null)
+                await Task.Delay(500);
+
+                // Login butonuna tıkla
+                var clickScript = @"
+                    (function() {
+                        var loginBtn = document.querySelector('button[name=""login""]') || 
+                                       document.querySelector('button[type=""submit""]') ||
+                                       document.querySelector('button[data-testid=""royal_login_button""]');
+                        if (loginBtn) {
+                            loginBtn.click();
+                            return 'clicked';
+                        }
+                        return 'button_not_found';
+                    })();
+                ";
+
+                var clickResult = await ExecuteScriptAsync(clickScript);
+                Log.Debug("[FacebookChatHost] Login butonu tıklama: {Result}", clickResult);
+
+                // Login sonucunu bekle (max 30 saniye)
+                var waitTask = _loginTcs.Task;
+                var timeoutTask = Task.Delay(30000);
+
+                var completedTask = await Task.WhenAny(waitTask, timeoutTask);
+
+                if (completedTask == timeoutTask)
                 {
-                    Log.Error("[FacebookChatHost] WebView2 veya CoreWebView2 null!");
-                    throw new InvalidOperationException("WebView2 başlatılamadı");
+                    Log.Warning("[FacebookChatHost] Login timeout (30s)");
+                    // Timeout olsa bile login durumunu kontrol et
+                    return await CheckLoginStatusAsync();
                 }
 
-                // Cookie'leri ayarla
-                var effectiveCookies = cookies ?? Cookies;
-                if (!string.IsNullOrEmpty(effectiveCookies))
-                {
-                    Log.Debug("[FacebookChatHost] Cookie'ler ayarlanıyor...");
-                    SetCookies(effectiveCookies);
-                }
-
-                // Mevcut scraper'ı durdur
-                if (_scraper != null)
-                {
-                    Log.Debug("[FacebookChatHost] Mevcut scraper durduruluyor...");
-                    await _scraper.StopAsync();
-                    _scraper.Dispose();
-                }
-
-                // Yeni scraper oluştur
-                Log.Debug("[FacebookChatHost] Yeni FacebookChatScraper oluşturuluyor...");
-                _scraper = new FacebookChatScraper(liveVideoUrl);
-                _scraper.Cookies = effectiveCookies;
-
-                // WebView2 kontrollerini ayarla
-                Log.Debug("[FacebookChatHost] SetWebViewControls çağrılıyor...");
-                _scraper.SetWebViewControls(
-                    ensureReady: EnsureWebViewReadyAsync,
-                    navigate: NavigateAsync,
-                    executeScript: ExecuteScriptAsync,
-                    registerHandler: RegisterMessageHandler,
-                    unregisterHandler: UnregisterMessageHandler
-                );
-
-                // Başlat
-                Log.Debug("[FacebookChatHost] Scraper başlatılıyor...");
-                await _scraper.StartAsync();
-
-                Log.Information("[FacebookChatHost] Chat başarıyla başlatıldı");
-                return _scraper;
+                return await waitTask;
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[FacebookChatHost] StartChatAsync hatası: {Message}", ex.Message);
-                throw;
+                Log.Error(ex, "[FacebookChatHost] Login hatası");
+                return false;
             }
+        }
+
+        private void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            if (_webView?.CoreWebView2 == null) return;
+
+            var url = _webView.CoreWebView2.Source;
+            Log.Debug("[FacebookChatHost] Navigation tamamlandı: {Url}", url);
+
+            // Checkpoint kontrolü
+            if (url.Contains("checkpoint"))
+            {
+                Log.Warning("[FacebookChatHost] ⚠️ Facebook güvenlik kontrolü algılandı!");
+                Log.Warning("[FacebookChatHost] Okuyucu hesabınız için doğrulama gerekiyor.");
+                Log.Warning("[FacebookChatHost] Tarayıcıda manuel olarak doğrulama yapın veya yeni okuyucu hesap oluşturun.");
+                _loginTcs?.TrySetResult(false);
+                return;
+            }
+
+            // Login başarılı mı kontrol et
+            if (_loginTcs != null && !_loginTcs.Task.IsCompleted)
+            {
+                // Ana sayfa veya feed'e yönlendirildiyse başarılı
+                if (url == FacebookBaseUrl ||
+                    url == FacebookBaseUrl + "/" ||
+                    url.Contains("facebook.com/?") ||
+                    url.Contains("facebook.com/home"))
+                {
+                    Task.Run(async () =>
+                    {
+                        var isLoggedIn = await CheckLoginStatusAsync();
+                        _loginTcs?.TrySetResult(isLoggedIn);
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Facebook'tan çıkış yapar.
+        /// </summary>
+        public async Task LogoutAsync()
+        {
+            if (_webView?.CoreWebView2 == null)
+                return;
+
+            try
+            {
+                // Cookie'leri temizle
+                var cookieManager = _webView.CoreWebView2.CookieManager;
+                cookieManager.DeleteAllCookies();
+
+                IsLoggedIn = false;
+                Log.Information("[FacebookChatHost] Facebook'tan çıkış yapıldı");
+
+                await Task.CompletedTask; // Async signature için
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[FacebookChatHost] Logout hatası");
+            }
+        }
+
+        private string EscapeJsString(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return "";
+            return value
+                .Replace("\\", "\\\\")
+                .Replace("'", "\\'")
+                .Replace("\"", "\\\"")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r");
+        }
+
+        #endregion
+
+        #region Chat Scraping
+
+        /// <summary>
+        /// Facebook Live chat'i başlatır.
+        /// Önce login durumunu kontrol eder.
+        /// </summary>
+        public async Task<FacebookChatScraper> StartChatAsync(string liveVideoUrl)
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(FacebookChatHost));
+
+            Log.Information("[FacebookChatHost] StartChatAsync - URL: {Url}", liveVideoUrl);
+
+            if (!_isInitialized)
+                await InitializeAsync();
+
+            // Login kontrolü
+            var isLoggedIn = await CheckLoginStatusAsync();
+            if (!isLoggedIn)
+            {
+                // Okuyucu hesap bilgileri varsa otomatik login yap
+                if (!string.IsNullOrWhiteSpace(_readerEmail) && !string.IsNullOrWhiteSpace(_readerPassword))
+                {
+                    Log.Information("[FacebookChatHost] Okuyucu hesap ile otomatik login yapılıyor...");
+                    isLoggedIn = await LoginAsync(_readerEmail, _readerPassword);
+
+                    if (!isLoggedIn)
+                    {
+                        throw new InvalidOperationException(
+                            "Facebook okuyucu hesabına giriş yapılamadı. Lütfen Ayarlar > Facebook bölümünden hesap bilgilerini kontrol edin.");
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        "Facebook'a giriş yapılmamış. Lütfen önce Ayarlar > Facebook Ayarları'ndan okuyucu hesap ile bağlanın.");
+                }
+            }
+
+            if (_webView?.CoreWebView2 == null)
+                throw new InvalidOperationException("WebView2 başlatılamadı");
+
+            // Mevcut scraper'ı durdur
+            if (_scraper != null)
+            {
+                await _scraper.StopAsync();
+                _scraper.Dispose();
+            }
+
+            // Yeni scraper oluştur
+            _scraper = new FacebookChatScraper(liveVideoUrl);
+
+            // WebView2 kontrollerini ayarla
+            _scraper.SetWebViewControls(
+                EnsureWebViewReadyAsync,
+                NavigateAsync,
+                ExecuteScriptAsync,
+                RegisterMessageHandler,
+                UnregisterMessageHandler
+            );
+
+            // Chat'i başlat
+            Log.Debug("[FacebookChatHost] Scraper başlatılıyor...");
+            await _scraper.StartAsync();
+
+            Log.Information("[FacebookChatHost] Chat başlatıldı");
+            return _scraper;
         }
 
         /// <summary>
@@ -258,7 +530,6 @@ namespace UniCast.App.Views
         /// </summary>
         public async Task StopChatAsync()
         {
-            // Thread-safe: local variable'a al
             var scraper = _scraper;
             _scraper = null;
 
@@ -271,7 +542,7 @@ namespace UniCast.App.Views
                 }
                 catch (Exception ex)
                 {
-                    Log.Debug(ex, "[FacebookChatHost] StopAsync hatası (ignorable)");
+                    Log.Debug(ex, "[FacebookChatHost] StopAsync hatası");
                 }
 
                 try
@@ -280,52 +551,16 @@ namespace UniCast.App.Views
                 }
                 catch (Exception ex)
                 {
-                    Log.Debug(ex, "[FacebookChatHost] Scraper dispose hatası (ignorable)");
+                    Log.Debug(ex, "[FacebookChatHost] Scraper dispose hatası");
                 }
 
-                Log.Debug("[FacebookChatHost] Chat durduruldu");
+                Log.Information("[FacebookChatHost] Chat durduruldu");
             }
         }
 
-        private void SetCookies(string cookies)
-        {
-            if (_webView?.CoreWebView2 == null)
-                return;
+        #endregion
 
-            try
-            {
-                var cookieManager = _webView.CoreWebView2.CookieManager;
-
-                // Cookie string'i parse et
-                var cookiePairs = cookies.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                int count = 0;
-
-                foreach (var pair in cookiePairs)
-                {
-                    var parts = pair.Trim().Split(new[] { '=' }, 2);
-                    if (parts.Length == 2)
-                    {
-                        var name = parts[0].Trim();
-                        var value = parts[1].Trim();
-
-                        var cookie = cookieManager.CreateCookie(name, value, ".facebook.com", "/");
-                        cookie.IsSecure = true;
-                        cookie.IsHttpOnly = true;
-
-                        cookieManager.AddOrUpdateCookie(cookie);
-                        count++;
-                    }
-                }
-
-                Log.Debug("[FacebookChatHost] {Count} cookie ayarlandı", count);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "[FacebookChatHost] Cookie ayarlama hatası");
-            }
-        }
-
-        #region WebView2 Kontrolleri
+        #region WebView2 Controls
 
         private Task EnsureWebViewReadyAsync()
         {
@@ -347,31 +582,20 @@ namespace UniCast.App.Views
 
             var tcs = new TaskCompletionSource<bool>();
 
-            void OnNavigationCompleted(object? s, CoreWebView2NavigationCompletedEventArgs e)
+            void OnNavCompleted(object? s, CoreWebView2NavigationCompletedEventArgs e)
             {
-                _webView.CoreWebView2.NavigationCompleted -= OnNavigationCompleted;
-
-                if (e.IsSuccess)
-                {
-                    Log.Debug("[FacebookChatHost] Navigation başarılı");
-                }
-                else
-                {
-                    Log.Warning("[FacebookChatHost] Navigation başarısız: {Status}", e.WebErrorStatus);
-                }
-
+                _webView.CoreWebView2.NavigationCompleted -= OnNavCompleted;
                 tcs.TrySetResult(e.IsSuccess);
             }
 
-            _webView.CoreWebView2.NavigationCompleted += OnNavigationCompleted;
+            _webView.CoreWebView2.NavigationCompleted += OnNavCompleted;
             _webView.CoreWebView2.Navigate(url);
 
-            // Timeout ile bekle
             var completedTask = await Task.WhenAny(tcs.Task, Task.Delay(30000));
             if (completedTask != tcs.Task)
             {
                 Log.Warning("[FacebookChatHost] Navigation timeout (30s)");
-                _webView.CoreWebView2.NavigationCompleted -= OnNavigationCompleted;
+                _webView.CoreWebView2.NavigationCompleted -= OnNavCompleted;
                 tcs.TrySetResult(false);
             }
 
@@ -407,7 +631,6 @@ namespace UniCast.App.Views
 
             _messageHandler = handler;
             _webView.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
-            Log.Debug("[FacebookChatHost] Message handler registered");
         }
 
         private void UnregisterMessageHandler()
@@ -417,7 +640,6 @@ namespace UniCast.App.Views
                 _webView.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
             }
             _messageHandler = null;
-            Log.Debug("[FacebookChatHost] Message handler unregistered");
         }
 
         private void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
@@ -425,8 +647,6 @@ namespace UniCast.App.Views
             try
             {
                 var message = e.WebMessageAsJson;
-                Log.Debug("[FacebookChatHost] WebMessage alındı: {Length} chars", message?.Length ?? 0);
-
                 if (!string.IsNullOrEmpty(message))
                 {
                     _messageHandler?.Invoke(message);
@@ -440,6 +660,8 @@ namespace UniCast.App.Views
 
         #endregion
 
+        #region Dispose
+
         public void Dispose()
         {
             if (_disposed)
@@ -452,10 +674,10 @@ namespace UniCast.App.Views
             {
                 Loaded -= OnLoaded;
                 _loadedTcs?.TrySetResult(false);
+                _loginTcs?.TrySetResult(false);
             }
             catch { }
 
-            // Thread-safe: local variable'lara al
             var scraper = _scraper;
             var webView = _webView;
             _scraper = null;
@@ -474,6 +696,7 @@ namespace UniCast.App.Views
             {
                 if (webView != null)
                 {
+                    webView.CoreWebView2.NavigationCompleted -= OnNavigationCompleted;
                     webView.CoreWebView2?.Stop();
                     webView.Dispose();
                 }
@@ -485,5 +708,7 @@ namespace UniCast.App.Views
 
             Log.Debug("[FacebookChatHost] Dispose tamamlandı");
         }
+
+        #endregion
     }
 }

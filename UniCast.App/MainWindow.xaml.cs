@@ -292,11 +292,17 @@ namespace UniCast.App
 
                         case StreamPlatform.Facebook:
                             // Facebook için WebView2 tabanlı FacebookChatHost kullan
-                            var cookies = SettingsStore.Data.FacebookCookies;
+                            // YENİ: Okuyucu hesap yaklaşımı - cookie yerine reader credentials kullan
+                            var readerEmail = SettingsStore.Data.FacebookReaderEmail;
+                            var readerPassword = SettingsStore.Data.FacebookReaderPassword;
                             var liveUrl = SettingsStore.Data.FacebookLiveVideoUrl;
-                            if (!string.IsNullOrWhiteSpace(cookies) && !string.IsNullOrWhiteSpace(liveUrl))
+                            var isReaderConnected = SettingsStore.Data.FacebookReaderConnected;
+
+                            if (!string.IsNullOrWhiteSpace(readerEmail) &&
+                                !string.IsNullOrWhiteSpace(readerPassword) &&
+                                !string.IsNullOrWhiteSpace(liveUrl))
                             {
-                                Log.Debug("[MainWindow] Facebook chat ingestor başlatılıyor...");
+                                Log.Debug("[MainWindow] Facebook chat ingestor başlatılıyor (Okuyucu Hesap)...");
 
                                 // UI thread'de çalıştır (WebView2 gereksinimi)
                                 Dispatcher.InvokeAsync(async () =>
@@ -319,8 +325,8 @@ namespace UniCast.App
                                             _facebookChatHost = null;
                                         }
 
-                                        // Yeni host oluştur
-                                        _facebookChatHost = new FacebookChatHost { Cookies = cookies };
+                                        // Yeni host oluştur (okuyucu hesap bilgileri ile)
+                                        _facebookChatHost = new FacebookChatHost(readerEmail, readerPassword);
 
                                         // MainGrid'e ekle (WebView2 için gerekli)
                                         var grid = Content as Grid;
@@ -336,7 +342,7 @@ namespace UniCast.App
 
                                         // Chat başlat - bu SetWebViewControls() çağrısını içerir
                                         _facebookIngestor = await _facebookChatHost.StartChatAsync(liveUrl);
-                                        Log.Information("[MainWindow] Facebook Chat başlatıldı (WebView2) - VideoUrl: {Url}",
+                                        Log.Information("[MainWindow] Facebook Chat başlatıldı (Okuyucu Hesap) - VideoUrl: {Url}",
                                             liveUrl.Length > 50 ? liveUrl.Substring(0, 50) + "..." : liveUrl);
                                     }
                                     catch (Exception ex)
@@ -357,13 +363,13 @@ namespace UniCast.App
                                     }
                                 });
                             }
-                            else if (!string.IsNullOrWhiteSpace(cookies))
+                            else if (!string.IsNullOrWhiteSpace(readerEmail))
                             {
-                                Log.Warning("[MainWindow] Facebook Chat - Cookie var ama Live Video URL eksik");
+                                Log.Warning("[MainWindow] Facebook Chat - Okuyucu hesap var ama Live Video URL eksik");
                             }
                             else
                             {
-                                Log.Warning("[MainWindow] Facebook Chat - Cookie eksik. Ayarlar'dan Facebook'a giriş yapın.");
+                                Log.Warning("[MainWindow] Facebook Chat - Okuyucu hesap bilgileri eksik. Ayarlar'dan Facebook okuyucu hesap bilgilerini girin.");
                             }
                             break;
 

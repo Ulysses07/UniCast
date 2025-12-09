@@ -62,7 +62,6 @@
                 <StackPanel>
                     <TextBlock Text="Yayın Kalitesi" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
 
-                    <!-- DÜZELTME: Encoder Seçimi Eklendi -->
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
@@ -125,20 +124,18 @@
                         </Grid.ColumnDefinitions>
                         <Slider Minimum="0" Maximum="2000" TickFrequency="50" IsSnapToTickEnabled="True"
                                 Value="{Binding AudioDelayMs}" VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="1" Text="{Binding AudioDelayMs, StringFormat={}{0} ms}" 
-                                   Foreground="{StaticResource TextMain}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0"
+                                   Text="{Binding AudioDelayMs, StringFormat={}{0} ms}" Foreground="{StaticResource TextMuted}"/>
                     </Grid>
-                    <TextBlock Text="İpucu: Ses görüntüden önce geliyorsa bu değeri artırın." 
-                               FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
 
-            <!-- YouTube Chat Ayarları -->
+            <!-- YouTube Ayarları -->
             <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
                 <StackPanel>
                     <TextBlock Text="YouTube Chat Ayarları" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
 
-                    <TextBlock Text="YouTube Yayın Linki veya Video ID" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
+                    <TextBlock Text="Video ID veya URL" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
                     <TextBox Text="{Binding YouTubeVideoId, UpdateSourceTrigger=PropertyChanged}" Height="30"
                              ToolTip="Örnek: https://youtube.com/watch?v=XXXXX veya sadece XXXXX"/>
                     <TextBlock Text="Örnek: https://youtube.com/watch?v=abc123 veya sadece abc123" 
@@ -171,6 +168,7 @@
                 <StackPanel>
                     <TextBlock Text="Sosyal Medya Entegrasyonu" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
 
+                    <!-- Instagram Ayarları -->
                     <Expander Header="Instagram Ayarları" Margin="0,0,0,10" Foreground="{StaticResource TextMain}">
                         <StackPanel Margin="10">
                             <!-- KRİTİK UYARI -->
@@ -199,8 +197,22 @@
                         </StackPanel>
                     </Expander>
 
+                    <!-- Facebook Ayarları (YENİ: Okuyucu Hesap Yaklaşımı) -->
                     <Expander Header="Facebook Ayarları" Foreground="{StaticResource TextMain}">
                         <StackPanel Margin="10">
+
+                            <!-- KRİTİK UYARI (Instagram ile aynı stil) -->
+                            <Border Background="#FFF3CD" BorderBrush="#FFE69C" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,15">
+                                <StackPanel>
+                                    <TextBlock Text="⚠️ ÖNEMLİ GÜVENLİK UYARISI" FontWeight="Bold" Foreground="#856404" FontSize="12"/>
+                                    <TextBlock TextWrapping="Wrap" Foreground="#856404" FontSize="11" Margin="0,5,0,0">
+                                        Facebook chat için ANA HESABINIZI DEĞİL, sadece yayını izlemek 
+                                        için oluşturduğunuz AYRI BİR OKUYUCU HESAP kullanın!
+                                        Ana hesabınızda güvenlik kontrolü (checkpoint) tetiklenebilir.
+                                        UniCast okuyucu hesabın yasaklanmasından sorumlu değildir.
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
 
                             <!-- Bağlantı Durumu -->
                             <Grid Margin="0,0,0,15">
@@ -210,30 +222,59 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock x:Name="TxtFacebookStatus" Text="⚪ Bağlı Değil" 
-                                               FontSize="14" VerticalAlignment="Center"/>
+                                    <Ellipse x:Name="FacebookStatusIndicator" Width="12" Height="12" 
+                                             Fill="Gray" Margin="0,0,8,0"/>
+                                    <TextBlock x:Name="TxtFacebookStatus" Text="Bağlı Değil" 
+                                               FontSize="14" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
                                 </StackPanel>
 
-                                <Button x:Name="BtnFacebookLogin" Grid.Column="1" 
-                                        Content="🔵 Facebook'a Giriş Yap" 
-                                        Click="BtnFacebookLogin_Click"
+                                <Button x:Name="BtnFacebookConnect" Grid.Column="1" 
+                                        Content="🔵 Bağlan" 
+                                        Click="BtnFacebookConnect_Click"
                                         Background="#1877F2" Foreground="White"
                                         Padding="15,8" FontWeight="SemiBold"
                                         BorderThickness="0" Cursor="Hand"/>
                             </Grid>
 
+                            <!-- Okuyucu Hesap Bilgileri -->
+                            <TextBlock Text="Okuyucu Hesap E-posta/Telefon" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
+                            <TextBox x:Name="TxtFacebookReaderEmail" Height="30"
+                                     Text="{Binding FacebookReaderEmail, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Ana hesabınız DEĞİL, ayrı bir okuyucu hesap kullanın!"/>
+
+                            <TextBlock Text="Okuyucu Hesap Şifresi" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
+                            <PasswordBox x:Name="PwdFacebookReaderPassword" 
+                                         PasswordChanged="PwdFacebookReaderPassword_PasswordChanged" Height="30"
+                                         ToolTip="Okuyucu hesap şifresi. Ana hesap şifrenizi GİRMEYİN!"/>
+
                             <!-- Canlı Yayın Linki -->
-                            <TextBlock Text="Facebook Canlı Yayın Linki" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
+                            <TextBlock Text="Facebook Canlı Yayın Linki" Foreground="{StaticResource TextMuted}" Margin="0,15,0,5"/>
                             <TextBox Text="{Binding FacebookLiveVideoUrl, UpdateSourceTrigger=PropertyChanged}" Height="30"
-                                     ToolTip="Örnek: https://www.facebook.com/sayfa/videos/123456789"/>
+                                     ToolTip="Ana hesabınızla yaptığınız canlı yayının linki"/>
                             <TextBlock Text="Örnek: https://facebook.com/sayfa/videos/123456789 veya sadece video ID" 
                                        FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,5,0,0"/>
 
                             <!-- Çıkış Butonu -->
-                            <Button x:Name="BtnFacebookLogout" Content="Çıkış Yap" 
+                            <Button x:Name="BtnFacebookLogout" Content="🚪 Çıkış Yap" 
                                     Click="BtnFacebookLogout_Click"
                                     HorizontalAlignment="Left" Margin="0,15,0,0"
-                                    Padding="10,5" Visibility="Collapsed"/>
+                                    Padding="10,5" Visibility="Collapsed"
+                                    Background="#DC3545" Foreground="White" BorderThickness="0"/>
+
+                            <!-- Yardım Notu -->
+                            <Border Background="#E7F3FF" BorderBrush="#B6D4FE" BorderThickness="1" 
+                                    CornerRadius="4" Padding="10" Margin="0,15,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="💡 Nasıl Çalışır?" FontWeight="SemiBold" Foreground="#084298" FontSize="11"/>
+                                    <TextBlock TextWrapping="Wrap" Foreground="#084298" FontSize="10" Margin="0,5,0,0">
+                                        1. Yeni bir Facebook hesabı oluşturun (okuyucu hesap)
+                                        2. Yukarıya bu hesabın bilgilerini girin
+                                        3. ANA HESABINIZLA canlı yayın başlatın
+                                        4. Yayın linkini "Canlı Yayın Linki" alanına yapıştırın
+                                        5. UniCast okuyucu hesapla chatı çekecektir
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Expander>
                 </StackPanel>

@@ -10048,3 +10048,1135 @@ System.Exception: Bu yayında chat bulunamadı veya chat kapalı.
 2025-12-08 17:43:57.740 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
 2025-12-08 17:43:57.741 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
 2025-12-08 17:43:57.741 +03:00 [DBG] [App] Log Flush başlatılıyor...
+2025-12-08 18:26:14.910 +03:00 [INF] ===================================================
+2025-12-08 18:26:14.931 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-08 18:26:14.932 +03:00 [INF] ===================================================
+2025-12-08 18:26:14.940 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-08 18:26:14.947 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-08 18:26:15.267 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-08 18:26:15.423 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-08 18:26:15.462 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-08 18:26:15.463 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-08 18:26:15.500 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-08 18:26:15.510 +03:00 [DBG] [ChatBus] Initialized
+2025-12-08 18:26:15.512 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-08 18:26:15.515 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-08 18:26:15.550 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-08 18:26:15.554 +03:00 [DBG] [MainWindow] YouTube chat ingestor başlatılıyor...
+2025-12-08 18:26:15.562 +03:00 [INF] ["YouTube"] Bağlanılıyor: Ze-FXL1oHRw
+2025-12-08 18:26:15.564 +03:00 [INF] [YouTube Scraper] Bağlanılıyor: Ze-FXL1oHRw
+2025-12-08 18:26:15.589 +03:00 [INF] [MainWindow] YouTube Chat Scraper aktif - API key gerektirmez
+2025-12-08 18:26:15.590 +03:00 [DBG] [MainWindow] 1 adet chat ingestor başlatıldı
+2025-12-08 18:26:15.591 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-08 18:26:15.592 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-08 18:26:15.593 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-08 18:26:15.622 +03:00 [DBG] [ControlView] Layout ayarları yüklendi: Mola=120, Camera=350, Chat=600
+2025-12-08 18:26:15.624 +03:00 [DBG] [ControlView] ChatBus'a bağlandı
+2025-12-08 18:26:17.216 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-08 18:26:17.217 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-08 18:26:17.218 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-08 18:26:17.219 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-08 18:26:17.219 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-08 18:26:17.220 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-08 18:26:17.221 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-08 18:26:17.222 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-08 18:26:17.223 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-08 18:26:17.224 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-08 18:26:17.225 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-08 18:26:17.225 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-08 18:26:17.226 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-08 18:26:17.227 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-08 18:26:17.228 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-08 18:26:17.229 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-08 18:26:17.230 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-08 18:26:17.231 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-08 18:26:17.236 +03:00 [INF] [Startup] Toplam süre: 2350ms
+2025-12-08 18:26:17.237 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-08 18:26:17.240 +03:00 [DBG] [YouTube Scraper] API Key bulundu
+2025-12-08 18:26:17.268 +03:00 [ERR] ["YouTube"] Bağlantı hatası
+System.Exception: Bu yayında chat bulunamadı veya chat kapalı.
+   at UniCast.Core.Chat.Ingestors.YouTubeChatScraper.ConnectAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\YouTubeChatScraper.cs:line 171
+   at UniCast.Core.Chat.Ingestors.BaseChatIngestor.StartAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\BaseChatIngestor.cs:line 71
+2025-12-08 18:26:17.313 +03:00 [ERR] [MainWindow] YouTube chat ingestor hatası
+System.Exception: Bu yayında chat bulunamadı veya chat kapalı.
+   at UniCast.Core.Chat.Ingestors.YouTubeChatScraper.ConnectAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\YouTubeChatScraper.cs:line 171
+   at UniCast.Core.Chat.Ingestors.BaseChatIngestor.StartAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\BaseChatIngestor.cs:line 71
+   at UniCast.App.MainWindow.StartIngestorSafeAsync(IChatIngestor ingestor, String name, CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.App\MainWindow.xaml.cs:line 234
+2025-12-08 18:26:17.905 +03:00 [INF] [HardwareEncoder] Tespit edildi: NVIDIA NVENC H.264 (2 encoder mevcut)
+2025-12-08 18:26:17.915 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-08 18:26:17.992 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-08 18:26:17.994 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-08 18:26:17.996 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#14)
+2025-12-08 18:26:17.999 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-08 18:26:18.001 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-08 18:26:18.003 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-08 18:26:18.998 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#17)
+2025-12-08 18:26:20.000 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#20)
+2025-12-08 18:26:21.000 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#23)
+2025-12-08 18:26:22.002 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#26)
+2025-12-08 18:26:23.002 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#28)
+2025-12-08 18:26:24.003 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#32)
+2025-12-08 18:26:25.004 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#35)
+2025-12-08 18:26:26.006 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#38)
+2025-12-08 18:26:27.006 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#41)
+2025-12-08 18:26:28.008 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#44)
+2025-12-08 18:26:29.008 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#48)
+2025-12-08 18:26:30.010 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#51)
+2025-12-08 18:26:31.010 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#54)
+2025-12-08 18:26:32.012 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#57)
+2025-12-08 18:26:33.012 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#60)
+2025-12-08 18:26:34.013 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#64)
+2025-12-08 18:26:35.014 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#67)
+2025-12-08 18:26:36.015 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#70)
+2025-12-08 18:26:37.016 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#73)
+2025-12-08 18:26:38.017 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#76)
+2025-12-08 18:26:39.018 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#80)
+2025-12-08 18:26:40.019 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#82)
+2025-12-08 18:26:41.021 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#85)
+2025-12-08 18:26:42.021 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#88)
+2025-12-08 18:26:43.022 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#91)
+2025-12-08 18:26:44.024 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#94)
+2025-12-08 18:26:45.024 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#97)
+2025-12-08 18:26:46.025 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#100)
+2025-12-08 18:26:47.026 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#103)
+2025-12-08 18:26:48.027 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#105)
+2025-12-08 18:26:49.029 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#109)
+2025-12-08 18:26:50.030 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#112)
+2025-12-08 18:26:51.031 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#115)
+2025-12-08 18:26:52.032 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#118)
+2025-12-08 18:26:53.034 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#121)
+2025-12-08 18:26:54.034 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#125)
+2025-12-08 18:26:54.730 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-08 18:26:54.732 +03:00 [DBG] [MainWindow] Ingestor task'ları bekleniyor... (1 adet)
+2025-12-08 18:26:54.734 +03:00 [INF] ["YouTube"] Durduruluyor: Ze-FXL1oHRw
+2025-12-08 18:26:54.737 +03:00 [DBG] [MainWindow] YouTube ingestor disposed
+2025-12-08 18:26:55.036 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#127)
+2025-12-08 18:26:56.533 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-08 18:26:56.534 +03:00 [DBG] [MainWindow] ChatViewModel disposed
+2025-12-08 18:26:56.538 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-08 18:26:56.539 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-08 18:26:56.549 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-08 18:26:56.551 +03:00 [INF] [MemoryProfiler] Monitoring durduruldu
+2025-12-08 18:26:56.552 +03:00 [INF] [HealthCheck] Durduruldu
+2025-12-08 18:26:56.553 +03:00 [INF] [PerfMonitor] Durduruldu
+2025-12-08 18:26:56.554 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-08 18:26:56.555 +03:00 [INF] ===================================================
+2025-12-08 18:26:56.556 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-08 18:26:56.556 +03:00 [INF] ===================================================
+2025-12-08 18:26:56.558 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-08 18:26:56.559 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-08 18:26:56.559 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-08 18:26:56.560 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-08 18:26:56.561 +03:00 [DBG] [App] Chat Sistemi tamamlandı
+2025-12-08 18:26:56.562 +03:00 [DBG] [App] Professional Services başlatılıyor...
+2025-12-08 18:26:56.566 +03:00 [DBG] [Shutdown] FrameTimingService disposed
+2025-12-08 18:26:56.568 +03:00 [DBG] [Shutdown] MemoryPool stats: Pool: 123,0 MB | Active: 0 | Pooled: 20 | Hit Rate: 100,0%
+2025-12-08 18:26:56.569 +03:00 [DBG] [Shutdown] FrameBufferPool disposed
+2025-12-08 18:26:56.571 +03:00 [DBG] [Shutdown] NativeMemoryPool disposed
+2025-12-08 18:26:56.580 +03:00 [DBG] [Shutdown] GpuCompositor disposed
+2025-12-08 18:26:56.581 +03:00 [DBG] [Shutdown] HardwareEncoderService disposed
+2025-12-08 18:26:56.581 +03:00 [INF] [Shutdown] Professional services cleanup tamamlandı
+2025-12-08 18:26:56.582 +03:00 [DBG] [App] Professional Services tamamlandı
+2025-12-08 18:26:56.583 +03:00 [DBG] [App] Ayarları Kaydet başlatılıyor...
+2025-12-08 18:26:56.584 +03:00 [DBG] [App] Ayarları Kaydet tamamlandı
+2025-12-08 18:26:56.585 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
+2025-12-08 18:26:56.586 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
+2025-12-08 18:26:56.587 +03:00 [DBG] [App] Log Flush başlatılıyor...
+2025-12-08 18:27:34.825 +03:00 [INF] ===================================================
+2025-12-08 18:27:34.846 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-08 18:27:34.847 +03:00 [INF] ===================================================
+2025-12-08 18:27:34.857 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-08 18:27:34.865 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-08 18:27:35.211 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-08 18:27:35.392 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-08 18:27:35.430 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-08 18:27:35.432 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-08 18:27:35.471 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-08 18:27:35.483 +03:00 [DBG] [ChatBus] Initialized
+2025-12-08 18:27:35.485 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-08 18:27:35.488 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-08 18:27:35.530 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-08 18:27:35.535 +03:00 [DBG] [MainWindow] YouTube chat ingestor başlatılıyor...
+2025-12-08 18:27:35.544 +03:00 [INF] ["YouTube"] Bağlanılıyor: Ze-FXL1oHRw
+2025-12-08 18:27:35.547 +03:00 [INF] [YouTube Scraper] Bağlanılıyor: Ze-FXL1oHRw
+2025-12-08 18:27:35.586 +03:00 [INF] [MainWindow] YouTube Chat Scraper aktif - API key gerektirmez
+2025-12-08 18:27:35.588 +03:00 [DBG] [MainWindow] 1 adet chat ingestor başlatıldı
+2025-12-08 18:27:35.589 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-08 18:27:35.594 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-08 18:27:35.596 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-08 18:27:35.639 +03:00 [DBG] [ControlView] Layout ayarları yüklendi: Mola=120, Camera=350, Chat=600
+2025-12-08 18:27:35.642 +03:00 [DBG] [ControlView] ChatBus'a bağlandı
+2025-12-08 18:27:37.269 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-08 18:27:37.270 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-08 18:27:37.271 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-08 18:27:37.272 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-08 18:27:37.273 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-08 18:27:37.274 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-08 18:27:37.275 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-08 18:27:37.276 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-08 18:27:37.277 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-08 18:27:37.278 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-08 18:27:37.278 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-08 18:27:37.279 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-08 18:27:37.280 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-08 18:27:37.281 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-08 18:27:37.283 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-08 18:27:37.284 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-08 18:27:37.286 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-08 18:27:37.287 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-08 18:27:37.289 +03:00 [INF] [Startup] Toplam süre: 2496ms
+2025-12-08 18:27:37.294 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-08 18:27:37.296 +03:00 [DBG] [YouTube Scraper] API Key bulundu
+2025-12-08 18:27:37.446 +03:00 [ERR] ["YouTube"] Bağlantı hatası
+System.Exception: Bu yayında chat bulunamadı veya chat kapalı.
+   at UniCast.Core.Chat.Ingestors.YouTubeChatScraper.ConnectAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\YouTubeChatScraper.cs:line 171
+   at UniCast.Core.Chat.Ingestors.BaseChatIngestor.StartAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\BaseChatIngestor.cs:line 71
+2025-12-08 18:27:37.656 +03:00 [ERR] [MainWindow] YouTube chat ingestor hatası
+System.Exception: Bu yayında chat bulunamadı veya chat kapalı.
+   at UniCast.Core.Chat.Ingestors.YouTubeChatScraper.ConnectAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\YouTubeChatScraper.cs:line 171
+   at UniCast.Core.Chat.Ingestors.BaseChatIngestor.StartAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\BaseChatIngestor.cs:line 71
+   at UniCast.App.MainWindow.StartIngestorSafeAsync(IChatIngestor ingestor, String name, CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.App\MainWindow.xaml.cs:line 234
+2025-12-08 18:27:37.912 +03:00 [INF] [HardwareEncoder] Tespit edildi: NVIDIA NVENC H.264 (2 encoder mevcut)
+2025-12-08 18:27:37.923 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-08 18:27:37.994 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-08 18:27:37.996 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-08 18:27:37.997 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#5)
+2025-12-08 18:27:37.999 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-08 18:27:38.001 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-08 18:27:38.002 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-08 18:27:38.999 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#8)
+2025-12-08 18:27:39.999 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#11)
+2025-12-08 18:27:41.000 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#14)
+2025-12-08 18:27:42.001 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#17)
+2025-12-08 18:27:43.002 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#20)
+2025-12-08 18:27:44.004 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#24)
+2025-12-08 18:27:45.004 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#27)
+2025-12-08 18:27:46.006 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#30)
+2025-12-08 18:27:47.006 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#33)
+2025-12-08 18:27:48.008 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#36)
+2025-12-08 18:27:49.008 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#40)
+2025-12-08 18:27:50.009 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#43)
+2025-12-08 18:27:51.010 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#46)
+2025-12-08 18:27:52.011 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#49)
+2025-12-08 18:27:53.013 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#52)
+2025-12-08 18:27:54.013 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#55)
+2025-12-08 18:27:55.015 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#58)
+2025-12-08 18:27:56.015 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#61)
+2025-12-08 18:27:57.017 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#64)
+2025-12-08 18:27:58.017 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#67)
+2025-12-08 18:27:59.019 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#70)
+2025-12-08 18:28:00.019 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#73)
+2025-12-08 18:28:01.021 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#75)
+2025-12-08 18:28:02.021 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#78)
+2025-12-08 18:28:03.023 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#81)
+2025-12-08 18:28:04.023 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#85)
+2025-12-08 18:28:05.025 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#88)
+2025-12-08 18:28:06.025 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#91)
+2025-12-08 18:28:07.027 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#94)
+2025-12-08 18:28:08.027 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#97)
+2025-12-08 18:28:09.029 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#101)
+2025-12-08 18:28:10.029 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#104)
+2025-12-08 18:28:11.030 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#107)
+2025-12-08 18:28:12.031 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#110)
+2025-12-08 18:28:13.033 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#113)
+2025-12-08 18:28:14.034 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#117)
+2025-12-08 18:28:15.035 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#120)
+2025-12-08 18:28:15.542 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-08 18:28:15.590 +03:00 [DBG] [ControlView] Layout ayarları kaydedildi: Mola=120, Camera=350, Chat=600
+2025-12-08 18:28:16.037 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#121)
+2025-12-08 18:28:35.483 +03:00 [DBG] [SettingsStore] Ayarlar kaydedildi
+2025-12-08 18:28:53.898 +03:00 [DBG] [SettingsStore] Ayarlar kaydedildi
+2025-12-08 18:28:55.078 +03:00 [DBG] [ControlView] ChatBus'a bağlandı
+2025-12-08 18:28:57.037 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#122)
+2025-12-08 18:28:57.643 +03:00 [DBG] [ControlView] Yayın başlatma komutu tetikleniyor...
+2025-12-08 18:28:57.650 +03:00 [DBG] [StreamControllerAdapter] Gelen hedef sayısı: 2
+2025-12-08 18:28:57.651 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="YouTube", Url=rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4, Enabled=true
+2025-12-08 18:28:57.654 +03:00 [DBG] [StreamControllerAdapter] Hedef: Platform="Facebook", Url=rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm, Enabled=true
+2025-12-08 18:28:57.659 +03:00 [DBG] [StreamControllerAdapter] Filtrelenmiş hedef sayısı: 2
+2025-12-08 18:28:57.661 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "YouTube" -> rtmp://a.rtmp.youtube.com/live2/akt7********
+2025-12-08 18:28:57.662 +03:00 [DBG] [StreamControllerAdapter] Tee output eklendi: "Facebook" -> rtmps://live-api-s.facebook.com:443/rtmp/FB-1********
+2025-12-08 18:28:57.663 +03:00 [INF] [StreamControllerAdapter] Multi-target: 2 platforma yayın yapılacak
+2025-12-08 18:28:57.664 +03:00 [DBG] [StreamControllerAdapter] Kamera: DroidCam Video
+2025-12-08 18:28:57.665 +03:00 [DBG] [StreamControllerAdapter] Mikrofon: Mikrofon (HyperX Cloud III Wireless)
+2025-12-08 18:28:57.667 +03:00 [INF] [StreamController] Stream başlatılıyor: tee://[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4%7C[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1****************
+2025-12-08 18:28:57.672 +03:00 [DBG] [StreamController] FFmpeg args: -f dshow -rtbufsize 100M -i "video=DroidCam Video" -f dshow -i audio="Mikrofon (HyperX Cloud III Wireless)" -c:v libx264 -preset veryfast -b:v 4500k -maxrate 4500k -bufsize 18000k -tune zerolatency -g 60 -vf "fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p" -c:a aac -b:a 128k -ar 44100 -ac 2 -map 0:v:0 -map 1:a:0 -f tee "[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7************"
+2025-12-08 18:28:57.680 +03:00 [INF] [StreamController] Stream başarıyla başlatıldı
+2025-12-08 18:28:57.682 +03:00 [INF] ["YouTube"] Durduruluyor: Ze-FXL1oHRw
+2025-12-08 18:28:57.684 +03:00 [DBG] [MainWindow] YouTube chat ingestor başlatılıyor...
+2025-12-08 18:28:57.684 +03:00 [INF] ["YouTube"] Bağlanılıyor: Ze-FXL1oHRw
+2025-12-08 18:28:57.685 +03:00 [INF] [YouTube Scraper] Bağlanılıyor: Ze-FXL1oHRw
+2025-12-08 18:28:57.687 +03:00 [INF] [MainWindow] YouTube Chat başlatıldı - VideoId: Ze-FXL1oHRw
+2025-12-08 18:28:57.688 +03:00 [DBG] [MainWindow] Facebook chat ingestor başlatılıyor...
+2025-12-08 18:28:57.690 +03:00 [INF] [MainWindow] Stream başladı - 1 chat ingestor aktif
+2025-12-08 18:28:57.692 +03:00 [DBG] [MainWindow] FacebookChatHost MainGrid'e eklendi
+2025-12-08 18:28:57.696 +03:00 [DBG] [StreamController] [FFmpeg] ffmpeg version N-121974-g041d4f010e-20251203 Copyright (c) 2000-2025 the FFmpeg developers
+2025-12-08 18:28:57.697 +03:00 [DBG] [StreamController] [FFmpeg]   built with gcc 15.2.0 (crosstool-NG 1.28.0.1_403899e)
+2025-12-08 18:28:57.701 +03:00 [DBG] [StreamController] [FFmpeg]   configuration: --prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32 --enable-gpl --enable-version3 --disable-debug --disable-w32threads --enable-pthreads --enable-iconv --enable-zlib --enable-libxml2 --enable-libvmaf --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-vulkan --enable-libshaderc --enable-libvorbis --disable-libxcb --disable-xlib --disable-libpulse --enable-opencl --enable-gmp --enable-lzma --enable-amf --enable-libaom --enable-libaribb24 --enable-avisynth --enable-chromaprint --enable-libdav1d --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librav1e --enable-librubberband --enable-schannel --enable-sdl2 --enable-libsnappy --enable-libsoxr --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --disable-libdrm --enable-vaapi --enable-libvidstab --enable-libvvenc --enable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --enable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs=-lgomp --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-w64-mingw32-gcc --cxx=x86_64-w64-mingw32-g++ --ar=x86_64-w64-mingw32-gcc-ar --ranlib=x86_64-w64-mingw32-gcc-ranlib --nm=x86_64-w64-mingw32-gcc-nm --extra-version=20251203
+2025-12-08 18:28:57.703 +03:00 [DBG] [StreamController] [FFmpeg]   libavutil      60. 19.101 / 60. 19.101
+2025-12-08 18:28:57.704 +03:00 [DBG] [StreamController] [FFmpeg]   libavcodec     62. 21.100 / 62. 21.100
+2025-12-08 18:28:57.707 +03:00 [DBG] [StreamController] [FFmpeg]   libavformat    62.  6.103 / 62.  6.103
+2025-12-08 18:28:57.707 +03:00 [DBG] [StreamController] [FFmpeg]   libavdevice    62.  2.100 / 62.  2.100
+2025-12-08 18:28:57.709 +03:00 [DBG] [StreamController] [FFmpeg]   libavfilter    11. 10.101 / 11. 10.101
+2025-12-08 18:28:57.712 +03:00 [DBG] [StreamController] [FFmpeg]   libswscale      9.  3.100 /  9.  3.100
+2025-12-08 18:28:57.713 +03:00 [DBG] [StreamController] [FFmpeg]   libswresample   6.  2.100 /  6.  2.100
+2025-12-08 18:28:57.714 +03:00 [DBG] [FacebookChatHost] StartChatAsync başlıyor - URL: https://m.facebook.com/watch/live/?v=1013324524329413
+2025-12-08 18:28:57.715 +03:00 [DBG] [FacebookChatHost] Henüz initialize edilmemiş, InitializeAsync çağrılıyor...
+2025-12-08 18:28:57.717 +03:00 [INF] [FacebookChatHost] WebView2 başlatılıyor (DEBUG MODE: true)...
+2025-12-08 18:28:57.720 +03:00 [DBG] [FacebookChatHost] Control Loaded event fired
+2025-12-08 18:28:57.721 +03:00 [DBG] [FacebookChatHost] WebView2 kontrolü oluşturuldu
+2025-12-08 18:28:57.722 +03:00 [DBG] [FacebookChatHost] UserDataFolder: C:\Users\PC\AppData\Local\UniCast\WebView2_Facebook_Debug
+2025-12-08 18:28:57.728 +03:00 [INF] [FacebookChatHost] WebView2 Runtime version: 142.0.3595.94
+2025-12-08 18:28:57.729 +03:00 [INF] [FacebookChatHost] Browser arguments: --autoplay-policy=no-user-gesture-required --disable-features=PreloadMediaEngagementData,MediaEngagementBypassAutoplayPolicies --disable-background-media-suspend --enable-accelerated-video-decode --enable-features=PlatformEncryptedMediaFoundation --disable-site-isolation-trials --enable-logging --v=1 
+2025-12-08 18:28:57.732 +03:00 [DBG] [FacebookChatHost] CoreWebView2Environment oluşturuluyor (with options)...
+2025-12-08 18:28:57.738 +03:00 [DBG] [FacebookChatHost] EnsureCoreWebView2Async çağrılıyor...
+2025-12-08 18:28:57.973 +03:00 [DBG] [FacebookChatHost] CoreWebView2 hazır, ayarlar yapılıyor...
+2025-12-08 18:28:57.991 +03:00 [DBG] [YouTube Scraper] API Key bulundu
+2025-12-08 18:28:57.998 +03:00 [DBG] [StreamController] [FFmpeg] Input #0, dshow, from 'video=DroidCam Video':
+2025-12-08 18:28:58.003 +03:00 [DBG] [StreamController] [FFmpeg]   Duration: N/A, start: 177667.584499, bitrate: N/A
+2025-12-08 18:28:58.004 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #0:0: Video: rawvideo (YUY2 / 0x32595559), yuyv422, 640x480, 29.97 fps, 29.97 tbr, 10000k tbn, start 177667.584499
+2025-12-08 18:28:58.015 +03:00 [ERR] ["YouTube"] Bağlantı hatası
+System.Exception: Bu yayında chat bulunamadı veya chat kapalı.
+   at UniCast.Core.Chat.Ingestors.YouTubeChatScraper.ConnectAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\YouTubeChatScraper.cs:line 171
+   at UniCast.Core.Chat.Ingestors.BaseChatIngestor.StartAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\BaseChatIngestor.cs:line 71
+2025-12-08 18:28:58.041 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#125)
+2025-12-08 18:28:58.041 +03:00 [ERR] [MainWindow] YouTube chat ingestor hatası
+System.Exception: Bu yayında chat bulunamadı veya chat kapalı.
+   at UniCast.Core.Chat.Ingestors.YouTubeChatScraper.ConnectAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\YouTubeChatScraper.cs:line 171
+   at UniCast.Core.Chat.Ingestors.BaseChatIngestor.StartAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\BaseChatIngestor.cs:line 71
+   at UniCast.App.MainWindow.StartIngestorSafeAsync(IChatIngestor ingestor, String name, CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.App\MainWindow.xaml.cs:line 234
+2025-12-08 18:28:58.043 +03:00 [DBG] [FacebookChatHost] Console capture script eklendi
+2025-12-08 18:28:58.045 +03:00 [INF] [FacebookChatHost] WebView2 hazır (version: 142.0.3595.94, DEBUG MODE: true)
+2025-12-08 18:28:58.046 +03:00 [DBG] [FacebookChatHost] Cookie'ler ayarlanıyor...
+2025-12-08 18:28:58.049 +03:00 [DBG] [FacebookChatHost] 8 cookie ayarlandı
+2025-12-08 18:28:58.050 +03:00 [DBG] [FacebookChatHost] Yeni FacebookChatScraper oluşturuluyor...
+2025-12-08 18:28:58.051 +03:00 [DBG] [FacebookChatHost] SetWebViewControls çağrılıyor...
+2025-12-08 18:28:58.052 +03:00 [DBG] [FB Scraper] WebView kontrolleri ayarlandı
+2025-12-08 18:28:58.053 +03:00 [DBG] [FacebookChatHost] Scraper başlatılıyor...
+2025-12-08 18:28:58.054 +03:00 [INF] ["Facebook"] Bağlanılıyor: https://m.facebook.com/watch/live/?v=1013324524329413
+2025-12-08 18:28:58.055 +03:00 [INF] [FB Scraper] Bağlanılıyor: https://m.facebook.com/watch/live/?v=1013324524329413
+2025-12-08 18:28:58.056 +03:00 [DBG] [FacebookChatHost] Message handler registered
+2025-12-08 18:28:58.058 +03:00 [DBG] [FacebookChatHost] Navigating to: https://m.facebook.com/watch/live/?v=1013324524329413
+2025-12-08 18:28:58.721 +03:00 [DBG] [StreamController] [FFmpeg] [aist#1:0/pcm_s16le @ 0000015cc1a7a400] Guessed Channel Layout: stereo
+2025-12-08 18:28:58.723 +03:00 [DBG] [StreamController] [FFmpeg] Input #1, dshow, from 'audio=Mikrofon (HyperX Cloud III Wireless)':
+2025-12-08 18:28:58.724 +03:00 [DBG] [StreamController] [FFmpeg]   Duration: N/A, start: 177667.791000, bitrate: 1411 kb/s
+2025-12-08 18:28:58.725 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #1:0: Audio: pcm_s16le, 44100 Hz, stereo, s16, 1411 kb/s, start 177667.791000
+2025-12-08 18:28:58.726 +03:00 [DBG] [StreamController] [FFmpeg] Stream mapping:
+2025-12-08 18:28:58.728 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #0:0 -> #0:0 (rawvideo (native) -> h264 (libx264))
+2025-12-08 18:28:58.729 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #1:0 -> #0:1 (pcm_s16le (native) -> aac (native))
+2025-12-08 18:28:58.730 +03:00 [DBG] [StreamController] [FFmpeg] Press [q] to stop, [?] for help
+2025-12-08 18:28:58.731 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000015cc187e500] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+2025-12-08 18:28:58.732 +03:00 [DBG] [StreamController] [FFmpeg] [libx264 @ 0000015cc187e500] profile High, level 3.2, 4:2:0, 8-bit
+2025-12-08 18:28:59.040 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#128)
+2025-12-08 18:28:59.585 +03:00 [DBG] [FacebookChatHost] [JS LOG] [UniCast] Console capture initialized
+2025-12-08 18:28:59.586 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 174 chars
+2025-12-08 18:29:00.042 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#131)
+2025-12-08 18:29:01.042 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#134)
+2025-12-08 18:29:01.351 +03:00 [INF] [FacebookChatHost] Navigation başarılı: https://www.facebook.com/100035277379427/videos/1013324524329413/
+2025-12-08 18:29:01.352 +03:00 [DBG] [FacebookChatHost] Navigation başarılı
+2025-12-08 18:29:02.000 +03:00 [DBG] [StreamController] [FFmpeg] Output #0, tee, to '[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmp://a.rtmp.youtube.com/live2/akt7-mc24-gu75-rvs5-89w4|[f=flv:flvflags=no_duration_filesize:onfail=ignore]rtmps://live-api-s.facebook.com:443/rtmp/FB-1554975459021685-0-Ab35j8IIkLwiXIhIKjfUdogm':
+2025-12-08 18:29:02.002 +03:00 [DBG] [StreamController] [FFmpeg]   Metadata:
+2025-12-08 18:29:02.003 +03:00 [DBG] [StreamController] [FFmpeg]     encoder         : Lavf62.6.103
+2025-12-08 18:29:02.004 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #0:0: Video: h264, yuv420p(tv, progressive), 1280x720, q=2-31, 4500 kb/s, 30 fps, 30 tbn
+2025-12-08 18:29:02.005 +03:00 [DBG] [StreamController] [FFmpeg]     Metadata:
+2025-12-08 18:29:02.006 +03:00 [DBG] [StreamController] [FFmpeg]       encoder         : Lavc62.21.100 libx264
+2025-12-08 18:29:02.007 +03:00 [DBG] [StreamController] [FFmpeg]     Side data:
+2025-12-08 18:29:02.008 +03:00 [DBG] [StreamController] [FFmpeg]       CPB properties: bitrate max/min/avg: 4500000/0/4500000 buffer size: 18000000 vbv_delay: N/A
+2025-12-08 18:29:02.010 +03:00 [DBG] [StreamController] [FFmpeg]   Stream #0:1: Audio: aac (LC), 44100 Hz, stereo, fltp, 128 kb/s
+2025-12-08 18:29:02.012 +03:00 [DBG] [StreamController] [FFmpeg]     Metadata:
+2025-12-08 18:29:02.013 +03:00 [DBG] [StreamController] [FFmpeg]       encoder         : Lavc62.21.100 aac
+2025-12-08 18:29:02.045 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#136)
+2025-12-08 18:29:02.322 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  127 fps= 35 q=0.0 size=N/A time=00:00:03.96 bitrate=N/A speed= 1.1x elapsed=0:00:03.59    
+2025-12-08 18:29:02.836 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  142 fps= 35 q=0.0 size=N/A time=00:00:04.45 bitrate=N/A speed=1.08x elapsed=0:00:04.11    
+2025-12-08 18:29:03.045 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#139)
+2025-12-08 18:29:03.352 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  156 fps= 34 q=0.0 size=N/A time=00:00:04.96 bitrate=N/A speed=1.07x elapsed=0:00:04.62    
+2025-12-08 18:29:03.867 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  172 fps= 33 q=0.0 size=N/A time=00:00:05.45 bitrate=N/A speed=1.06x elapsed=0:00:05.14    
+2025-12-08 18:29:04.046 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#143)
+2025-12-08 18:29:04.383 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  187 fps= 33 q=0.0 size=N/A time=00:00:05.96 bitrate=N/A speed=1.05x elapsed=0:00:05.66    
+2025-12-08 18:29:04.898 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  201 fps= 33 q=0.0 size=N/A time=00:00:06.45 bitrate=N/A speed=1.04x elapsed=0:00:06.17    
+2025-12-08 18:29:05.048 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#146)
+2025-12-08 18:29:05.414 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  217 fps= 32 q=0.0 size=N/A time=00:00:06.96 bitrate=N/A speed=1.04x elapsed=0:00:06.69    
+2025-12-08 18:29:05.930 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  233 fps= 32 q=0.0 size=N/A time=00:00:07.45 bitrate=N/A speed=1.03x elapsed=0:00:07.20    
+2025-12-08 18:29:06.048 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#149)
+2025-12-08 18:29:06.446 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  247 fps= 32 q=0.0 size=N/A time=00:00:07.96 bitrate=N/A speed=1.03x elapsed=0:00:07.72    
+2025-12-08 18:29:06.961 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  262 fps= 32 q=0.0 size=N/A time=00:00:08.47 bitrate=N/A speed=1.03x elapsed=0:00:08.23    
+2025-12-08 18:29:07.050 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#152)
+2025-12-08 18:29:07.476 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  277 fps= 32 q=0.0 size=N/A time=00:00:08.95 bitrate=N/A speed=1.02x elapsed=0:00:08.75    
+2025-12-08 18:29:07.992 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  292 fps= 31 q=0.0 size=N/A time=00:00:09.47 bitrate=N/A speed=1.02x elapsed=0:00:09.27    
+2025-12-08 18:29:08.050 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#156)
+2025-12-08 18:29:08.508 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  307 fps= 31 q=0.0 size=N/A time=00:00:09.95 bitrate=N/A speed=1.02x elapsed=0:00:09.78    
+2025-12-08 18:29:09.024 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  322 fps= 31 q=0.0 size=N/A time=00:00:10.46 bitrate=N/A speed=1.02x elapsed=0:00:10.30    
+2025-12-08 18:29:09.052 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#159)
+2025-12-08 18:29:09.540 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  337 fps= 31 q=0.0 size=N/A time=00:00:10.95 bitrate=N/A speed=1.01x elapsed=0:00:10.81    
+2025-12-08 18:29:10.052 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#162)
+2025-12-08 18:29:10.054 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  351 fps= 31 q=0.0 size=N/A time=00:00:11.46 bitrate=N/A speed=1.01x elapsed=0:00:11.33    
+2025-12-08 18:29:10.570 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  367 fps= 31 q=0.0 size=N/A time=00:00:11.95 bitrate=N/A speed=1.01x elapsed=0:00:11.84    
+2025-12-08 18:29:11.054 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#165)
+2025-12-08 18:29:11.086 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  381 fps= 31 q=0.0 size=N/A time=00:00:12.46 bitrate=N/A speed=1.01x elapsed=0:00:12.36    
+2025-12-08 18:29:11.602 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  396 fps= 31 q=0.0 size=N/A time=00:00:12.95 bitrate=N/A speed=1.01x elapsed=0:00:12.87    
+2025-12-08 18:29:12.054 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#168)
+2025-12-08 18:29:12.117 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  412 fps= 31 q=0.0 size=N/A time=00:00:13.46 bitrate=N/A speed=1.01x elapsed=0:00:13.39    
+2025-12-08 18:29:12.632 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  426 fps= 31 q=0.0 size=N/A time=00:00:13.95 bitrate=N/A speed=   1x elapsed=0:00:13.91    
+2025-12-08 18:29:13.056 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#172)
+2025-12-08 18:29:13.148 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  442 fps= 31 q=0.0 size=N/A time=00:00:14.46 bitrate=N/A speed=   1x elapsed=0:00:14.42    
+2025-12-08 18:29:13.664 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  457 fps= 31 q=0.0 size=N/A time=00:00:14.95 bitrate=N/A speed=   1x elapsed=0:00:14.94    
+2025-12-08 18:29:14.056 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#174)
+2025-12-08 18:29:14.180 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  472 fps= 31 q=0.0 size=N/A time=00:00:15.46 bitrate=N/A speed=   1x elapsed=0:00:15.45    
+2025-12-08 18:29:14.696 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  486 fps= 30 q=0.0 size=N/A time=00:00:15.97 bitrate=N/A speed=   1x elapsed=0:00:15.97    
+2025-12-08 18:29:15.058 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#177)
+2025-12-08 18:29:15.211 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  501 fps= 30 q=0.0 size=N/A time=00:00:16.45 bitrate=N/A speed=0.998x elapsed=0:00:16.48    
+2025-12-08 18:29:15.727 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  516 fps= 30 q=0.0 size=N/A time=00:00:16.97 bitrate=N/A speed=0.998x elapsed=0:00:17.00    
+2025-12-08 18:29:16.058 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#180)
+2025-12-08 18:29:16.242 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  534 fps= 30 q=0.0 size=N/A time=00:00:17.80 bitrate=N/A speed=1.02x elapsed=0:00:17.51    
+2025-12-08 18:29:16.758 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  561 fps= 31 q=0.0 size=N/A time=00:00:18.45 bitrate=N/A speed=1.02x elapsed=0:00:18.03    
+2025-12-08 18:29:17.060 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#183)
+2025-12-08 18:29:17.273 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  576 fps= 31 q=0.0 size=N/A time=00:00:18.96 bitrate=N/A speed=1.02x elapsed=0:00:18.55    
+2025-12-08 18:29:17.789 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  591 fps= 31 q=0.0 size=N/A time=00:00:19.45 bitrate=N/A speed=1.02x elapsed=0:00:19.06    
+2025-12-08 18:29:18.060 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#186)
+2025-12-08 18:29:18.305 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  607 fps= 31 q=0.0 size=N/A time=00:00:19.96 bitrate=N/A speed=1.02x elapsed=0:00:19.58    
+2025-12-08 18:29:18.821 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  621 fps= 31 q=0.0 size=N/A time=00:00:20.45 bitrate=N/A speed=1.02x elapsed=0:00:20.09    
+2025-12-08 18:29:19.061 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#189)
+2025-12-08 18:29:19.336 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  637 fps= 31 q=0.0 size=N/A time=00:00:20.96 bitrate=N/A speed=1.02x elapsed=0:00:20.61    
+2025-12-08 18:29:19.368 +03:00 [WRN] [FB Scraper] Observer init timeout - devam ediliyor
+2025-12-08 18:29:19.369 +03:00 [DBG] [FB Scraper] Observer inject edildi
+2025-12-08 18:29:19.370 +03:00 [INF] [FB Scraper] Bağlantı başarılı
+2025-12-08 18:29:19.371 +03:00 [INF] ["Facebook"] Bağlandı: https://m.facebook.com/watch/live/?v=1013324524329413
+2025-12-08 18:29:19.373 +03:00 [INF] [FacebookChatHost] Chat başarıyla başlatıldı
+2025-12-08 18:29:19.374 +03:00 [INF] [MainWindow] Facebook Chat başlatıldı (WebView2) - VideoUrl: https://m.facebook.com/watch/live/?v=1013324524329...
+2025-12-08 18:29:19.851 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  651 fps= 31 q=0.0 size=N/A time=00:00:21.45 bitrate=N/A speed=1.02x elapsed=0:00:21.12    
+2025-12-08 18:29:20.062 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#192)
+2025-12-08 18:29:20.367 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  667 fps= 31 q=0.0 size=N/A time=00:00:21.96 bitrate=N/A speed=1.01x elapsed=0:00:21.64    
+2025-12-08 18:29:20.883 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  681 fps= 31 q=0.0 size=N/A time=00:00:22.45 bitrate=N/A speed=1.01x elapsed=0:00:22.16    
+2025-12-08 18:29:21.063 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#195)
+2025-12-08 18:29:21.399 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  697 fps= 31 q=0.0 size=N/A time=00:00:22.96 bitrate=N/A speed=1.01x elapsed=0:00:22.67    
+2025-12-08 18:29:21.915 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  712 fps= 31 q=0.0 size=N/A time=00:00:23.47 bitrate=N/A speed=1.01x elapsed=0:00:23.19    
+2025-12-08 18:29:22.064 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#199)
+2025-12-08 18:29:22.430 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  727 fps= 31 q=0.0 size=N/A time=00:00:23.95 bitrate=N/A speed=1.01x elapsed=0:00:23.70    
+2025-12-08 18:29:22.947 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  742 fps= 31 q=0.0 size=N/A time=00:00:24.47 bitrate=N/A speed=1.01x elapsed=0:00:24.22    
+2025-12-08 18:29:23.066 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#202)
+2025-12-08 18:29:23.461 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  756 fps= 31 q=0.0 size=N/A time=00:00:24.95 bitrate=N/A speed=1.01x elapsed=0:00:24.73    
+2025-12-08 18:29:23.977 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  772 fps= 31 q=0.0 size=N/A time=00:00:25.47 bitrate=N/A speed=1.01x elapsed=0:00:25.25    
+2025-12-08 18:29:24.066 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#205)
+2025-12-08 18:29:24.492 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  786 fps= 31 q=0.0 size=N/A time=00:00:25.95 bitrate=N/A speed=1.01x elapsed=0:00:25.76    
+2025-12-08 18:29:25.008 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  802 fps= 31 q=0.0 size=N/A time=00:00:26.46 bitrate=N/A speed=1.01x elapsed=0:00:26.28    
+2025-12-08 18:29:25.068 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#208)
+2025-12-08 18:29:25.523 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  816 fps= 30 q=0.0 size=N/A time=00:00:26.95 bitrate=N/A speed=1.01x elapsed=0:00:26.80    
+2025-12-08 18:29:26.039 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  832 fps= 30 q=0.0 size=N/A time=00:00:27.46 bitrate=N/A speed=1.01x elapsed=0:00:27.31    
+2025-12-08 18:29:26.068 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#211)
+2025-12-08 18:29:26.555 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  847 fps= 30 q=0.0 size=N/A time=00:00:27.95 bitrate=N/A speed=   1x elapsed=0:00:27.83    
+2025-12-08 18:29:27.070 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#215)
+2025-12-08 18:29:27.071 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  862 fps= 30 q=0.0 size=N/A time=00:00:28.46 bitrate=N/A speed=   1x elapsed=0:00:28.34    
+2025-12-08 18:29:27.586 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  876 fps= 30 q=0.0 size=N/A time=00:00:28.95 bitrate=N/A speed=   1x elapsed=0:00:28.86    
+2025-12-08 18:29:28.070 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#218)
+2025-12-08 18:29:28.101 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  892 fps= 30 q=0.0 size=N/A time=00:00:29.46 bitrate=N/A speed=   1x elapsed=0:00:29.37    
+2025-12-08 18:29:28.617 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  907 fps= 30 q=0.0 size=N/A time=00:00:29.95 bitrate=N/A speed=   1x elapsed=0:00:29.89    
+2025-12-08 18:29:29.072 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#221)
+2025-12-08 18:29:29.133 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  921 fps= 30 q=0.0 size=N/A time=00:00:30.46 bitrate=N/A speed=   1x elapsed=0:00:30.41    
+2025-12-08 18:29:29.649 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  937 fps= 30 q=0.0 size=N/A time=00:00:30.97 bitrate=N/A speed=   1x elapsed=0:00:30.92    
+2025-12-08 18:29:30.072 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#224)
+2025-12-08 18:29:30.165 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  952 fps= 30 q=0.0 size=N/A time=00:00:31.46 bitrate=N/A speed=   1x elapsed=0:00:31.44    
+2025-12-08 18:29:30.679 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  967 fps= 30 q=0.0 size=N/A time=00:00:31.97 bitrate=N/A speed=   1x elapsed=0:00:31.95    
+2025-12-08 18:29:31.074 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#227)
+2025-12-08 18:29:31.195 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  981 fps= 30 q=0.0 size=N/A time=00:00:32.45 bitrate=N/A speed=   1x elapsed=0:00:32.47    
+2025-12-08 18:29:31.711 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame=  997 fps= 30 q=0.0 size=N/A time=00:00:32.97 bitrate=N/A speed=0.999x elapsed=0:00:32.98    
+2025-12-08 18:29:32.074 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#230)
+2025-12-08 18:29:32.227 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1012 fps= 30 q=0.0 size=N/A time=00:00:33.45 bitrate=N/A speed=0.999x elapsed=0:00:33.50    
+2025-12-08 18:29:32.743 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1037 fps= 30 q=0.0 size=N/A time=00:00:34.45 bitrate=N/A speed=1.01x elapsed=0:00:34.02    
+2025-12-08 18:29:33.075 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#233)
+2025-12-08 18:29:33.258 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1057 fps= 31 q=0.0 size=N/A time=00:00:34.96 bitrate=N/A speed=1.01x elapsed=0:00:34.53    
+2025-12-08 18:29:33.773 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1072 fps= 31 q=0.0 size=N/A time=00:00:35.45 bitrate=N/A speed=1.01x elapsed=0:00:35.05    
+2025-12-08 18:29:34.076 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#236)
+2025-12-08 18:29:34.289 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1087 fps= 31 q=0.0 size=N/A time=00:00:35.96 bitrate=N/A speed=1.01x elapsed=0:00:35.56    
+2025-12-08 18:29:34.805 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1102 fps= 31 q=0.0 size=N/A time=00:00:36.45 bitrate=N/A speed=1.01x elapsed=0:00:36.08    
+2025-12-08 18:29:35.076 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#238)
+2025-12-08 18:29:35.320 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1116 fps= 30 q=0.0 size=N/A time=00:00:36.96 bitrate=N/A speed=1.01x elapsed=0:00:36.59    
+2025-12-08 18:29:35.836 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1132 fps= 31 q=0.0 size=N/A time=00:00:37.45 bitrate=N/A speed=1.01x elapsed=0:00:37.11    
+2025-12-08 18:29:36.077 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#242)
+2025-12-08 18:29:36.352 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1147 fps= 30 q=0.0 size=N/A time=00:00:37.96 bitrate=N/A speed=1.01x elapsed=0:00:37.62    
+2025-12-08 18:29:36.867 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1162 fps= 30 q=0.0 size=N/A time=00:00:38.47 bitrate=N/A speed=1.01x elapsed=0:00:38.14    
+2025-12-08 18:29:37.078 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#245)
+2025-12-08 18:29:37.383 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1177 fps= 30 q=0.0 size=N/A time=00:00:38.96 bitrate=N/A speed=1.01x elapsed=0:00:38.66    
+2025-12-08 18:29:37.898 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1191 fps= 30 q=0.0 size=N/A time=00:00:39.47 bitrate=N/A speed=1.01x elapsed=0:00:39.17    
+2025-12-08 18:29:38.079 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#248)
+2025-12-08 18:29:38.414 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1207 fps= 30 q=0.0 size=N/A time=00:00:39.95 bitrate=N/A speed=1.01x elapsed=0:00:39.69    
+2025-12-08 18:29:38.930 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1221 fps= 30 q=0.0 size=N/A time=00:00:40.47 bitrate=N/A speed=1.01x elapsed=0:00:40.20    
+2025-12-08 18:29:39.080 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#251)
+2025-12-08 18:29:39.446 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1237 fps= 30 q=0.0 size=N/A time=00:00:40.95 bitrate=N/A speed=1.01x elapsed=0:00:40.72    
+2025-12-08 18:29:39.961 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1252 fps= 30 q=0.0 size=N/A time=00:00:41.46 bitrate=N/A speed=1.01x elapsed=0:00:41.23    
+2025-12-08 18:29:40.082 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#254)
+2025-12-08 18:29:40.476 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1267 fps= 30 q=0.0 size=N/A time=00:00:41.95 bitrate=N/A speed=   1x elapsed=0:00:41.75    
+2025-12-08 18:29:40.992 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1281 fps= 30 q=0.0 size=N/A time=00:00:42.46 bitrate=N/A speed=   1x elapsed=0:00:42.27    
+2025-12-08 18:29:41.082 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#258)
+2025-12-08 18:29:41.508 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1296 fps= 30 q=0.0 size=N/A time=00:00:42.95 bitrate=N/A speed=   1x elapsed=0:00:42.78    
+2025-12-08 18:29:42.024 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1312 fps= 30 q=0.0 size=N/A time=00:00:43.46 bitrate=N/A speed=   1x elapsed=0:00:43.30    
+2025-12-08 18:29:42.084 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#261)
+2025-12-08 18:29:42.540 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1326 fps= 30 q=0.0 size=N/A time=00:00:43.95 bitrate=N/A speed=   1x elapsed=0:00:43.81    
+2025-12-08 18:29:43.055 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1342 fps= 30 q=0.0 size=N/A time=00:00:44.46 bitrate=N/A speed=   1x elapsed=0:00:44.33    
+2025-12-08 18:29:43.085 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#264)
+2025-12-08 18:29:43.571 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1356 fps= 30 q=0.0 size=N/A time=00:00:44.95 bitrate=N/A speed=   1x elapsed=0:00:44.84    
+2025-12-08 18:29:44.085 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#267)
+2025-12-08 18:29:44.087 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1372 fps= 30 q=0.0 size=N/A time=00:00:45.46 bitrate=N/A speed=   1x elapsed=0:00:45.36    
+2025-12-08 18:29:44.601 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1387 fps= 30 q=0.0 size=N/A time=00:00:45.97 bitrate=N/A speed=   1x elapsed=0:00:45.87    
+2025-12-08 18:29:45.087 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#270)
+2025-12-08 18:29:45.117 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1402 fps= 30 q=0.0 size=N/A time=00:00:46.45 bitrate=N/A speed=   1x elapsed=0:00:46.39    
+2025-12-08 18:29:45.633 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1416 fps= 30 q=0.0 size=N/A time=00:00:46.97 bitrate=N/A speed=   1x elapsed=0:00:46.91    
+2025-12-08 18:29:46.087 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#274)
+2025-12-08 18:29:46.149 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1432 fps= 30 q=0.0 size=N/A time=00:00:47.45 bitrate=N/A speed=   1x elapsed=0:00:47.42    
+2025-12-08 18:29:46.665 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1447 fps= 30 q=0.0 size=N/A time=00:00:47.97 bitrate=N/A speed=   1x elapsed=0:00:47.94    
+2025-12-08 18:29:47.089 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#277)
+2025-12-08 18:29:47.180 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1462 fps= 30 q=0.0 size=N/A time=00:00:48.45 bitrate=N/A speed=   1x elapsed=0:00:48.45    
+2025-12-08 18:29:47.695 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1477 fps= 30 q=0.0 size=N/A time=00:00:48.96 bitrate=N/A speed=   1x elapsed=0:00:48.97    
+2025-12-08 18:29:48.089 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#280)
+2025-12-08 18:29:48.211 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1492 fps= 30 q=0.0 size=N/A time=00:00:49.45 bitrate=N/A speed=0.999x elapsed=0:00:49.48    
+2025-12-08 18:29:48.726 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1506 fps= 30 q=0.0 size=N/A time=00:00:49.96 bitrate=N/A speed=0.999x elapsed=0:00:50.00    
+2025-12-08 18:29:49.091 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#282)
+2025-12-08 18:29:49.242 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1531 fps= 30 q=0.0 size=N/A time=00:00:50.96 bitrate=N/A speed=1.01x elapsed=0:00:50.52    
+2025-12-08 18:29:49.758 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1551 fps= 30 q=0.0 size=N/A time=00:00:51.45 bitrate=N/A speed=1.01x elapsed=0:00:51.03    
+2025-12-08 18:29:50.091 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#285)
+2025-12-08 18:29:50.274 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1567 fps= 30 q=0.0 size=N/A time=00:00:51.96 bitrate=N/A speed=1.01x elapsed=0:00:51.55    
+2025-12-08 18:29:50.789 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1581 fps= 30 q=0.0 size=N/A time=00:00:52.45 bitrate=N/A speed=1.01x elapsed=0:00:52.06    
+2025-12-08 18:29:51.093 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#288)
+2025-12-08 18:29:51.305 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1596 fps= 30 q=0.0 size=N/A time=00:00:52.96 bitrate=N/A speed=1.01x elapsed=0:00:52.58    
+2025-12-08 18:29:51.820 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1611 fps= 30 q=0.0 size=N/A time=00:00:53.47 bitrate=N/A speed=1.01x elapsed=0:00:53.09    
+2025-12-08 18:29:52.093 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#291)
+2025-12-08 18:29:52.336 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1627 fps= 30 q=0.0 size=N/A time=00:00:53.95 bitrate=N/A speed=1.01x elapsed=0:00:53.61    
+2025-12-08 18:29:52.852 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1641 fps= 30 q=0.0 size=N/A time=00:00:54.47 bitrate=N/A speed=1.01x elapsed=0:00:54.12    
+2025-12-08 18:29:53.094 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#294)
+2025-12-08 18:29:53.368 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1657 fps= 30 q=0.0 size=N/A time=00:00:54.95 bitrate=N/A speed=1.01x elapsed=0:00:54.64    
+2025-12-08 18:29:53.882 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1671 fps= 30 q=0.0 size=N/A time=00:00:55.47 bitrate=N/A speed=1.01x elapsed=0:00:55.16    
+2025-12-08 18:29:54.094 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#297)
+2025-12-08 18:29:54.398 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1687 fps= 30 q=0.0 size=N/A time=00:00:55.95 bitrate=N/A speed=1.01x elapsed=0:00:55.67    
+2025-12-08 18:29:54.914 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1701 fps= 30 q=0.0 size=N/A time=00:00:56.46 bitrate=N/A speed=   1x elapsed=0:00:56.19    
+2025-12-08 18:29:55.095 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#301)
+2025-12-08 18:29:55.430 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1716 fps= 30 q=0.0 size=N/A time=00:00:56.95 bitrate=N/A speed=   1x elapsed=0:00:56.70    
+2025-12-08 18:29:55.946 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1732 fps= 30 q=0.0 size=N/A time=00:00:57.46 bitrate=N/A speed=   1x elapsed=0:00:57.22    
+2025-12-08 18:29:56.096 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#304)
+2025-12-08 18:29:56.461 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1746 fps= 30 q=0.0 size=N/A time=00:00:57.95 bitrate=N/A speed=   1x elapsed=0:00:57.73    
+2025-12-08 18:29:56.976 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1762 fps= 30 q=0.0 size=N/A time=00:00:58.46 bitrate=N/A speed=   1x elapsed=0:00:58.25    
+2025-12-08 18:29:57.097 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#307)
+2025-12-08 18:29:57.492 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1776 fps= 30 q=0.0 size=N/A time=00:00:58.95 bitrate=N/A speed=   1x elapsed=0:00:58.76    
+2025-12-08 18:29:58.008 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1792 fps= 30 q=0.0 size=N/A time=00:00:59.46 bitrate=N/A speed=   1x elapsed=0:00:59.28    
+2025-12-08 18:29:58.098 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#310)
+2025-12-08 18:29:58.524 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1806 fps= 30 q=0.0 size=N/A time=00:00:59.95 bitrate=N/A speed=   1x elapsed=0:00:59.80    
+2025-12-08 18:29:59.039 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1822 fps= 30 q=0.0 size=N/A time=00:01:00.46 bitrate=N/A speed=   1x elapsed=0:01:00.31    
+2025-12-08 18:29:59.099 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#313)
+2025-12-08 18:29:59.555 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1836 fps= 30 q=0.0 size=N/A time=00:01:00.97 bitrate=N/A speed=   1x elapsed=0:01:00.83    
+2025-12-08 18:30:00.070 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1852 fps= 30 q=0.0 size=N/A time=00:01:01.46 bitrate=N/A speed=   1x elapsed=0:01:01.34    
+2025-12-08 18:30:00.100 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#317)
+2025-12-08 18:30:00.586 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1866 fps= 30 q=0.0 size=N/A time=00:01:01.97 bitrate=N/A speed=   1x elapsed=0:01:01.86    
+2025-12-08 18:30:01.101 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#320)
+2025-12-08 18:30:01.103 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1882 fps= 30 q=0.0 size=N/A time=00:01:02.45 bitrate=N/A speed=   1x elapsed=0:01:02.37    
+2025-12-08 18:30:01.617 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1896 fps= 30 q=0.0 size=N/A time=00:01:02.97 bitrate=N/A speed=   1x elapsed=0:01:02.89    
+2025-12-08 18:30:02.103 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#323)
+2025-12-08 18:30:02.133 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1912 fps= 30 q=0.0 size=N/A time=00:01:03.45 bitrate=N/A speed=   1x elapsed=0:01:03.41    
+2025-12-08 18:30:02.648 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1927 fps= 30 q=0.0 size=N/A time=00:01:03.96 bitrate=N/A speed=   1x elapsed=0:01:03.92    
+2025-12-08 18:30:03.104 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#326)
+2025-12-08 18:30:03.164 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1941 fps= 30 q=0.0 size=N/A time=00:01:04.45 bitrate=N/A speed=   1x elapsed=0:01:04.44    
+2025-12-08 18:30:03.680 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1957 fps= 30 q=0.0 size=N/A time=00:01:04.96 bitrate=N/A speed=   1x elapsed=0:01:04.95    
+2025-12-08 18:30:04.104 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#329)
+2025-12-08 18:30:04.197 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1971 fps= 30 q=0.0 size=N/A time=00:01:05.45 bitrate=N/A speed=   1x elapsed=0:01:05.47    
+2025-12-08 18:30:04.711 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 1987 fps= 30 q=0.0 size=N/A time=00:01:05.96 bitrate=N/A speed=   1x elapsed=0:01:05.98    
+2025-12-08 18:30:05.105 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#332)
+2025-12-08 18:30:05.227 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2001 fps= 30 q=0.0 size=N/A time=00:01:06.45 bitrate=N/A speed=0.999x elapsed=0:01:06.50    
+2025-12-08 18:30:05.742 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2018 fps= 30 q=0.0 size=N/A time=00:01:07.26 bitrate=N/A speed=   1x elapsed=0:01:07.01    
+2025-12-08 18:30:06.106 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#335)
+2025-12-08 18:30:06.258 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2047 fps= 30 q=0.0 size=N/A time=00:01:07.96 bitrate=N/A speed=1.01x elapsed=0:01:07.53    
+2025-12-08 18:30:06.773 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2061 fps= 30 q=0.0 size=N/A time=00:01:08.47 bitrate=N/A speed=1.01x elapsed=0:01:08.05    
+2025-12-08 18:30:07.107 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#337)
+2025-12-08 18:30:07.289 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2077 fps= 30 q=0.0 size=N/A time=00:01:08.96 bitrate=N/A speed=1.01x elapsed=0:01:08.56    
+2025-12-08 18:30:07.805 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2091 fps= 30 q=0.0 size=N/A time=00:01:09.47 bitrate=N/A speed=1.01x elapsed=0:01:09.08    
+2025-12-08 18:30:08.108 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#340)
+2025-12-08 18:30:08.321 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2107 fps= 30 q=0.0 size=N/A time=00:01:09.95 bitrate=N/A speed=1.01x elapsed=0:01:09.59    
+2025-12-08 18:30:08.836 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2121 fps= 30 q=0.0 size=N/A time=00:01:10.47 bitrate=N/A speed=1.01x elapsed=0:01:10.11    
+2025-12-08 18:30:09.109 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#344)
+2025-12-08 18:30:09.351 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2137 fps= 30 q=0.0 size=N/A time=00:01:10.95 bitrate=N/A speed=   1x elapsed=0:01:10.62    
+2025-12-08 18:30:09.867 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2151 fps= 30 q=0.0 size=N/A time=00:01:11.46 bitrate=N/A speed=   1x elapsed=0:01:11.14    
+2025-12-08 18:30:10.110 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#347)
+2025-12-08 18:30:10.383 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2167 fps= 30 q=0.0 size=N/A time=00:01:11.95 bitrate=N/A speed=   1x elapsed=0:01:11.66    
+2025-12-08 18:30:10.899 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2182 fps= 30 q=0.0 size=N/A time=00:01:12.46 bitrate=N/A speed=   1x elapsed=0:01:12.17    
+2025-12-08 18:30:11.110 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#350)
+2025-12-08 18:30:11.415 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2197 fps= 30 q=0.0 size=N/A time=00:01:12.95 bitrate=N/A speed=   1x elapsed=0:01:12.69    
+2025-12-08 18:30:11.929 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2211 fps= 30 q=0.0 size=N/A time=00:01:13.46 bitrate=N/A speed=   1x elapsed=0:01:13.20    
+2025-12-08 18:30:12.111 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#353)
+2025-12-08 18:30:12.445 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2227 fps= 30 q=0.0 size=N/A time=00:01:13.95 bitrate=N/A speed=   1x elapsed=0:01:13.72    
+2025-12-08 18:30:12.961 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2242 fps= 30 q=0.0 size=N/A time=00:01:14.46 bitrate=N/A speed=   1x elapsed=0:01:14.23    
+2025-12-08 18:30:13.111 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#356)
+2025-12-08 18:30:13.476 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2257 fps= 30 q=0.0 size=N/A time=00:01:14.95 bitrate=N/A speed=   1x elapsed=0:01:14.75    
+2025-12-08 18:30:13.992 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2271 fps= 30 q=0.0 size=N/A time=00:01:15.46 bitrate=N/A speed=   1x elapsed=0:01:15.26    
+2025-12-08 18:30:14.111 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#360)
+2025-12-08 18:30:14.240 +03:00 [DBG] [Shortcuts] Çalıştırılıyor: stream.start
+2025-12-08 18:30:14.508 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2286 fps= 30 q=0.0 size=N/A time=00:01:15.97 bitrate=N/A speed=   1x elapsed=0:01:15.78    
+2025-12-08 18:30:15.024 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2302 fps= 30 q=0.0 size=N/A time=00:01:16.46 bitrate=N/A speed=   1x elapsed=0:01:16.30    
+2025-12-08 18:30:15.112 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#363)
+2025-12-08 18:30:15.539 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2316 fps= 30 q=0.0 size=N/A time=00:01:16.97 bitrate=N/A speed=   1x elapsed=0:01:16.81    
+2025-12-08 18:30:16.055 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2332 fps= 30 q=0.0 size=N/A time=00:01:17.45 bitrate=N/A speed=   1x elapsed=0:01:17.33    
+2025-12-08 18:30:16.111 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#366)
+2025-12-08 18:30:16.570 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2347 fps= 30 q=0.0 size=N/A time=00:01:17.97 bitrate=N/A speed=   1x elapsed=0:01:17.84    
+2025-12-08 18:30:17.086 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2362 fps= 30 q=0.0 size=N/A time=00:01:18.45 bitrate=N/A speed=   1x elapsed=0:01:18.36    
+2025-12-08 18:30:17.112 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#369)
+2025-12-08 18:30:17.603 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2376 fps= 30 q=0.0 size=N/A time=00:01:18.96 bitrate=N/A speed=   1x elapsed=0:01:18.88    
+2025-12-08 18:30:18.112 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#372)
+2025-12-08 18:30:18.117 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2392 fps= 30 q=0.0 size=N/A time=00:01:19.45 bitrate=N/A speed=   1x elapsed=0:01:19.39    
+2025-12-08 18:30:18.633 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2407 fps= 30 q=0.0 size=N/A time=00:01:19.96 bitrate=N/A speed=   1x elapsed=0:01:19.91    
+2025-12-08 18:30:19.114 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#376)
+2025-12-08 18:30:19.149 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2421 fps= 30 q=0.0 size=N/A time=00:01:20.45 bitrate=N/A speed=   1x elapsed=0:01:20.42    
+2025-12-08 18:30:19.664 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2437 fps= 30 q=0.0 size=N/A time=00:01:20.96 bitrate=N/A speed=   1x elapsed=0:01:20.94    
+2025-12-08 18:30:20.114 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#379)
+2025-12-08 18:30:20.179 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2451 fps= 30 q=0.0 size=N/A time=00:01:21.45 bitrate=N/A speed=   1x elapsed=0:01:21.45    
+2025-12-08 18:30:20.695 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2466 fps= 30 q=0.0 size=N/A time=00:01:21.96 bitrate=N/A speed=   1x elapsed=0:01:21.97    
+2025-12-08 18:30:21.115 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#381)
+2025-12-08 18:30:21.211 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2482 fps= 30 q=0.0 size=N/A time=00:01:22.45 bitrate=N/A speed=   1x elapsed=0:01:22.48    
+2025-12-08 18:30:21.727 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2496 fps= 30 q=0.0 size=N/A time=00:01:22.96 bitrate=N/A speed=   1x elapsed=0:01:23.00    
+2025-12-08 18:30:22.116 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#384)
+2025-12-08 18:30:22.243 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2520 fps= 30 q=0.0 size=N/A time=00:01:23.96 bitrate=N/A speed=1.01x elapsed=0:01:23.52    
+2025-12-08 18:30:22.758 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2542 fps= 30 q=0.0 size=N/A time=00:01:24.47 bitrate=N/A speed=1.01x elapsed=0:01:24.03    
+2025-12-08 18:30:23.118 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#387)
+2025-12-08 18:30:23.275 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2556 fps= 30 q=0.0 size=N/A time=00:01:24.95 bitrate=N/A speed=   1x elapsed=0:01:24.55    
+2025-12-08 18:30:23.789 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2572 fps= 30 q=0.0 size=N/A time=00:01:25.47 bitrate=N/A speed=   1x elapsed=0:01:25.06    
+2025-12-08 18:30:24.118 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#390)
+2025-12-08 18:30:24.305 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2587 fps= 30 q=0.0 size=N/A time=00:01:25.95 bitrate=N/A speed=   1x elapsed=0:01:25.58    
+2025-12-08 18:30:24.821 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2602 fps= 30 q=0.0 size=N/A time=00:01:26.46 bitrate=N/A speed=   1x elapsed=0:01:26.09    
+2025-12-08 18:30:25.120 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#393)
+2025-12-08 18:30:25.336 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2617 fps= 30 q=0.0 size=N/A time=00:01:26.95 bitrate=N/A speed=   1x elapsed=0:01:26.61    
+2025-12-08 18:30:25.851 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2631 fps= 30 q=0.0 size=N/A time=00:01:27.46 bitrate=N/A speed=   1x elapsed=0:01:27.12    
+2025-12-08 18:30:26.120 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#396)
+2025-12-08 18:30:26.367 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2647 fps= 30 q=0.0 size=N/A time=00:01:27.95 bitrate=N/A speed=   1x elapsed=0:01:27.64    
+2025-12-08 18:30:26.883 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2661 fps= 30 q=0.0 size=N/A time=00:01:28.46 bitrate=N/A speed=   1x elapsed=0:01:28.16    
+2025-12-08 18:30:27.121 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#399)
+2025-12-08 18:30:27.399 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2676 fps= 30 q=0.0 size=N/A time=00:01:28.95 bitrate=N/A speed=   1x elapsed=0:01:28.67    
+2025-12-08 18:30:27.914 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2692 fps= 30 q=0.0 size=N/A time=00:01:29.46 bitrate=N/A speed=   1x elapsed=0:01:29.19    
+2025-12-08 18:30:28.122 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#403)
+2025-12-08 18:30:28.430 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2706 fps= 30 q=0.0 size=N/A time=00:01:29.95 bitrate=N/A speed=   1x elapsed=0:01:29.70    
+2025-12-08 18:30:28.945 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2722 fps= 30 q=0.0 size=N/A time=00:01:30.46 bitrate=N/A speed=   1x elapsed=0:01:30.22    
+2025-12-08 18:30:29.124 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#406)
+2025-12-08 18:30:29.461 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2736 fps= 30 q=0.0 size=N/A time=00:01:30.97 bitrate=N/A speed=   1x elapsed=0:01:30.73    
+2025-12-08 18:30:29.977 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2752 fps= 30 q=0.0 size=N/A time=00:01:31.46 bitrate=N/A speed=   1x elapsed=0:01:31.25    
+2025-12-08 18:30:30.124 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#409)
+2025-12-08 18:30:30.493 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2766 fps= 30 q=0.0 size=N/A time=00:01:31.97 bitrate=N/A speed=   1x elapsed=0:01:31.77    
+2025-12-08 18:30:31.008 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2782 fps= 30 q=0.0 size=N/A time=00:01:32.45 bitrate=N/A speed=   1x elapsed=0:01:32.28    
+2025-12-08 18:30:31.126 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#412)
+2025-12-08 18:30:31.523 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2797 fps= 30 q=0.0 size=N/A time=00:01:32.97 bitrate=N/A speed=   1x elapsed=0:01:32.80    
+2025-12-08 18:30:32.039 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2812 fps= 30 q=0.0 size=N/A time=00:01:33.45 bitrate=N/A speed=   1x elapsed=0:01:33.31    
+2025-12-08 18:30:32.126 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#415)
+2025-12-08 18:30:32.555 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2826 fps= 30 q=0.0 size=N/A time=00:01:33.96 bitrate=N/A speed=   1x elapsed=0:01:33.83    
+2025-12-08 18:30:33.071 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2841 fps= 30 q=0.0 size=N/A time=00:01:34.45 bitrate=N/A speed=   1x elapsed=0:01:34.34    
+2025-12-08 18:30:33.127 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#419)
+2025-12-08 18:30:33.586 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2857 fps= 30 q=0.0 size=N/A time=00:01:34.96 bitrate=N/A speed=   1x elapsed=0:01:34.86    
+2025-12-08 18:30:34.103 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2871 fps= 30 q=0.0 size=N/A time=00:01:35.45 bitrate=N/A speed=   1x elapsed=0:01:35.38    
+2025-12-08 18:30:34.128 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#422)
+2025-12-08 18:30:34.617 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2887 fps= 30 q=0.0 size=N/A time=00:01:35.96 bitrate=N/A speed=   1x elapsed=0:01:35.89    
+2025-12-08 18:30:35.129 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#425)
+2025-12-08 18:30:35.133 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2901 fps= 30 q=0.0 size=N/A time=00:01:36.45 bitrate=N/A speed=   1x elapsed=0:01:36.41    
+2025-12-08 18:30:35.649 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2917 fps= 30 q=0.0 size=N/A time=00:01:36.96 bitrate=N/A speed=   1x elapsed=0:01:36.92    
+2025-12-08 18:30:36.130 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#428)
+2025-12-08 18:30:36.164 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2932 fps= 30 q=0.0 size=N/A time=00:01:37.45 bitrate=N/A speed=   1x elapsed=0:01:37.44    
+2025-12-08 18:30:36.679 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2946 fps= 30 q=0.0 size=N/A time=00:01:37.96 bitrate=N/A speed=   1x elapsed=0:01:37.95    
+2025-12-08 18:30:37.131 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#431)
+2025-12-08 18:30:37.195 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2962 fps= 30 q=0.0 size=N/A time=00:01:38.47 bitrate=N/A speed=   1x elapsed=0:01:38.47    
+2025-12-08 18:30:37.711 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2976 fps= 30 q=0.0 size=N/A time=00:01:38.96 bitrate=N/A speed=   1x elapsed=0:01:38.98    
+2025-12-08 18:30:38.132 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#434)
+2025-12-08 18:30:38.227 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 2991 fps= 30 q=0.0 size=N/A time=00:01:39.47 bitrate=N/A speed=   1x elapsed=0:01:39.50    
+2025-12-08 18:30:38.743 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3010 fps= 30 q=0.0 size=N/A time=00:01:40.33 bitrate=N/A speed=   1x elapsed=0:01:40.02    
+2025-12-08 18:30:39.134 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#437)
+2025-12-08 18:30:39.257 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3037 fps= 30 q=0.0 size=N/A time=00:01:40.95 bitrate=N/A speed=   1x elapsed=0:01:40.53    
+2025-12-08 18:30:39.773 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3051 fps= 30 q=0.0 size=N/A time=00:01:41.46 bitrate=N/A speed=   1x elapsed=0:01:41.05    
+2025-12-08 18:30:40.134 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#440)
+2025-12-08 18:30:40.289 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3067 fps= 30 q=0.0 size=N/A time=00:01:41.95 bitrate=N/A speed=   1x elapsed=0:01:41.56    
+2025-12-08 18:30:40.805 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3082 fps= 30 q=0.0 size=N/A time=00:01:42.46 bitrate=N/A speed=   1x elapsed=0:01:42.08    
+2025-12-08 18:30:41.136 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#443)
+2025-12-08 18:30:41.321 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3097 fps= 30 q=0.0 size=N/A time=00:01:42.95 bitrate=N/A speed=   1x elapsed=0:01:42.59    
+2025-12-08 18:30:41.836 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3112 fps= 30 q=0.0 size=N/A time=00:01:43.46 bitrate=N/A speed=   1x elapsed=0:01:43.11    
+2025-12-08 18:30:42.136 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#446)
+2025-12-08 18:30:42.351 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3127 fps= 30 q=0.0 size=N/A time=00:01:43.95 bitrate=N/A speed=   1x elapsed=0:01:43.62    
+2025-12-08 18:30:42.867 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3142 fps= 30 q=0.0 size=N/A time=00:01:44.46 bitrate=N/A speed=   1x elapsed=0:01:44.14    
+2025-12-08 18:30:43.138 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#449)
+2025-12-08 18:30:43.383 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3156 fps= 30 q=0.0 size=N/A time=00:01:44.95 bitrate=N/A speed=   1x elapsed=0:01:44.66    
+2025-12-08 18:30:43.899 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3172 fps= 30 q=0.0 size=N/A time=00:01:45.46 bitrate=N/A speed=   1x elapsed=0:01:45.17    
+2025-12-08 18:30:44.138 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#452)
+2025-12-08 18:30:44.414 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3186 fps= 30 q=0.0 size=N/A time=00:01:45.97 bitrate=N/A speed=   1x elapsed=0:01:45.69    
+2025-12-08 18:30:44.930 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3201 fps= 30 q=0.0 size=N/A time=00:01:46.46 bitrate=N/A speed=   1x elapsed=0:01:46.20    
+2025-12-08 18:30:45.138 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#455)
+2025-12-08 18:30:45.446 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3216 fps= 30 q=0.0 size=N/A time=00:01:46.97 bitrate=N/A speed=   1x elapsed=0:01:46.72    
+2025-12-08 18:30:45.961 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3232 fps= 30 q=0.0 size=N/A time=00:01:47.45 bitrate=N/A speed=   1x elapsed=0:01:47.23    
+2025-12-08 18:30:46.139 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#459)
+2025-12-08 18:30:46.476 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3246 fps= 30 q=0.0 size=N/A time=00:01:47.97 bitrate=N/A speed=   1x elapsed=0:01:47.75    
+2025-12-08 18:30:46.992 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3262 fps= 30 q=0.0 size=N/A time=00:01:48.45 bitrate=N/A speed=   1x elapsed=0:01:48.27    
+2025-12-08 18:30:47.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#462)
+2025-12-08 18:30:47.508 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3276 fps= 30 q=0.0 size=N/A time=00:01:48.97 bitrate=N/A speed=   1x elapsed=0:01:48.78    
+2025-12-08 18:30:48.024 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3291 fps= 30 q=0.0 size=N/A time=00:01:49.45 bitrate=N/A speed=   1x elapsed=0:01:49.30    
+2025-12-08 18:30:48.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#465)
+2025-12-08 18:30:48.539 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3306 fps= 30 q=0.0 size=N/A time=00:01:49.96 bitrate=N/A speed=   1x elapsed=0:01:49.81    
+2025-12-08 18:30:49.054 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3322 fps= 30 q=0.0 size=N/A time=00:01:50.45 bitrate=N/A speed=   1x elapsed=0:01:50.33    
+2025-12-08 18:30:49.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#468)
+2025-12-08 18:30:49.570 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3337 fps= 30 q=0.0 size=N/A time=00:01:50.96 bitrate=N/A speed=   1x elapsed=0:01:50.84    
+2025-12-08 18:30:50.086 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3351 fps= 30 q=0.0 size=N/A time=00:01:51.45 bitrate=N/A speed=   1x elapsed=0:01:51.36    
+2025-12-08 18:30:50.140 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#471)
+2025-12-08 18:30:50.602 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3367 fps= 30 q=0.0 size=N/A time=00:01:51.96 bitrate=N/A speed=   1x elapsed=0:01:51.87    
+2025-12-08 18:30:51.117 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3381 fps= 30 q=0.0 size=N/A time=00:01:52.45 bitrate=N/A speed=   1x elapsed=0:01:52.39    
+2025-12-08 18:30:51.141 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#475)
+2025-12-08 18:30:51.633 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3396 fps= 30 q=0.0 size=N/A time=00:01:52.96 bitrate=N/A speed=   1x elapsed=0:01:52.91    
+2025-12-08 18:30:52.143 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#478)
+2025-12-08 18:30:52.148 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3412 fps= 30 q=0.0 size=N/A time=00:01:53.47 bitrate=N/A speed=   1x elapsed=0:01:53.42    
+2025-12-08 18:30:52.262 +03:00 [DBG] [FacebookChatHost] [JS LOG] [UniCast] Console capture initialized
+2025-12-08 18:30:52.263 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 162 chars
+2025-12-08 18:30:52.664 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3427 fps= 30 q=0.0 size=N/A time=00:01:53.96 bitrate=N/A speed=   1x elapsed=0:01:53.94    
+2025-12-08 18:30:53.143 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#481)
+2025-12-08 18:30:53.180 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3441 fps= 30 q=0.0 size=N/A time=00:01:54.47 bitrate=N/A speed=   1x elapsed=0:01:54.45    
+2025-12-08 18:30:53.462 +03:00 [DBG] [FacebookChatHost] [JS LOG] 
+%cDur! font-family:helvetica; font-size:20px; font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black;
+2025-12-08 18:30:53.463 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 249 chars
+2025-12-08 18:30:53.464 +03:00 [DBG] [FacebookChatHost] [JS LOG] 
+%cBu, geliştiriciler için tasarlanmış bir tarayıcı özelliğidir. Biri sana bir Facebook özelliğini etkinleştirmek veya birinin hesabını ele geçirmek için bir şeyi kopyalayıp buraya yapıştırmanı söylediyse, bu bir dolandırıcılıktır ve bunu yapmanı söyleyen kişi sen bunu yaptığında senin Facebook hesabına erişebilecektir. font-family:helvetica; font-size:20px; 
+2025-12-08 18:30:53.465 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 488 chars
+2025-12-08 18:30:53.466 +03:00 [DBG] [FacebookChatHost] [JS LOG] 
+%cDaha fazla bilgi için https://www.facebook.com/selfxss adresine bak. font-family:helvetica; font-size:20px; 
+2025-12-08 18:30:53.468 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 238 chars
+2025-12-08 18:30:53.469 +03:00 [DBG] [FacebookChatHost] [JS LOG] 
+%c 
+2025-12-08 18:30:53.469 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 131 chars
+2025-12-08 18:30:53.478 +03:00 [INF] [FacebookChatHost] Navigation başarılı: https://www.facebook.com/checkpoint/1501092823525282/
+2025-12-08 18:30:53.484 +03:00 [ERR] [FacebookChatHost] [JS ERROR] ErrorUtils caught an error:
+
+Non-error thrown: [object Object], keys: []
+
+Subsequent non-fatal errors won't be logged; see https://fburl.com/debugjs. {"column":"180","clientTime":1765207853,"extra":{},"guardList":[],"hash":"tyokq2","isNormalizedError":true,"line":"77","loggingSource":"PROMISE_DONE","message":"Non-error thrown: [object Object], keys: []","messageFormat":"Non-error thrown: %s, keys: %s","messageParams":["[object Object]","[]"],"name":"Error","page_time":1719,"script":"https://static.xx.fbcdn.net/rsrc.php/v4/y1/r/CnTMi1jpxbm.js","stack":"    at s (https://static.xx.fbcdn.net/rsrc.php/v4/y1/r/CnTMi1jpxbm.js:77:180)\n    at E (https://static.xx.fbcdn.net/rsrc.php/v4/y1/r/CnTMi1jpxbm.js:77:1643)\n    at u (https://static.xx.fbcdn.net/rsrc.php/v4/y1/r/CnTMi1jpxbm.js:109:138)","stackFrames":[{"identifier":"s","script":"https://static.xx.fbcdn.net/rsrc.php/v4/y1/r/CnTMi1jpxbm.js","line":77,"column":180,"text":"    at s (https://static.xx.fbcdn.net/rsrc.php/v4/y1/r/CnTMi1jpxbm.js:77:180)"},{"identifier":"E","script":"https://static.xx.fbcdn.net/rsrc.php/v4/y1/r/CnTMi1jpxbm.js","line":77,"column":1643,"text":"    at E (https://static.xx.fbcdn.net/rsrc.php/v4/y1/r/CnTMi1jpxbm.js:77:1643)"},{"identifier":"u","script":"https://static.xx.fbcdn.net/rsrc.php/v4/y1/r/CnTMi1jpxbm.js","line":109,"column":138,"text":"    at u (https://static.xx.fbcdn.net/rsrc.php/v4/y1/r/CnTMi1jpxbm.js:109:138)"}],"type":"error","xFBDebug":[],"tags":[],"taalOpcodes":[2,2],"windowLocationURL":"https://www.facebook.com/checkpoint/1501092823525282/","loadingUrls":[]}
+2025-12-08 18:30:53.485 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 2064 chars
+2025-12-08 18:30:53.695 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3457 fps= 30 q=0.0 size=N/A time=00:01:54.96 bitrate=N/A speed=   1x elapsed=0:01:54.97    
+2025-12-08 18:30:54.144 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#484)
+2025-12-08 18:30:54.211 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3471 fps= 30 q=0.0 size=N/A time=00:01:55.47 bitrate=N/A speed=   1x elapsed=0:01:55.48    
+2025-12-08 18:30:54.728 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3486 fps= 30 q=0.0 size=N/A time=00:01:55.95 bitrate=N/A speed=   1x elapsed=0:01:56.00    
+2025-12-08 18:30:55.146 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#487)
+2025-12-08 18:30:55.242 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3509 fps= 30 q=0.0 size=N/A time=00:01:56.95 bitrate=N/A speed=   1x elapsed=0:01:56.52    
+2025-12-08 18:30:55.758 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3532 fps= 30 q=0.0 size=N/A time=00:01:57.46 bitrate=N/A speed=   1x elapsed=0:01:57.03    
+2025-12-08 18:30:56.146 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#490)
+2025-12-08 18:30:56.274 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3548 fps= 30 q=0.0 size=N/A time=00:01:57.95 bitrate=N/A speed=   1x elapsed=0:01:57.55    
+2025-12-08 18:30:56.789 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3548 fps= 30 q=0.0 size=N/A time=00:01:58.26 bitrate=N/A speed=   1x elapsed=0:01:58.06    
+2025-12-08 18:30:57.148 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#493)
+2025-12-08 18:30:57.304 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3548 fps= 30 q=0.0 size=N/A time=00:01:58.26 bitrate=N/A speed=0.997x elapsed=0:01:58.58    
+2025-12-08 18:30:57.820 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3548 fps= 30 q=0.0 size=N/A time=00:01:58.26 bitrate=N/A speed=0.993x elapsed=0:01:59.09    
+2025-12-08 18:30:58.148 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#496)
+2025-12-08 18:30:58.336 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3548 fps= 30 q=0.0 size=N/A time=00:01:58.26 bitrate=N/A speed=0.989x elapsed=0:01:59.61    
+2025-12-08 18:30:58.852 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3548 fps= 30 q=0.0 size=N/A time=00:01:58.26 bitrate=N/A speed=0.984x elapsed=0:02:00.12    
+2025-12-08 18:30:59.150 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#499)
+2025-12-08 18:30:59.368 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3548 fps= 29 q=0.0 size=N/A time=00:01:58.26 bitrate=N/A speed=0.98x elapsed=0:02:00.64    
+2025-12-08 18:30:59.882 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3548 fps= 29 q=0.0 size=N/A time=00:01:58.26 bitrate=N/A speed=0.976x elapsed=0:02:01.16    
+2025-12-08 18:31:00.150 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#502)
+2025-12-08 18:31:00.398 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3549 fps= 29 q=0.0 size=N/A time=00:01:58.30 bitrate=N/A speed=0.972x elapsed=0:02:01.67    
+2025-12-08 18:31:00.914 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3577 fps= 29 q=0.0 size=N/A time=00:01:59.50 bitrate=N/A speed=0.978x elapsed=0:02:02.19    
+2025-12-08 18:31:01.152 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#505)
+2025-12-08 18:31:01.430 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3609 fps= 29 q=0.0 size=N/A time=00:02:00.56 bitrate=N/A speed=0.983x elapsed=0:02:02.70    
+2025-12-08 18:31:01.945 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3700 fps= 30 q=0.0 size=N/A time=00:02:03.36 bitrate=N/A speed=   1x elapsed=0:02:03.22    
+2025-12-08 18:31:02.152 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#508)
+2025-12-08 18:31:02.461 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3727 fps= 30 q=0.0 size=N/A time=00:02:03.97 bitrate=N/A speed=   1x elapsed=0:02:03.73    
+2025-12-08 18:31:02.977 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3742 fps= 30 q=0.0 size=N/A time=00:02:04.45 bitrate=N/A speed=   1x elapsed=0:02:04.25    
+2025-12-08 18:31:03.153 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#511)
+2025-12-08 18:31:03.492 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3756 fps= 30 q=0.0 size=N/A time=00:02:04.96 bitrate=N/A speed=   1x elapsed=0:02:04.76    
+2025-12-08 18:31:04.008 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3772 fps= 30 q=0.0 size=N/A time=00:02:05.45 bitrate=N/A speed=   1x elapsed=0:02:05.28    
+2025-12-08 18:31:04.154 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#515)
+2025-12-08 18:31:04.523 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3786 fps= 30 q=0.0 size=N/A time=00:02:05.96 bitrate=N/A speed=   1x elapsed=0:02:05.80    
+2025-12-08 18:31:05.039 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3802 fps= 30 q=0.0 size=N/A time=00:02:06.45 bitrate=N/A speed=   1x elapsed=0:02:06.31    
+2025-12-08 18:31:05.155 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#518)
+2025-12-08 18:31:05.555 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3817 fps= 30 q=0.0 size=N/A time=00:02:06.96 bitrate=N/A speed=   1x elapsed=0:02:06.83    
+2025-12-08 18:31:06.071 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3831 fps= 30 q=0.0 size=N/A time=00:02:07.45 bitrate=N/A speed=   1x elapsed=0:02:07.34    
+2025-12-08 18:31:06.157 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#521)
+2025-12-08 18:31:06.586 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3847 fps= 30 q=0.0 size=N/A time=00:02:07.96 bitrate=N/A speed=   1x elapsed=0:02:07.86    
+2025-12-08 18:31:07.101 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3862 fps= 30 q=0.0 size=N/A time=00:02:08.47 bitrate=N/A speed=   1x elapsed=0:02:08.37    
+2025-12-08 18:31:07.157 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#524)
+2025-12-08 18:31:07.617 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3877 fps= 30 q=0.0 size=N/A time=00:02:08.96 bitrate=N/A speed=   1x elapsed=0:02:08.89    
+2025-12-08 18:31:08.133 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3892 fps= 30 q=0.0 size=N/A time=00:02:09.47 bitrate=N/A speed=   1x elapsed=0:02:09.41    
+2025-12-08 18:31:08.158 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#527)
+2025-12-08 18:31:08.649 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3907 fps= 30 q=0.0 size=N/A time=00:02:09.96 bitrate=N/A speed=   1x elapsed=0:02:09.92    
+2025-12-08 18:31:09.157 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#530)
+2025-12-08 18:31:09.164 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3921 fps= 30 q=0.0 size=N/A time=00:02:10.47 bitrate=N/A speed=   1x elapsed=0:02:10.44    
+2025-12-08 18:31:09.679 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3937 fps= 30 q=0.0 size=N/A time=00:02:10.95 bitrate=N/A speed=   1x elapsed=0:02:10.95    
+2025-12-08 18:31:10.159 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#534)
+2025-12-08 18:31:10.195 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3952 fps= 30 q=0.0 size=N/A time=00:02:11.47 bitrate=N/A speed=   1x elapsed=0:02:11.47    
+2025-12-08 18:31:10.711 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3967 fps= 30 q=0.0 size=N/A time=00:02:11.95 bitrate=N/A speed=   1x elapsed=0:02:11.98    
+2025-12-08 18:31:11.159 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#537)
+2025-12-08 18:31:11.227 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 3983 fps= 30 q=0.0 size=N/A time=00:02:12.46 bitrate=N/A speed=   1x elapsed=0:02:12.50    
+2025-12-08 18:31:11.743 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4009 fps= 30 q=0.0 size=N/A time=00:02:13.46 bitrate=N/A speed=   1x elapsed=0:02:13.02    
+2025-12-08 18:31:12.161 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#540)
+2025-12-08 18:31:12.258 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4027 fps= 30 q=0.0 size=N/A time=00:02:13.95 bitrate=N/A speed=   1x elapsed=0:02:13.53    
+2025-12-08 18:31:12.774 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4041 fps= 30 q=0.0 size=N/A time=00:02:14.46 bitrate=N/A speed=   1x elapsed=0:02:14.05    
+2025-12-08 18:31:13.160 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#543)
+2025-12-08 18:31:13.290 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4057 fps= 30 q=0.0 size=N/A time=00:02:14.95 bitrate=N/A speed=   1x elapsed=0:02:14.56    
+2025-12-08 18:31:13.804 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4072 fps= 30 q=0.0 size=N/A time=00:02:15.46 bitrate=N/A speed=   1x elapsed=0:02:15.08    
+2025-12-08 18:31:14.160 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#545)
+2025-12-08 18:31:14.320 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4087 fps= 30 q=0.0 size=N/A time=00:02:15.97 bitrate=N/A speed=   1x elapsed=0:02:15.59    
+2025-12-08 18:31:14.836 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4102 fps= 30 q=0.0 size=N/A time=00:02:16.46 bitrate=N/A speed=   1x elapsed=0:02:16.11    
+2025-12-08 18:31:15.161 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#548)
+2025-12-08 18:31:15.352 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4116 fps= 30 q=0.0 size=N/A time=00:02:16.97 bitrate=N/A speed=   1x elapsed=0:02:16.62    
+2025-12-08 18:31:15.869 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4131 fps= 30 q=0.0 size=N/A time=00:02:17.46 bitrate=N/A speed=   1x elapsed=0:02:17.14    
+2025-12-08 18:31:16.161 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#551)
+2025-12-08 18:31:16.383 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4147 fps= 30 q=0.0 size=N/A time=00:02:17.97 bitrate=N/A speed=   1x elapsed=0:02:17.66    
+2025-12-08 18:31:16.898 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4161 fps= 30 q=0.0 size=N/A time=00:02:18.45 bitrate=N/A speed=   1x elapsed=0:02:18.17    
+2025-12-08 18:31:17.163 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#554)
+2025-12-08 18:31:17.414 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4176 fps= 30 q=0.0 size=N/A time=00:02:18.97 bitrate=N/A speed=   1x elapsed=0:02:18.69    
+2025-12-08 18:31:17.930 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4192 fps= 30 q=0.0 size=N/A time=00:02:19.45 bitrate=N/A speed=   1x elapsed=0:02:19.20    
+2025-12-08 18:31:18.164 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#557)
+2025-12-08 18:31:18.446 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4206 fps= 30 q=0.0 size=N/A time=00:02:19.96 bitrate=N/A speed=   1x elapsed=0:02:19.72    
+2025-12-08 18:31:18.961 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4221 fps= 30 q=0.0 size=N/A time=00:02:20.45 bitrate=N/A speed=   1x elapsed=0:02:20.23    
+2025-12-08 18:31:19.166 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#561)
+2025-12-08 18:31:19.374 +03:00 [WRN] [FB Scraper] Observer durdu, yeniden başlatılıyor...
+2025-12-08 18:31:19.377 +03:00 [DBG] [FB Scraper] JS Debug: Script yuklendi, baslatma bekleniyor...
+2025-12-08 18:31:19.378 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 78 chars
+2025-12-08 18:31:19.379 +03:00 [DBG] [FB Scraper] JS Debug: Script yuklendi, baslatma bekleniyor...
+2025-12-08 18:31:19.380 +03:00 [DBG] [FB Scraper] JS Debug: Document ready, 2 saniye sonra baslatilacak
+2025-12-08 18:31:19.381 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 82 chars
+2025-12-08 18:31:19.382 +03:00 [DBG] [FB Scraper] JS Debug: Document ready, 2 saniye sonra baslatilacak
+2025-12-08 18:31:19.477 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4236 fps= 30 q=0.0 size=N/A time=00:02:20.96 bitrate=N/A speed=   1x elapsed=0:02:20.75    
+2025-12-08 18:31:19.992 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4252 fps= 30 q=0.0 size=N/A time=00:02:21.45 bitrate=N/A speed=   1x elapsed=0:02:21.26    
+2025-12-08 18:31:20.165 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#564)
+2025-12-08 18:31:20.508 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4266 fps= 30 q=0.0 size=N/A time=00:02:21.96 bitrate=N/A speed=   1x elapsed=0:02:21.78    
+2025-12-08 18:31:21.023 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4282 fps= 30 q=0.0 size=N/A time=00:02:22.45 bitrate=N/A speed=   1x elapsed=0:02:22.30    
+2025-12-08 18:31:21.166 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#567)
+2025-12-08 18:31:21.388 +03:00 [DBG] [FB Scraper] JS Debug: startObserver cagrildi, retry: 0
+2025-12-08 18:31:21.389 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 71 chars
+2025-12-08 18:31:21.390 +03:00 [DBG] [FB Scraper] JS Debug: startObserver cagrildi, retry: 0
+2025-12-08 18:31:21.391 +03:00 [DBG] [FB Scraper] JS Debug: Document state: complete
+2025-12-08 18:31:21.392 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 63 chars
+2025-12-08 18:31:21.393 +03:00 [DBG] [FB Scraper] JS Debug: Document state: complete
+2025-12-08 18:31:21.394 +03:00 [DBG] [FB Scraper] JS Debug: URL: https://www.facebook.com/checkpoint/1501092823525282/
+2025-12-08 18:31:21.395 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 97 chars
+2025-12-08 18:31:21.396 +03:00 [DBG] [FB Scraper] JS Debug: URL: https://www.facebook.com/checkpoint/1501092823525282/
+2025-12-08 18:31:21.397 +03:00 [DBG] [FB Scraper] JS Debug: Script baslatildi - URL: https://www.facebook.com/checkpoint/1501092823525282/
+2025-12-08 18:31:21.398 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 117 chars
+2025-12-08 18:31:21.398 +03:00 [DBG] [FB Scraper] JS Debug: Script baslatildi - URL: https://www.facebook.com/checkpoint/1501092823525282/
+2025-12-08 18:31:21.399 +03:00 [DBG] [FB Scraper] JS Debug: Bulunan avatar sayisi: 0
+2025-12-08 18:31:21.400 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 63 chars
+2025-12-08 18:31:21.401 +03:00 [DBG] [FB Scraper] JS Debug: Bulunan avatar sayisi: 0
+2025-12-08 18:31:21.402 +03:00 [DBG] [FB Scraper] JS Debug: UYARI: Spesifik container bulunamadi! Muhtemelen yorum yok veya DOM yapisi farkli
+2025-12-08 18:31:21.403 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 120 chars
+2025-12-08 18:31:21.404 +03:00 [DBG] [FB Scraper] JS Debug: UYARI: Spesifik container bulunamadi! Muhtemelen yorum yok veya DOM yapisi farkli
+2025-12-08 18:31:21.405 +03:00 [DBG] [FB Scraper] JS Debug: Container bulundu, mevcut yorumlar taraniyor...
+2025-12-08 18:31:21.405 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 86 chars
+2025-12-08 18:31:21.406 +03:00 [DBG] [FB Scraper] JS Debug: Container bulundu, mevcut yorumlar taraniyor...
+2025-12-08 18:31:21.407 +03:00 [INF] [FB Scraper] DOM Debug: Container boyutu: 785x0, tag: BODY, class: _6s5d _71pn system-fonts--body segoe
+2025-12-08 18:31:21.408 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 119 chars
+2025-12-08 18:31:21.409 +03:00 [INF] [FB Scraper] DOM Debug: Container boyutu: 785x0, tag: BODY, class: _6s5d _71pn system-fonts--body segoe
+2025-12-08 18:31:21.410 +03:00 [INF] [FB Scraper] DOM Debug: Container analizi: 113 child, 62 div, 14 span, 1 link, 4 dir=auto, 0 article, 1 avatar
+2025-12-08 18:31:21.411 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 126 chars
+2025-12-08 18:31:21.412 +03:00 [INF] [FB Scraper] DOM Debug: Container analizi: 113 child, 62 div, 14 span, 1 link, 4 dir=auto, 0 article, 1 avatar
+2025-12-08 18:31:21.413 +03:00 [INF] [FB Scraper] DOM Debug: Child[0]:  text=<meta http-equiv="refresh" content="0; URL=/checkp
+2025-12-08 18:31:21.414 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 115 chars
+2025-12-08 18:31:21.414 +03:00 [INF] [FB Scraper] DOM Debug: Child[0]:  text=<meta http-equiv="refresh" content="0; URL=/checkp
+2025-12-08 18:31:21.415 +03:00 [INF] [FB Scraper] DOM Debug: Child[1]: link+img+ text=MusaKimliğini bir selfie videosuyla onaylaGerçek b
+2025-12-08 18:31:21.416 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 115 chars
+2025-12-08 18:31:21.417 +03:00 [INF] [FB Scraper] DOM Debug: Child[1]: link+img+ text=MusaKimliğini bir selfie videosuyla onaylaGerçek b
+2025-12-08 18:31:21.418 +03:00 [INF] [FB Scraper] DOM Debug: Child[2]:  text={"require":[["maybeDisableAnimations",null,null,[]
+2025-12-08 18:31:21.418 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 118 chars
+2025-12-08 18:31:21.419 +03:00 [INF] [FB Scraper] DOM Debug: Child[2]:  text={"require":[["maybeDisableAnimations",null,null,[]
+2025-12-08 18:31:21.420 +03:00 [DBG] [FB Scraper] JS Debug: Strateji 1 (article): 0 element
+2025-12-08 18:31:21.421 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 70 chars
+2025-12-08 18:31:21.422 +03:00 [DBG] [FB Scraper] JS Debug: Strateji 1 (article): 0 element
+2025-12-08 18:31:21.423 +03:00 [DBG] [FB Scraper] JS Debug: Strateji 2 (data-commentid): 0 element
+2025-12-08 18:31:21.423 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 77 chars
+2025-12-08 18:31:21.424 +03:00 [DBG] [FB Scraper] JS Debug: Strateji 2 (data-commentid): 0 element
+2025-12-08 18:31:21.425 +03:00 [DBG] [FB Scraper] JS Debug: Strateji 3 (avatar parents): 0 avatar
+2025-12-08 18:31:21.426 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 76 chars
+2025-12-08 18:31:21.427 +03:00 [DBG] [FB Scraper] JS Debug: Strateji 3 (avatar parents): 0 avatar
+2025-12-08 18:31:21.428 +03:00 [DBG] [FB Scraper] JS Debug: Strateji 3 (filtered avatars): 0 avatar
+2025-12-08 18:31:21.429 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 78 chars
+2025-12-08 18:31:21.429 +03:00 [DBG] [FB Scraper] JS Debug: Strateji 3 (filtered avatars): 0 avatar
+2025-12-08 18:31:21.430 +03:00 [DBG] [FB Scraper] JS Debug: Strateji 5 (dir=auto parents): 4 element
+2025-12-08 18:31:21.431 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 79 chars
+2025-12-08 18:31:21.432 +03:00 [DBG] [FB Scraper] JS Debug: Strateji 5 (dir=auto parents): 4 element
+2025-12-08 18:31:21.433 +03:00 [DBG] [FB Scraper] JS Debug: Hic yorum parse edilemedi! DOM yapisi farkli olabilir.
+2025-12-08 18:31:21.434 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 93 chars
+2025-12-08 18:31:21.435 +03:00 [DBG] [FB Scraper] JS Debug: Hic yorum parse edilemedi! DOM yapisi farkli olabilir.
+2025-12-08 18:31:21.436 +03:00 [INF] [FB Scraper] DOM Debug: Sample HTML (1000 char): <noscript><meta http-equiv="refresh" content="0; URL=/checkpoint/1501092823525282/?_fb_noscript=1" /></noscript><div id="mount_0_0_co" style=""><!--$--><!--$--><div><div class=""><!--$--><form action="/logout.php?button_location=settings&amp;button_name=logout" method="POST" data-visualcompletion="ignore"><input type="hidden" value="AfiT4NZvdJVBVR2KEiQ" name="h"><input type="hidden" value="mb" name="ref"></form><div class="x9f619 x1n2onr6 x1ja2u2z"><div class="x9f619 x1ja2u2z x1pq812k x5yr21d x1o0tod xw2csxc x1odjw0f xixxii4 x1rohswg x13vifvy xh8yej3 xfk6m8 x1yqm8si xjx87ck" aria-hidden="true" id="scrollview" style="left: 0px;"><div class="x78zum5 xdt5ytf x1n2onr6 x1ja2u2z"><div class="x78zum5 xdt5ytf x1n2onr6 xat3117 xxzkxad"><!--$--><div class="xtijo5x x1o0tod xixxii4 x13vifvy x1vjfegm"><div role="banner"><div class="x6s0dn4 x9f619 x78zum5 x1iyjqo2 x1s65kcs x1o0tod xyqm7xq xixxii4 x13vifvy xzkaem6"><div class="x4txaam x10l6tqk xcd74o5 x1k90msu x6o7n8i xbxq160 xg01cxk x47corl"><div ar
+2025-12-08 18:31:21.437 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 1215 chars
+2025-12-08 18:31:21.438 +03:00 [INF] [FB Scraper] DOM Debug: Sample HTML (1000 char): <noscript><meta http-equiv="refresh" content="0; URL=/checkpoint/1501092823525282/?_fb_noscript=1" /></noscript><div id="mount_0_0_co" style=""><!--$--><!--$--><div><div class=""><!--$--><form action="/logout.php?button_location=settings&amp;button_name=logout" method="POST" data-visualcompletion="ignore"><input type="hidden" value="AfiT4NZvdJVBVR2KEiQ" name="h"><input type="hidden" value="mb" name="ref"></form><div class="x9f619 x1n2onr6 x1ja2u2z"><div class="x9f619 x1ja2u2z x1pq812k x5yr21d x1o0tod xw2csxc x1odjw0f xixxii4 x1rohswg x13vifvy xh8yej3 xfk6m8 x1yqm8si xjx87ck" aria-hidden="true" id="scrollview" style="left: 0px;"><div class="x78zum5 xdt5ytf x1n2onr6 x1ja2u2z"><div class="x78zum5 xdt5ytf x1n2onr6 xat3117 xxzkxad"><!--$--><div class="xtijo5x x1o0tod xixxii4 x13vifvy x1vjfegm"><div role="banner"><div class="x6s0dn4 x9f619 x78zum5 x1iyjqo2 x1s65kcs x1o0tod xyqm7xq xixxii4 x13vifvy xzkaem6"><div class="x4txaam x10l6tqk xcd74o5 x1k90msu x6o7n8i xbxq160 xg01cxk x47corl"><div ar
+2025-12-08 18:31:21.438 +03:00 [DBG] [FB Scraper] JS Debug: MutationObserver kuruldu
+2025-12-08 18:31:21.439 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 63 chars
+2025-12-08 18:31:21.440 +03:00 [DBG] [FB Scraper] JS Debug: MutationObserver kuruldu
+2025-12-08 18:31:21.441 +03:00 [INF] [FB Scraper] Observer başlatıldı
+2025-12-08 18:31:21.442 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 44 chars
+2025-12-08 18:31:21.443 +03:00 [INF] [FB Scraper] Observer başlatıldı
+2025-12-08 18:31:21.444 +03:00 [DBG] [FB Scraper] JS Debug: Observer basariyla baslatildi!
+2025-12-08 18:31:21.444 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 69 chars
+2025-12-08 18:31:21.445 +03:00 [DBG] [FB Scraper] JS Debug: Observer basariyla baslatildi!
+2025-12-08 18:31:21.446 +03:00 [DBG] [FB Scraper] Observer inject edildi
+2025-12-08 18:31:21.539 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4296 fps= 30 q=0.0 size=N/A time=00:02:22.96 bitrate=N/A speed=   1x elapsed=0:02:22.81    
+2025-12-08 18:31:22.055 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4312 fps= 30 q=0.0 size=N/A time=00:02:23.47 bitrate=N/A speed=   1x elapsed=0:02:23.33    
+2025-12-08 18:31:22.166 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#570)
+2025-12-08 18:31:22.570 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4326 fps= 30 q=0.0 size=N/A time=00:02:23.96 bitrate=N/A speed=   1x elapsed=0:02:23.84    
+2025-12-08 18:31:23.086 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4342 fps= 30 q=0.0 size=N/A time=00:02:24.47 bitrate=N/A speed=   1x elapsed=0:02:24.36    
+2025-12-08 18:31:23.166 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#573)
+2025-12-08 18:31:23.602 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4356 fps= 30 q=0.0 size=N/A time=00:02:24.96 bitrate=N/A speed=   1x elapsed=0:02:24.87    
+2025-12-08 18:31:24.117 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4372 fps= 30 q=0.0 size=N/A time=00:02:25.47 bitrate=N/A speed=   1x elapsed=0:02:25.39    
+2025-12-08 18:31:24.166 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#577)
+2025-12-08 18:31:24.633 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4387 fps= 30 q=0.0 size=N/A time=00:02:25.95 bitrate=N/A speed=   1x elapsed=0:02:25.91    
+2025-12-08 18:31:25.149 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4402 fps= 30 q=0.0 size=N/A time=00:02:26.47 bitrate=N/A speed=   1x elapsed=0:02:26.42    
+2025-12-08 18:31:25.166 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#580)
+2025-12-08 18:31:25.664 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4417 fps= 30 q=0.0 size=N/A time=00:02:26.95 bitrate=N/A speed=   1x elapsed=0:02:26.94    
+2025-12-08 18:31:26.167 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#583)
+2025-12-08 18:31:26.180 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4432 fps= 30 q=0.0 size=N/A time=00:02:27.46 bitrate=N/A speed=   1x elapsed=0:02:27.45    
+2025-12-08 18:31:26.695 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4446 fps= 30 q=0.0 size=N/A time=00:02:27.95 bitrate=N/A speed=   1x elapsed=0:02:27.97    
+2025-12-08 18:31:27.168 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#586)
+2025-12-08 18:31:27.211 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4461 fps= 30 q=0.0 size=N/A time=00:02:28.46 bitrate=N/A speed=   1x elapsed=0:02:28.48    
+2025-12-08 18:31:27.727 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4477 fps= 30 q=0.0 size=N/A time=00:02:28.95 bitrate=N/A speed=   1x elapsed=0:02:29.00    
+2025-12-08 18:31:28.169 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#589)
+2025-12-08 18:31:28.242 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4492 fps= 30 q=0.0 size=N/A time=00:02:29.73 bitrate=N/A speed=   1x elapsed=0:02:29.51    
+2025-12-08 18:31:28.758 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4521 fps= 30 q=0.0 size=N/A time=00:02:30.46 bitrate=N/A speed=   1x elapsed=0:02:30.03    
+2025-12-08 18:31:29.170 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#592)
+2025-12-08 18:31:29.274 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4537 fps= 30 q=0.0 size=N/A time=00:02:30.97 bitrate=N/A speed=   1x elapsed=0:02:30.55    
+2025-12-08 18:31:29.789 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4551 fps= 30 q=0.0 size=N/A time=00:02:31.46 bitrate=N/A speed=   1x elapsed=0:02:31.06    
+2025-12-08 18:31:30.171 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#595)
+2025-12-08 18:31:30.305 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4567 fps= 30 q=0.0 size=N/A time=00:02:31.97 bitrate=N/A speed=   1x elapsed=0:02:31.58    
+2025-12-08 18:31:30.821 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4581 fps= 30 q=0.0 size=N/A time=00:02:32.46 bitrate=N/A speed=   1x elapsed=0:02:32.09    
+2025-12-08 18:31:31.172 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#598)
+2025-12-08 18:31:31.336 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4596 fps= 30 q=0.0 size=N/A time=00:02:32.97 bitrate=N/A speed=   1x elapsed=0:02:32.61    
+2025-12-08 18:31:31.851 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4611 fps= 30 q=0.0 size=N/A time=00:02:33.45 bitrate=N/A speed=   1x elapsed=0:02:33.12    
+2025-12-08 18:31:32.172 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#601)
+2025-12-08 18:31:32.367 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4627 fps= 30 q=0.0 size=N/A time=00:02:33.97 bitrate=N/A speed=   1x elapsed=0:02:33.64    
+2025-12-08 18:31:32.883 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4641 fps= 30 q=0.0 size=N/A time=00:02:34.45 bitrate=N/A speed=   1x elapsed=0:02:34.16    
+2025-12-08 18:31:33.174 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#604)
+2025-12-08 18:31:33.399 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4657 fps= 30 q=0.0 size=N/A time=00:02:34.96 bitrate=N/A speed=   1x elapsed=0:02:34.67    
+2025-12-08 18:31:33.914 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4672 fps= 30 q=0.0 size=N/A time=00:02:35.45 bitrate=N/A speed=   1x elapsed=0:02:35.19    
+2025-12-08 18:31:34.173 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#607)
+2025-12-08 18:31:34.429 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4687 fps= 30 q=0.0 size=N/A time=00:02:35.96 bitrate=N/A speed=   1x elapsed=0:02:35.70    
+2025-12-08 18:31:34.945 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4702 fps= 30 q=0.0 size=N/A time=00:02:36.45 bitrate=N/A speed=   1x elapsed=0:02:36.22    
+2025-12-08 18:31:35.174 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#610)
+2025-12-08 18:31:35.461 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4717 fps= 30 q=0.0 size=N/A time=00:02:36.96 bitrate=N/A speed=   1x elapsed=0:02:36.73    
+2025-12-08 18:31:35.977 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4731 fps= 30 q=0.0 size=N/A time=00:02:37.45 bitrate=N/A speed=   1x elapsed=0:02:37.25    
+2025-12-08 18:31:36.174 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#613)
+2025-12-08 18:31:36.492 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4747 fps= 30 q=0.0 size=N/A time=00:02:37.96 bitrate=N/A speed=   1x elapsed=0:02:37.77    
+2025-12-08 18:31:37.008 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4762 fps= 30 q=0.0 size=N/A time=00:02:38.47 bitrate=N/A speed=   1x elapsed=0:02:38.28    
+2025-12-08 18:31:37.176 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#616)
+2025-12-08 18:31:37.524 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4777 fps= 30 q=0.0 size=N/A time=00:02:38.96 bitrate=N/A speed=   1x elapsed=0:02:38.80    
+2025-12-08 18:31:38.039 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4792 fps= 30 q=0.0 size=N/A time=00:02:39.47 bitrate=N/A speed=   1x elapsed=0:02:39.31    
+2025-12-08 18:31:38.175 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#619)
+2025-12-08 18:31:38.555 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4807 fps= 30 q=0.0 size=N/A time=00:02:39.96 bitrate=N/A speed=   1x elapsed=0:02:39.83    
+2025-12-08 18:31:39.070 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4821 fps= 30 q=0.0 size=N/A time=00:02:40.47 bitrate=N/A speed=   1x elapsed=0:02:40.34    
+2025-12-08 18:31:39.176 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#623)
+2025-12-08 18:31:39.586 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4837 fps= 30 q=0.0 size=N/A time=00:02:40.96 bitrate=N/A speed=   1x elapsed=0:02:40.86    
+2025-12-08 18:31:40.102 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4852 fps= 30 q=0.0 size=N/A time=00:02:41.47 bitrate=N/A speed=   1x elapsed=0:02:41.37    
+2025-12-08 18:31:40.175 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#626)
+2025-12-08 18:31:40.618 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4867 fps= 30 q=0.0 size=N/A time=00:02:41.95 bitrate=N/A speed=   1x elapsed=0:02:41.89    
+2025-12-08 18:31:41.133 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4882 fps= 30 q=0.0 size=N/A time=00:02:42.46 bitrate=N/A speed=   1x elapsed=0:02:42.41    
+2025-12-08 18:31:41.175 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#629)
+2025-12-08 18:31:41.648 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4896 fps= 30 q=0.0 size=N/A time=00:02:42.95 bitrate=N/A speed=   1x elapsed=0:02:42.92    
+2025-12-08 18:31:42.164 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4911 fps= 30 q=0.0 size=N/A time=00:02:43.46 bitrate=N/A speed=   1x elapsed=0:02:43.44    
+2025-12-08 18:31:42.176 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#632)
+2025-12-08 18:31:42.680 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4926 fps= 30 q=0.0 size=N/A time=00:02:43.95 bitrate=N/A speed=   1x elapsed=0:02:43.95    
+2025-12-08 18:31:43.178 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#635)
+2025-12-08 18:31:43.195 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4941 fps= 30 q=0.0 size=N/A time=00:02:44.46 bitrate=N/A speed=   1x elapsed=0:02:44.47    
+2025-12-08 18:31:43.711 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4956 fps= 30 q=0.0 size=N/A time=00:02:44.95 bitrate=N/A speed=   1x elapsed=0:02:44.98    
+2025-12-08 18:31:44.178 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#639)
+2025-12-08 18:31:44.226 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4971 fps= 30 q=0.0 size=N/A time=00:02:45.46 bitrate=N/A speed=   1x elapsed=0:02:45.50    
+2025-12-08 18:31:44.742 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 4988 fps= 30 q=0.0 size=N/A time=00:02:46.26 bitrate=N/A speed=   1x elapsed=0:02:46.01    
+2025-12-08 18:31:45.178 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#642)
+2025-12-08 18:31:45.258 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5016 fps= 30 q=0.0 size=N/A time=00:02:46.97 bitrate=N/A speed=   1x elapsed=0:02:46.53    
+2025-12-08 18:31:45.773 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5031 fps= 30 q=0.0 size=N/A time=00:02:47.46 bitrate=N/A speed=   1x elapsed=0:02:47.05    
+2025-12-08 18:31:46.180 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#645)
+2025-12-08 18:31:46.289 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5046 fps= 30 q=0.0 size=N/A time=00:02:47.97 bitrate=N/A speed=   1x elapsed=0:02:47.56    
+2025-12-08 18:31:46.805 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5062 fps= 30 q=0.0 size=N/A time=00:02:48.45 bitrate=N/A speed=   1x elapsed=0:02:48.08    
+2025-12-08 18:31:47.179 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#648)
+2025-12-08 18:31:47.321 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5077 fps= 30 q=0.0 size=N/A time=00:02:48.97 bitrate=N/A speed=   1x elapsed=0:02:48.59    
+2025-12-08 18:31:47.836 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5092 fps= 30 q=0.0 size=N/A time=00:02:49.45 bitrate=N/A speed=   1x elapsed=0:02:49.11    
+2025-12-08 18:31:48.181 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#651)
+2025-12-08 18:31:48.351 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5106 fps= 30 q=0.0 size=N/A time=00:02:49.96 bitrate=N/A speed=   1x elapsed=0:02:49.62    
+2025-12-08 18:31:48.867 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5122 fps= 30 q=0.0 size=N/A time=00:02:50.45 bitrate=N/A speed=   1x elapsed=0:02:50.14    
+2025-12-08 18:31:49.180 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#653)
+2025-12-08 18:31:49.383 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5136 fps= 30 q=0.0 size=N/A time=00:02:50.96 bitrate=N/A speed=   1x elapsed=0:02:50.66    
+2025-12-08 18:31:49.899 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 30 q=0.0 size=N/A time=00:02:51.45 bitrate=N/A speed=   1x elapsed=0:02:51.17    
+2025-12-08 18:31:50.181 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#656)
+2025-12-08 18:31:50.414 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 30 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=   1x elapsed=0:02:51.69    
+2025-12-08 18:31:50.929 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 30 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.997x elapsed=0:02:52.20    
+2025-12-08 18:31:51.181 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#659)
+2025-12-08 18:31:51.445 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 30 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.994x elapsed=0:02:52.72    
+2025-12-08 18:31:51.961 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 30 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.991x elapsed=0:02:53.23    
+2025-12-08 18:31:52.182 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#663)
+2025-12-08 18:31:52.477 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 30 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.988x elapsed=0:02:53.75    
+2025-12-08 18:31:52.992 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 30 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.985x elapsed=0:02:54.26    
+2025-12-08 18:31:53.182 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#666)
+2025-12-08 18:31:53.508 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 29 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.983x elapsed=0:02:54.78    
+2025-12-08 18:31:54.024 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 29 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.98x elapsed=0:02:55.30    
+2025-12-08 18:31:54.183 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#669)
+2025-12-08 18:31:54.423 +03:00 [DBG] [FB Scraper] JS Debug: Yorum parse edildi: Bilgilerini indir: Gizlilik  · Koşullar  · Reklam  · Ad Choices   · Ç
+2025-12-08 18:31:54.424 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 128 chars
+2025-12-08 18:31:54.425 +03:00 [DBG] [FB Scraper] JS Debug: Yorum parse edildi: Bilgilerini indir: Gizlilik  · Koşullar  · Reklam  · Ad Choices   · Ç
+2025-12-08 18:31:54.431 +03:00 [DBG] [ChatBus] Mesaj alındı: "Facebook" - Bilgilerini indir: Gizlilik  · Koşullar  · Reklam  · Ad Choices   · Çerezler  · Diğer
+2025-12-08 18:31:54.434 +03:00 [DBG] [ChatBus] Event tetikleniyor - Subscribers: MessageReceived=true, OnMerged=true
+2025-12-08 18:31:54.436 +03:00 [DBG] [FB Scraper] Yorum: Bilgilerini indir: Gizlilik  · Koşullar  · Reklam  · Ad Choices   · Çerezler  · Diğer
+2025-12-08 18:31:54.437 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 276 chars
+2025-12-08 18:31:54.438 +03:00 [DBG] [FB Scraper] JS Debug: Mutation: 1 yeni yorum algilandi
+2025-12-08 18:31:54.439 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 71 chars
+2025-12-08 18:31:54.440 +03:00 [DBG] [FB Scraper] JS Debug: Mutation: 1 yeni yorum algilandi
+2025-12-08 18:31:54.441 +03:00 [ERR] [FacebookChatHost] [JS ERROR] Uncaught Error: ResizeObserver loop completed with undelivered notifications. at https://www.facebook.com/checkpoint/1501092823525282/:0
+2025-12-08 18:31:54.442 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 263 chars
+2025-12-08 18:31:54.448 +03:00 [ERR] [FacebookChatHost] [JS ERROR] Uncaught Error: ResizeObserver loop completed with undelivered notifications. at https://www.facebook.com/checkpoint/1501092823525282/:0
+2025-12-08 18:31:54.449 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 263 chars
+2025-12-08 18:31:54.539 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 29 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.977x elapsed=0:02:55.81    
+2025-12-08 18:31:54.591 +03:00 [DBG] [ChatViewModel] 1 mesaj Feed'e eklendi. Toplam: 1
+2025-12-08 18:31:55.055 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 29 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.974x elapsed=0:02:56.33    
+2025-12-08 18:31:55.183 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#672)
+2025-12-08 18:31:55.197 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (62% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:55.386 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (63% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:55.570 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 29 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.971x elapsed=0:02:56.84    
+2025-12-08 18:31:55.577 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (65% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:55.766 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (67% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:55.953 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (69% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:56.086 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 29 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.968x elapsed=0:02:57.36    
+2025-12-08 18:31:56.142 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (71% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:56.183 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#675)
+2025-12-08 18:31:56.213 +03:00 [DBG] [FB Scraper] JS Debug: Yorum parse edildi: Daha fazla bilgi al: Selfie fotoğrafın sadece kimliğini doğrulamak ve p
+2025-12-08 18:31:56.214 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 130 chars
+2025-12-08 18:31:56.215 +03:00 [DBG] [FB Scraper] JS Debug: Yorum parse edildi: Daha fazla bilgi al: Selfie fotoğrafın sadece kimliğini doğrulamak ve p
+2025-12-08 18:31:56.216 +03:00 [DBG] [ChatBus] Mesaj alındı: "Facebook" - Daha fazla bilgi al: Selfie fotoğrafın sadece kimliğini doğrulamak ve platformumuzun güvenliği, emniyeti ve bütünlüğü için kullanılacaktır. 30 gün içinde silinecektir.
+2025-12-08 18:31:56.217 +03:00 [DBG] [ChatBus] Event tetikleniyor - Subscribers: MessageReceived=true, OnMerged=true
+2025-12-08 18:31:56.218 +03:00 [DBG] [FB Scraper] Yorum: Daha fazla bilgi al: Selfie fotoğrafın sadece kimliğini doğrulamak ve platformumuzun güvenliği, emniyeti ve bütünlüğü için kullanılacaktır. 30 gün içinde silinecektir.
+2025-12-08 18:31:56.219 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 422 chars
+2025-12-08 18:31:56.220 +03:00 [DBG] [FB Scraper] JS Debug: Mutation: 1 yeni yorum algilandi
+2025-12-08 18:31:56.221 +03:00 [DBG] [FacebookChatHost] WebMessage alındı: 71 chars
+2025-12-08 18:31:56.222 +03:00 [DBG] [FB Scraper] JS Debug: Mutation: 1 yeni yorum algilandi
+2025-12-08 18:31:56.330 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (73% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:56.393 +03:00 [DBG] [ChatViewModel] 1 mesaj Feed'e eklendi. Toplam: 2
+2025-12-08 18:31:56.520 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (74% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:56.601 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 29 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.965x elapsed=0:02:57.87    
+2025-12-08 18:31:56.713 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (76% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:56.902 +03:00 [DBG] [StreamController] [FFmpeg]     Last message repeated 1 times
+2025-12-08 18:31:56.903 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (78% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:57.092 +03:00 [DBG] [StreamController] [FFmpeg]     Last message repeated 1 times
+2025-12-08 18:31:57.093 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (79% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:57.117 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 29 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.963x elapsed=0:02:58.39    
+2025-12-08 18:31:57.139 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (79% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:57.183 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#679)
+2025-12-08 18:31:57.282 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (80% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:57.473 +03:00 [DBG] [StreamController] [FFmpeg]     Last message repeated 1 times
+2025-12-08 18:31:57.474 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (81% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:57.633 +03:00 [DBG] [StreamController] [FFmpeg]     Last message repeated 1 times
+2025-12-08 18:31:57.635 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 29 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.96x elapsed=0:02:58.91    
+2025-12-08 18:31:57.663 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (82% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:57.855 +03:00 [DBG] [StreamController] [FFmpeg]     Last message repeated 1 times
+2025-12-08 18:31:57.856 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (84% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:58.046 +03:00 [DBG] [StreamController] [FFmpeg]     Last message repeated 1 times
+2025-12-08 18:31:58.047 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (85% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:58.149 +03:00 [DBG] [StreamController] [FFmpeg]     Last message repeated 1 times
+2025-12-08 18:31:58.150 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5152 fps= 29 q=0.0 size=N/A time=00:02:51.73 bitrate=N/A speed=0.957x elapsed=0:02:59.42    
+2025-12-08 18:31:58.184 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#682)
+2025-12-08 18:31:58.236 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (86% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:58.472 +03:00 [DBG] [StreamController] [FFmpeg]     Last message repeated 2 times
+2025-12-08 18:31:58.474 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (80% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:58.616 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (79% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:58.664 +03:00 [DBG] [StreamController] [FFmpeg]     Last message repeated 1 times
+2025-12-08 18:31:58.665 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5162 fps= 29 q=0.0 size=N/A time=00:02:52.33 bitrate=N/A speed=0.958x elapsed=0:02:59.94    
+2025-12-08 18:31:58.805 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (81% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:58.997 +03:00 [DBG] [StreamController] [FFmpeg]     Last message repeated 1 times
+2025-12-08 18:31:58.998 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (78% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:59.045 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (75% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:59.180 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5197 fps= 29 q=0.0 size=N/A time=00:02:53.46 bitrate=N/A speed=0.961x elapsed=0:03:00.45    
+2025-12-08 18:31:59.184 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#685)
+2025-12-08 18:31:59.186 +03:00 [DBG] [StreamController] [FFmpeg] [dshow @ 0000015cbebcf8c0] real-time buffer [DroidCam Video] [video input] too full or near too full (70% of size: 100000000 [rtbufsize parameter])! frame dropped!
+2025-12-08 18:31:59.695 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5263 fps= 29 q=0.0 size=N/A time=00:02:55.50 bitrate=N/A speed=0.97x elapsed=0:03:00.97    
+2025-12-08 18:32:00.185 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#688)
+2025-12-08 18:32:00.211 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5356 fps= 30 q=0.0 size=N/A time=00:02:58.76 bitrate=N/A speed=0.985x elapsed=0:03:01.48    
+2025-12-08 18:32:00.727 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5471 fps= 30 q=0.0 size=N/A time=00:03:01.97 bitrate=N/A speed=   1x elapsed=0:03:02.00    
+2025-12-08 18:32:01.185 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#691)
+2025-12-08 18:32:01.243 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5491 fps= 30 q=0.0 size=N/A time=00:03:02.97 bitrate=N/A speed=   1x elapsed=0:03:02.52    
+2025-12-08 18:32:01.757 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5512 fps= 30 q=0.0 size=N/A time=00:03:03.45 bitrate=N/A speed=   1x elapsed=0:03:03.03    
+2025-12-08 18:32:02.185 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#694)
+2025-12-08 18:32:02.273 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5526 fps= 30 q=0.0 size=N/A time=00:03:03.97 bitrate=N/A speed=   1x elapsed=0:03:03.55    
+2025-12-08 18:32:02.789 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5542 fps= 30 q=0.0 size=N/A time=00:03:04.45 bitrate=N/A speed=   1x elapsed=0:03:04.06    
+2025-12-08 18:32:03.186 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#697)
+2025-12-08 18:32:03.305 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5556 fps= 30 q=0.0 size=N/A time=00:03:04.96 bitrate=N/A speed=   1x elapsed=0:03:04.58    
+2025-12-08 18:32:03.821 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5572 fps= 30 q=0.0 size=N/A time=00:03:05.45 bitrate=N/A speed=   1x elapsed=0:03:05.09    
+2025-12-08 18:32:04.187 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#700)
+2025-12-08 18:32:04.336 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5587 fps= 30 q=0.0 size=N/A time=00:03:05.96 bitrate=N/A speed=   1x elapsed=0:03:05.61    
+2025-12-08 18:32:04.851 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5601 fps= 30 q=0.0 size=N/A time=00:03:06.45 bitrate=N/A speed=   1x elapsed=0:03:06.12    
+2025-12-08 18:32:05.186 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#703)
+2025-12-08 18:32:05.367 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5617 fps= 30 q=0.0 size=N/A time=00:03:06.96 bitrate=N/A speed=   1x elapsed=0:03:06.64    
+2025-12-08 18:32:05.883 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5632 fps= 30 q=0.0 size=N/A time=00:03:07.45 bitrate=N/A speed=   1x elapsed=0:03:07.16    
+2025-12-08 18:32:06.187 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#706)
+2025-12-08 18:32:06.399 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5646 fps= 30 q=0.0 size=N/A time=00:03:07.96 bitrate=N/A speed=   1x elapsed=0:03:07.67    
+2025-12-08 18:32:06.914 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5662 fps= 30 q=0.0 size=N/A time=00:03:08.47 bitrate=N/A speed=   1x elapsed=0:03:08.19    
+2025-12-08 18:32:07.187 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#709)
+2025-12-08 18:32:07.430 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5677 fps= 30 q=0.0 size=N/A time=00:03:08.96 bitrate=N/A speed=   1x elapsed=0:03:08.70    
+2025-12-08 18:32:07.945 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5691 fps= 30 q=0.0 size=N/A time=00:03:09.47 bitrate=N/A speed=   1x elapsed=0:03:09.22    
+2025-12-08 18:32:08.189 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#712)
+2025-12-08 18:32:08.461 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5707 fps= 30 q=0.0 size=N/A time=00:03:09.96 bitrate=N/A speed=   1x elapsed=0:03:09.73    
+2025-12-08 18:32:08.977 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5722 fps= 30 q=0.0 size=N/A time=00:03:10.47 bitrate=N/A speed=   1x elapsed=0:03:10.25    
+2025-12-08 18:32:09.189 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#715)
+2025-12-08 18:32:09.492 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5737 fps= 30 q=0.0 size=N/A time=00:03:10.96 bitrate=N/A speed=   1x elapsed=0:03:10.77    
+2025-12-08 18:32:10.008 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5752 fps= 30 q=0.0 size=N/A time=00:03:11.47 bitrate=N/A speed=   1x elapsed=0:03:11.28    
+2025-12-08 18:32:10.191 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#719)
+2025-12-08 18:32:10.524 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5766 fps= 30 q=0.0 size=N/A time=00:03:11.95 bitrate=N/A speed=   1x elapsed=0:03:11.80    
+2025-12-08 18:32:11.039 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5782 fps= 30 q=0.0 size=N/A time=00:03:12.46 bitrate=N/A speed=   1x elapsed=0:03:12.31    
+2025-12-08 18:32:11.191 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#722)
+2025-12-08 18:32:11.556 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5796 fps= 30 q=0.0 size=N/A time=00:03:12.95 bitrate=N/A speed=   1x elapsed=0:03:12.83    
+2025-12-08 18:32:12.070 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5812 fps= 30 q=0.0 size=N/A time=00:03:13.46 bitrate=N/A speed=   1x elapsed=0:03:13.34    
+2025-12-08 18:32:12.193 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#725)
+2025-12-08 18:32:12.586 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5827 fps= 30 q=0.0 size=N/A time=00:03:13.95 bitrate=N/A speed=   1x elapsed=0:03:13.86    
+2025-12-08 18:32:13.101 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5841 fps= 30 q=0.0 size=N/A time=00:03:14.46 bitrate=N/A speed=   1x elapsed=0:03:14.37    
+2025-12-08 18:32:13.192 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#728)
+2025-12-08 18:32:13.617 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5857 fps= 30 q=0.0 size=N/A time=00:03:14.95 bitrate=N/A speed=   1x elapsed=0:03:14.89    
+2025-12-08 18:32:14.133 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5872 fps= 30 q=0.0 size=N/A time=00:03:15.46 bitrate=N/A speed=   1x elapsed=0:03:15.41    
+2025-12-08 18:32:14.194 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#732)
+2025-12-08 18:32:14.649 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5886 fps= 30 q=0.0 size=N/A time=00:03:15.97 bitrate=N/A speed=   1x elapsed=0:03:15.92    
+2025-12-08 18:32:15.164 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5902 fps= 30 q=0.0 size=N/A time=00:03:16.46 bitrate=N/A speed=   1x elapsed=0:03:16.44    
+2025-12-08 18:32:15.193 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#735)
+2025-12-08 18:32:15.680 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5916 fps= 30 q=0.0 size=N/A time=00:03:16.97 bitrate=N/A speed=   1x elapsed=0:03:16.95    
+2025-12-08 18:32:16.194 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#738)
+2025-12-08 18:32:16.195 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5931 fps= 30 q=0.0 size=N/A time=00:03:17.46 bitrate=N/A speed=   1x elapsed=0:03:17.47    
+2025-12-08 18:32:16.711 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5946 fps= 30 q=0.0 size=N/A time=00:03:17.97 bitrate=N/A speed=   1x elapsed=0:03:17.98    
+2025-12-08 18:32:17.194 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#741)
+2025-12-08 18:32:17.226 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5962 fps= 30 q=0.0 size=N/A time=00:03:18.45 bitrate=N/A speed=   1x elapsed=0:03:18.50    
+2025-12-08 18:32:17.742 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 5979 fps= 30 q=0.0 size=N/A time=00:03:19.30 bitrate=N/A speed=   1x elapsed=0:03:19.02    
+2025-12-08 18:32:18.195 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#744)
+2025-12-08 18:32:18.258 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6006 fps= 30 q=0.0 size=N/A time=00:03:19.97 bitrate=N/A speed=   1x elapsed=0:03:19.53    
+2025-12-08 18:32:18.774 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6021 fps= 30 q=0.0 size=N/A time=00:03:20.45 bitrate=N/A speed=   1x elapsed=0:03:20.05    
+2025-12-08 18:32:19.194 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#747)
+2025-12-08 18:32:19.302 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6036 fps= 30 q=0.0 size=N/A time=00:03:20.96 bitrate=N/A speed=   1x elapsed=0:03:20.57    
+2025-12-08 18:32:19.806 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6052 fps= 30 q=0.0 size=N/A time=00:03:21.45 bitrate=N/A speed=   1x elapsed=0:03:21.08    
+2025-12-08 18:32:20.195 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#750)
+2025-12-08 18:32:20.320 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6066 fps= 30 q=0.0 size=N/A time=00:03:21.96 bitrate=N/A speed=   1x elapsed=0:03:21.59    
+2025-12-08 18:32:20.836 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6082 fps= 30 q=0.0 size=N/A time=00:03:22.45 bitrate=N/A speed=   1x elapsed=0:03:22.11    
+2025-12-08 18:32:21.194 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#753)
+2025-12-08 18:32:21.352 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6096 fps= 30 q=0.0 size=N/A time=00:03:22.96 bitrate=N/A speed=   1x elapsed=0:03:22.62    
+2025-12-08 18:32:21.868 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6111 fps= 30 q=0.0 size=N/A time=00:03:23.47 bitrate=N/A speed=   1x elapsed=0:03:23.14    
+2025-12-08 18:32:22.195 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#755)
+2025-12-08 18:32:22.382 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6126 fps= 30 q=0.0 size=N/A time=00:03:23.96 bitrate=N/A speed=   1x elapsed=0:03:23.66    
+2025-12-08 18:32:22.899 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6142 fps= 30 q=0.0 size=N/A time=00:03:24.47 bitrate=N/A speed=   1x elapsed=0:03:24.17    
+2025-12-08 18:32:23.194 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#759)
+2025-12-08 18:32:23.414 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6156 fps= 30 q=0.0 size=N/A time=00:03:24.96 bitrate=N/A speed=   1x elapsed=0:03:24.69    
+2025-12-08 18:32:23.930 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6172 fps= 30 q=0.0 size=N/A time=00:03:25.47 bitrate=N/A speed=   1x elapsed=0:03:25.20    
+2025-12-08 18:32:24.195 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#762)
+2025-12-08 18:32:24.446 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6186 fps= 30 q=0.0 size=N/A time=00:03:25.96 bitrate=N/A speed=   1x elapsed=0:03:25.72    
+2025-12-08 18:32:24.961 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6202 fps= 30 q=0.0 size=N/A time=00:03:26.47 bitrate=N/A speed=   1x elapsed=0:03:26.23    
+2025-12-08 18:32:25.194 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#765)
+2025-12-08 18:32:25.476 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6216 fps= 30 q=0.0 size=N/A time=00:03:26.95 bitrate=N/A speed=   1x elapsed=0:03:26.75    
+2025-12-08 18:32:25.992 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6232 fps= 30 q=0.0 size=N/A time=00:03:27.47 bitrate=N/A speed=   1x elapsed=0:03:27.27    
+2025-12-08 18:32:26.195 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#768)
+2025-12-08 18:32:26.508 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6246 fps= 30 q=0.0 size=N/A time=00:03:27.95 bitrate=N/A speed=   1x elapsed=0:03:27.78    
+2025-12-08 18:32:27.024 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6262 fps= 30 q=0.0 size=N/A time=00:03:28.46 bitrate=N/A speed=   1x elapsed=0:03:28.30    
+2025-12-08 18:32:27.194 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#771)
+2025-12-08 18:32:27.539 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6276 fps= 30 q=0.0 size=N/A time=00:03:28.95 bitrate=N/A speed=   1x elapsed=0:03:28.81    
+2025-12-08 18:32:28.055 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6292 fps= 30 q=0.0 size=N/A time=00:03:29.46 bitrate=N/A speed=   1x elapsed=0:03:29.33    
+2025-12-08 18:32:28.195 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#775)
+2025-12-08 18:32:28.570 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6307 fps= 30 q=0.0 size=N/A time=00:03:29.95 bitrate=N/A speed=   1x elapsed=0:03:29.84    
+2025-12-08 18:32:29.086 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6321 fps= 30 q=0.0 size=N/A time=00:03:30.46 bitrate=N/A speed=   1x elapsed=0:03:30.36    
+2025-12-08 18:32:29.195 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#778)
+2025-12-08 18:32:29.602 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6337 fps= 30 q=0.0 size=N/A time=00:03:30.97 bitrate=N/A speed=   1x elapsed=0:03:30.87    
+2025-12-08 18:32:30.118 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6351 fps= 30 q=0.0 size=N/A time=00:03:31.46 bitrate=N/A speed=   1x elapsed=0:03:31.39    
+2025-12-08 18:32:30.196 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#781)
+2025-12-08 18:32:30.633 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6367 fps= 30 q=0.0 size=N/A time=00:03:31.97 bitrate=N/A speed=   1x elapsed=0:03:31.91    
+2025-12-08 18:32:31.148 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6381 fps= 30 q=0.0 size=N/A time=00:03:32.46 bitrate=N/A speed=   1x elapsed=0:03:32.42    
+2025-12-08 18:32:31.196 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#784)
+2025-12-08 18:32:31.664 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6397 fps= 30 q=0.0 size=N/A time=00:03:32.97 bitrate=N/A speed=   1x elapsed=0:03:32.94    
+2025-12-08 18:32:31.752 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-08 18:32:31.754 +03:00 [DBG] [MainWindow] Ingestor task'ları bekleniyor... (1 adet)
+2025-12-08 18:32:31.756 +03:00 [INF] ["YouTube"] Durduruluyor: Ze-FXL1oHRw
+2025-12-08 18:32:31.758 +03:00 [DBG] [MainWindow] YouTube ingestor disposed
+2025-12-08 18:32:31.759 +03:00 [INF] ["Facebook"] Durduruluyor: https://m.facebook.com/watch/live/?v=1013324524329413
+2025-12-08 18:32:32.180 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6411 fps= 30 q=0.0 size=N/A time=00:03:33.46 bitrate=N/A speed=   1x elapsed=0:03:33.45    
+2025-12-08 18:32:32.197 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#786)
+2025-12-08 18:32:32.696 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6426 fps= 30 q=0.0 size=N/A time=00:03:33.97 bitrate=N/A speed=   1x elapsed=0:03:33.97    
+2025-12-08 18:32:33.211 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6441 fps= 30 q=0.0 size=N/A time=00:03:34.45 bitrate=N/A speed=   1x elapsed=0:03:34.48    
+2025-12-08 18:32:33.728 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6457 fps= 30 q=0.0 size=N/A time=00:03:34.97 bitrate=N/A speed=   1x elapsed=0:03:35.00    
+2025-12-08 18:32:33.765 +03:00 [DBG] [FacebookChatHost] Message handler unregistered
+2025-12-08 18:32:33.766 +03:00 [DBG] [MainWindow] Facebook ingestor disposed
+2025-12-08 18:32:33.768 +03:00 [DBG] [FacebookChatHost] Dispose başlıyor...
+2025-12-08 18:32:33.776 +03:00 [DBG] [FacebookChatHost] Dispose tamamlandı
+2025-12-08 18:32:33.777 +03:00 [DBG] [MainWindow] FacebookChatHost disposed
+2025-12-08 18:32:34.242 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6476 fps= 30 q=0.0 size=N/A time=00:03:35.86 bitrate=N/A speed=   1x elapsed=0:03:35.52    
+2025-12-08 18:32:34.758 +03:00 [DBG] [StreamController] [FFmpeg Stats] frame= 6487 fps= 30 q=0.0 size=N/A time=00:03:36.23 bitrate=N/A speed=   1x elapsed=0:03:36.03    

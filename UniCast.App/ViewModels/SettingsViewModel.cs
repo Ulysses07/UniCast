@@ -16,7 +16,7 @@ using SettingsData = UniCast.App.Services.SettingsData;
 namespace UniCast.App.ViewModels
 {
     /// <summary>
-    /// DÜZELTME v18: Ayarlar kaydedildi onayı ve validation eklendi.
+    /// SettingsViewModel - Facebook Okuyucu Hesap desteği eklendi.
     /// </summary>
     public sealed class SettingsViewModel : INotifyPropertyChanged, IDisposable
     {
@@ -67,6 +67,11 @@ namespace UniCast.App.ViewModels
             _facebookUserId = _settings.FacebookUserId ?? "";
             _facebookLiveVideoUrl = _settings.FacebookLiveVideoUrl ?? "";
 
+            // YENİ: Facebook Okuyucu Hesap
+            _facebookReaderEmail = _settings.FacebookReaderEmail ?? "";
+            _facebookReaderPassword = _settings.FacebookReaderPassword ?? "";
+            _facebookReaderConnected = _settings.FacebookReaderConnected;
+
             // Komutlar
             SaveCommand = new RelayCommand(_ => Save());
             BrowseRecordFolderCommand = new RelayCommand(_ => BrowseFolder());
@@ -78,12 +83,9 @@ namespace UniCast.App.ViewModels
         public ObservableCollection<CaptureDevice> VideoDevices { get; } = new();
         public ObservableCollection<CaptureDevice> AudioDevices { get; } = new();
 
-        #region DÜZELTME v18: Save Status Properties
+        #region Save Status Properties
 
         private bool _isSaving;
-        /// <summary>
-        /// Kaydetme işlemi devam ediyor mu
-        /// </summary>
         public bool IsSaving
         {
             get => _isSaving;
@@ -91,9 +93,6 @@ namespace UniCast.App.ViewModels
         }
 
         private bool _saveSuccess;
-        /// <summary>
-        /// Son kaydetme başarılı mı
-        /// </summary>
         public bool SaveSuccess
         {
             get => _saveSuccess;
@@ -101,9 +100,6 @@ namespace UniCast.App.ViewModels
         }
 
         private string? _saveMessage;
-        /// <summary>
-        /// Kaydetme durumu mesajı
-        /// </summary>
         public string? SaveMessage
         {
             get => _saveMessage;
@@ -111,23 +107,18 @@ namespace UniCast.App.ViewModels
         }
 
         private bool _hasUnsavedChanges;
-        /// <summary>
-        /// Kaydedilmemiş değişiklikler var mı
-        /// </summary>
         public bool HasUnsavedChanges
         {
             get => _hasUnsavedChanges;
             private set { _hasUnsavedChanges = value; OnPropertyChanged(); }
         }
 
-        /// <summary>
-        /// Ayarlar kaydedildiğinde tetiklenen event
-        /// </summary>
         public event EventHandler<SettingsSavedEventArgs>? OnSettingsSaved;
 
         #endregion
 
-        // DÜZELTME: DefaultCamera - hem DefaultCamera hem SelectedVideoDevice güncelleniyor
+        #region Device Properties
+
         private string _defaultCamera;
         public string DefaultCamera
         {
@@ -142,7 +133,6 @@ namespace UniCast.App.ViewModels
             }
         }
 
-        // DÜZELTME: DefaultMicrophone - hem DefaultMicrophone hem SelectedAudioDevice güncelleniyor
         private string _defaultMicrophone;
         public string DefaultMicrophone
         {
@@ -156,6 +146,10 @@ namespace UniCast.App.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        #endregion
+
+        #region Encoder & Quality Properties
 
         private string _encoder;
         public string Encoder
@@ -220,7 +214,10 @@ namespace UniCast.App.ViewModels
             set { _enableLocalRecord = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
 
-        // YouTube
+        #endregion
+
+        #region YouTube Properties
+
         private string _youTubeApiKey;
         public string YouTubeApiKey
         {
@@ -235,7 +232,10 @@ namespace UniCast.App.ViewModels
             set { _youTubeVideoId = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
 
-        // Twitch
+        #endregion
+
+        #region Twitch Properties
+
         private string _twitchChannelName;
         public string TwitchChannelName
         {
@@ -257,7 +257,10 @@ namespace UniCast.App.ViewModels
             set { _twitchBotUsername = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
 
-        // Sosyal Alanlar
+        #endregion
+
+        #region Instagram Properties
+
         private string _instagramUserId;
         public string InstagramUserId
         {
@@ -271,6 +274,10 @@ namespace UniCast.App.ViewModels
             get => _instagramSessionId;
             set { _instagramSessionId = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
+
+        #endregion
+
+        #region Facebook Properties (Eski - Geriye Uyumluluk)
 
         private string _facebookPageId;
         public string FacebookPageId
@@ -293,7 +300,6 @@ namespace UniCast.App.ViewModels
             set { _facebookAccessToken = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
 
-        // Yeni WebView2 tabanlı Facebook ayarları
         private string _facebookCookies = "";
         public string FacebookCookies
         {
@@ -315,13 +321,53 @@ namespace UniCast.App.ViewModels
             set { _facebookLiveVideoUrl = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
 
+        #endregion
+
+        #region Facebook Okuyucu Hesap Properties (YENİ)
+
+        private string _facebookReaderEmail = "";
+        /// <summary>
+        /// Facebook okuyucu hesap e-posta/telefon.
+        /// Ana hesap DEĞİL, ayrı bir okuyucu hesap!
+        /// </summary>
+        public string FacebookReaderEmail
+        {
+            get => _facebookReaderEmail;
+            set { _facebookReaderEmail = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _facebookReaderPassword = "";
+        /// <summary>
+        /// Facebook okuyucu hesap şifresi.
+        /// </summary>
+        public string FacebookReaderPassword
+        {
+            get => _facebookReaderPassword;
+            set { _facebookReaderPassword = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private bool _facebookReaderConnected;
+        /// <summary>
+        /// Facebook okuyucu hesap bağlantı durumu.
+        /// </summary>
+        public bool FacebookReaderConnected
+        {
+            get => _facebookReaderConnected;
+            set { _facebookReaderConnected = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        #endregion
+
+        #region Commands
+
         public ICommand SaveCommand { get; }
         public ICommand BrowseRecordFolderCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
 
-        /// <summary>
-        /// DÜZELTME v18: Geliştirilmiş kaydetme metodu - validation ve onay mesajı
-        /// </summary>
+        #endregion
+
+        #region Save Method
+
         private void Save()
         {
             IsSaving = true;
@@ -330,7 +376,6 @@ namespace UniCast.App.ViewModels
 
             try
             {
-                // DÜZELTME v18: Validation
                 var validationResult = ValidateSettings();
                 if (!validationResult.IsValid)
                 {
@@ -339,7 +384,6 @@ namespace UniCast.App.ViewModels
                     return;
                 }
 
-                // SettingsStore.Data'yı güncelle
                 SettingsStore.Update(s =>
                 {
                     s.DefaultCamera = (DefaultCamera ?? "").Trim();
@@ -373,16 +417,19 @@ namespace UniCast.App.ViewModels
                     s.FacebookCookies = (FacebookCookies ?? "").Trim();
                     s.FacebookUserId = (FacebookUserId ?? "").Trim();
                     s.FacebookLiveVideoUrl = (FacebookLiveVideoUrl ?? "").Trim();
+
+                    // Facebook Okuyucu Hesap (YENİ)
+                    s.FacebookReaderEmail = (FacebookReaderEmail ?? "").Trim();
+                    s.FacebookReaderPassword = (FacebookReaderPassword ?? "").Trim();
+                    s.FacebookReaderConnected = FacebookReaderConnected;
                 });
 
                 SettingsStore.Save();
 
-                // DÜZELTME v18: Başarı durumu
                 SaveSuccess = true;
                 SaveMessage = "✅ Ayarlar başarıyla kaydedildi";
                 HasUnsavedChanges = false;
 
-                // Event tetikle
                 OnSettingsSaved?.Invoke(this, new SettingsSavedEventArgs
                 {
                     Success = true,
@@ -390,7 +437,6 @@ namespace UniCast.App.ViewModels
                     Timestamp = DateTime.Now
                 });
 
-                // DÜZELTME v18: 3 saniye sonra mesajı temizle
                 _ = ClearSaveMessageAfterDelay();
             }
             catch (Exception ex)
@@ -411,30 +457,27 @@ namespace UniCast.App.ViewModels
             }
         }
 
-        /// <summary>
-        /// DÜZELTME v18: Ayarları doğrula
-        /// </summary>
+        #endregion
+
+        #region Validation
+
         private ValidationResult ValidateSettings()
         {
-            // Video bitrate kontrolü
             if (VideoKbps < 500 || VideoKbps > 50000)
             {
                 return new ValidationResult(false, "Video bitrate 500-50000 kbps arasında olmalı");
             }
 
-            // Audio bitrate kontrolü
             if (AudioKbps < 32 || AudioKbps > 320)
             {
                 return new ValidationResult(false, "Audio bitrate 32-320 kbps arasında olmalı");
             }
 
-            // FPS kontrolü
             if (Fps < 15 || Fps > 60)
             {
                 return new ValidationResult(false, "FPS 15-60 arasında olmalı");
             }
 
-            // Çözünürlük kontrolü
             if (Width < 640 || Width > 3840)
             {
                 return new ValidationResult(false, "Genişlik 640-3840 arasında olmalı");
@@ -445,7 +488,6 @@ namespace UniCast.App.ViewModels
                 return new ValidationResult(false, "Yükseklik 360-2160 arasında olmalı");
             }
 
-            // Kayıt klasörü kontrolü
             if (EnableLocalRecord && string.IsNullOrWhiteSpace(RecordFolder))
             {
                 return new ValidationResult(false, "Yerel kayıt aktifse kayıt klasörü belirtilmeli");
@@ -468,6 +510,10 @@ namespace UniCast.App.ViewModels
 
             return new ValidationResult(true, null);
         }
+
+        #endregion
+
+        #region Helper Methods
 
         private async Task ClearSaveMessageAfterDelay()
         {
@@ -508,6 +554,10 @@ namespace UniCast.App.ViewModels
             foreach (var a in audios) AudioDevices.Add(a);
         }
 
+        #endregion
+
+        #region Dispose
+
         public void Dispose()
         {
             if (_disposed) return;
@@ -519,21 +569,17 @@ namespace UniCast.App.ViewModels
             OnSettingsSaved = null;
         }
 
+        #endregion
+
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? n = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
     }
 
-    #region DÜZELTME v18: Helper Types
+    #region Helper Types
 
-    /// <summary>
-    /// Validation sonucu
-    /// </summary>
     internal record ValidationResult(bool IsValid, string? ErrorMessage);
 
-    /// <summary>
-    /// Ayarlar kaydedildi event argümanları
-    /// </summary>
     public class SettingsSavedEventArgs : EventArgs
     {
         public bool Success { get; init; }

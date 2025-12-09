@@ -471,7 +471,8 @@ namespace UniCast.Core.Chat.Ingestors
                     
                     if (hr.indexOf('/videos/') >= 0 || hr.indexOf('/watch/') >= 0 || hr.indexOf('/live/') >= 0) continue;
                     if (hr.indexOf('/hashtag/') >= 0 || hr.indexOf('/groups/') >= 0 || hr.indexOf('/events/') >= 0) continue;
-                    if (hr.indexOf('?comment_id=') >= 0 || hr.indexOf('#') >= 0) continue;
+                    // comment_id içeren linkler YAZAR linki olabilir - atlama!
+                    if (hr.indexOf('#') >= 0 && hr.indexOf('?comment_id=') < 0) continue;
                     
                     var linkText = lnk.textContent ? lnk.textContent.trim() : '';
                     if (linkText && linkText.length > 1 && linkText.length < 50) {
@@ -516,37 +517,51 @@ namespace UniCast.Core.Chat.Ingestors
             var textContainers = el.querySelectorAll('[dir=""auto""]');
             if (debug) log('Parse: ' + textContainers.length + ' dir=auto container bulundu');
             
+            // Facebook yapısı: ilk dir=auto yazar adı, sonrakiler mesaj
+            var foundAuthorInDirAuto = false;
             for (var m = 0; m < textContainers.length; m++) {
                 var container = textContainers[m];
                 if (container.closest('a')) continue;
                 
                 var content = container.textContent ? container.textContent.trim() : '';
                 
-                if (content && content !== author && content.length > 0 && content.length < 1000) {
-                    if (/^\d+\s*(saat|dakika|saniye|gun|hafta|ay|yil|h|m|s|d|w)/i.test(content)) continue;
-                    if (/^(just now|now|\d+\s*(hours?|minutes?|seconds?|days?|weeks?)\s*ago)$/i.test(content)) continue;
-                    
-                    var lowerContent = content.toLowerCase();
-                    if (lowerContent.indexOf('canli yayin') >= 0 || 
-                        lowerContent.indexOf('simdi canli') >= 0 ||
-                        lowerContent.indexOf('yayinda') >= 0 ||
-                        lowerContent.indexOf('yanitla') >= 0 ||
-                        lowerContent.indexOf('begen') >= 0 ||
-                        lowerContent.indexOf('paylas') >= 0 ||
-                        lowerContent.indexOf('like') >= 0 ||
-                        lowerContent.indexOf('reply') >= 0 ||
-                        lowerContent.indexOf('share') >= 0 ||
-                        lowerContent.indexOf('izleyici') >= 0 ||
-                        lowerContent.indexOf('viewer') >= 0) {
-                        if (debug) log('Parse: UI metni atlandi: ' + content.substring(0, 30));
-                        continue;
-                    }
-                    
-                    if (debug) log('Parse: Potansiyel mesaj: ' + content.substring(0, 50));
-                    
-                    if (!commentText || content.length > commentText.length) {
-                        commentText = content;
-                    }
+                if (!content || content.length === 0 || content.length >= 1000) continue;
+                
+                // İlk bulunan yazar adıysa atla
+                if (content === author) {
+                    foundAuthorInDirAuto = true;
+                    if (debug) log('Parse: Yazar adi atlandi: ' + content);
+                    continue;
+                }
+                
+                // Zaman damgası kontrolü
+                if (/^\d+\s*(saat|dakika|saniye|gun|hafta|ay|yil|h|m|s|d|w)/i.test(content)) continue;
+                if (/^(just now|now|\d+\s*(hours?|minutes?|seconds?|days?|weeks?)\s*ago)$/i.test(content)) continue;
+                if (/^\d+[hdwmy]$/i.test(content)) continue;
+                
+                var lowerContent = content.toLowerCase();
+                if (lowerContent.indexOf('canli yayin') >= 0 || 
+                    lowerContent.indexOf('simdi canli') >= 0 ||
+                    lowerContent.indexOf('yayinda') >= 0 ||
+                    lowerContent.indexOf('yanitla') >= 0 ||
+                    lowerContent.indexOf('begen') >= 0 ||
+                    lowerContent.indexOf('paylas') >= 0 ||
+                    lowerContent.indexOf('like') >= 0 ||
+                    lowerContent.indexOf('reply') >= 0 ||
+                    lowerContent.indexOf('share') >= 0 ||
+                    lowerContent.indexOf('izleyici') >= 0 ||
+                    lowerContent.indexOf('viewer') >= 0) {
+                    if (debug) log('Parse: UI metni atlandi: ' + content.substring(0, 30));
+                    continue;
+                }
+                
+                if (debug) log('Parse: Potansiyel mesaj: ' + content.substring(0, 50));
+                
+                // Yazar adından sonraki İLK geçerli içeriği al (en uzun değil)
+                if (!commentText) {
+                    commentText = content;
+                    if (debug) log('Parse: Mesaj secildi: ' + content.substring(0, 50));
+                    break; // İlk geçerli mesajı bulduk
                 }
             }
             

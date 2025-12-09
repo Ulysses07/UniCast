@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UniCast.Core.Core; // Platform enum vb. için gerekebilir, yoksa kaldırılabilir
+using UniCast.Core.Core;
 using UniCast.Core.Models;
 
 namespace UniCast.Core.Settings
@@ -41,28 +41,70 @@ namespace UniCast.Core.Settings
         public string? YouTubeChannelId { get; set; }
         public string? YouTubeVideoId { get; set; }
         public string? TikTokRoomId { get; set; }
+
+        // Instagram Okuyucu Hesap Ayarları
         public string? InstagramUserId { get; set; }
-        public string? InstagramSessionId { get; set; }
-        public string? FacebookAccessToken { get; set; }
-        public string? FacebookPageId { get; set; }
-        public string? FacebookLiveVideoId { get; set; }
-        public string? TikTokSessionCookie { get; set; }
+        public string? InstagramSessionId { get; set; }  // Şifre olarak kullanılıyor
 
         // Twitch Chat Ayarları
         public string? TwitchChannelName { get; set; }
         public string? TwitchOAuthToken { get; set; }
         public string? TwitchBotUsername { get; set; }
 
-        // Yeni WebView2 tabanlı Facebook ayarları
-        public string? FacebookCookies { get; set; }
-        public string? FacebookUserId { get; set; }
+        public string? TikTokSessionCookie { get; set; }
+
+        // ============================================
+        // FACEBOOK OKUYUCU HESAP AYARLARI (YENİ)
+        // ============================================
+        // ⚠️ ÖNEMLİ: Ana hesabınızı DEĞİL, sadece chat okumak için
+        // oluşturduğunuz AYRI BİR OKUYUCU HESAP bilgilerini girin!
+
+        /// <summary>
+        /// Facebook okuyucu hesap e-posta adresi veya telefon numarası.
+        /// Ana hesabınızı DEĞİL, ayrı bir okuyucu hesap kullanın!
+        /// </summary>
+        public string? FacebookReaderEmail { get; set; }
+
+        /// <summary>
+        /// Facebook okuyucu hesap şifresi.
+        /// DPAPI ile şifrelenerek saklanır.
+        /// </summary>
+        public string? FacebookReaderPassword { get; set; }
+
+        /// <summary>
+        /// Facebook canlı yayın URL'si.
+        /// Örnek: https://www.facebook.com/sayfa/videos/123456789
+        /// </summary>
         public string? FacebookLiveVideoUrl { get; set; }
+
+        /// <summary>
+        /// Facebook okuyucu hesap bağlantı durumu.
+        /// true = giriş yapılmış, false = giriş yapılmamış
+        /// </summary>
+        public bool FacebookReaderConnected { get; set; } = false;
+
+        // --- Eski Facebook Ayarları (Geriye Dönük Uyumluluk) ---
+        // NOT: Bu alanlar artık kullanılmıyor, ama mevcut ayarları bozmamak için tutuluyor
+        [Obsolete("FacebookAccessToken artık kullanılmıyor. FacebookReaderEmail/Password kullanın.")]
+        public string? FacebookAccessToken { get; set; }
+
+        [Obsolete("FacebookPageId artık kullanılmıyor.")]
+        public string? FacebookPageId { get; set; }
+
+        [Obsolete("FacebookLiveVideoId artık kullanılmıyor. FacebookLiveVideoUrl kullanın.")]
+        public string? FacebookLiveVideoId { get; set; }
+
+        [Obsolete("FacebookCookies artık kullanılmıyor. Shared WebView2 profil kullanılıyor.")]
+        public string? FacebookCookies { get; set; }
+
+        [Obsolete("FacebookUserId artık kullanılmıyor.")]
+        public string? FacebookUserId { get; set; }
 
         // --- Overlay Ayarları ---
         public bool ShowOverlay { get; set; } = false;
         public int OverlayX { get; set; } = 24;
         public int OverlayY { get; set; } = 24;
-        public double OverlayWidth { get; set; } = 300; // Boyutlandırma için
+        public double OverlayWidth { get; set; } = 300;
         public double OverlayHeight { get; set; } = 400;
         public double OverlayOpacity { get; set; } = 0.85;
         public int OverlayFontSize { get; set; } = 18;
@@ -108,6 +150,25 @@ namespace UniCast.Core.Settings
                     IsVisible = true
                 });
             }
+        }
+
+        /// <summary>
+        /// Facebook okuyucu hesap bilgilerinin girilip girilmediğini kontrol eder.
+        /// </summary>
+        public bool HasFacebookReaderCredentials()
+        {
+            return !string.IsNullOrWhiteSpace(FacebookReaderEmail) &&
+                   !string.IsNullOrWhiteSpace(FacebookReaderPassword);
+        }
+
+        /// <summary>
+        /// Facebook okuyucu hesap bilgilerini temizler (çıkış yap).
+        /// </summary>
+        public void ClearFacebookReaderCredentials()
+        {
+            FacebookReaderEmail = null;
+            FacebookReaderPassword = null;
+            FacebookReaderConnected = false;
         }
     }
 }

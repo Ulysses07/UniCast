@@ -426,6 +426,44 @@ namespace UniCast.App.Services
         public string FacebookUserId { get; set; } = "";
         public string FacebookLiveVideoUrl { get; set; } = "";
 
+        // ============================================
+        // FACEBOOK OKUYUCU HESAP AYARLARI (YENİ)
+        // ============================================
+        // Ana hesap yerine chat okumak için ayrı bir "okuyucu hesap" kullanılır.
+        // Bu sayede ana hesap checkpoint riskine maruz kalmaz.
+
+        /// <summary>
+        /// Facebook okuyucu hesap e-posta/telefon.
+        /// Ana hesap DEĞİL, ayrı bir okuyucu hesap kullanın!
+        /// </summary>
+        public string FacebookReaderEmail { get; set; } = "";
+
+        /// <summary>
+        /// Facebook okuyucu hesap şifresi (şifreli).
+        /// </summary>
+        private string _encryptedFacebookReaderPassword = "";
+        public string EncryptedFacebookReaderPassword
+        {
+            get => _encryptedFacebookReaderPassword;
+            set => _encryptedFacebookReaderPassword = value;
+        }
+
+        /// <summary>
+        /// Facebook okuyucu hesap şifresi (decrypted).
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string FacebookReaderPassword
+        {
+            get => SecretStore.Unprotect(_encryptedFacebookReaderPassword) ?? "";
+            set => _encryptedFacebookReaderPassword = SecretStore.Protect(value) ?? "";
+        }
+
+        /// <summary>
+        /// Facebook okuyucu hesap bağlantı durumu.
+        /// true = giriş yapılmış, false = giriş yapılmamış
+        /// </summary>
+        public bool FacebookReaderConnected { get; set; } = false;
+
         public string CustomRtmpUrl { get; set; } = "";
 
         // Layout Ayarları (ControlView panel genişlikleri)
