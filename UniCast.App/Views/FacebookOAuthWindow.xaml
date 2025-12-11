@@ -1,0 +1,71 @@
+<Window x:Class="UniCast.App.Views.FacebookOAuthWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="Facebook Sayfa Bağlantısı" 
+        Height="700" Width="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        MinHeight="500" MinWidth="450">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#4267B2" Padding="16">
+            <StackPanel>
+                <TextBlock Text="Facebook Sayfa Bağlantısı" 
+                           FontSize="18" FontWeight="Bold" 
+                           Foreground="White"/>
+                <TextBlock x:Name="TxtStatus" 
+                           Text="Yükleniyor..." 
+                           FontSize="12" 
+                           Foreground="#E4E6EB" 
+                           Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- WebView -->
+        <Grid Grid.Row="1">
+            <wv2:WebView2 x:Name="webView" Visibility="Collapsed"/>
+            
+            <!-- Loading Overlay -->
+            <Border x:Name="LoadingOverlay" Background="#F0F2F5">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="⏳" FontSize="48" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Facebook yükleniyor..." 
+                               FontSize="14" 
+                               Foreground="#65676B"
+                               Margin="0,16,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+        
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="#F0F2F5" Padding="16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Column="0" 
+                           Text="Facebook sayfanızı seçin ve izinleri onaylayın."
+                           FontSize="12" 
+                           Foreground="#65676B"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"/>
+                
+                <Button x:Name="BtnCancel" 
+                        Grid.Column="1"
+                        Content="İptal" 
+                        Padding="24,8"
+                        Click="BtnCancel_Click"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

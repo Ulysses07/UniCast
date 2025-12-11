@@ -83,6 +83,46 @@ namespace UniCast.Core.Settings
         /// </summary>
         public bool FacebookReaderConnected { get; set; } = false;
 
+        // ============================================
+        // FACEBOOK GRAPH API AYARLARI (YENİ - API Tabanlı)
+        // ============================================
+        // Resmi Graph API kullanarak yorum çekmek için.
+        // Gereksinim: Facebook Sayfası (60+ gün, 100+ takipçi)
+
+        /// <summary>
+        /// Facebook Sayfa ID'si.
+        /// /me/accounts endpoint'inden alınır.
+        /// </summary>
+        public string? FacebookPageId_Api { get; set; }
+
+        /// <summary>
+        /// Facebook Sayfa Adı.
+        /// </summary>
+        public string? FacebookPageName_Api { get; set; }
+
+        /// <summary>
+        /// Facebook Page Access Token.
+        /// pages_read_engagement izni gerekli.
+        /// </summary>
+        public string? FacebookPageAccessToken { get; set; }
+
+        /// <summary>
+        /// Facebook User Access Token (Long-lived).
+        /// Page token almak için kullanılır.
+        /// </summary>
+        public string? FacebookUserAccessToken { get; set; }
+
+        /// <summary>
+        /// Token son kullanma tarihi.
+        /// </summary>
+        public DateTime? FacebookTokenExpiry { get; set; }
+
+        /// <summary>
+        /// API tabanlı mı yoksa scraping tabanlı mı?
+        /// true = Graph API, false = WebView2 Scraping
+        /// </summary>
+        public bool FacebookUseGraphApi { get; set; } = false;
+
         // --- Eski Facebook Ayarları (Geriye Dönük Uyumluluk) ---
         // NOT: Bu alanlar artık kullanılmıyor, ama mevcut ayarları bozmamak için tutuluyor
         [Obsolete("FacebookAccessToken artık kullanılmıyor. FacebookReaderEmail/Password kullanın.")]
@@ -169,6 +209,43 @@ namespace UniCast.Core.Settings
             FacebookReaderEmail = null;
             FacebookReaderPassword = null;
             FacebookReaderConnected = false;
+        }
+
+        /// <summary>
+        /// Facebook Graph API bilgilerinin girilip girilmediğini kontrol eder.
+        /// </summary>
+        public bool HasFacebookApiCredentials()
+        {
+            return !string.IsNullOrWhiteSpace(FacebookPageId_Api) &&
+                   !string.IsNullOrWhiteSpace(FacebookPageAccessToken);
+        }
+
+        /// <summary>
+        /// Facebook API token'ın geçerli olup olmadığını kontrol eder.
+        /// </summary>
+        public bool IsFacebookApiTokenValid()
+        {
+            if (!HasFacebookApiCredentials())
+                return false;
+
+            // Expiry yoksa veya gelecekteyse geçerli kabul et
+            if (!FacebookTokenExpiry.HasValue)
+                return true;
+
+            return FacebookTokenExpiry.Value > DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Facebook Graph API bilgilerini temizler.
+        /// </summary>
+        public void ClearFacebookApiCredentials()
+        {
+            FacebookPageId_Api = null;
+            FacebookPageName_Api = null;
+            FacebookPageAccessToken = null;
+            FacebookUserAccessToken = null;
+            FacebookTokenExpiry = null;
+            FacebookUseGraphApi = false;
         }
     }
 }

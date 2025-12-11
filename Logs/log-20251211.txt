@@ -1,0 +1,100 @@
+2025-12-11 13:30:57.337 +03:00 [INF] ===================================================
+2025-12-11 13:30:57.359 +03:00 [INF] UniCast Başlatılıyor... Versiyon: 1.0.0.0
+2025-12-11 13:30:57.360 +03:00 [INF] ===================================================
+2025-12-11 13:30:57.368 +03:00 [DBG] [App] Orphan FFmpeg process bulunamadı
+2025-12-11 13:30:57.375 +03:00 [INF] [ConfigValidator] Konfigürasyon doğrulandı. Warnings: 1
+2025-12-11 13:30:57.766 +03:00 [WRN] DEBUG modu: Güvenlik kontrolleri atlanıyor...
+2025-12-11 13:30:58.598 +03:00 [DBG] [LicenseManager] Lisans doğrulama başarılı
+2025-12-11 13:30:58.599 +03:00 [INF] Lisans doğrulandı. Tür: "Lifetime"
+2025-12-11 13:30:58.601 +03:00 [DBG] MainWindow oluşturuluyor...
+2025-12-11 13:30:58.719 +03:00 [DBG] [SettingsStore] Ayarlar yüklendi
+2025-12-11 13:30:58.731 +03:00 [DBG] [ChatBus] Initialized
+2025-12-11 13:30:58.733 +03:00 [DBG] [MainWindow] Overlay oluşturuluyor...
+2025-12-11 13:30:58.737 +03:00 [DBG] [MainWindow] Overlay.Show() çağrılıyor...
+2025-12-11 13:30:58.784 +03:00 [DBG] [MainWindow] Overlay başlatıldı
+2025-12-11 13:30:58.788 +03:00 [DBG] [MainWindow] YouTube chat ingestor başlatılıyor...
+2025-12-11 13:30:58.796 +03:00 [INF] ["YouTube"] Bağlanılıyor: Ze-FXL1oHRw
+2025-12-11 13:30:58.797 +03:00 [INF] [YouTube Scraper] Bağlanılıyor: Ze-FXL1oHRw
+2025-12-11 13:30:58.801 +03:00 [INF] [MainWindow] YouTube Chat Scraper aktif - API key gerektirmez
+2025-12-11 13:30:58.802 +03:00 [DBG] [MainWindow] 1 adet chat ingestor başlatıldı
+2025-12-11 13:30:58.803 +03:00 [DBG] [MainWindow] Chat sistemi başlatıldı
+2025-12-11 13:30:58.804 +03:00 [INF] [MainWindow] Başlatıldı
+2025-12-11 13:30:58.805 +03:00 [DBG] MainWindow.Show() çağrılıyor...
+2025-12-11 13:30:58.833 +03:00 [DBG] [ControlView] Layout ayarları yüklendi: Mola=120, Camera=350, Chat=600
+2025-12-11 13:30:58.835 +03:00 [DBG] [ControlView] ChatBus'a bağlandı
+2025-12-11 13:31:00.617 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.start = 
+2025-12-11 13:31:00.618 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.stop = 
+2025-12-11 13:31:00.619 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: stream.toggle = 
+2025-12-11 13:31:00.620 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: record.toggle = 
+2025-12-11 13:31:00.621 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.mute = 
+2025-12-11 13:31:00.621 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_up = 
+2025-12-11 13:31:00.622 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: audio.volume_down = 
+2025-12-11 13:31:00.623 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.control = 
+2025-12-11 13:31:00.624 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.preview = 
+2025-12-11 13:31:00.625 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.platforms = 
+2025-12-11 13:31:00.625 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.chat = 
+2025-12-11 13:31:00.626 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: nav.settings = 
+2025-12-11 13:31:00.627 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: overlay.toggle = 
+2025-12-11 13:31:00.628 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.fullscreen = 
+2025-12-11 13:31:00.629 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.minimize = 
+2025-12-11 13:31:00.630 +03:00 [DBG] [Shortcuts] Kısayol kaydedildi: app.help = 
+2025-12-11 13:31:00.631 +03:00 [INF] [Shortcuts] 16 kısayol kaydedildi
+2025-12-11 13:31:00.632 +03:00 [DBG] [Shortcuts] Klavye kısayolları başlatıldı
+2025-12-11 13:31:00.633 +03:00 [INF] [Startup] Toplam süre: 3379ms
+2025-12-11 13:31:00.634 +03:00 [INF] MainWindow başarıyla açıldı
+2025-12-11 13:31:00.644 +03:00 [DBG] [YouTube Scraper] API Key bulundu
+2025-12-11 13:31:00.679 +03:00 [ERR] ["YouTube"] Bağlantı hatası
+System.Exception: Bu yayında chat bulunamadı veya chat kapalı.
+   at UniCast.Core.Chat.Ingestors.YouTubeChatScraper.ConnectAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\YouTubeChatScraper.cs:line 171
+   at UniCast.Core.Chat.Ingestors.BaseChatIngestor.StartAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\BaseChatIngestor.cs:line 71
+2025-12-11 13:31:00.790 +03:00 [ERR] [MainWindow] YouTube chat ingestor hatası
+System.Exception: Bu yayında chat bulunamadı veya chat kapalı.
+   at UniCast.Core.Chat.Ingestors.YouTubeChatScraper.ConnectAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\YouTubeChatScraper.cs:line 171
+   at UniCast.Core.Chat.Ingestors.BaseChatIngestor.StartAsync(CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.Core\Chat\Ingestors\BaseChatIngestor.cs:line 71
+   at UniCast.App.MainWindow.StartIngestorSafeAsync(IChatIngestor ingestor, String name, CancellationToken ct) in C:\Users\PC\Documents\UniCast\UniCast.App\MainWindow.xaml.cs:line 234
+2025-12-11 13:31:01.771 +03:00 [INF] [HardwareEncoder] Tespit edildi: NVIDIA NVENC H.264 (2 encoder mevcut)
+2025-12-11 13:31:01.781 +03:00 [DBG] [MemoryPool] 1080p buffer'lar pre-allocate edildi
+2025-12-11 13:31:01.856 +03:00 [INF] [GpuCompositor] GPU: NVIDIA GeForce RTX 3050, DirectX 11.0
+2025-12-11 13:31:01.859 +03:00 [INF] [MemoryProfiler] Monitoring başlatıldı
+2025-12-11 13:31:01.860 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#17)
+2025-12-11 13:31:01.862 +03:00 [INF] [HealthCheck] Başlatıldı
+2025-12-11 13:31:01.864 +03:00 [INF] [PerfMonitor] Başlatıldı
+2025-12-11 13:31:01.866 +03:00 [INF] [Diagnostics] Tüm servisler başlatıldı
+2025-12-11 13:31:02.862 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#20)
+2025-12-11 13:31:03.862 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#23)
+2025-12-11 13:31:04.156 +03:00 [DBG] [MainWindow] Dispose başlatılıyor...
+2025-12-11 13:31:04.157 +03:00 [DBG] [MainWindow] Ingestor task'ları bekleniyor... (1 adet)
+2025-12-11 13:31:04.159 +03:00 [INF] ["YouTube"] Durduruluyor: Ze-FXL1oHRw
+2025-12-11 13:31:04.162 +03:00 [DBG] [MainWindow] YouTube ingestor disposed
+2025-12-11 13:31:04.864 +03:00 [DBG] [MemoryProfiler] Gen2 GC gerçekleşti (#24)
+2025-12-11 13:31:05.924 +03:00 [DBG] [MainWindow] ControlViewModel disposed
+2025-12-11 13:31:05.926 +03:00 [DBG] [MainWindow] ChatViewModel disposed
+2025-12-11 13:31:05.931 +03:00 [DBG] [MainWindow] Dispose tamamlandı
+2025-12-11 13:31:05.932 +03:00 [DBG] MainWindow kapandı, uygulama kapatılıyor...
+2025-12-11 13:31:05.947 +03:00 [INF] Uygulama kapatılıyor. Çıkış Kodu: 0
+2025-12-11 13:31:05.948 +03:00 [INF] [MemoryProfiler] Monitoring durduruldu
+2025-12-11 13:31:05.949 +03:00 [INF] [HealthCheck] Durduruldu
+2025-12-11 13:31:05.950 +03:00 [INF] [PerfMonitor] Durduruldu
+2025-12-11 13:31:05.951 +03:00 [DBG] [Diagnostics] Servisler durduruldu
+2025-12-11 13:31:05.952 +03:00 [INF] ===================================================
+2025-12-11 13:31:05.953 +03:00 [INF] [App] Uygulama kapatılıyor - Graceful Shutdown başladı
+2025-12-11 13:31:05.953 +03:00 [INF] ===================================================
+2025-12-11 13:31:05.955 +03:00 [DBG] [App] Stream Durdurma başlatılıyor...
+2025-12-11 13:31:05.956 +03:00 [DBG] [App] Stream Durdurma tamamlandı
+2025-12-11 13:31:05.956 +03:00 [DBG] [App] Chat Sistemi başlatılıyor...
+2025-12-11 13:31:05.957 +03:00 [DBG] [ChatBus] All subscribers cleared
+2025-12-11 13:31:05.958 +03:00 [DBG] [App] Chat Sistemi tamamlandı
+2025-12-11 13:31:05.959 +03:00 [DBG] [App] Professional Services başlatılıyor...
+2025-12-11 13:31:05.963 +03:00 [DBG] [Shutdown] FrameTimingService disposed
+2025-12-11 13:31:05.965 +03:00 [DBG] [Shutdown] MemoryPool stats: Pool: 123,0 MB | Active: 0 | Pooled: 20 | Hit Rate: 100,0%
+2025-12-11 13:31:05.966 +03:00 [DBG] [Shutdown] FrameBufferPool disposed
+2025-12-11 13:31:05.967 +03:00 [DBG] [Shutdown] NativeMemoryPool disposed
+2025-12-11 13:31:05.976 +03:00 [DBG] [Shutdown] GpuCompositor disposed
+2025-12-11 13:31:05.977 +03:00 [DBG] [Shutdown] HardwareEncoderService disposed
+2025-12-11 13:31:05.978 +03:00 [INF] [Shutdown] Professional services cleanup tamamlandı
+2025-12-11 13:31:05.978 +03:00 [DBG] [App] Professional Services tamamlandı
+2025-12-11 13:31:05.979 +03:00 [DBG] [App] Ayarları Kaydet başlatılıyor...
+2025-12-11 13:31:05.980 +03:00 [DBG] [App] Ayarları Kaydet tamamlandı
+2025-12-11 13:31:05.981 +03:00 [DBG] [App] Overlay Kapatma başlatılıyor...
+2025-12-11 13:31:05.982 +03:00 [DBG] [App] Overlay Kapatma tamamlandı
+2025-12-11 13:31:05.983 +03:00 [DBG] [App] Log Flush başlatılıyor...
