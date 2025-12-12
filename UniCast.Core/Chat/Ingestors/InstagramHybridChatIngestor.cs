@@ -369,6 +369,71 @@ namespace UniCast.Core.Chat.Ingestors
             return null;
         }
 
+        /// <summary>
+        /// Tek denemeli broadcast arama - polling sırasında kullanılır.
+        /// Daha az agresif, rate limit dostu.
+        /// </summary>
+        private async Task<string?> FindBroadcastIdSingleAsync(CancellationToken ct)
+        {
+            var targetUser = string.IsNullOrEmpty(BroadcasterUsername) ? Username : BroadcasterUsername;
+
+            try
+            {
+                // Sadece GetSuggestedBroadcastsAsync kullan - kullanıcı araması yapma
+                var suggestedResult = await _instaApi!.LiveProcessor.GetSuggestedBroadcastsAsync();
+
+                if (suggestedResult.Succeeded && suggestedResult.Value != null)
+                {
+                    foreach (var broadcast in suggestedResult.Value)
+                    {
+                        var ownerName = broadcast.BroadcastOwner?.UserName ?? "";
+                        if (ownerName.Equals(targetUser, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return broadcast.Id.ToString();
+                        }
+                    }
+                }
+                else
+                {
+                    var errorMsg = suggestedResult.Info?.Message ?? "";
+
+                    // HTML yanıtı kontrolü - session sorunu
+                    if (errorMsg.Contains("<") || errorMsg.Contains("Unexpected character"))
+                    {
+                        Log.Debug("[Instagram Private] API HTML yanıtı - session yenileme gerekebilir");
+
+                        // Session'ı yenile (ama her seferinde değil)
+                        if (_broadcastSearchAttempts == 1 && File.Exists(_sessionFile))
+                        {
+                            try
+                            {
+                                File.Delete(_sessionFile);
+                                _isPrivateApiLoggedIn = false;
+                                var loginResult = await _instaApi!.LoginAsync();
+                                if (loginResult.Succeeded)
+                                {
+                                    _isPrivateApiLoggedIn = true;
+                                    await SaveSessionAsync();
+                                    Log.Information("[Instagram Private] Session yenilendi");
+                                }
+                            }
+                            catch { /* ignore */ }
+                        }
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Log.Debug("[Instagram Private] Broadcast arama hatası: {Error}", ex.Message);
+            }
+
+            return null;
+        }
+
         private async Task InitializeGraphApiAsync(CancellationToken ct)
         {
             try
@@ -512,20 +577,45 @@ namespace UniCast.Core.Chat.Ingestors
 
         #region Private API Polling
 
+        // Broadcast arama kontrolü - çok sık aramayı önle
+        private DateTime _lastBroadcastSearch = DateTime.MinValue;
+        private int _broadcastSearchAttempts = 0;
+        private const int MaxBroadcastSearchAttempts = 3; // İlk bağlantıda max 3 deneme
+
         private async Task PollPrivateApiAsync(CancellationToken ct)
         {
             try
             {
-                // Broadcast ID yoksa aramayı dene
+                // Broadcast ID yoksa aramayı dene - AMA çok sık değil!
                 if (string.IsNullOrEmpty(_broadcastId))
                 {
-                    _broadcastId = await FindBroadcastIdAsync(ct);
-                    if (string.IsNullOrEmpty(_broadcastId))
+                    // İlk 3 denemeden sonra 30 saniyede bir ara
+                    var timeSinceLastSearch = DateTime.UtcNow - _lastBroadcastSearch;
+
+                    if (_broadcastSearchAttempts >= MaxBroadcastSearchAttempts && timeSinceLastSearch.TotalSeconds < 30)
                     {
-                        Log.Debug("[Instagram Private] Henüz aktif yayın yok, bekleniyor...");
+                        // Çok sık arama yapma, bekle
                         return;
                     }
+
+                    _lastBroadcastSearch = DateTime.UtcNow;
+                    _broadcastSearchAttempts++;
+
+                    // Sadece 1 deneme yap (FindBroadcastIdAsync içindeki 5 retry'ı 1'e düşür)
+                    _broadcastId = await FindBroadcastIdSingleAsync(ct);
+
+                    if (string.IsNullOrEmpty(_broadcastId))
+                    {
+                        if (_broadcastSearchAttempts <= MaxBroadcastSearchAttempts)
+                        {
+                            Log.Debug("[Instagram Private] Henüz aktif yayın yok, bekleniyor... (deneme {N}/{Max})",
+                                _broadcastSearchAttempts, MaxBroadcastSearchAttempts);
+                        }
+                        return;
+                    }
+
                     Log.Information("[Instagram Private] Yayın bulundu: {BroadcastId}", _broadcastId);
+                    _broadcastSearchAttempts = 0; // Reset
                 }
 
                 var commentsResult = await _instaApi!.LiveProcessor.GetCommentsAsync(_broadcastId!, _lastCommentTs);

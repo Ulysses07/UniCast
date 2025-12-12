@@ -34,6 +34,7 @@ namespace UniCast.LicenseServer.Services
                 ["activate"] = new(5, TimeSpan.FromMinutes(1)),
                 ["deactivate"] = new(3, TimeSpan.FromMinutes(1)),
                 ["validate"] = new(30, TimeSpan.FromMinutes(1)),
+                ["config"] = new(60, TimeSpan.FromHours(1)), // Config: saatte 60 istek
                 ["default"] = new(60, TimeSpan.FromMinutes(1))
             };
 

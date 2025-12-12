@@ -335,6 +335,140 @@ try
     .WithDescription("API bilgisi ve versiyon")
     .Produces<ApiInfoResponse>(StatusCodes.Status200OK);
 
+    // ==================== CONFIG ENDPOINTS ====================
+    // Platform selector'ları ve diğer dinamik konfigürasyonlar
+    // Bu endpoint'ler public - rate limiting uygulanıyor
+
+    var configGroup = app.MapGroup("/api/v1/config")
+        .WithTags("Config")
+        .RequireCors("HealthCheck"); // Public erişim
+
+    /// <summary>Instagram selector konfigürasyonu</summary>
+    configGroup.MapGet("/instagram-selectors", (HttpContext context) =>
+    {
+        var clientIp = GetClientIp(context);
+
+        // Rate limiting - saatte 60 istek
+        if (!rateLimiter.TryAcquire(clientIp, "config", out var remaining, out var resetTime))
+        {
+            AddRateLimitHeaders(context, remaining, resetTime);
+            return CreateRateLimitResponse(context);
+        }
+        AddRateLimitHeaders(context, remaining, resetTime);
+
+        // Selector konfigürasyonu
+        // Instagram class'ları değiştiğinde sadece burayı güncelle!
+        var config = new InstagramSelectorConfig
+        {
+            Version = 1,
+            UpdatedAt = new DateTime(2025, 1, 12, 0, 0, 0, DateTimeKind.Utc),
+            Selectors = new InstagramSelectors
+            {
+                // Test edilmiş selector'lar (12 Ocak 2025)
+                Username = "span._ap3a._aaco._aacw._aacx._aad7",
+                Message = "span._ap3a._aaco._aacu._aacx._aad7._aadf",
+                // Yayıncı adı (filtreleme için)
+                Broadcaster = "span._ap3a._aaco._aacw._aacx._aada"
+            },
+            // Alternatif selector'lar (fallback)
+            FallbackSelectors = new InstagramSelectors
+            {
+                Username = "span[dir='auto']",
+                Message = "span[dir='auto']",
+                Broadcaster = null
+            },
+            // Polling ayarları
+            PollingIntervalMs = 3000,
+            // Not
+            Notes = "Instagram Live Chat için DOM selector'ları. Class'lar değişirse bu config güncellenir."
+        };
+
+        Log.Debug("Instagram selectors requested from {IP}", clientIp);
+        return Results.Ok(config);
+    })
+    .WithName("GetInstagramSelectors")
+    .WithDescription("Instagram Live Chat için DOM selector konfigürasyonu")
+    .Produces<InstagramSelectorConfig>(StatusCodes.Status200OK)
+    .ProducesProblem(StatusCodes.Status429TooManyRequests);
+
+    /// <summary>Facebook selector konfigürasyonu</summary>
+    configGroup.MapGet("/facebook-selectors", (HttpContext context) =>
+    {
+        var clientIp = GetClientIp(context);
+
+        if (!rateLimiter.TryAcquire(clientIp, "config", out var remaining, out var resetTime))
+        {
+            AddRateLimitHeaders(context, remaining, resetTime);
+            return CreateRateLimitResponse(context);
+        }
+        AddRateLimitHeaders(context, remaining, resetTime);
+
+        var config = new FacebookSelectorConfig
+        {
+            Version = 1,
+            UpdatedAt = new DateTime(2025, 1, 12, 0, 0, 0, DateTimeKind.Utc),
+            Selectors = new FacebookSelectors
+            {
+                CommentContainer = "div.xv55zj0.x1vvkbs",
+                AuthorLink = "a",
+                CommentText = "div[dir='auto']"
+            },
+            FallbackSelectors = new FacebookSelectors
+            {
+                CommentContainer = "div[role='article']",
+                AuthorLink = "a[role='link']",
+                CommentText = "span"
+            },
+            PollingIntervalMs = 5000,
+            Notes = "Facebook Live Chat için DOM selector'ları."
+        };
+
+        Log.Debug("Facebook selectors requested from {IP}", clientIp);
+        return Results.Ok(config);
+    })
+    .WithName("GetFacebookSelectors")
+    .WithDescription("Facebook Live Chat için DOM selector konfigürasyonu")
+    .Produces<FacebookSelectorConfig>(StatusCodes.Status200OK)
+    .ProducesProblem(StatusCodes.Status429TooManyRequests);
+
+    /// <summary>Tüm platform selector'larını getir</summary>
+    configGroup.MapGet("/selectors", (HttpContext context) =>
+    {
+        var clientIp = GetClientIp(context);
+
+        if (!rateLimiter.TryAcquire(clientIp, "config", out var remaining, out var resetTime))
+        {
+            AddRateLimitHeaders(context, remaining, resetTime);
+            return CreateRateLimitResponse(context);
+        }
+        AddRateLimitHeaders(context, remaining, resetTime);
+
+        var config = new AllSelectorsConfig
+        {
+            Version = 1,
+            UpdatedAt = DateTime.UtcNow,
+            Instagram = new InstagramSelectors
+            {
+                Username = "span._ap3a._aaco._aacw._aacx._aad7",
+                Message = "span._ap3a._aaco._aacu._aacx._aad7._aadf",
+                Broadcaster = "span._ap3a._aaco._aacw._aacx._aada"
+            },
+            Facebook = new FacebookSelectors
+            {
+                CommentContainer = "div.xv55zj0.x1vvkbs",
+                AuthorLink = "a",
+                CommentText = "div[dir='auto']"
+            }
+        };
+
+        Log.Debug("All selectors requested from {IP}", clientIp);
+        return Results.Ok(config);
+    })
+    .WithName("GetAllSelectors")
+    .WithDescription("Tüm platformlar için DOM selector konfigürasyonları")
+    .Produces<AllSelectorsConfig>(StatusCodes.Status200OK)
+    .ProducesProblem(StatusCodes.Status429TooManyRequests);
+
     // ==================== LICENSE ENDPOINTS ====================
 
     var licenseGroup = app.MapGroup("/api/v1")
@@ -856,3 +990,91 @@ public record PagedResponse<T>(
     int TotalCount,
     int TotalPages
 );
+
+// ==================== CONFIG MODELS ====================
+
+/// <summary>Instagram selector'ları</summary>
+public record InstagramSelectors
+{
+    /// <summary>Kullanıcı adı selector'ı</summary>
+    public string? Username { get; init; }
+
+    /// <summary>Mesaj metni selector'ı</summary>
+    public string? Message { get; init; }
+
+    /// <summary>Yayıncı adı selector'ı (filtreleme için)</summary>
+    public string? Broadcaster { get; init; }
+}
+
+/// <summary>Instagram selector konfigürasyonu</summary>
+public record InstagramSelectorConfig
+{
+    /// <summary>Konfigürasyon versiyonu</summary>
+    public int Version { get; init; }
+
+    /// <summary>Son güncelleme tarihi</summary>
+    public DateTime UpdatedAt { get; init; }
+
+    /// <summary>Ana selector'lar</summary>
+    public InstagramSelectors Selectors { get; init; } = new();
+
+    /// <summary>Fallback selector'lar (ana selector'lar çalışmazsa)</summary>
+    public InstagramSelectors? FallbackSelectors { get; init; }
+
+    /// <summary>Polling aralığı (ms)</summary>
+    public int PollingIntervalMs { get; init; } = 3000;
+
+    /// <summary>Notlar</summary>
+    public string? Notes { get; init; }
+}
+
+/// <summary>Facebook selector'ları</summary>
+public record FacebookSelectors
+{
+    /// <summary>Yorum container selector'ı</summary>
+    public string? CommentContainer { get; init; }
+
+    /// <summary>Yazar link selector'ı</summary>
+    public string? AuthorLink { get; init; }
+
+    /// <summary>Yorum metni selector'ı</summary>
+    public string? CommentText { get; init; }
+}
+
+/// <summary>Facebook selector konfigürasyonu</summary>
+public record FacebookSelectorConfig
+{
+    /// <summary>Konfigürasyon versiyonu</summary>
+    public int Version { get; init; }
+
+    /// <summary>Son güncelleme tarihi</summary>
+    public DateTime UpdatedAt { get; init; }
+
+    /// <summary>Ana selector'lar</summary>
+    public FacebookSelectors Selectors { get; init; } = new();
+
+    /// <summary>Fallback selector'lar</summary>
+    public FacebookSelectors? FallbackSelectors { get; init; }
+
+    /// <summary>Polling aralığı (ms)</summary>
+    public int PollingIntervalMs { get; init; } = 5000;
+
+    /// <summary>Notlar</summary>
+    public string? Notes { get; init; }
+}
+
+/// <summary>Tüm platform selector'ları</summary>
+public record AllSelectorsConfig
+{
+    /// <summary>Konfigürasyon versiyonu</summary>
+    public int Version { get; init; }
+
+    /// <summary>Son güncelleme tarihi</summary>
+    public DateTime UpdatedAt { get; init; }
+
+    /// <summary>Instagram selector'ları</summary>
+    public InstagramSelectors? Instagram { get; init; }
+
+    /// <summary>Facebook selector'ları</summary>
+    public FacebookSelectors? Facebook { get; init; }
+}
