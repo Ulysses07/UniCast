@@ -58,6 +58,7 @@ namespace UniCast.App.ViewModels
             // Sosyal Medya
             _instagramUserId = _settings.InstagramUsername ?? "";
             _instagramSessionId = _settings.InstagramPassword ?? "";
+            _instagramBroadcasterUsername = _settings.InstagramBroadcasterUsername ?? "";
             _facebookPageId = _settings.FacebookPageId ?? "";
             _facebookLiveVideoId = _settings.FacebookLiveVideoId ?? "";
             _facebookAccessToken = _settings.FacebookPageAccessToken ?? "";
@@ -71,6 +72,14 @@ namespace UniCast.App.ViewModels
             _facebookReaderEmail = _settings.FacebookReaderEmail ?? "";
             _facebookReaderPassword = _settings.FacebookReaderPassword ?? "";
             _facebookReaderConnected = _settings.FacebookReaderConnected;
+
+            // YENİ: Facebook Graph API
+            _facebookPageId_Api = _settings.FacebookPageId_Api ?? "";
+            _facebookPageName_Api = _settings.FacebookPageName_Api ?? "";
+            _facebookPageAccessToken_Api = _settings.FacebookPageAccessToken ?? "";
+            _facebookUserAccessToken = _settings.FacebookUserAccessToken ?? "";
+            _facebookTokenExpiry = _settings.FacebookTokenExpiry;
+            _facebookUseGraphApi = _settings.FacebookUseGraphApi;
 
             // Komutlar
             SaveCommand = new RelayCommand(_ => Save());
@@ -275,6 +284,13 @@ namespace UniCast.App.ViewModels
             set { _instagramSessionId = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
 
+        private string _instagramBroadcasterUsername = "";
+        public string InstagramBroadcasterUsername
+        {
+            get => _instagramBroadcasterUsername;
+            set { _instagramBroadcasterUsername = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
         #endregion
 
         #region Facebook Properties (Eski - Geriye Uyumluluk)
@@ -358,6 +374,61 @@ namespace UniCast.App.ViewModels
 
         #endregion
 
+        #region Facebook Graph API Properties
+
+        private string _facebookPageId_Api = "";
+        public string FacebookPageId_Api
+        {
+            get => _facebookPageId_Api;
+            set { _facebookPageId_Api = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _facebookPageName_Api = "";
+        public string FacebookPageName_Api
+        {
+            get => _facebookPageName_Api;
+            set { _facebookPageName_Api = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _facebookPageAccessToken_Api = "";
+        public string FacebookPageAccessToken
+        {
+            get => _facebookPageAccessToken_Api;
+            set { _facebookPageAccessToken_Api = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _facebookUserAccessToken = "";
+        public string FacebookUserAccessToken
+        {
+            get => _facebookUserAccessToken;
+            set { _facebookUserAccessToken = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private DateTime? _facebookTokenExpiry;
+        public DateTime? FacebookTokenExpiry
+        {
+            get => _facebookTokenExpiry;
+            set { _facebookTokenExpiry = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private bool _facebookUseGraphApi;
+        public bool FacebookUseGraphApi
+        {
+            get => _facebookUseGraphApi;
+            set { _facebookUseGraphApi = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        /// <summary>
+        /// Facebook API kimlik bilgilerinin mevcut olup olmadığını kontrol eder.
+        /// </summary>
+        public bool HasFacebookApiCredentials()
+        {
+            return !string.IsNullOrWhiteSpace(FacebookPageId_Api) &&
+                   !string.IsNullOrWhiteSpace(_facebookPageAccessToken_Api);
+        }
+
+        #endregion
+
         #region Commands
 
         public ICommand SaveCommand { get; }
@@ -410,6 +481,7 @@ namespace UniCast.App.ViewModels
                     // Sosyal Medya
                     s.InstagramUsername = (InstagramUserId ?? "").Trim();
                     s.InstagramPassword = (InstagramSessionId ?? "").Trim();
+                    s.InstagramBroadcasterUsername = (InstagramBroadcasterUsername ?? "").Trim();
                     s.FacebookPageId = (FacebookPageId ?? "").Trim();
                     s.FacebookPageAccessToken = (FacebookAccessToken ?? "").Trim();
 
@@ -422,6 +494,14 @@ namespace UniCast.App.ViewModels
                     s.FacebookReaderEmail = (FacebookReaderEmail ?? "").Trim();
                     s.FacebookReaderPassword = (FacebookReaderPassword ?? "").Trim();
                     s.FacebookReaderConnected = FacebookReaderConnected;
+
+                    // Facebook Graph API (YENİ)
+                    s.FacebookPageId_Api = (FacebookPageId_Api ?? "").Trim();
+                    s.FacebookPageName_Api = (FacebookPageName_Api ?? "").Trim();
+                    s.FacebookPageAccessToken = (_facebookPageAccessToken_Api ?? "").Trim();
+                    s.FacebookUserAccessToken = (FacebookUserAccessToken ?? "").Trim();
+                    s.FacebookTokenExpiry = FacebookTokenExpiry;
+                    s.FacebookUseGraphApi = FacebookUseGraphApi;
                 });
 
                 SettingsStore.Save();

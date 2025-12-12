@@ -22,7 +22,7 @@ namespace UniCast.App.Views
         // Facebook App bilgileri
         private const string AppId = "1593694605379011";
         private const string RedirectUri = "https://localhost/callback";
-        private const string Scope = "pages_show_list,pages_read_engagement";
+        private const string Scope = "pages_read_engagement,pages_read_user_content";
 
         // OAuth URL
         private static readonly string OAuthUrl =

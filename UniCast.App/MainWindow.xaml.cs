@@ -396,7 +396,10 @@ namespace UniCast.App
                                     {
                                         Username = instaUsername,
                                         Password = SettingsStore.Data.InstagramPassword ?? "",
-                                        GraphApiAccessToken = SettingsStore.Data.InstagramAccessToken
+                                        GraphApiAccessToken = SettingsStore.Data.InstagramAccessToken,
+                                        BroadcasterUsername = string.IsNullOrWhiteSpace(SettingsStore.Data.InstagramBroadcasterUsername)
+                                            ? null
+                                            : SettingsStore.Data.InstagramBroadcasterUsername
                                     };
                                     _ingestorTasks.Add(StartIngestorSafeAsync(_instagramIngestor, "Instagram", ct));
                                     Log.Information("[MainWindow] Instagram Chat başlatıldı");

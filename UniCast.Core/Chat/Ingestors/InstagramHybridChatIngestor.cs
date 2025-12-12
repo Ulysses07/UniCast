@@ -140,9 +140,20 @@ namespace UniCast.Core.Chat.Ingestors
 
             await Task.WhenAll(tasks);
 
+            // En az bir API çalışmalı
             if (!_privateApiEnabled && !_graphApiEnabled)
             {
-                throw new Exception("Instagram'a bağlanılamadı.");
+                // Private API başarısız olduysa ama login olduysa, yayın henüz başlamamış olabilir
+                // Bu durumda hata fırlatmak yerine sadece uyar ve devam et
+                if (_isPrivateApiLoggedIn)
+                {
+                    Log.Warning("[Instagram Hybrid] Aktif yayın bulunamadı ama oturum açık. Chat polling başlatılıyor...");
+                    _privateApiEnabled = true; // Oturum açık, yayın sonra bulunabilir
+                }
+                else
+                {
+                    throw new Exception("Instagram'a bağlanılamadı.");
+                }
             }
 
             Log.Information("[Instagram Hybrid] Bağlantı kuruldu - Private: {P}, Graph: {G}",
@@ -233,46 +244,129 @@ namespace UniCast.Core.Chat.Ingestors
 
         private async Task<string?> FindBroadcastIdAsync(CancellationToken ct)
         {
-            try
+            var targetUser = string.IsNullOrEmpty(BroadcasterUsername) ? Username : BroadcasterUsername;
+
+            // Retry ile yayın bulmayı dene (Instagram API bazen gecikmeli yanıt verir)
+            for (int attempt = 1; attempt <= 5; attempt++)
             {
-                var targetUser = string.IsNullOrEmpty(BroadcasterUsername) ? Username : BroadcasterUsername;
-
-                // Kullanıcıyı bul
-                var userResult = await _instaApi!.UserProcessor.GetUserAsync(targetUser);
-                if (!userResult.Succeeded)
-                {
-                    Log.Warning("[Instagram Private] Kullanıcı bulunamadı: @{Username}", targetUser);
-                    return null;
-                }
-
-                // Kullanıcı PK'sını string'e çevir
-                var userPkStr = userResult.Value.Pk.ToString();
-
-                // Yayın bilgisini al
                 try
                 {
-                    var infoResult = await _instaApi.LiveProcessor.GetInfoAsync(userPkStr);
-                    if (infoResult.Succeeded && infoResult.Value != null)
+                    Log.Debug("[Instagram Private] Yayın aranıyor, deneme {Attempt}/5 - Hedef: @{User}", attempt, targetUser);
+
+                    // Kullanıcıyı bul
+                    var userResult = await _instaApi!.UserProcessor.GetUserAsync(targetUser);
+                    if (!userResult.Succeeded)
                     {
-                        // Id long tipinde, string'e çevir
-                        return infoResult.Value.Id.ToString();
+                        Log.Warning("[Instagram Private] Kullanıcı bulunamadı: @{Username} - {Error}",
+                            targetUser, userResult.Info?.Message);
+                        return null;
                     }
+
+                    var userPk = userResult.Value.Pk;
+                    Log.Debug("[Instagram Private] Kullanıcı PK: {Pk}", userPk);
+
+                    // Yöntem 1: GetSuggestedBroadcastsAsync - Önerilen yayınlardan ara
+                    try
+                    {
+                        var suggestedResult = await _instaApi.LiveProcessor.GetSuggestedBroadcastsAsync();
+                        if (suggestedResult.Succeeded && suggestedResult.Value != null)
+                        {
+                            // InstaBroadcastList IEnumerable<InstaBroadcast> implement ediyor
+                            int count = 0;
+                            foreach (var broadcast in suggestedResult.Value)
+                            {
+                                count++;
+                                var ownerName = broadcast.BroadcastOwner?.UserName ?? "null";
+                                Log.Debug("[Instagram Private] Broadcast #{Num}: Id={Id}, Owner=@{Owner}",
+                                    count, broadcast.Id, ownerName);
+
+                                if (ownerName.Equals(targetUser, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var broadcastId = broadcast.Id.ToString();
+                                    Log.Information("[Instagram Private] Yayın bulundu (SuggestedBroadcasts): {Id}", broadcastId);
+                                    return broadcastId;
+                                }
+                            }
+                            Log.Debug("[Instagram Private] SuggestedBroadcasts'ta {Count} yayın var, hedef kullanıcı (@{User}) yok",
+                                count, targetUser);
+                        }
+                        else
+                        {
+                            var errorMsg = suggestedResult.Info?.Message ?? "null";
+                            Log.Debug("[Instagram Private] GetSuggestedBroadcastsAsync başarısız: {Message}", errorMsg);
+
+                            // HTML yanıtı kontrolü - session veya IP sorunu
+                            if (errorMsg.Contains("<") || errorMsg.Contains("Unexpected character"))
+                            {
+                                Log.Warning("[Instagram Private] API HTML yanıtı döndürüyor - Session geçersiz veya Instagram engeli");
+
+                                // Session dosyasını sil ve yeniden login dene (sadece ilk denemede)
+                                if (attempt == 1 && File.Exists(_sessionFile))
+                                {
+                                    try
+                                    {
+                                        File.Delete(_sessionFile);
+                                        Log.Information("[Instagram Private] Session dosyası silindi, yeniden giriş deneniyor...");
+
+                                        // Yeniden login dene
+                                        _isPrivateApiLoggedIn = false;
+                                        var loginResult = await _instaApi!.LoginAsync();
+                                        if (loginResult.Succeeded)
+                                        {
+                                            _isPrivateApiLoggedIn = true;
+                                            await SaveSessionAsync();
+                                            Log.Information("[Instagram Private] Yeniden giriş başarılı!");
+                                            continue; // Bu denemeyi yeniden başlat
+                                        }
+                                        else
+                                        {
+                                            Log.Warning("[Instagram Private] Yeniden giriş başarısız: {Message}", loginResult.Info?.Message);
+                                        }
+                                    }
+                                    catch (Exception reloginEx)
+                                    {
+                                        Log.Warning("[Instagram Private] Yeniden giriş hatası: {Error}", reloginEx.Message);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Debug("[Instagram Private] GetSuggestedBroadcastsAsync hatası: {Error}", ex.Message);
+                    }
+
+                    // Yöntem 2: GetInfoAsync - Eğer broadcast ID biliyorsak (şimdilik atla)
+                    // Not: GetInfoAsync bir broadcast ID gerektirir, kullanıcı PK'sı değil
+                    // Bu nedenle önce başka bir yöntemle broadcast ID bulmamız gerekiyor
+
+                    // Bulunamadıysa bekle ve tekrar dene
+                    if (attempt < 5)
+                    {
+                        var delay = attempt * 2;
+                        Log.Debug("[Instagram Private] Yayın bulunamadı, {Delay}sn sonra tekrar denenecek...", delay);
+                        await Task.Delay(TimeSpan.FromSeconds(delay), ct);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch (Exception ex)
                 {
-                    Log.Debug(ex, "[Instagram Private] GetInfoAsync hatası");
+                    Log.Warning(ex, "[Instagram Private] Broadcast ID arama hatası (deneme {Attempt})", attempt);
+
+                    if (attempt < 5)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(attempt * 2), ct);
+                    }
                 }
-
-                // Not: GetSuggestedBroadcastsAsync API versiyonuna göre farklı çalışabilir
-                // Bu yüzden sadece GetInfoAsync kullanıyoruz
-
-                return null;
             }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "[Instagram Private] Broadcast ID bulunamadı");
-                return null;
-            }
+
+            Log.Warning("[Instagram Private] 5 denemede de yayın bulunamadı. " +
+                "Not: Instagram Private API sadece 'Suggested Broadcasts' listesindeki yayınları bulabilir. " +
+                "Kendi yayınınızı görmek için Instagram'da başkaları tarafından izleniyor olması gerekebilir.");
+            return null;
         }
 
         private async Task InitializeGraphApiAsync(CancellationToken ct)
@@ -385,7 +479,10 @@ namespace UniCast.Core.Chat.Ingestors
 
         private bool CanUsePrivateApi()
         {
-            if (!_privateApiEnabled || _instaApi == null || string.IsNullOrEmpty(_broadcastId))
+            // Not: _broadcastId kontrolü kaldırıldı çünkü PollPrivateApiAsync içinde aranıyor
+            if (!_privateApiEnabled || _instaApi == null)
+                return false;
+            if (!_isPrivateApiLoggedIn)
                 return false;
             if (DateTime.UtcNow < _privateApiDisabledUntil)
                 return false;
@@ -419,6 +516,18 @@ namespace UniCast.Core.Chat.Ingestors
         {
             try
             {
+                // Broadcast ID yoksa aramayı dene
+                if (string.IsNullOrEmpty(_broadcastId))
+                {
+                    _broadcastId = await FindBroadcastIdAsync(ct);
+                    if (string.IsNullOrEmpty(_broadcastId))
+                    {
+                        Log.Debug("[Instagram Private] Henüz aktif yayın yok, bekleniyor...");
+                        return;
+                    }
+                    Log.Information("[Instagram Private] Yayın bulundu: {BroadcastId}", _broadcastId);
+                }
+
                 var commentsResult = await _instaApi!.LiveProcessor.GetCommentsAsync(_broadcastId!, _lastCommentTs);
 
                 if (!commentsResult.Succeeded)

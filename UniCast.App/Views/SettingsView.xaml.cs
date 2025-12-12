@@ -47,6 +47,7 @@ namespace UniCast.App.Views
 
                 // Facebook bağlantı durumunu güncelle
                 UpdateFacebookStatus(vm);
+                UpdateFacebookApiStatus(vm);
             }
         }
 
@@ -400,6 +401,109 @@ namespace UniCast.App.Views
         {
             // Eski metodu yeni metoda yönlendir
             BtnFacebookConnect_Click(sender, e);
+        }
+
+        #endregion
+
+        #region Facebook Graph API Connection
+
+        /// <summary>
+        /// Facebook Graph API ile sayfa bağlantısı yapar.
+        /// </summary>
+        private async void BtnFacebookApiConnect_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not SettingsViewModel vm)
+                return;
+
+            try
+            {
+                // OAuth penceresini aç
+                var oauthWindow = new FacebookOAuthWindow
+                {
+                    Owner = Window.GetWindow(this)
+                };
+
+                var result = oauthWindow.ShowDialog();
+
+                if (result == true && oauthWindow.SelectedPage != null)
+                {
+                    // Token ve sayfa bilgilerini kaydet
+                    vm.FacebookPageId_Api = oauthWindow.SelectedPage.Id;
+                    vm.FacebookPageName_Api = oauthWindow.SelectedPage.Name;
+                    vm.FacebookPageAccessToken = oauthWindow.SelectedPage.AccessToken;
+                    vm.FacebookUserAccessToken = oauthWindow.LongLivedToken;
+                    vm.FacebookTokenExpiry = oauthWindow.TokenExpiry;
+                    vm.FacebookUseGraphApi = true;
+
+                    // UI'ı güncelle
+                    UpdateFacebookApiStatus(vm);
+
+                    Log.Information("[SettingsView] Facebook API bağlantısı başarılı: {PageName}",
+                        oauthWindow.SelectedPage.Name);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[SettingsView] Facebook API bağlantı hatası");
+
+                MessageBox.Show(
+                    $"Facebook bağlantısı sırasında hata oluştu:\n\n{ex.Message}",
+                    "Hata",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Facebook Graph API durumunu günceller.
+        /// </summary>
+        private void UpdateFacebookApiStatus(SettingsViewModel vm)
+        {
+            var statusIndicator = this.FindName("FacebookApiStatusIndicator") as Ellipse;
+            var statusText = this.FindName("TxtFacebookApiStatus") as TextBlock;
+            var pageInfo = this.FindName("FacebookApiPageInfo") as StackPanel;
+            var pageName = this.FindName("TxtFacebookPageName") as TextBlock;
+            var tokenExpiry = this.FindName("TxtFacebookTokenExpiry") as TextBlock;
+            var connectBtn = this.FindName("BtnFacebookApiConnect") as Button;
+
+            if (statusIndicator == null || statusText == null)
+                return;
+
+            bool isConnected = vm.HasFacebookApiCredentials();
+
+            if (isConnected)
+            {
+                statusIndicator.Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)); // Yeşil
+                statusText.Text = "Sayfa bağlı";
+                statusText.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80));
+
+                if (pageInfo != null)
+                    pageInfo.Visibility = Visibility.Visible;
+
+                if (pageName != null)
+                    pageName.Text = vm.FacebookPageName_Api ?? "Bilinmeyen Sayfa";
+
+                if (tokenExpiry != null && vm.FacebookTokenExpiry.HasValue)
+                {
+                    var daysLeft = (vm.FacebookTokenExpiry.Value - DateTime.UtcNow).Days;
+                    tokenExpiry.Text = $"Token geçerliliği: {daysLeft} gün kaldı";
+                }
+
+                if (connectBtn != null)
+                    connectBtn.Content = "🔄 Yeniden Bağla";
+            }
+            else
+            {
+                statusIndicator.Fill = new SolidColorBrush(Color.FromRgb(128, 128, 128)); // Gri
+                statusText.Text = "Sayfa bağlı değil";
+                statusText.Foreground = (Brush)FindResource("TextMuted");
+
+                if (pageInfo != null)
+                    pageInfo.Visibility = Visibility.Collapsed;
+
+                if (connectBtn != null)
+                    connectBtn.Content = "🔗 Sayfa Bağla";
+            }
         }
 
         #endregion

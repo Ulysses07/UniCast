@@ -11,6 +11,11 @@
         <!-- Null değer Visible, değilse Collapsed -->
         <local:NullToVisibilityConverter x:Key="NullToVisibleConverter"/>
 
+        <!-- Bool Converter'lar -->
+        <local:InverseBoolConverter x:Key="InverseBoolConverter"/>
+        <local:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+
         <SolidColorBrush x:Key="BgDark" Color="#18181B"/>
         <SolidColorBrush x:Key="BgLight" Color="#2D2D30"/>
         <SolidColorBrush x:Key="Primary" Color="#9146FF"/>

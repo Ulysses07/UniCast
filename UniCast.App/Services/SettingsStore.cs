@@ -464,6 +464,74 @@ namespace UniCast.App.Services
         /// </summary>
         public bool FacebookReaderConnected { get; set; } = false;
 
+        // ============================================
+        // FACEBOOK GRAPH API AYARLARI (YENİ)
+        // ============================================
+        // Resmi Graph API kullanarak yorum çekmek için.
+        // Gereksinim: Facebook Sayfası (60+ gün, 100+ takipçi)
+
+        /// <summary>
+        /// Facebook Sayfa ID'si (Graph API için).
+        /// </summary>
+        public string FacebookPageId_Api { get; set; } = "";
+
+        /// <summary>
+        /// Facebook Sayfa Adı (Graph API için).
+        /// </summary>
+        public string FacebookPageName_Api { get; set; } = "";
+
+        /// <summary>
+        /// Facebook User Access Token (Long-lived).
+        /// </summary>
+        public string FacebookUserAccessToken { get; set; } = "";
+
+        /// <summary>
+        /// Token son kullanma tarihi.
+        /// </summary>
+        public DateTime? FacebookTokenExpiry { get; set; }
+
+        /// <summary>
+        /// API tabanlı mı yoksa scraping tabanlı mı?
+        /// true = Graph API, false = WebView2 Scraping
+        /// </summary>
+        public bool FacebookUseGraphApi { get; set; } = false;
+
+        /// <summary>
+        /// Facebook API kimlik bilgilerinin mevcut olup olmadığını kontrol eder.
+        /// </summary>
+        public bool HasFacebookApiCredentials()
+        {
+            return !string.IsNullOrWhiteSpace(FacebookPageId_Api) &&
+                   !string.IsNullOrWhiteSpace(FacebookPageAccessToken);
+        }
+
+        /// <summary>
+        /// Facebook API token'ının geçerli olup olmadığını kontrol eder.
+        /// </summary>
+        public bool IsFacebookApiTokenValid()
+        {
+            if (!HasFacebookApiCredentials())
+                return false;
+
+            if (!FacebookTokenExpiry.HasValue)
+                return true; // Süre bilgisi yoksa geçerli say
+
+            return FacebookTokenExpiry.Value > DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Facebook API kimlik bilgilerini temizler.
+        /// </summary>
+        public void ClearFacebookApiCredentials()
+        {
+            FacebookPageId_Api = "";
+            FacebookPageName_Api = "";
+            FacebookPageAccessToken = "";
+            FacebookUserAccessToken = "";
+            FacebookTokenExpiry = null;
+            FacebookUseGraphApi = false;
+        }
+
         public string CustomRtmpUrl { get; set; } = "";
 
         // Layout Ayarları (ControlView panel genişlikleri)
