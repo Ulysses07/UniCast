@@ -40,7 +40,7 @@ namespace UniCast.App.Infrastructure
             // Chat Ingestor'lar
             services.AddTransient<YouTubeChatIngestor>();
             services.AddTransient<TikTokChatIngestor>();
-            services.AddTransient<InstagramHybridChatIngestor>();
+            services.AddTransient<InstagramLiveChatScraper>();
             services.AddTransient<FacebookChatIngestor>();
 
             // --- ViewModels ---
