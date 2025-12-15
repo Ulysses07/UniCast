@@ -37,8 +37,9 @@ namespace UniCast.App
         private YouTubeChatScraper? _ytIngestor;  // Scraper kullanıyoruz (API key gerektirmez)
         private TwitchChatIngestor? _twitchIngestor;
         private TikTokChatIngestor? _tikTokIngestor;
-        private InstagramLiveChatScraper? _instagramIngestor;  // WebView2 tabanlı scraper
-        private InstagramChatHost? _instagramChatHost;  // WebView2 host for Instagram chat
+        private InstagramLiveChatScraper? _instagramIngestor;  // WebView2 tabanlı scraper (fallback)
+        private InstagramChatHost? _instagramChatHost;  // WebView2 host for Instagram chat (fallback)
+        private ExtensionBridgeIngestor? _extensionBridgeIngestor;  // Browser Extension tabanlı (önerilen)
         private FacebookChatScraper? _facebookIngestor;  // Cookie tabanlı scraper
         private FacebookChatHost? _facebookChatHost;  // WebView2 host for Facebook chat
 
@@ -365,87 +366,25 @@ namespace UniCast.App
                             break;
 
                         case StreamPlatform.Instagram:
-                            // Instagram WebView2 tabanlı chat scraper
-                            var instaReaderUsername = SettingsStore.Data.InstagramUsername;
-                            var instaReaderPassword = SettingsStore.Data.InstagramPassword;
-                            var instaBroadcaster = SettingsStore.Data.InstagramBroadcasterUsername;
+                            // Instagram için Browser Extension tabanlı chat bridge kullan
+                            // Bu yöntem login/2FA sorunlarını ortadan kaldırır
+                            Log.Debug("[MainWindow] Instagram chat ingestor başlatılıyor (Extension Bridge)...");
 
-                            // Yayıncı adı yoksa okuyucu adını kullan
-                            if (string.IsNullOrWhiteSpace(instaBroadcaster))
-                                instaBroadcaster = instaReaderUsername;
-
-                            if (!string.IsNullOrWhiteSpace(instaReaderUsername) &&
-                                !string.IsNullOrWhiteSpace(instaReaderPassword) &&
-                                !string.IsNullOrWhiteSpace(instaBroadcaster))
+                            // Mevcut extension bridge'i temizle (senkron)
+                            if (_extensionBridgeIngestor != null)
                             {
-                                Log.Debug("[MainWindow] Instagram chat ingestor başlatılıyor (WebView2)...");
-
-                                // UI thread'de çalıştır (WebView2 gereksinimi)
-                                Dispatcher.InvokeAsync(async () =>
-                                {
-                                    try
-                                    {
-                                        // Cleanup old host
-                                        if (_instagramChatHost != null)
-                                        {
-                                            Log.Debug("[MainWindow] Eski InstagramChatHost temizleniyor...");
-                                            await _instagramChatHost.StopChatAsync();
-
-                                            var mainGrid = Content as Grid;
-                                            if (mainGrid != null && mainGrid.Children.Contains(_instagramChatHost))
-                                            {
-                                                mainGrid.Children.Remove(_instagramChatHost);
-                                            }
-
-                                            _instagramChatHost.Dispose();
-                                            _instagramChatHost = null;
-                                        }
-
-                                        // Yeni host oluştur
-                                        _instagramChatHost = new InstagramChatHost(instaReaderUsername, instaReaderPassword);
-
-                                        // MainGrid'e ekle (WebView2 için gerekli)
-                                        var grid = Content as Grid;
-                                        if (grid != null)
-                                        {
-                                            grid.Children.Add(_instagramChatHost);
-                                            Log.Debug("[MainWindow] InstagramChatHost MainGrid'e eklendi");
-                                        }
-                                        else
-                                        {
-                                            Log.Warning("[MainWindow] MainGrid bulunamadı - InstagramChatHost eklenemedi");
-                                        }
-
-                                        // Chat başlat
-                                        _instagramIngestor = await _instagramChatHost.StartChatAsync(instaBroadcaster);
-                                        Log.Information("[MainWindow] Instagram Chat başlatıldı (WebView2) - @{Broadcaster}", instaBroadcaster);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Log.Error(ex, "[MainWindow] Instagram chat başlatma hatası: {Message}", ex.Message);
-
-                                        // Cleanup on error
-                                        if (_instagramChatHost != null)
-                                        {
-                                            var mainGrid = Content as Grid;
-                                            if (mainGrid != null && mainGrid.Children.Contains(_instagramChatHost))
-                                            {
-                                                mainGrid.Children.Remove(_instagramChatHost);
-                                            }
-                                            _instagramChatHost.Dispose();
-                                            _instagramChatHost = null;
-                                        }
-                                    }
-                                });
+                                _extensionBridgeIngestor.StopAsync().Wait(TimeSpan.FromSeconds(2));
+                                _extensionBridgeIngestor.Dispose();
+                                _extensionBridgeIngestor = null;
                             }
-                            else if (!string.IsNullOrWhiteSpace(instaReaderUsername))
-                            {
-                                Log.Warning("[MainWindow] Instagram Chat - Şifre veya yayıncı adı eksik");
-                            }
-                            else
-                            {
-                                Log.Warning("[MainWindow] Instagram Chat - Okuyucu hesap bilgileri eksik");
-                            }
+
+                            // Yeni extension bridge başlat
+                            _extensionBridgeIngestor = new ExtensionBridgeIngestor(9876);
+                            _ingestorTasks.Add(StartIngestorSafeAsync(_extensionBridgeIngestor, "Instagram (Extension)", ct));
+
+                            Log.Information("[MainWindow] Instagram Chat (Extension Bridge) başlatıldı");
+                            Log.Information("[MainWindow] → Tarayıcınızda Instagram Live sayfasını açın");
+                            Log.Information("[MainWindow] → Extension otomatik olarak yorumları aktaracak");
                             break;
                     }
                 }

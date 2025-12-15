@@ -276,6 +276,7 @@ namespace UniCast.App.Views
 
         /// <summary>
         /// Instagram login durumunu kontrol eder.
+        /// Cookie varlığını ve session geçerliliğini kontrol eder.
         /// </summary>
         public async Task<bool> CheckLoginStatusAsync()
         {
@@ -298,15 +299,36 @@ namespace UniCast.App.Views
 
                 await Task.WhenAny(tcs.Task, Task.Delay(15000));
 
-                // Kısa bekle
-                await Task.Delay(2000);
+                // Sayfanın tam yüklenmesi için bekle
+                await Task.Delay(3000);
+
+                // Mevcut URL'i kontrol et
+                var currentUrl = _webView.CoreWebView2.Source ?? "";
 
                 // Login sayfasına yönlendirildik mi?
-                var currentUrl = _webView.CoreWebView2.Source ?? "";
-                IsLoggedIn = !currentUrl.Contains("/accounts/login") && !currentUrl.Contains("/challenge");
+                if (currentUrl.Contains("/accounts/login") || currentUrl.Contains("/challenge"))
+                {
+                    IsLoggedIn = false;
+                    Log.Debug("[InstagramChatHost] Login durumu: Giriş yapılmamış (URL: {Url})", currentUrl);
+                    return false;
+                }
 
-                Log.Debug("[InstagramChatHost] Login durumu: {Status} (URL: {Url})",
-                    IsLoggedIn ? "Giriş yapılmış" : "Giriş yapılmamış", currentUrl);
+                // JavaScript ile session_id cookie kontrolü yap
+                var cookieCheck = await _webView.CoreWebView2.ExecuteScriptAsync(
+                    "document.cookie.includes('sessionid') || document.cookie.includes('ds_user_id')");
+
+                var hasCookie = cookieCheck?.Trim('"').ToLowerInvariant() == "true";
+
+                // Ayrıca DOM'da login butonunun olup olmadığını kontrol et
+                var hasLoginButton = await _webView.CoreWebView2.ExecuteScriptAsync(
+                    "!!document.querySelector('a[href=\"/accounts/login/\"]') || !!document.querySelector('button[type=\"submit\"]')");
+                var showsLoginButton = hasLoginButton?.Trim('"').ToLowerInvariant() == "true";
+
+                IsLoggedIn = hasCookie && !showsLoginButton;
+
+                Log.Debug("[InstagramChatHost] Login durumu: {Status} (URL: {Url}, Cookie: {Cookie}, LoginBtn: {Btn})",
+                    IsLoggedIn ? "Giriş yapılmış" : "Giriş yapılmamış",
+                    currentUrl, hasCookie, showsLoginButton);
 
                 return IsLoggedIn;
             }
@@ -422,7 +444,7 @@ namespace UniCast.App.Views
         /// </summary>
         /// <param name="broadcasterUsername">Yayıncının kullanıcı adı (@ olmadan)</param>
         /// <returns>Chat scraper instance'ı</returns>
-        public async Task<InstagramLiveChatScraper> StartChatAsync(string broadcasterUsername)
+        public async Task<InstagramLiveChatScraper> StartChatAsync(string broadcasterUsername, string? broadcastId = null)
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(InstagramChatHost));
@@ -433,7 +455,8 @@ namespace UniCast.App.Views
             // @ işaretini temizle
             broadcasterUsername = broadcasterUsername.TrimStart('@').ToLowerInvariant();
 
-            Log.Information("[InstagramChatHost] StartChatAsync - Yayıncı: @{Username}", broadcasterUsername);
+            Log.Information("[InstagramChatHost] StartChatAsync - Yayıncı: @{Username}, BroadcastId: {BroadcastId}",
+                broadcasterUsername, broadcastId ?? "N/A");
 
             if (!_isInitialized)
                 await InitializeAsync();
@@ -471,8 +494,15 @@ namespace UniCast.App.Views
                 _scraper.Dispose();
             }
 
-            // Yeni scraper oluştur
-            _scraper = new InstagramLiveChatScraper(broadcasterUsername);
+            // Yeni scraper oluştur - broadcast_id varsa URL'i oluştur
+            string? liveUrl = null;
+            if (!string.IsNullOrWhiteSpace(broadcastId))
+            {
+                liveUrl = $"https://www.instagram.com/{broadcasterUsername}/live/?broadcast_id={broadcastId}";
+                Log.Debug("[InstagramChatHost] Live URL oluşturuldu: {Url}", liveUrl);
+            }
+
+            _scraper = new InstagramLiveChatScraper(broadcasterUsername, liveUrl);
 
             // WebView2 kontrollerini ayarla
             _scraper.SetWebViewControls(

@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "UniCast Chat Bridge",
+  "description": "Instagram Live chat'i UniCast'e aktarır",
+  "version": "1.0.0",
+  "author": "UniCast",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://www.instagram.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.instagram.com/*/live/*",
+        "*://www.instagram.com/*/live"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

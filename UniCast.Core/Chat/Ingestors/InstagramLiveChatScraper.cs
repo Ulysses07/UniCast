@@ -48,9 +48,10 @@ namespace UniCast.Core.Chat.Ingestors
         /// </summary>
         public string? LiveUrl { get; set; }
 
-        public InstagramLiveChatScraper(string broadcasterUsername) : base(broadcasterUsername.TrimStart('@').ToLowerInvariant())
+        public InstagramLiveChatScraper(string broadcasterUsername, string? liveUrl = null) : base(broadcasterUsername.TrimStart('@').ToLowerInvariant())
         {
             BroadcasterUsername = _identifier;
+            LiveUrl = liveUrl;
         }
 
         /// <summary>
@@ -98,6 +99,18 @@ namespace UniCast.Core.Chat.Ingestors
 
             // Sayfanın yüklenmesi için bekle
             await Task.Delay(4000, ct);
+
+            // Login sayfasına yönlendirilip yönlendirilmediğini kontrol et
+            var currentUrl = await _executeScript("window.location.href");
+            currentUrl = currentUrl?.Trim('"') ?? "";
+
+            if (currentUrl.Contains("/accounts/login") || currentUrl.Contains("/challenge"))
+            {
+                Log.Error("[IG Scraper] Instagram login gerekli - mevcut URL: {Url}", currentUrl);
+                throw new InvalidOperationException(
+                    "Instagram'a giriş yapılmamış veya oturum süresi dolmuş. " +
+                    "Lütfen Ayarlar > Instagram bölümünden hesap bilgilerini kontrol edin ve uygulamayı yeniden başlatın.");
+            }
 
             // Observer script'i inject et
             await InjectObserverAsync(ct);
