@@ -20,7 +20,7 @@ namespace UniCast.Core.Chat.Bridge
         private const int DEFAULT_PORT = 9876;
         private readonly int _port;
         private readonly ConcurrentDictionary<string, WebSocket> _clients = new();
-        private readonly CancellationTokenSource _cts = new();
+        private CancellationTokenSource? _cts;
         private HttpListener? _listener;
         private Task? _acceptTask;
         private bool _disposed;
@@ -64,6 +64,10 @@ namespace UniCast.Core.Chat.Bridge
 
             try
             {
+                // Her start için yeni CTS oluştur
+                _cts?.Dispose();
+                _cts = new CancellationTokenSource();
+
                 _listener = new HttpListener();
                 _listener.Prefixes.Add($"http://localhost:{_port}/");
                 _listener.Start();
@@ -92,7 +96,15 @@ namespace UniCast.Core.Chat.Bridge
         {
             if (!IsRunning) return;
 
-            _cts.Cancel();
+            try
+            {
+                _cts?.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // CTS zaten dispose edilmiş, devam et
+            }
+
             IsRunning = false;
 
             // Tüm client bağlantılarını kapat
@@ -356,8 +368,13 @@ namespace UniCast.Core.Chat.Bridge
             if (_disposed) return;
             _disposed = true;
 
-            _cts.Cancel();
-            _cts.Dispose();
+            try
+            {
+                _cts?.Cancel();
+            }
+            catch (ObjectDisposedException) { }
+
+            _cts?.Dispose();
             _listener?.Close();
 
             foreach (var kvp in _clients)

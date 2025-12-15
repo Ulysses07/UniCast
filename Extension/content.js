@@ -1,6 +1,8 @@
 /**
  * UniCast Chat Bridge - Content Script
  * Instagram Live sayfasındaki yorumları izler ve UniCast'e gönderir
+ * 
+ * v3.0 - Instagram Live DOM yapısı: DIV > SPAN (username) + SPAN (message)
  */
 
 (function() {
@@ -8,36 +10,26 @@
 
     const UNICAST_WS_PORT = 9876;
     const RECONNECT_INTERVAL = 3000;
+    const SCAN_INTERVAL = 500; // Her 500ms yeni yorum tara
     const SEEN_COMMENTS = new Set();
+    const MAX_SEEN_CACHE = 500;
 
     let ws = null;
     let isConnected = false;
     let observer = null;
+    let scanTimer = null;
     let reconnectTimer = null;
+    let debugMode = true;
 
-    // Instagram Live yorum selector'ları
-    const SELECTORS = {
-        // Ana yorum container'ları - Instagram sık değiştiriyor, birden fazla deneyelim
-        commentContainer: [
-            '[aria-label*="comment" i]',
-            '[data-testid*="comment"]',
-            'div[class*="Comment"]',
-            'ul[class*="comment" i] > li',
-            'div[role="list"] > div[role="listitem"]'
-        ],
-        // Yorum içeriği
-        commentText: [
-            'span[class*="x1lliihq"]',
-            'span[dir="auto"]',
-            'span:not([class*="username"])'
-        ],
-        // Kullanıcı adı
-        username: [
-            'span[class*="username"]',
-            'a[role="link"] span',
-            'span[class*="x1lliihq"]:first-child'
-        ]
-    };
+    function log(...args) {
+        if (debugMode) {
+            console.log('[UniCast Bridge]', ...args);
+        }
+    }
+
+    function logError(...args) {
+        console.error('[UniCast Bridge]', ...args);
+    }
 
     /**
      * WebSocket bağlantısını başlat
@@ -48,14 +40,14 @@
         }
 
         try {
+            log('WebSocket bağlantısı deneniyor...');
             ws = new WebSocket(`ws://localhost:${UNICAST_WS_PORT}/instagram`);
 
             ws.onopen = () => {
-                console.log('[UniCast Bridge] WebSocket bağlandı');
+                log('WebSocket bağlandı ✓');
                 isConnected = true;
                 clearTimeout(reconnectTimer);
                 
-                // Bağlantı bilgisini gönder
                 sendMessage({
                     type: 'connected',
                     platform: 'instagram',
@@ -63,19 +55,26 @@
                     timestamp: Date.now()
                 });
 
-                // Badge'i güncelle
-                chrome.runtime.sendMessage({ action: 'setConnected', connected: true });
+                try {
+                    chrome.runtime.sendMessage({ action: 'setConnected', connected: true });
+                } catch (e) {}
+
+                // Taramayı başlat
+                startPeriodicScan();
             };
 
             ws.onclose = () => {
-                console.log('[UniCast Bridge] WebSocket kapandı, yeniden bağlanılıyor...');
+                log('WebSocket kapandı, yeniden bağlanılıyor...');
                 isConnected = false;
-                chrome.runtime.sendMessage({ action: 'setConnected', connected: false });
+                stopPeriodicScan();
+                try {
+                    chrome.runtime.sendMessage({ action: 'setConnected', connected: false });
+                } catch (e) {}
                 scheduleReconnect();
             };
 
             ws.onerror = (error) => {
-                console.error('[UniCast Bridge] WebSocket hatası:', error);
+                logError('WebSocket hatası:', error);
                 isConnected = false;
             };
 
@@ -84,38 +83,29 @@
                     const data = JSON.parse(event.data);
                     handleServerMessage(data);
                 } catch (e) {
-                    console.error('[UniCast Bridge] Mesaj parse hatası:', e);
+                    logError('Mesaj parse hatası:', e);
                 }
             };
 
         } catch (error) {
-            console.error('[UniCast Bridge] WebSocket bağlantı hatası:', error);
+            logError('WebSocket bağlantı hatası:', error);
             scheduleReconnect();
         }
     }
 
-    /**
-     * Yeniden bağlanma zamanlayıcısı
-     */
     function scheduleReconnect() {
-        if (reconnectTimer) {
-            clearTimeout(reconnectTimer);
-        }
+        if (reconnectTimer) clearTimeout(reconnectTimer);
         reconnectTimer = setTimeout(connectWebSocket, RECONNECT_INTERVAL);
     }
 
-    /**
-     * Sunucuya mesaj gönder
-     */
     function sendMessage(data) {
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify(data));
+            return true;
         }
+        return false;
     }
 
-    /**
-     * Sunucudan gelen mesajları işle
-     */
     function handleServerMessage(data) {
         switch (data.type) {
             case 'ping':
@@ -133,199 +123,228 @@
     }
 
     /**
-     * Selector listesinden çalışan ilkini bul
+     * Benzersiz yorum hash'i oluştur
      */
-    function findElement(selectors, parent = document) {
-        for (const selector of selectors) {
-            const element = parent.querySelector(selector);
-            if (element) {
-                return element;
-            }
+    function createCommentHash(username, text) {
+        const str = `${username}:${text}`.toLowerCase().trim();
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
         }
-        return null;
+        return hash.toString(36);
     }
 
     /**
-     * Tüm eşleşen elementleri bul
+     * Instagram Live yorumlarını tara
+     * Yapı: DIV > SPAN (username) + SPAN (message)
      */
-    function findAllElements(selectors, parent = document) {
-        for (const selector of selectors) {
-            const elements = parent.querySelectorAll(selector);
-            if (elements.length > 0) {
-                return Array.from(elements);
-            }
-        }
-        return [];
-    }
+    function scanForComments() {
+        const comments = [];
+        const foundPairs = new Set(); // Tekrar önleme
 
-    /**
-     * Yorum elementinden veri çıkar
-     */
-    function extractCommentData(element) {
-        try {
-            // Benzersiz ID oluştur
-            const id = element.getAttribute('data-comment-id') || 
-                       `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-            // Daha önce gördüysek atla
-            if (SEEN_COMMENTS.has(id)) {
-                return null;
-            }
-
-            // Kullanıcı adını bul
-            let username = 'Anonim';
-            const usernameEl = findElement(SELECTORS.username, element);
-            if (usernameEl) {
-                username = usernameEl.textContent.trim().replace('@', '');
-            }
-
-            // Yorum metnini bul
-            let text = '';
-            const textEl = findElement(SELECTORS.commentText, element);
-            if (textEl) {
-                text = textEl.textContent.trim();
-            }
-
-            // Boş yorumları atla
-            if (!text || text === username) {
-                return null;
-            }
-
-            SEEN_COMMENTS.add(id);
-
-            return {
-                id,
-                username,
-                text,
-                timestamp: Date.now(),
-                platform: 'instagram'
-            };
-
-        } catch (error) {
-            console.error('[UniCast Bridge] Yorum parse hatası:', error);
-            return null;
-        }
-    }
-
-    /**
-     * Mevcut yorumları tara
-     */
-    function scanExistingComments() {
-        const comments = findAllElements(SELECTORS.commentContainer);
-        console.log(`[UniCast Bridge] ${comments.length} mevcut yorum bulundu`);
-
-        for (const element of comments) {
-            const data = extractCommentData(element);
-            if (data) {
-                sendMessage({
-                    type: 'comment',
-                    data
-                });
-            }
-        }
-    }
-
-    /**
-     * Yorum container'ını bul
-     */
-    function findCommentRoot() {
-        // Live chat panelini bul
-        const possibleRoots = [
-            document.querySelector('[aria-label*="Live" i]'),
-            document.querySelector('[data-testid*="live"]'),
-            document.querySelector('section[class*="live" i]'),
-            document.querySelector('div[class*="comment" i]')?.parentElement?.parentElement,
-            document.body // Fallback
-        ];
-
-        for (const root of possibleRoots) {
-            if (root) {
-                return root;
-            }
-        }
-        return document.body;
-    }
-
-    /**
-     * MutationObserver başlat
-     */
-    function startObserver() {
-        if (observer) {
-            observer.disconnect();
-        }
-
-        const root = findCommentRoot();
-        console.log('[UniCast Bridge] Observer başlatılıyor:', root);
-
-        observer = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                for (const node of mutation.addedNodes) {
-                    if (node.nodeType === Node.ELEMENT_NODE) {
-                        // Yeni eklenen node bir yorum mu kontrol et
-                        const isComment = SELECTORS.commentContainer.some(sel => 
-                            node.matches?.(sel) || node.querySelector?.(sel)
-                        );
-
-                        if (isComment) {
-                            // Direkt yorum elementi
-                            let data = extractCommentData(node);
-                            if (data) {
-                                console.log('[UniCast Bridge] Yeni yorum:', data);
-                                sendMessage({ type: 'comment', data });
-                            }
-
-                            // İç içe yorum elementleri
-                            const innerComments = findAllElements(SELECTORS.commentContainer, node);
-                            for (const inner of innerComments) {
-                                data = extractCommentData(inner);
-                                if (data) {
-                                    console.log('[UniCast Bridge] Yeni iç yorum:', data);
-                                    sendMessage({ type: 'comment', data });
-                                }
-                            }
-                        }
+        // Ana strateji: 2 çocuk span'ı olan div'leri bul
+        document.querySelectorAll('div').forEach(div => {
+            // Sadece direkt çocuk span'ları al
+            const childSpans = Array.from(div.children).filter(el => el.tagName === 'SPAN');
+            
+            if (childSpans.length === 2) {
+                const username = childSpans[0]?.textContent?.trim();
+                const message = childSpans[1]?.textContent?.trim();
+                
+                // Geçerlilik kontrolleri
+                if (username && message &&
+                    username.length > 0 && username.length < 50 &&
+                    message.length > 0 && message.length < 1000 &&
+                    !username.includes('\n') &&
+                    !username.includes(' ') && // Username'de boşluk olmaz
+                    username !== message && // Username ve message farklı olmalı
+                    !/^(LIVE|Messages|Share|Like|Comment|Send|Follow)$/i.test(username) && // UI elementleri değil
+                    !/^(LIVE|Messages|Share|Like|Comment|Send|Follow)$/i.test(message)) {
+                    
+                    const pairKey = `${username}|${message}`;
+                    if (!foundPairs.has(pairKey)) {
+                        foundPairs.add(pairKey);
+                        comments.push({ 
+                            username: username.replace('@', ''), 
+                            text: message, 
+                            source: 'div-2span' 
+                        });
                     }
                 }
             }
         });
 
-        observer.observe(root, {
+        // Yedek strateji: prevSibling username olan span'lar
+        document.querySelectorAll('span').forEach(span => {
+            const text = span.textContent?.trim();
+            const prevSibling = span.previousElementSibling;
+            
+            if (prevSibling?.tagName === 'SPAN' && text) {
+                const username = prevSibling.textContent?.trim();
+                
+                if (username && text &&
+                    username.length > 0 && username.length < 50 &&
+                    text.length > 0 && text.length < 1000 &&
+                    !username.includes(' ') &&
+                    username !== text &&
+                    !/^(LIVE|Messages|Share|Like|Comment|Send|Follow)$/i.test(username)) {
+                    
+                    const pairKey = `${username}|${text}`;
+                    if (!foundPairs.has(pairKey)) {
+                        foundPairs.add(pairKey);
+                        comments.push({ 
+                            username: username.replace('@', ''), 
+                            text: text, 
+                            source: 'sibling-span' 
+                        });
+                    }
+                }
+            }
+        });
+
+        return comments;
+    }
+
+    /**
+     * Yorumları işle ve gönder
+     */
+    function processComments(comments) {
+        let newCount = 0;
+
+        comments.forEach(({ username, text, source }) => {
+            const hash = createCommentHash(username, text);
+            
+            if (!SEEN_COMMENTS.has(hash)) {
+                SEEN_COMMENTS.add(hash);
+                newCount++;
+
+                const commentData = {
+                    id: `ig-${Date.now()}-${hash}`,
+                    username: username,
+                    text: text,
+                    timestamp: Date.now(),
+                    platform: 'instagram'
+                };
+
+                log(`✓ Yeni yorum [${source}]: @${username}: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+
+                if (sendMessage({ type: 'comment', data: commentData })) {
+                    log('  → Gönderildi');
+                } else {
+                    log('  → HATA: WebSocket bağlı değil');
+                }
+            }
+        });
+
+        // Bellek temizliği
+        if (SEEN_COMMENTS.size > MAX_SEEN_CACHE) {
+            const arr = Array.from(SEEN_COMMENTS);
+            arr.splice(0, arr.length - MAX_SEEN_CACHE / 2);
+            SEEN_COMMENTS.clear();
+            arr.forEach(h => SEEN_COMMENTS.add(h));
+        }
+
+        return newCount;
+    }
+
+    /**
+     * Periyodik tarama başlat
+     */
+    function startPeriodicScan() {
+        if (scanTimer) clearInterval(scanTimer);
+
+        log('Periyodik tarama başlatıldı (' + SCAN_INTERVAL + 'ms aralıkla)');
+
+        // İlk tarama
+        const comments = scanForComments();
+        log(`İlk tarama: ${comments.length} yorum bulundu`);
+        if (comments.length > 0) {
+            log('Bulunan yorumlar:', comments);
+        }
+        processComments(comments);
+
+        // Periyodik tarama
+        scanTimer = setInterval(() => {
+            const comments = scanForComments();
+            const newCount = processComments(comments);
+            // Sadece yeni yorum varsa log bas (spam önleme)
+        }, SCAN_INTERVAL);
+    }
+
+    function stopPeriodicScan() {
+        if (scanTimer) {
+            clearInterval(scanTimer);
+            scanTimer = null;
+        }
+    }
+
+    /**
+     * MutationObserver - DOM değişikliklerini izle
+     */
+    function startObserver() {
+        if (observer) observer.disconnect();
+
+        // Live video alanını bul
+        const liveContainer = document.querySelector('[role="main"]') || 
+                             document.querySelector('section') || 
+                             document.body;
+
+        log('Observer başlatılıyor:', liveContainer.tagName);
+
+        observer = new MutationObserver((mutations) => {
+            let hasNewNodes = false;
+            for (const mutation of mutations) {
+                if (mutation.addedNodes.length > 0) {
+                    hasNewNodes = true;
+                    break;
+                }
+            }
+
+            if (hasNewNodes) {
+                // Yeni node eklendiğinde hemen tara
+                const comments = scanForComments();
+                processComments(comments);
+            }
+        });
+
+        observer.observe(liveContainer, {
             childList: true,
             subtree: true
         });
 
-        console.log('[UniCast Bridge] MutationObserver aktif');
+        log('MutationObserver aktif');
     }
 
     /**
-     * Sayfa hazır olduğunda başlat
+     * Başlatma
      */
     function init() {
-        console.log('[UniCast Bridge] Instagram Live sayfası tespit edildi');
-        console.log('[UniCast Bridge] URL:', window.location.href);
+        log('=========================================');
+        log('UniCast Bridge v3.0');
+        log('Instagram Live sayfası tespit edildi');
+        log('URL:', window.location.href);
+        log('=========================================');
 
-        // WebSocket bağlantısını başlat
         connectWebSocket();
 
-        // Sayfa tam yüklenene kadar bekle
         setTimeout(() => {
-            scanExistingComments();
             startObserver();
-        }, 2000);
+        }, 1500);
 
-        // Sayfa değişikliklerini izle (SPA navigation)
+        // SPA navigation izle
         let lastUrl = location.href;
         new MutationObserver(() => {
             const url = location.href;
             if (url !== lastUrl) {
                 lastUrl = url;
-                console.log('[UniCast Bridge] Sayfa değişti:', url);
+                log('Sayfa değişti:', url);
                 
                 if (url.includes('/live')) {
                     setTimeout(() => {
                         SEEN_COMMENTS.clear();
-                        scanExistingComments();
-                        startObserver();
+                        startPeriodicScan();
                     }, 2000);
                 }
             }
@@ -338,5 +357,35 @@
     } else {
         init();
     }
+
+    // Debug için global erişim
+    window.__unicastBridge = {
+        scan: () => {
+            const comments = scanForComments();
+            console.log('Bulunan yorumlar:', comments);
+            return comments;
+        },
+        send: sendMessage,
+        status: () => ({
+            connected: isConnected,
+            wsState: ws?.readyState,
+            seenCount: SEEN_COMMENTS.size
+        }),
+        forceSend: () => {
+            const comments = scanForComments();
+            comments.forEach(c => {
+                sendMessage({ type: 'comment', data: {
+                    id: `ig-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    username: c.username,
+                    text: c.text,
+                    timestamp: Date.now(),
+                    platform: 'instagram'
+                }});
+            });
+            return `${comments.length} yorum gönderildi`;
+        }
+    };
+
+    log('Debug: window.__unicastBridge.scan() ile manuel tarama yapabilirsiniz');
 
 })();
