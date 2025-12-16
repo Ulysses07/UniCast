@@ -43,6 +43,9 @@ namespace UniCast.App
         private FacebookChatScraper? _facebookIngestor;  // Cookie tabanlı scraper
         private FacebookChatHost? _facebookChatHost;  // WebView2 host for Facebook chat
 
+        // Stream Chat Overlay (yayına gömülü chat)
+        private StreamChatOverlayService? _streamChatOverlayService;
+
         // ViewModels (IDisposable olanlar)
         private PreviewViewModel? _previewViewModel;
         private ControlViewModel? _controlViewModel;
@@ -390,10 +393,90 @@ namespace UniCast.App
                 }
 
                 Log.Information("[MainWindow] Stream başladı - {Count} chat ingestor aktif", _ingestorTasks.Count);
+
+                // Stream Chat Overlay başlat (yayına gömülü chat)
+                StartStreamChatOverlay();
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "[MainWindow] OnStreamStarted hatası");
+            }
+        }
+
+        /// <summary>
+        /// Stream Chat Overlay'i başlatır (ayarlarda aktifse)
+        /// </summary>
+        private void StartStreamChatOverlay()
+        {
+            try
+            {
+                var settings = SettingsStore.Data;
+
+                if (!settings.StreamChatOverlayEnabled)
+                {
+                    Log.Debug("[MainWindow] Stream Chat Overlay devre dışı");
+                    return;
+                }
+
+                // Mevcut servisi temizle
+                if (_streamChatOverlayService != null)
+                {
+                    _streamChatOverlayService.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(2));
+                    _streamChatOverlayService = null;
+                }
+
+                // Yeni servis oluştur
+                _streamChatOverlayService = new StreamChatOverlayService(
+                    settings.Width > 0 ? settings.Width : 1920,
+                    settings.Height > 0 ? settings.Height : 1080,
+                    "unicast_chat_overlay",
+                    settings.Fps > 0 ? settings.Fps : 30);
+
+                // Ayarları uygula
+                var renderer = _streamChatOverlayService.Renderer;
+                renderer.Position = settings.StreamChatOverlayPosition switch
+                {
+                    "TopLeft" => ChatOverlayPosition.TopLeft,
+                    "TopRight" => ChatOverlayPosition.TopRight,
+                    "BottomRight" => ChatOverlayPosition.BottomRight,
+                    "Center" => ChatOverlayPosition.Center,
+                    _ => ChatOverlayPosition.BottomLeft
+                };
+                renderer.MaxVisibleMessages = settings.StreamChatOverlayMaxMessages;
+                renderer.MessageLifetimeSeconds = settings.StreamChatOverlayMessageLifetime;
+                renderer.FontSize = settings.StreamChatOverlayFontSize;
+                renderer.Opacity = settings.StreamChatOverlayOpacity;
+                renderer.EnableShadow = settings.StreamChatOverlayShadow;
+
+                // Servisi başlat
+                _streamChatOverlayService.Start();
+
+                Log.Information("[MainWindow] Stream Chat Overlay başlatıldı - Pozisyon: {Position}, Max: {Max} mesaj",
+                    settings.StreamChatOverlayPosition, settings.StreamChatOverlayMaxMessages);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Stream Chat Overlay başlatma hatası");
+            }
+        }
+
+        /// <summary>
+        /// Stream Chat Overlay'i durdurur
+        /// </summary>
+        private async Task StopStreamChatOverlayAsync()
+        {
+            try
+            {
+                if (_streamChatOverlayService != null)
+                {
+                    await _streamChatOverlayService.DisposeAsync();
+                    _streamChatOverlayService = null;
+                    Log.Debug("[MainWindow] Stream Chat Overlay durduruldu");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[MainWindow] Stream Chat Overlay durdurma hatası");
             }
         }
 
@@ -405,6 +488,10 @@ namespace UniCast.App
             try
             {
                 StopAllChatIngestors();
+
+                // Stream Chat Overlay'i durdur
+                _ = StopStreamChatOverlayAsync();
+
                 Log.Information("[MainWindow] Stream durdu - Chat ingestor'lar kapatıldı");
             }
             catch (Exception ex)

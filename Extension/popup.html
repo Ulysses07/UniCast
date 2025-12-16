@@ -9,7 +9,7 @@
             box-sizing: border-box;
         }
         body {
-            width: 280px;
+            width: 300px;
             padding: 16px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #1a1a2e;
@@ -36,18 +36,49 @@
             font-size: 16px;
             font-weight: 600;
         }
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px;
-            background: #16213e;
-            border-radius: 8px;
+        .version {
+            font-size: 10px;
+            color: #666;
+            margin-left: auto;
+        }
+        .platforms {
             margin-bottom: 12px;
         }
+        .platform {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #16213e;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .platform-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .platform-icon.instagram {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        }
+        .platform-icon.tiktok {
+            background: #000;
+            border: 1px solid #25F4EE;
+        }
+        .platform-icon.facebook {
+            background: #1877F2;
+        }
+        .platform-name {
+            font-size: 13px;
+            flex: 1;
+        }
         .status-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: #ef4444;
         }
@@ -59,17 +90,16 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
-        .status-text {
-            font-size: 13px;
-            color: #aaa;
-        }
         .info {
-            font-size: 12px;
+            font-size: 11px;
             color: #666;
-            line-height: 1.5;
+            line-height: 1.6;
+            padding: 10px;
+            background: #0f0f1a;
+            border-radius: 6px;
         }
         .info p {
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .info strong {
             color: #888;
@@ -80,18 +110,32 @@
     <div class="header">
         <div class="logo">UC</div>
         <div class="title">UniCast Chat Bridge</div>
+        <div class="version">v2.1</div>
     </div>
     
-    <div class="status">
-        <div class="status-dot" id="statusDot"></div>
-        <div class="status-text" id="statusText">Bağlantı kontrol ediliyor...</div>
+    <div class="platforms">
+        <div class="platform">
+            <div class="platform-icon instagram">📷</div>
+            <div class="platform-name">Instagram Live</div>
+            <div class="status-dot" id="instagramStatus"></div>
+        </div>
+        <div class="platform">
+            <div class="platform-icon tiktok">🎵</div>
+            <div class="platform-name">TikTok Live</div>
+            <div class="status-dot" id="tiktokStatus"></div>
+        </div>
+        <div class="platform">
+            <div class="platform-icon facebook">📘</div>
+            <div class="platform-name">Facebook Live</div>
+            <div class="status-dot" id="facebookStatus"></div>
+        </div>
     </div>
     
     <div class="info">
         <p><strong>Kullanım:</strong></p>
         <p>1. UniCast uygulamasını başlatın</p>
-        <p>2. Instagram Live sayfasını açın</p>
-        <p>3. Yorumlar otomatik aktarılır</p>
+        <p>2. Herhangi bir Live sayfasını açın</p>
+        <p>3. Yorumlar otomatik olarak aktarılır ✨</p>
     </div>
 
     <script src="popup.js"></script>

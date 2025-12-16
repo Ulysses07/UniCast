@@ -549,6 +549,81 @@ namespace UniCast.App.Services
         public bool OverlayShowChat { get; set; } = true;
         public int OverlayChatMessageLimit { get; set; } = 50;
 
+        // ===== STREAM CHAT OVERLAY AYARLARI =====
+        // Chat mesajlarını doğrudan yayın görüntüsüne ekler
+        // Tüm platformlardaki izleyiciler chatı görebilir
+
+        /// <summary>
+        /// Chat overlay'i yayına ekle (tüm platformlarda görünür)
+        /// </summary>
+        public bool StreamChatOverlayEnabled { get; set; } = false;
+
+        /// <summary>
+        /// Overlay pozisyonu: TopLeft, TopRight, BottomLeft, BottomRight, Center
+        /// </summary>
+        public string StreamChatOverlayPosition { get; set; } = "BottomLeft";
+
+        /// <summary>
+        /// Maksimum görünür mesaj sayısı (1-15)
+        /// </summary>
+        public int StreamChatOverlayMaxMessages { get; set; } = 8;
+
+        /// <summary>
+        /// Mesaj görünürlük süresi (saniye, 5-120)
+        /// </summary>
+        public int StreamChatOverlayMessageLifetime { get; set; } = 30;
+
+        /// <summary>
+        /// Font boyutu (12-48)
+        /// </summary>
+        public int StreamChatOverlayFontSize { get; set; } = 18;
+
+        /// <summary>
+        /// Şeffaflık (0.1-1.0)
+        /// </summary>
+        public double StreamChatOverlayOpacity { get; set; } = 0.9;
+
+        /// <summary>
+        /// Gölge efekti aktif mi
+        /// </summary>
+        public bool StreamChatOverlayShadow { get; set; } = true;
+
+        // ===== STREAM CHAT OVERLAY AYARLARI SONU =====
+
+        // ===== MOLA EKRANI AYARLARI =====
+
+        /// <summary>
+        /// Mola ekranı görseli (GIF, PNG, JPG) - tam dosya yolu
+        /// </summary>
+        public string BreakScreenImagePath { get; set; } = "";
+
+        /// <summary>
+        /// Mola ekranı başlık metni
+        /// </summary>
+        public string BreakScreenTitle { get; set; } = "Mola";
+
+        /// <summary>
+        /// Mola ekranı alt metni
+        /// </summary>
+        public string BreakScreenSubtitle { get; set; } = "Birazdan döneceğim...";
+
+        /// <summary>
+        /// Geri sayım sayacını göster
+        /// </summary>
+        public bool BreakScreenShowCountdown { get; set; } = true;
+
+        /// <summary>
+        /// Mola ekranı arka plan rengi (hex)
+        /// </summary>
+        public string BreakScreenBackgroundColor { get; set; } = "#181825";
+
+        /// <summary>
+        /// Mola ekranı metin rengi (hex)
+        /// </summary>
+        public string BreakScreenTextColor { get; set; } = "#FFFFFF";
+
+        // ===== MOLA EKRANI AYARLARI SONU =====
+
         // Chat Ayarları
         public bool ChatEnabled { get; set; } = true;
         public bool ChatShowTimestamps { get; set; } = true;
@@ -848,6 +923,17 @@ namespace UniCast.App.Services
             OverlayWidth = Math.Clamp(OverlayWidth, 200, 1920);
             OverlayHeight = Math.Clamp(OverlayHeight, 150, 1080);
             OverlayChatMessageLimit = Math.Clamp(OverlayChatMessageLimit, 10, 500);
+
+            // Stream Chat Overlay
+            StreamChatOverlayMaxMessages = Math.Clamp(StreamChatOverlayMaxMessages, 1, 15);
+            StreamChatOverlayMessageLifetime = Math.Clamp(StreamChatOverlayMessageLifetime, 5, 120);
+            StreamChatOverlayFontSize = Math.Clamp(StreamChatOverlayFontSize, 12, 48);
+            StreamChatOverlayOpacity = Math.Clamp(StreamChatOverlayOpacity, 0.1, 1.0);
+            var validOverlayPositions = new[] { "TopLeft", "TopRight", "BottomLeft", "BottomRight", "Center" };
+            if (string.IsNullOrEmpty(StreamChatOverlayPosition) || !validOverlayPositions.Contains(StreamChatOverlayPosition))
+            {
+                StreamChatOverlayPosition = "BottomLeft";
+            }
 
             // Recording
             RecordingQuality = Math.Clamp(RecordingQuality, 1, 100);

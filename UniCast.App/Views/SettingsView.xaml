@@ -5,6 +5,98 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="1200">
 
+    <UserControl.Resources>
+        <!-- Kaydet Butonu Stili - Tıklama Efektli -->
+        <Style x:Key="SaveButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform x:Name="scaleTransform" ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Hover efekti -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#7C3AED"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="scaleTransform" 
+                                                             Storyboard.TargetProperty="ScaleX" 
+                                                             To="1.02" Duration="0:0:0.1"/>
+                                            <DoubleAnimation Storyboard.TargetName="scaleTransform" 
+                                                             Storyboard.TargetProperty="ScaleY" 
+                                                             To="1.02" Duration="0:0:0.1"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="scaleTransform" 
+                                                             Storyboard.TargetProperty="ScaleX" 
+                                                             To="1" Duration="0:0:0.1"/>
+                                            <DoubleAnimation Storyboard.TargetName="scaleTransform" 
+                                                             Storyboard.TargetProperty="ScaleY" 
+                                                             To="1" Duration="0:0:0.1"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <!-- Tıklama efekti (basınca küçülme) -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#5B21B6"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="scaleTransform" 
+                                                             Storyboard.TargetProperty="ScaleX" 
+                                                             To="0.95" Duration="0:0:0.05"/>
+                                            <DoubleAnimation Storyboard.TargetName="scaleTransform" 
+                                                             Storyboard.TargetProperty="ScaleY" 
+                                                             To="0.95" Duration="0:0:0.05"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="scaleTransform" 
+                                                             Storyboard.TargetProperty="ScaleX" 
+                                                             To="1.02" Duration="0:0:0.1"/>
+                                            <DoubleAnimation Storyboard.TargetName="scaleTransform" 
+                                                             Storyboard.TargetProperty="ScaleY" 
+                                                             To="1.02" Duration="0:0:0.1"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <!-- Disabled durumu -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#9CA3AF"/>
+                                <Setter Property="Foreground" Value="#D1D5DB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
         <StackPanel MaxWidth="800" Width="761">
 
@@ -130,46 +222,55 @@
                 </StackPanel>
             </Border>
 
-            <!-- YouTube Ayarları -->
-            <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
-                <StackPanel>
-                    <TextBlock Text="YouTube Chat Ayarları" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
-
-                    <TextBlock Text="Video ID veya URL" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
-                    <TextBox Text="{Binding YouTubeVideoId, UpdateSourceTrigger=PropertyChanged}" Height="30"
-                             ToolTip="Örnek: https://youtube.com/watch?v=XXXXX veya sadece XXXXX"/>
-                    <TextBlock Text="Örnek: https://youtube.com/watch?v=abc123 veya sadece abc123" 
-                               FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Twitch Chat Ayarları -->
-            <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
-                <StackPanel>
-                    <TextBlock Text="Twitch Chat Ayarları" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
-
-                    <TextBlock Text="Kanal Adı" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
-                    <TextBox Text="{Binding TwitchChannelName, UpdateSourceTrigger=PropertyChanged}" Height="30"
-                             ToolTip="Twitch kanal adınız (örn: ninja)"/>
-
-                    <TextBlock Text="Bot Kullanıcı Adı (Opsiyonel)" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
-                    <TextBox Text="{Binding TwitchBotUsername, UpdateSourceTrigger=PropertyChanged}" Height="30"
-                             ToolTip="Chat botu kullanıcı adı (boş bırakılabilir)"/>
-
-                    <TextBlock Text="OAuth Token" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
-                    <PasswordBox x:Name="PwdTwitchOAuth" PasswordChanged="PwdTwitchOAuth_PasswordChanged" Height="30"
-                                ToolTip="https://twitchapps.com/tmi/ adresinden alabilirsiniz"/>
-                    <TextBlock Text="Token almak için: https://twitchapps.com/tmi/" 
-                               FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
-
             <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
                 <StackPanel>
                     <TextBlock Text="Sosyal Medya Entegrasyonu" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
 
+                    <!-- YouTube Ayarları -->
+                    <Expander Header="▶ YouTube Ayarları" Margin="0,0,0,10" Foreground="{StaticResource TextMain}">
+                        <StackPanel Margin="10">
+                            <TextBlock Text="Video ID veya URL" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
+                            <TextBox Text="{Binding YouTubeVideoId, UpdateSourceTrigger=PropertyChanged}" Height="30"
+                                     ToolTip="Örnek: https://youtube.com/watch?v=XXXXX veya sadece XXXXX"/>
+                            <TextBlock Text="Örnek: https://youtube.com/watch?v=abc123 veya sadece abc123" 
+                                       FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,5,0,0"/>
+
+                            <Border Background="#FFEBEE" BorderBrush="#FFCDD2" BorderThickness="1" 
+                                    CornerRadius="4" Padding="10" Margin="0,10,0,0">
+                                <TextBlock TextWrapping="Wrap" Foreground="#C62828" FontSize="10">
+                                    💡 YouTube chat için: Yayın başlattığınızda video ID'yi buraya girin.
+                                    Chat mesajları otomatik olarak çekilecektir.
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </Expander>
+
+                    <!-- Twitch Ayarları -->
+                    <Expander Header="◆ Twitch Ayarları" Margin="0,0,0,10" Foreground="{StaticResource TextMain}">
+                        <StackPanel Margin="10">
+                            <TextBlock Text="Kanal Adı" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
+                            <TextBox Text="{Binding TwitchChannelName, UpdateSourceTrigger=PropertyChanged}" Height="30"
+                                     ToolTip="Twitch kanal adınız (örn: ninja)"/>
+
+                            <TextBlock Text="Bot Kullanıcı Adı (Opsiyonel)" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
+                            <TextBox Text="{Binding TwitchBotUsername, UpdateSourceTrigger=PropertyChanged}" Height="30"
+                                     ToolTip="Chat botu kullanıcı adı (boş bırakılabilir)"/>
+
+                            <TextBlock Text="OAuth Token" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
+                            <PasswordBox x:Name="PwdTwitchOAuth" PasswordChanged="PwdTwitchOAuth_PasswordChanged" Height="30"
+                                        ToolTip="https://twitchapps.com/tmi/ adresinden alabilirsiniz"/>
+
+                            <Border Background="#EDE7F6" BorderBrush="#D1C4E9" BorderThickness="1" 
+                                    CornerRadius="4" Padding="10" Margin="0,10,0,0">
+                                <TextBlock TextWrapping="Wrap" Foreground="#512DA8" FontSize="10">
+                                    🔗 Token almak için: https://twitchapps.com/tmi/
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </Expander>
+
                     <!-- Instagram Ayarları -->
-                    <Expander Header="Instagram Ayarları" Margin="0,0,0,10" Foreground="{StaticResource TextMain}">
+                    <Expander Header="◉ Instagram Ayarları" Margin="0,0,0,10" Foreground="{StaticResource TextMain}">
                         <StackPanel Margin="10">
                             <!-- KRİTİK UYARI -->
                             <Border Background="#FFF3CD" BorderBrush="#FFE69C" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,15">
@@ -204,7 +305,7 @@
                     </Expander>
 
                     <!-- Facebook Ayarları (YENİ: Okuyucu Hesap Yaklaşımı) -->
-                    <Expander Header="Facebook Ayarları" Foreground="{StaticResource TextMain}">
+                    <Expander Header="● Facebook Ayarları" Foreground="{StaticResource TextMain}">
                         <StackPanel Margin="10">
 
                             <!-- YÖNTEM SEÇİMİ -->
@@ -366,6 +467,312 @@
                 </StackPanel>
             </Border>
 
+            <!-- ========== STREAM CHAT OVERLAY ========== -->
+            <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="📺 Yayın Chat Overlay" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
+
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextMuted}" FontSize="12" Margin="0,0,0,15">
+                        Chat mesajlarını doğrudan yayın görüntüsüne ekler. Tüm platformlardaki izleyiciler chatı görebilir.
+                    </TextBlock>
+
+                    <!-- Ana Toggle -->
+                    <CheckBox x:Name="ChkStreamChatOverlay" 
+                              Content="Chat overlay'i yayına ekle" 
+                              IsChecked="{Binding StreamChatOverlayEnabled, Mode=TwoWay}" 
+                              Margin="0,0,0,15" 
+                              FontWeight="SemiBold"
+                              Foreground="{StaticResource TextMain}"/>
+
+                    <!-- Ayarlar Paneli (Sadece aktifse görünür) -->
+                    <StackPanel Visibility="{Binding IsChecked, ElementName=ChkStreamChatOverlay, Converter={StaticResource BoolToVisibility}}">
+
+                        <!-- Pozisyon -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Pozisyon" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                            <ComboBox Grid.Column="1" 
+                                      SelectedValue="{Binding StreamChatOverlayPosition, Mode=TwoWay}" 
+                                      SelectedValuePath="Tag" 
+                                      Height="35">
+                                <ComboBoxItem Tag="BottomLeft">
+                                    <TextBlock Text="Sol Alt" Foreground="Black"/>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="BottomRight">
+                                    <TextBlock Text="Sağ Alt" Foreground="Black"/>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="TopLeft">
+                                    <TextBlock Text="Sol Üst" Foreground="Black"/>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="TopRight">
+                                    <TextBlock Text="Sağ Üst" Foreground="Black"/>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="Center">
+                                    <TextBlock Text="Orta" Foreground="Black"/>
+                                </ComboBoxItem>
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Max Mesaj Sayısı -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="40"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Max Mesaj" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                            <Slider Grid.Column="1" 
+                                    Minimum="1" Maximum="15" 
+                                    Value="{Binding StreamChatOverlayMaxMessages, Mode=TwoWay}"
+                                    TickFrequency="1" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" 
+                                       Text="{Binding StreamChatOverlayMaxMessages}" 
+                                       VerticalAlignment="Center" 
+                                       HorizontalAlignment="Center"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextMain}"/>
+                        </Grid>
+
+                        <!-- Mesaj Süresi -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Mesaj Süresi" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                            <Slider Grid.Column="1" 
+                                    Minimum="5" Maximum="120" 
+                                    Value="{Binding StreamChatOverlayMessageLifetime, Mode=TwoWay}"
+                                    TickFrequency="5" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" 
+                                       VerticalAlignment="Center" 
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextMain}">
+                                <Run Text="{Binding StreamChatOverlayMessageLifetime, Mode=OneWay}"/>
+                                <Run Text="sn"/>
+                            </TextBlock>
+                        </Grid>
+
+                        <!-- Font Boyutu -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Font Boyutu" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                            <Slider Grid.Column="1" 
+                                    Minimum="12" Maximum="48" 
+                                    Value="{Binding StreamChatOverlayFontSize, Mode=TwoWay}"
+                                    TickFrequency="2" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" 
+                                       VerticalAlignment="Center" 
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextMain}">
+                                <Run Text="{Binding StreamChatOverlayFontSize, Mode=OneWay}"/>
+                                <Run Text="px"/>
+                            </TextBlock>
+                        </Grid>
+
+                        <!-- Şeffaflık -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Şeffaflık" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                            <Slider Grid.Column="1" 
+                                    Minimum="0.1" Maximum="1.0" 
+                                    Value="{Binding StreamChatOverlayOpacity, Mode=TwoWay}"
+                                    TickFrequency="0.1" IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" 
+                                       Text="{Binding StreamChatOverlayOpacity, StringFormat=P0}" 
+                                       VerticalAlignment="Center" 
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextMain}"/>
+                        </Grid>
+
+                        <!-- Gölge Efekti -->
+                        <CheckBox Content="Gölge efekti (okunabilirlik için)" 
+                                  IsChecked="{Binding StreamChatOverlayShadow, Mode=TwoWay}" 
+                                  Margin="0,5,0,0"
+                                  Foreground="{StaticResource TextMain}"/>
+
+                        <!-- Bilgi Notu -->
+                        <Border Background="#E8F5E9" BorderBrush="#A5D6A7" BorderThickness="1" 
+                                CornerRadius="4" Padding="10" Margin="0,15,0,0">
+                            <StackPanel>
+                                <TextBlock Text="💡 Bilgi" FontWeight="SemiBold" Foreground="#2E7D32" FontSize="11"/>
+                                <TextBlock TextWrapping="Wrap" Foreground="#2E7D32" FontSize="10" Margin="0,5,0,0">
+                                    • Overlay sadece yayın sırasında aktif olur
+                                    • Tüm platformlardan gelen chatler gösterilir
+                                    • Her platform için farklı renk kullanılır (YouTube=Kırmızı, Twitch=Mor, vb.)
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ========== MOLA EKRANI AYARLARI ========== -->
+            <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="☕ Mola Ekranı" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
+
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextMuted}" FontSize="12" Margin="0,0,0,15">
+                        Mola verdiğinizde izleyicilerinize gösterilecek ekranı özelleştirin. GIF kullanarak animasyonlu mola ekranı oluşturabilirsiniz.
+                    </TextBlock>
+
+                    <!-- Görsel Seçimi -->
+                    <TextBlock Text="Mola Görseli (GIF/PNG/JPG)" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding BreakScreenImagePath}" IsReadOnly="True" Height="35" 
+                                 VerticalContentAlignment="Center" 
+                                 Background="#2A2A3A" Foreground="{StaticResource TextMain}"/>
+                        <Button Grid.Column="1" Content="📁 Seç" Command="{Binding BrowseBreakScreenImageCommand}" 
+                                Margin="10,0,0,0" Height="35" Width="60"/>
+                        <Button Grid.Column="2" Content="✕" Command="{Binding ClearBreakScreenImageCommand}" 
+                                Margin="5,0,0,0" Height="35" Width="35" 
+                                ToolTip="Görseli Kaldır"
+                                Visibility="{Binding HasBreakScreenImage, Converter={StaticResource BoolToVisibility}}"/>
+                    </Grid>
+
+                    <!-- Görsel Önizleme -->
+                    <Border Background="#1A1A2E" CornerRadius="8" Padding="10" Margin="0,0,0,15" 
+                            Visibility="{Binding HasBreakScreenImage, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="Önizleme" FontSize="11" Foreground="{StaticResource TextMuted}" Margin="0,0,0,8"/>
+                            <Border Background="#0D0D15" CornerRadius="4" Padding="5" HorizontalAlignment="Center">
+                                <Image Source="{Binding BreakScreenImagePath, Converter={StaticResource StringToImageSource}}" 
+                                       MaxHeight="150" MaxWidth="300" Stretch="Uniform"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Başlık -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Başlık" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                        <TextBox Grid.Column="1" Text="{Binding BreakScreenTitle, UpdateSourceTrigger=PropertyChanged}" 
+                                 Height="35" VerticalContentAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Alt Başlık -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Alt Başlık" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                        <TextBox Grid.Column="1" Text="{Binding BreakScreenSubtitle, UpdateSourceTrigger=PropertyChanged}" 
+                                 Height="35" VerticalContentAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Geri Sayım -->
+                    <CheckBox Content="Geri sayım sayacını göster" 
+                              IsChecked="{Binding BreakScreenShowCountdown, Mode=TwoWay}" 
+                              Margin="0,5,0,15"
+                              Foreground="{StaticResource TextMain}"/>
+
+                    <!-- Renkler -->
+                    <TextBlock Text="Renk Ayarları" FontWeight="SemiBold" Foreground="{StaticResource TextMain}" Margin="0,5,0,10"/>
+
+                    <!-- Arka Plan Rengi -->
+                    <StackPanel Margin="0,0,0,15">
+                        <TextBlock Text="Arka Plan Rengi" Foreground="{StaticResource TextMuted}" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Renk Önizleme -->
+                            <Border Width="40" Height="40" CornerRadius="4" BorderBrush="#555" BorderThickness="1" Margin="0,0,10,0"
+                                    Background="{Binding BreakScreenBackgroundColor, Converter={StaticResource StringToBrush}}"/>
+                            <!-- Hazır Renkler -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="" Width="32" Height="32" Background="#181825" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#181825" ToolTip="Koyu Mor" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#1a1a2e" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#1a1a2e" ToolTip="Koyu Lacivert" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#0f0f0f" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#0f0f0f" ToolTip="Siyah" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#1e3a5f" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#1e3a5f" ToolTip="Koyu Mavi" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#2d132c" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#2d132c" ToolTip="Koyu Bordo" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#1b4332" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#1b4332" ToolTip="Koyu Yeşil" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#3d3d3d" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#3d3d3d" ToolTip="Gri" Cursor="Hand"/>
+                            </StackPanel>
+                            <!-- Manuel Giriş -->
+                            <TextBox Text="{Binding BreakScreenBackgroundColor, UpdateSourceTrigger=PropertyChanged}" 
+                                     Width="80" Height="32" Margin="10,0,0,0"
+                                     VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                     FontFamily="Consolas" FontSize="12"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Metin Rengi -->
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="Metin Rengi" Foreground="{StaticResource TextMuted}" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Renk Önizleme -->
+                            <Border Width="40" Height="40" CornerRadius="4" BorderBrush="#555" BorderThickness="1" Margin="0,0,10,0"
+                                    Background="{Binding BreakScreenTextColor, Converter={StaticResource StringToBrush}}"/>
+                            <!-- Hazır Renkler -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="" Width="32" Height="32" Background="#FFFFFF" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#FFFFFF" ToolTip="Beyaz" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#F0F0F0" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#F0F0F0" ToolTip="Açık Gri" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#FFD700" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#FFD700" ToolTip="Altın" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#00FFFF" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#00FFFF" ToolTip="Cyan" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#FF6B6B" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#FF6B6B" ToolTip="Kırmızı" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#98D8C8" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#98D8C8" ToolTip="Mint" Cursor="Hand"/>
+                                <Button Content="" Width="32" Height="32" Background="#DDA0DD" Margin="2" BorderThickness="1" BorderBrush="#333"
+                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#DDA0DD" ToolTip="Pembe" Cursor="Hand"/>
+                            </StackPanel>
+                            <!-- Manuel Giriş -->
+                            <TextBox Text="{Binding BreakScreenTextColor, UpdateSourceTrigger=PropertyChanged}" 
+                                     Width="80" Height="32" Margin="10,0,0,0"
+                                     VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                     FontFamily="Consolas" FontSize="12"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Bilgi Notu -->
+                    <Border Background="#FFF8E1" BorderBrush="#FFE082" BorderThickness="1" 
+                            CornerRadius="4" Padding="10" Margin="0,10,0,0">
+                        <StackPanel>
+                            <TextBlock Text="💡 İpucu" FontWeight="SemiBold" Foreground="#F57C00" FontSize="11"/>
+                            <TextBlock TextWrapping="Wrap" Foreground="#E65100" FontSize="10" Margin="0,5,0,0">
+                                • GIF dosyaları animasyonlu mola ekranı için idealdir
+                                • Önerilen boyut: 1920x1080 (yayın çözünürlüğünüzle aynı)
+                                • Şeffaf PNG kullanarak özel efektler oluşturabilirsiniz
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
             <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
                 <StackPanel>
                     <TextBlock Text="Yerel Kayıt" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
@@ -387,7 +794,7 @@
 
             <Button Content="💾 Ayarları Kaydet" Command="{Binding SaveCommand}" 
                     HorizontalAlignment="Right" Width="200" Height="50" 
-                    Background="{StaticResource Primary}" BorderThickness="0" FontWeight="Bold" FontSize="16"/>
+                    Style="{StaticResource SaveButtonStyle}"/>
 
         </StackPanel>
     </ScrollViewer>

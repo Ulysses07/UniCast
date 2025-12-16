@@ -318,10 +318,25 @@ namespace UniCast.Core.Chat.Bridge
                     ? DateTimeOffset.FromUnixTimeMilliseconds(tsEl.GetInt64()).DateTime
                     : DateTime.Now;
 
+                // Platform belirleme - varsayılan Instagram
+                var platform = ChatPlatform.Instagram;
+                if (data.TryGetProperty("platform", out var platformEl))
+                {
+                    var platformStr = platformEl.GetString()?.ToLowerInvariant();
+                    platform = platformStr switch
+                    {
+                        "tiktok" => ChatPlatform.TikTok,
+                        "instagram" => ChatPlatform.Instagram,
+                        "facebook" => ChatPlatform.Facebook,
+                        "youtube" => ChatPlatform.YouTube,
+                        _ => ChatPlatform.Instagram
+                    };
+                }
+
                 return new ChatMessage
                 {
                     Id = id,
-                    Platform = ChatPlatform.Instagram,
+                    Platform = platform,
                     Username = username.ToLowerInvariant(),
                     DisplayName = username,
                     Message = text,

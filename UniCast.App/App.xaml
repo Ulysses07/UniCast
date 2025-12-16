@@ -15,6 +15,8 @@
         <local:InverseBoolConverter x:Key="InverseBoolConverter"/>
         <local:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+        <local:StringToImageSourceConverter x:Key="StringToImageSource"/>
+        <local:StringToSolidColorBrushConverter x:Key="StringToBrush"/>
 
         <SolidColorBrush x:Key="BgDark" Color="#18181B"/>
         <SolidColorBrush x:Key="BgLight" Color="#2D2D30"/>

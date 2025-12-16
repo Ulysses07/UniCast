@@ -1,19 +1,26 @@
 /**
- * UniCast Chat Bridge - Background Service Worker
- * Extension durumunu ve badge'i yönetir
+ * UniCast Chat Bridge - Background Service Worker v2.1
+ * Instagram, TikTok ve Facebook bağlantı durumunu yönetir
  */
 
-let isConnected = false;
+let platformStatus = {
+    instagram: false,
+    tiktok: false,
+    facebook: false
+};
 
-// Badge renklerini ayarla
-function updateBadge(connected) {
-    isConnected = connected;
+// Badge'i güncelle - bağlı platform sayısını göster
+function updateBadge() {
+    let count = 0;
+    if (platformStatus.instagram) count++;
+    if (platformStatus.tiktok) count++;
+    if (platformStatus.facebook) count++;
     
-    if (connected) {
-        chrome.action.setBadgeText({ text: '●' });
+    if (count > 0) {
+        chrome.action.setBadgeText({ text: count.toString() });
         chrome.action.setBadgeBackgroundColor({ color: '#22c55e' }); // Yeşil
     } else {
-        chrome.action.setBadgeText({ text: '○' });
+        chrome.action.setBadgeText({ text: '' });
         chrome.action.setBadgeBackgroundColor({ color: '#ef4444' }); // Kırmızı
     }
 }
@@ -22,10 +29,14 @@ function updateBadge(connected) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.action) {
         case 'setConnected':
-            updateBadge(message.connected);
+            const platform = message.platform || 'instagram';
+            platformStatus[platform] = message.connected;
+            updateBadge();
+            console.log(`[UniCast Bridge] ${platform} bağlantı: ${message.connected}`);
             break;
+            
         case 'getStatus':
-            sendResponse({ connected: isConnected });
+            sendResponse(platformStatus);
             break;
     }
     return true;
@@ -33,14 +44,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Extension yüklendiğinde
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('[UniCast Bridge] Extension yüklendi');
-    updateBadge(false);
+    console.log('[UniCast Bridge] Extension v2.1 yüklendi');
+    console.log('[UniCast Bridge] Desteklenen platformlar: Instagram, TikTok, Facebook');
+    updateBadge();
 });
 
 // Extension başlatıldığında
 chrome.runtime.onStartup.addListener(() => {
-    updateBadge(false);
+    platformStatus = { instagram: false, tiktok: false, facebook: false };
+    updateBadge();
 });
 
-// Başlangıçta badge'i ayarla
-updateBadge(false);
+// Başlangıçta badge'i temizle
+updateBadge();

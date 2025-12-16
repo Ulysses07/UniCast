@@ -1,15 +1,18 @@
 {
   "manifest_version": 3,
   "name": "UniCast Chat Bridge",
-  "description": "Instagram Live chat'i UniCast'e aktarır",
-  "version": "1.0.0",
+  "description": "Instagram, TikTok ve Facebook Live chat'i UniCast'e aktarır",
+  "version": "2.1.0",
   "author": "UniCast",
   "permissions": [
     "activeTab",
     "storage"
   ],
   "host_permissions": [
-    "*://www.instagram.com/*"
+    "*://www.instagram.com/*",
+    "*://www.tiktok.com/*",
+    "*://www.facebook.com/*",
+    "*://web.facebook.com/*"
   ],
   "content_scripts": [
     {
@@ -17,7 +20,26 @@
         "*://www.instagram.com/*/live/*",
         "*://www.instagram.com/*/live"
       ],
-      "js": ["content.js"],
+      "js": ["content-instagram.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://www.tiktok.com/@*/live",
+        "*://www.tiktok.com/@*/live?*"
+      ],
+      "js": ["content-tiktok.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://www.facebook.com/*/videos/*",
+        "*://www.facebook.com/watch/live/*",
+        "*://www.facebook.com/watch/?v=*",
+        "*://web.facebook.com/*/videos/*",
+        "*://web.facebook.com/watch/live/*"
+      ],
+      "js": ["content-facebook.js"],
       "run_at": "document_idle"
     }
   ],

@@ -81,9 +81,30 @@ namespace UniCast.App.ViewModels
             _facebookTokenExpiry = _settings.FacebookTokenExpiry;
             _facebookUseGraphApi = _settings.FacebookUseGraphApi;
 
+            // Stream Chat Overlay
+            _streamChatOverlayEnabled = _settings.StreamChatOverlayEnabled;
+            _streamChatOverlayPosition = _settings.StreamChatOverlayPosition ?? "BottomLeft";
+            _streamChatOverlayMaxMessages = _settings.StreamChatOverlayMaxMessages;
+            _streamChatOverlayMessageLifetime = _settings.StreamChatOverlayMessageLifetime;
+            _streamChatOverlayFontSize = _settings.StreamChatOverlayFontSize;
+            _streamChatOverlayOpacity = _settings.StreamChatOverlayOpacity;
+            _streamChatOverlayShadow = _settings.StreamChatOverlayShadow;
+
+            // Mola Ekranı
+            _breakScreenImagePath = _settings.BreakScreenImagePath ?? "";
+            _breakScreenTitle = _settings.BreakScreenTitle ?? "Mola";
+            _breakScreenSubtitle = _settings.BreakScreenSubtitle ?? "Birazdan döneceğim...";
+            _breakScreenShowCountdown = _settings.BreakScreenShowCountdown;
+            _breakScreenBackgroundColor = _settings.BreakScreenBackgroundColor ?? "#181825";
+            _breakScreenTextColor = _settings.BreakScreenTextColor ?? "#FFFFFF";
+
             // Komutlar
             SaveCommand = new RelayCommand(_ => Save());
             BrowseRecordFolderCommand = new RelayCommand(_ => BrowseFolder());
+            BrowseBreakScreenImageCommand = new RelayCommand(_ => BrowseBreakScreenImage());
+            ClearBreakScreenImageCommand = new RelayCommand(_ => ClearBreakScreenImage());
+            SetBreakBgColorCommand = new RelayCommand(color => { if (color is string c) BreakScreenBackgroundColor = c; });
+            SetBreakTextColorCommand = new RelayCommand(color => { if (color is string c) BreakScreenTextColor = c; });
             RefreshDevicesCommand = new RelayCommand(async _ => await RefreshDevicesAsync());
 
             _ = RefreshDevicesAsync();
@@ -221,6 +242,107 @@ namespace UniCast.App.ViewModels
         {
             get => _enableLocalRecord;
             set { _enableLocalRecord = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        #endregion
+
+        #region Stream Chat Overlay Properties
+
+        private bool _streamChatOverlayEnabled;
+        public bool StreamChatOverlayEnabled
+        {
+            get => _streamChatOverlayEnabled;
+            set { _streamChatOverlayEnabled = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _streamChatOverlayPosition = "BottomLeft";
+        public string StreamChatOverlayPosition
+        {
+            get => _streamChatOverlayPosition;
+            set { _streamChatOverlayPosition = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private int _streamChatOverlayMaxMessages = 8;
+        public int StreamChatOverlayMaxMessages
+        {
+            get => _streamChatOverlayMaxMessages;
+            set { _streamChatOverlayMaxMessages = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private int _streamChatOverlayMessageLifetime = 30;
+        public int StreamChatOverlayMessageLifetime
+        {
+            get => _streamChatOverlayMessageLifetime;
+            set { _streamChatOverlayMessageLifetime = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private int _streamChatOverlayFontSize = 18;
+        public int StreamChatOverlayFontSize
+        {
+            get => _streamChatOverlayFontSize;
+            set { _streamChatOverlayFontSize = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private double _streamChatOverlayOpacity = 0.9;
+        public double StreamChatOverlayOpacity
+        {
+            get => _streamChatOverlayOpacity;
+            set { _streamChatOverlayOpacity = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private bool _streamChatOverlayShadow = true;
+        public bool StreamChatOverlayShadow
+        {
+            get => _streamChatOverlayShadow;
+            set { _streamChatOverlayShadow = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        #endregion
+
+        #region Break Screen Properties
+
+        private string _breakScreenImagePath = "";
+        public string BreakScreenImagePath
+        {
+            get => _breakScreenImagePath;
+            set { _breakScreenImagePath = value; HasUnsavedChanges = true; OnPropertyChanged(); OnPropertyChanged(nameof(HasBreakScreenImage)); }
+        }
+
+        public bool HasBreakScreenImage => !string.IsNullOrEmpty(_breakScreenImagePath) && System.IO.File.Exists(_breakScreenImagePath);
+
+        private string _breakScreenTitle = "Mola";
+        public string BreakScreenTitle
+        {
+            get => _breakScreenTitle;
+            set { _breakScreenTitle = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _breakScreenSubtitle = "Birazdan döneceğim...";
+        public string BreakScreenSubtitle
+        {
+            get => _breakScreenSubtitle;
+            set { _breakScreenSubtitle = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private bool _breakScreenShowCountdown = true;
+        public bool BreakScreenShowCountdown
+        {
+            get => _breakScreenShowCountdown;
+            set { _breakScreenShowCountdown = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _breakScreenBackgroundColor = "#181825";
+        public string BreakScreenBackgroundColor
+        {
+            get => _breakScreenBackgroundColor;
+            set { _breakScreenBackgroundColor = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private string _breakScreenTextColor = "#FFFFFF";
+        public string BreakScreenTextColor
+        {
+            get => _breakScreenTextColor;
+            set { _breakScreenTextColor = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
 
         #endregion
@@ -433,6 +555,10 @@ namespace UniCast.App.ViewModels
 
         public ICommand SaveCommand { get; }
         public ICommand BrowseRecordFolderCommand { get; }
+        public ICommand BrowseBreakScreenImageCommand { get; }
+        public ICommand ClearBreakScreenImageCommand { get; }
+        public ICommand SetBreakBgColorCommand { get; }
+        public ICommand SetBreakTextColorCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
 
         #endregion
@@ -502,6 +628,23 @@ namespace UniCast.App.ViewModels
                     s.FacebookUserAccessToken = (FacebookUserAccessToken ?? "").Trim();
                     s.FacebookTokenExpiry = FacebookTokenExpiry;
                     s.FacebookUseGraphApi = FacebookUseGraphApi;
+
+                    // Stream Chat Overlay
+                    s.StreamChatOverlayEnabled = StreamChatOverlayEnabled;
+                    s.StreamChatOverlayPosition = StreamChatOverlayPosition ?? "BottomLeft";
+                    s.StreamChatOverlayMaxMessages = StreamChatOverlayMaxMessages;
+                    s.StreamChatOverlayMessageLifetime = StreamChatOverlayMessageLifetime;
+                    s.StreamChatOverlayFontSize = StreamChatOverlayFontSize;
+                    s.StreamChatOverlayOpacity = StreamChatOverlayOpacity;
+                    s.StreamChatOverlayShadow = StreamChatOverlayShadow;
+
+                    // Mola Ekranı
+                    s.BreakScreenImagePath = BreakScreenImagePath ?? "";
+                    s.BreakScreenTitle = BreakScreenTitle ?? "Mola";
+                    s.BreakScreenSubtitle = BreakScreenSubtitle ?? "Birazdan döneceğim...";
+                    s.BreakScreenShowCountdown = BreakScreenShowCountdown;
+                    s.BreakScreenBackgroundColor = BreakScreenBackgroundColor ?? "#181825";
+                    s.BreakScreenTextColor = BreakScreenTextColor ?? "#FFFFFF";
                 });
 
                 SettingsStore.Save();
@@ -618,6 +761,25 @@ namespace UniCast.App.ViewModels
                 if (!string.IsNullOrWhiteSpace(path))
                     RecordFolder = path;
             }
+        }
+
+        private void BrowseBreakScreenImage()
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Mola Ekranı Görseli Seç",
+                Filter = "Görsel Dosyaları|*.gif;*.png;*.jpg;*.jpeg;*.webp|GIF|*.gif|PNG|*.png|JPEG|*.jpg;*.jpeg|Tüm Dosyalar|*.*",
+                CheckFileExists = true
+            };
+            if (dlg.ShowDialog() == true)
+            {
+                BreakScreenImagePath = dlg.FileName;
+            }
+        }
+
+        private void ClearBreakScreenImage()
+        {
+            BreakScreenImagePath = "";
         }
 
         private async Task RefreshDevicesAsync()

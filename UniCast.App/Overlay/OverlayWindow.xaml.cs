@@ -8,6 +8,8 @@ using UniCast.App.Services;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
+using ColorConverter = System.Windows.Media.ColorConverter;
+
 
 
 
@@ -158,10 +160,75 @@ namespace UniCast.App.Overlay
 
             Dispatcher.Invoke(() =>
             {
-                if (BreakOverlay != null)
+                if (BreakOverlay == null) return;
+
+                // Ayarları yükle
+                var settings = SettingsStore.Data;
+
+                // Arka plan rengi
+                try
                 {
-                    BreakOverlay.Visibility = Visibility.Visible;
+                    var bgColor = (Color)ColorConverter.ConvertFromString(settings.BreakScreenBackgroundColor ?? "#181825");
+                    BreakOverlay.Background = new SolidColorBrush(Color.FromArgb(220, bgColor.R, bgColor.G, bgColor.B));
                 }
+                catch { }
+
+                // Metin rengi
+                try
+                {
+                    var textColor = (Color)ColorConverter.ConvertFromString(settings.BreakScreenTextColor ?? "#FFFFFF");
+                    var textBrush = new SolidColorBrush(textColor);
+                    if (BreakTitle != null) BreakTitle.Foreground = textBrush;
+                    if (BreakSubtitle != null) BreakSubtitle.Foreground = new SolidColorBrush(Color.FromArgb(200, textColor.R, textColor.G, textColor.B));
+                }
+                catch { }
+
+                // Başlık ve alt başlık
+                if (BreakTitle != null)
+                    BreakTitle.Text = settings.BreakScreenTitle ?? "Mola";
+                if (BreakSubtitle != null)
+                    BreakSubtitle.Text = settings.BreakScreenSubtitle ?? "Birazdan döneceğim...";
+
+                // Geri sayım görünürlüğü
+                if (BreakCountdown != null)
+                    BreakCountdown.Visibility = settings.BreakScreenShowCountdown ? Visibility.Visible : Visibility.Collapsed;
+
+                // Görsel varsa yükle
+                var imagePath = settings.BreakScreenImagePath;
+                if (!string.IsNullOrEmpty(imagePath) && System.IO.File.Exists(imagePath))
+                {
+                    try
+                    {
+                        var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.UriSource = new Uri(imagePath, UriKind.Absolute);
+                        bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                        bitmap.EndInit();
+
+                        if (BreakImage != null)
+                        {
+                            BreakImage.Source = bitmap;
+                            BreakImage.Visibility = Visibility.Visible;
+                        }
+                        // Görsel varsa emoji'yi gizle
+                        if (BreakEmoji != null)
+                            BreakEmoji.Visibility = Visibility.Collapsed;
+                    }
+                    catch
+                    {
+                        // Görsel yüklenemezse emoji göster
+                        if (BreakImage != null) BreakImage.Visibility = Visibility.Collapsed;
+                        if (BreakEmoji != null) BreakEmoji.Visibility = Visibility.Visible;
+                    }
+                }
+                else
+                {
+                    // Görsel yoksa emoji göster
+                    if (BreakImage != null) BreakImage.Visibility = Visibility.Collapsed;
+                    if (BreakEmoji != null) BreakEmoji.Visibility = Visibility.Visible;
+                }
+
+                BreakOverlay.Visibility = Visibility.Visible;
                 UpdateBreakTimer();
                 _breakTimer.Start();
             });
@@ -179,6 +246,12 @@ namespace UniCast.App.Overlay
                 if (BreakOverlay != null)
                 {
                     BreakOverlay.Visibility = Visibility.Collapsed;
+                }
+                // Görseli temizle (GIF animasyonunu durdur)
+                if (BreakImage != null)
+                {
+                    BreakImage.Source = null;
+                    BreakImage.Visibility = Visibility.Collapsed;
                 }
             });
         }

@@ -10,7 +10,7 @@
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
-    
+
     <Border Background="#E6181825" CornerRadius="10">
         <Grid>
             <Grid.RowDefinitions>
@@ -18,7 +18,7 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            
+
             <!-- Header -->
             <Border Grid.Row="0" Background="#20FFFFFF" CornerRadius="10,10,0,0" Padding="10,8">
                 <Grid>
@@ -27,17 +27,17 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    
+
                     <!-- Status Indicator -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <Ellipse x:Name="StatusIndicator" Width="10" Height="10" Fill="Gray" Margin="0,0,8,0"/>
                         <TextBlock x:Name="StatusText" Text="KAPALI" Foreground="#888" FontSize="11" FontWeight="SemiBold"/>
                     </StackPanel>
-                    
+
                     <!-- Title -->
                     <TextBlock Grid.Column="1" Text="UniCast" Foreground="White" FontWeight="Bold" 
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    
+
                     <!-- Minimize Button -->
                     <Button Grid.Column="2" Content="─" Width="24" Height="24"
                             Background="Transparent" Foreground="#888" BorderThickness="0"
@@ -45,7 +45,7 @@
                             ToolTip="Gizle"/>
                 </Grid>
             </Border>
-            
+
             <!-- Chat Messages -->
             <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1" 
                           VerticalScrollBarVisibility="Hidden"
@@ -76,22 +76,39 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
-            
+
             <!-- Break Overlay -->
             <Border x:Name="BreakOverlay" Grid.Row="1" 
                     Background="#DD181825" Visibility="Collapsed"
                     CornerRadius="0">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="☕" FontSize="64" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Mola" FontSize="24" Foreground="White" 
-                               FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10,0,5"/>
-                    <TextBlock x:Name="BreakCountdown" Text="05:00" 
-                               FontSize="48" Foreground="#e94560" 
-                               FontFamily="Consolas" FontWeight="Bold"
-                               HorizontalAlignment="Center"/>
-                </StackPanel>
+                <Grid>
+                    <!-- Arka Plan Görseli (GIF/PNG) -->
+                    <Image x:Name="BreakImage" Stretch="Uniform" 
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Visibility="Collapsed"/>
+
+                    <!-- Metin İçerikleri -->
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <!-- Varsayılan emoji (görsel yoksa) -->
+                        <TextBlock x:Name="BreakEmoji" Text="☕" FontSize="64" HorizontalAlignment="Center"/>
+
+                        <!-- Başlık -->
+                        <TextBlock x:Name="BreakTitle" Text="Mola" FontSize="24" Foreground="White" 
+                                   FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10,0,5"/>
+
+                        <!-- Alt Başlık -->
+                        <TextBlock x:Name="BreakSubtitle" Text="Birazdan döneceğim..." FontSize="14" Foreground="#CCCCCC" 
+                                   HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                        <!-- Geri Sayım -->
+                        <TextBlock x:Name="BreakCountdown" Text="05:00" 
+                                   FontSize="48" Foreground="#e94560" 
+                                   FontFamily="Consolas" FontWeight="Bold"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
             </Border>
-            
+
             <!-- Footer -->
             <Border Grid.Row="2" Background="#15FFFFFF" CornerRadius="0,0,10,10" Padding="10,6">
                 <Grid>
@@ -99,7 +116,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    
+
                     <TextBlock x:Name="ViewerCount" Grid.Column="0" 
                                Text="👥 0" Foreground="#aaa" FontSize="12"/>
                     <TextBlock x:Name="UptimeText" Grid.Column="1" 
