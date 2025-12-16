@@ -73,7 +73,8 @@ namespace UniCast.Encoder
             string? overlayPipeName,
             string? encoderName,
             string? rtbufSize = null,
-            int? threadQueueSize = null)
+            int? threadQueueSize = null,
+            string? chatOverlayPipeName = null)
         {
             var sb = new StringBuilder();
 
@@ -119,7 +120,7 @@ namespace UniCast.Encoder
                 sb.Append("-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 ");
             }
 
-            // INPUT 2: OVERLAY
+            // INPUT 2: OVERLAY (opsiyonel)
             int overlayIndex = -1;
             if (!string.IsNullOrEmpty(overlayPipeName))
             {
@@ -127,12 +128,21 @@ namespace UniCast.Encoder
                 overlayIndex = 2;
             }
 
+            // INPUT 3 (veya 2): CHAT OVERLAY (yeni)
+            int chatOverlayIndex = -1;
+            if (!string.IsNullOrEmpty(chatOverlayPipeName))
+            {
+                chatOverlayIndex = overlayIndex == -1 ? 2 : 3;
+                sb.Append($"-f rawvideo -pix_fmt bgra -s {profile.Width}x{profile.Height} -r {profile.Fps} ");
+                sb.Append($"-i \"\\\\.\\pipe\\{chatOverlayPipeName}\" ");
+            }
+
             // --- 2. FİLTRELER ---
             bool hasHorizontal = targets.Any(t => IsHorizontal(MapPlatform(t.Platform)));
             bool hasVertical = targets.Any(t => IsVertical(MapPlatform(t.Platform)));
             if (!string.IsNullOrEmpty(localRecordPath)) hasHorizontal = true;
 
-            bool needsFilter = (overlayIndex != -1) || hasVertical;
+            bool needsFilter = (overlayIndex != -1) || (chatOverlayIndex != -1) || hasVertical;
             string vMain = "0:v";
             string mapHorizontal = "0:v";
             string mapVertical = "0:v";
@@ -141,10 +151,18 @@ namespace UniCast.Encoder
             {
                 sb.Append(" -filter_complex \"");
 
+                // İlk overlay (varsa)
                 if (overlayIndex != -1)
                 {
                     sb.Append($"[{vMain}][{overlayIndex}:v]overlay=0:0:eof_action=pass[v_overlaid];");
                     vMain = "[v_overlaid]";
+                }
+
+                // Chat overlay (varsa) - şeffaf alpha blending ile
+                if (chatOverlayIndex != -1)
+                {
+                    sb.Append($"{vMain}[{chatOverlayIndex}:v]overlay=0:0:eof_action=pass:format=auto[v_chat];");
+                    vMain = "[v_chat]";
                 }
 
                 if (hasVertical)

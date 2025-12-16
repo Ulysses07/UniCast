@@ -140,7 +140,7 @@ namespace UniCast.Core.Settings
         [Obsolete("FacebookUserId artık kullanılmıyor.")]
         public string? FacebookUserId { get; set; }
 
-        // --- Overlay Ayarları ---
+        // --- Overlay Ayarları (Ayrı Pencere) ---
         public bool ShowOverlay { get; set; } = false;
         public int OverlayX { get; set; } = 24;
         public int OverlayY { get; set; } = 24;
@@ -148,6 +148,42 @@ namespace UniCast.Core.Settings
         public double OverlayHeight { get; set; } = 400;
         public double OverlayOpacity { get; set; } = 0.85;
         public int OverlayFontSize { get; set; } = 18;
+
+        // --- Stream Chat Overlay Ayarları (Yayına Gömülü) ---
+        /// <summary>
+        /// Chat overlay'i yayına ekle (tüm platformlarda görünür)
+        /// </summary>
+        public bool StreamChatOverlayEnabled { get; set; } = false;
+
+        /// <summary>
+        /// Overlay pozisyonu: TopLeft, TopRight, BottomLeft, BottomRight, Center
+        /// </summary>
+        public string StreamChatOverlayPosition { get; set; } = "BottomLeft";
+
+        /// <summary>
+        /// Maksimum görünür mesaj sayısı (1-15)
+        /// </summary>
+        public int StreamChatOverlayMaxMessages { get; set; } = 8;
+
+        /// <summary>
+        /// Mesaj görünürlük süresi (saniye, 5-120)
+        /// </summary>
+        public int StreamChatOverlayMessageLifetime { get; set; } = 30;
+
+        /// <summary>
+        /// Font boyutu (12-48)
+        /// </summary>
+        public int StreamChatOverlayFontSize { get; set; } = 18;
+
+        /// <summary>
+        /// Şeffaflık (0.1-1.0)
+        /// </summary>
+        public double StreamChatOverlayOpacity { get; set; } = 0.9;
+
+        /// <summary>
+        /// Gölge efekti aktif mi
+        /// </summary>
+        public bool StreamChatOverlayShadow { get; set; } = true;
 
         // --- Profil Yönetimi ---
         public List<Profile> Profiles { get; set; } =
@@ -168,11 +204,24 @@ namespace UniCast.Core.Settings
 
         public void Normalize()
         {
-            // Değerleri mantıklı sınırlarda tut
+            // Overlay değerlerini mantıklı sınırlarda tut
             OverlayOpacity = Math.Clamp(OverlayOpacity, 0.0, 1.0);
             OverlayFontSize = Math.Clamp(OverlayFontSize, 8, 96);
             OverlayWidth = Math.Clamp(OverlayWidth, 200, 1000);
             OverlayHeight = Math.Clamp(OverlayHeight, 100, 1000);
+
+            // Stream Chat Overlay ayarlarını normalize et
+            StreamChatOverlayMaxMessages = Math.Clamp(StreamChatOverlayMaxMessages, 1, 15);
+            StreamChatOverlayMessageLifetime = Math.Clamp(StreamChatOverlayMessageLifetime, 5, 120);
+            StreamChatOverlayFontSize = Math.Clamp(StreamChatOverlayFontSize, 12, 48);
+            StreamChatOverlayOpacity = Math.Clamp(StreamChatOverlayOpacity, 0.1, 1.0);
+
+            // Geçerli pozisyon kontrolü
+            var validPositions = new[] { "TopLeft", "TopRight", "BottomLeft", "BottomRight", "Center" };
+            if (!validPositions.Contains(StreamChatOverlayPosition))
+            {
+                StreamChatOverlayPosition = "BottomLeft";
+            }
 
             SceneItems ??= new List<OverlayItem>();
             if (OverlayX < 0) OverlayX = 0;
