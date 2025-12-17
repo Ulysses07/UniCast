@@ -264,8 +264,8 @@ namespace UniCast.Core.Chat.Bridge
                             var message = ParseCommentData(dataEl);
                             if (message != null)
                             {
-                                Log.Debug("[ExtensionBridge] Yorum: @{User}: {Text}",
-                                    message.DisplayName, message.Message);
+                                Log.Debug("[ExtensionBridge] Yorum [{Platform}]: @{User}: {Text}",
+                                    message.Platform, message.DisplayName, message.Message);
                                 OnMessageReceived?.Invoke(message);
                             }
                         }
@@ -320,9 +320,11 @@ namespace UniCast.Core.Chat.Bridge
 
                 // Platform belirleme - varsayılan Instagram
                 var platform = ChatPlatform.Instagram;
+                var platformStr = "instagram"; // varsayılan
+                
                 if (data.TryGetProperty("platform", out var platformEl))
                 {
-                    var platformStr = platformEl.GetString()?.ToLowerInvariant();
+                    platformStr = platformEl.GetString()?.ToLowerInvariant() ?? "instagram";
                     platform = platformStr switch
                     {
                         "tiktok" => ChatPlatform.TikTok,
@@ -331,6 +333,11 @@ namespace UniCast.Core.Chat.Bridge
                         "youtube" => ChatPlatform.YouTube,
                         _ => ChatPlatform.Instagram
                     };
+                    Log.Debug("[ExtensionBridge] Platform algılandı: {PlatformStr} -> {Platform}", platformStr, platform);
+                }
+                else
+                {
+                    Log.Warning("[ExtensionBridge] Platform bilgisi YOK! Varsayılan Instagram kullanılıyor. Data: {Data}", data.ToString());
                 }
 
                 return new ChatMessage
