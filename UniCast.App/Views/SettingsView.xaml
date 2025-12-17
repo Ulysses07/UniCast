@@ -6,7 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="1200">
 
     <UserControl.Resources>
-        <!-- Kaydet Butonu Stili - Tıklama Efektli -->
+        <!-- Kaydet Butonu Stili -->
         <Style x:Key="SaveButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource Primary}"/>
             <Setter Property="Foreground" Value="White"/>
@@ -29,7 +29,6 @@
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <!-- Hover efekti -->
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#7C3AED"/>
                                 <Trigger.EnterActions>
@@ -57,7 +56,6 @@
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>
                             </Trigger>
-                            <!-- Tıklama efekti (basınca küçülme) -->
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#5B21B6"/>
                                 <Trigger.EnterActions>
@@ -85,7 +83,6 @@
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>
                             </Trigger>
-                            <!-- Disabled durumu -->
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Background" Value="#9CA3AF"/>
                                 <Setter Property="Foreground" Value="#D1D5DB"/>
@@ -102,6 +99,7 @@
 
             <TextBlock Text="⚙️ Ayarlar" FontSize="24" FontWeight="Bold" Margin="0,0,0,20" Foreground="{StaticResource TextMain}"/>
 
+            <!-- ========== KAMERA VE MİKROFON ========== -->
             <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
                 <StackPanel>
                     <TextBlock Text="Kamera ve Mikrofon" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
@@ -150,6 +148,7 @@
                 </StackPanel>
             </Border>
 
+            <!-- ========== YAYIN KALİTESİ ========== -->
             <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
                 <StackPanel>
                     <TextBlock Text="Yayın Kalitesi" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
@@ -203,8 +202,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="FPS" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
                         <TextBox Grid.Column="1" Text="{Binding Fps}" Height="30" VerticalContentAlignment="Center"/>
-
-                        <TextBlock Grid.Column="3" Text="Video Bitrate (Kbps)" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                        <TextBlock Grid.Column="3" Text="Video Bitrate" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
                         <TextBox Grid.Column="4" Text="{Binding VideoKbps}" Height="30" VerticalContentAlignment="Center"/>
                     </Grid>
 
@@ -222,6 +220,7 @@
                 </StackPanel>
             </Border>
 
+            <!-- ========== SOSYAL MEDYA ENTEGRASYONU ========== -->
             <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
                 <StackPanel>
                     <TextBlock Text="Sosyal Medya Entegrasyonu" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
@@ -269,201 +268,27 @@
                         </StackPanel>
                     </Expander>
 
-                    <!-- Instagram Ayarları -->
-                    <Expander Header="◉ Instagram Ayarları" Margin="0,0,0,10" Foreground="{StaticResource TextMain}">
-                        <StackPanel Margin="10">
-                            <!-- KRİTİK UYARI -->
-                            <Border Background="#FFF3CD" BorderBrush="#FFE69C" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,15">
-                                <StackPanel>
-                                    <TextBlock Text="⚠️ ÖNEMLİ GÜVENLİK UYARISI" FontWeight="Bold" Foreground="#856404" FontSize="12"/>
-                                    <TextBlock TextWrapping="Wrap" Foreground="#856404" FontSize="11" Margin="0,5,0,0">
-                                        Instagram Private API kullanımı hesap yasaklanmasına yol açabilir!
-                                        Ana hesabınızı DEĞİL, sadece chat okumak için oluşturduğunuz
-                                        AYRI BİR OKUYUCU HESAP kullanın. UniCast bu hesabın
-                                        yasaklanmasından sorumlu değildir.
-                                    </TextBlock>
-                                </StackPanel>
-                            </Border>
-
-                            <TextBlock Text="Okuyucu Hesap Kullanıcı Adı" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
-                            <TextBox Text="{Binding InstagramUserId, UpdateSourceTrigger=PropertyChanged}" Height="30"
-                                     ToolTip="Ana hesabınız DEĞİL, ayrı bir okuyucu hesap kullanın!"/>
-
-                            <TextBlock Text="Okuyucu Hesap Şifresi" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
-                            <PasswordBox x:Name="PwdInstagramSession" PasswordChanged="PwdInstagramSession_PasswordChanged" Height="30"
-                                        ToolTip="Private API için gerekli. Ana hesap şifrenizi GİRMEYİN!"/>
-
-                            <TextBlock Text="Yayıncı Hesap Kullanıcı Adı" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
-                            <TextBox Text="{Binding InstagramBroadcasterUsername, UpdateSourceTrigger=PropertyChanged}" Height="30"
-                                     ToolTip="Canlı yayın açtığınız hesabın kullanıcı adı (örn: emaroutlet)"/>
-                            <TextBlock Text="Yayın açtığınız hesabın kullanıcı adını girin. Boş bırakırsanız okuyucu hesap aranır." 
-                                       Foreground="{StaticResource TextMuted}" FontSize="10" Margin="0,3,0,0"/>
-
-                            <TextBlock Text="Not: Instagram canlı chat için hesapta aktif canlı yayın gerekir." 
-                                       Foreground="Orange" FontSize="10" Margin="0,10,0,0"/>
+                    <!-- Browser Extension Bilgisi -->
+                    <Border Background="#E8F5E9" BorderBrush="#A5D6A7" BorderThickness="1" 
+                            CornerRadius="4" Padding="15" Margin="0,10,0,0">
+                        <StackPanel>
+                            <TextBlock Text="🌐 Instagram, Facebook, TikTok Chat" FontWeight="Bold" 
+                                       Foreground="#2E7D32" FontSize="14"/>
+                            <TextBlock TextWrapping="Wrap" Foreground="#388E3C" FontSize="11" Margin="0,10,0,0">
+                                Bu platformlar için UniCast Chat Bridge tarayıcı extension'ı kullanılıyor.
+                                Extension otomatik olarak açık olan Live sayfalarından yorumları çeker.
+                            </TextBlock>
+                            <TextBlock TextWrapping="Wrap" Foreground="#1B5E20" FontSize="11" Margin="0,10,0,0" FontWeight="SemiBold">
+                                Kullanım:
+                            </TextBlock>
+                            <TextBlock TextWrapping="Wrap" Foreground="#388E3C" FontSize="11" Margin="0,5,0,0">
+                                1. Chrome'da UniCast Chat Bridge extension'ını yükleyin
+                                2. İlgili platforma giriş yapın (tarayıcıda)
+                                3. Live sayfasını açın (Instagram/Facebook/TikTok)
+                                4. Yorumlar otomatik olarak UniCast'e aktarılır
+                            </TextBlock>
                         </StackPanel>
-                    </Expander>
-
-                    <!-- Facebook Ayarları (YENİ: Okuyucu Hesap Yaklaşımı) -->
-                    <Expander Header="● Facebook Ayarları" Foreground="{StaticResource TextMain}">
-                        <StackPanel Margin="10">
-
-                            <!-- YÖNTEM SEÇİMİ -->
-                            <TextBlock Text="Bağlantı Yöntemi" FontWeight="SemiBold" Foreground="{StaticResource TextMain}" Margin="0,0,0,10"/>
-
-                            <RadioButton x:Name="RbFacebookScraping" 
-                                         Content="🔍 WebView2 Scraping (Tüm yayınlar için)" 
-                                         GroupName="FacebookMethod"
-                                         IsChecked="{Binding FacebookUseGraphApi, Converter={StaticResource InverseBoolConverter}, Mode=TwoWay}"
-                                         Foreground="{StaticResource TextMain}"
-                                         Margin="0,0,0,5"/>
-
-                            <RadioButton x:Name="RbFacebookApi" 
-                                         Content="🔗 Graph API (Kendi sayfanız için - Önerilen)" 
-                                         GroupName="FacebookMethod"
-                                         IsChecked="{Binding FacebookUseGraphApi, Mode=TwoWay}"
-                                         Foreground="{StaticResource TextMain}"
-                                         Margin="0,0,0,15"/>
-
-                            <!-- ========== GRAPH API BÖLÜMÜ ========== -->
-                            <Border x:Name="FacebookApiSection" 
-                                    Background="#E8F5E9" BorderBrush="#A5D6A7" BorderThickness="1" 
-                                    CornerRadius="4" Padding="15" Margin="0,0,0,15"
-                                    Visibility="{Binding FacebookUseGraphApi, Converter={StaticResource BoolToVisibility}}">
-                                <StackPanel>
-                                    <TextBlock Text="📡 Facebook Graph API" FontWeight="Bold" Foreground="#2E7D32" FontSize="14"/>
-                                    <TextBlock Text="Kendi Facebook sayfanızın canlı yayın yorumlarını resmi API ile çekin." 
-                                               Foreground="#388E3C" FontSize="11" Margin="0,5,0,10" TextWrapping="Wrap"/>
-
-                                    <!-- API Bağlantı Durumu -->
-                                    <Grid Margin="0,0,0,10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Ellipse x:Name="FacebookApiStatusIndicator" Width="12" Height="12" 
-                                                     Fill="Gray" Margin="0,0,8,0"/>
-                                            <TextBlock x:Name="TxtFacebookApiStatus" Text="Sayfa bağlı değil" 
-                                                       FontSize="13" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
-                                        </StackPanel>
-
-                                        <Button x:Name="BtnFacebookApiConnect" Grid.Column="1" 
-                                                Content="🔗 Sayfa Bağla" 
-                                                Click="BtnFacebookApiConnect_Click"
-                                                Background="#4CAF50" Foreground="White"
-                                                Padding="15,8" FontWeight="SemiBold"
-                                                BorderThickness="0" Cursor="Hand"/>
-                                    </Grid>
-
-                                    <!-- Bağlı Sayfa Bilgisi -->
-                                    <StackPanel x:Name="FacebookApiPageInfo" Visibility="Collapsed" Margin="0,5,0,0">
-                                        <TextBlock Text="Bağlı Sayfa:" Foreground="#2E7D32" FontSize="11"/>
-                                        <TextBlock x:Name="TxtFacebookPageName" Text="-" FontWeight="SemiBold" 
-                                                   Foreground="#1B5E20" FontSize="13" Margin="0,2,0,0"/>
-                                        <TextBlock x:Name="TxtFacebookTokenExpiry" Text="" 
-                                                   Foreground="#689F38" FontSize="10" Margin="0,2,0,0"/>
-                                    </StackPanel>
-
-                                    <!-- Gereksinimler -->
-                                    <Border Background="#FFF8E1" BorderBrush="#FFE082" BorderThickness="1" 
-                                            CornerRadius="4" Padding="10" Margin="0,10,0,0">
-                                        <StackPanel>
-                                            <TextBlock Text="📋 Gereksinimler:" FontWeight="SemiBold" Foreground="#F57C00" FontSize="11"/>
-                                            <TextBlock TextWrapping="Wrap" Foreground="#EF6C00" FontSize="10" Margin="0,5,0,0">
-                                                • Facebook Sayfası (kişisel profil değil)
-                                                • Sayfa en az 60 günlük olmalı
-                                                • Sayfa en az 100 takipçiye sahip olmalı
-                                                • Sayfada Admin/Editor rolünüz olmalı
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- ========== SCRAPING BÖLÜMÜ (ESKİ) ========== -->
-                            <Border x:Name="FacebookScrapingSection"
-                                    Visibility="{Binding FacebookUseGraphApi, Converter={StaticResource InverseBoolToVisibility}}">
-                                <StackPanel>
-                                    <!-- KRİTİK UYARI (Instagram ile aynı stil) -->
-                                    <Border Background="#FFF3CD" BorderBrush="#FFE69C" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,15">
-                                        <StackPanel>
-                                            <TextBlock Text="⚠️ ÖNEMLİ GÜVENLİK UYARISI" FontWeight="Bold" Foreground="#856404" FontSize="12"/>
-                                            <TextBlock TextWrapping="Wrap" Foreground="#856404" FontSize="11" Margin="0,5,0,0">
-                                                Facebook chat için ANA HESABINIZI DEĞİL, sadece yayını izlemek 
-                                                için oluşturduğunuz AYRI BİR OKUYUCU HESAP kullanın!
-                                                Ana hesabınızda güvenlik kontrolü (checkpoint) tetiklenebilir.
-                                                UniCast okuyucu hesabın yasaklanmasından sorumlu değildir.
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Bağlantı Durumu -->
-                                    <Grid Margin="0,0,0,15">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Ellipse x:Name="FacebookStatusIndicator" Width="12" Height="12" 
-                                                     Fill="Gray" Margin="0,0,8,0"/>
-                                            <TextBlock x:Name="TxtFacebookStatus" Text="Bağlı Değil" 
-                                                       FontSize="14" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
-                                        </StackPanel>
-
-                                        <Button x:Name="BtnFacebookConnect" Grid.Column="1" 
-                                                Content="🔵 Bağlan" 
-                                                Click="BtnFacebookConnect_Click"
-                                                Background="#1877F2" Foreground="White"
-                                                Padding="15,8" FontWeight="SemiBold"
-                                                BorderThickness="0" Cursor="Hand"/>
-                                    </Grid>
-
-                                    <!-- Okuyucu Hesap Bilgileri -->
-                                    <TextBlock Text="Okuyucu Hesap E-posta/Telefon" Foreground="{StaticResource TextMuted}" Margin="0,5"/>
-                                    <TextBox x:Name="TxtFacebookReaderEmail" Height="30"
-                                             Text="{Binding FacebookReaderEmail, UpdateSourceTrigger=PropertyChanged}"
-                                             ToolTip="Ana hesabınız DEĞİL, ayrı bir okuyucu hesap kullanın!"/>
-
-                                    <TextBlock Text="Okuyucu Hesap Şifresi" Foreground="{StaticResource TextMuted}" Margin="0,10,0,5"/>
-                                    <PasswordBox x:Name="PwdFacebookReaderPassword" 
-                                                 PasswordChanged="PwdFacebookReaderPassword_PasswordChanged" Height="30"
-                                                 ToolTip="Okuyucu hesap şifresi. Ana hesap şifrenizi GİRMEYİN!"/>
-
-                                    <!-- Canlı Yayın Linki -->
-                                    <TextBlock Text="Facebook Canlı Yayın Linki" Foreground="{StaticResource TextMuted}" Margin="0,15,0,5"/>
-                                    <TextBox Text="{Binding FacebookLiveVideoUrl, UpdateSourceTrigger=PropertyChanged}" Height="30"
-                                             ToolTip="Ana hesabınızla yaptığınız canlı yayının linki"/>
-                                    <TextBlock Text="Örnek: https://facebook.com/sayfa/videos/123456789 veya sadece video ID" 
-                                               FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,5,0,0"/>
-
-                                    <!-- Çıkış Butonu -->
-                                    <Button x:Name="BtnFacebookLogout" Content="🚪 Çıkış Yap" 
-                                            Click="BtnFacebookLogout_Click"
-                                            HorizontalAlignment="Left" Margin="0,15,0,0"
-                                            Padding="10,5" Visibility="Collapsed"
-                                            Background="#DC3545" Foreground="White" BorderThickness="0"/>
-
-                                    <!-- Yardım Notu -->
-                                    <Border Background="#E7F3FF" BorderBrush="#B6D4FE" BorderThickness="1" 
-                                            CornerRadius="4" Padding="10" Margin="0,15,0,0">
-                                        <StackPanel>
-                                            <TextBlock Text="💡 Nasıl Çalışır?" FontWeight="SemiBold" Foreground="#084298" FontSize="11"/>
-                                            <TextBlock TextWrapping="Wrap" Foreground="#084298" FontSize="10" Margin="0,5,0,0">
-                                                1. Yeni bir Facebook hesabı oluşturun (okuyucu hesap)
-                                                2. Yukarıya bu hesabın bilgilerini girin
-                                                3. ANA HESABINIZLA canlı yayın başlatın
-                                                4. Yayın linkini "Canlı Yayın Linki" alanına yapıştırın
-                                                5. UniCast okuyucu hesapla chatı çekecektir
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </Expander>
+                    </Border>
                 </StackPanel>
             </Border>
 
@@ -476,7 +301,6 @@
                         Chat mesajlarını doğrudan yayın görüntüsüne ekler. Tüm platformlardaki izleyiciler chatı görebilir.
                     </TextBlock>
 
-                    <!-- Ana Toggle -->
                     <CheckBox x:Name="ChkStreamChatOverlay" 
                               Content="Chat overlay'i yayına ekle" 
                               IsChecked="{Binding StreamChatOverlayEnabled, Mode=TwoWay}" 
@@ -484,10 +308,8 @@
                               FontWeight="SemiBold"
                               Foreground="{StaticResource TextMain}"/>
 
-                    <!-- Ayarlar Paneli (Sadece aktifse görünür) -->
                     <StackPanel Visibility="{Binding IsChecked, ElementName=ChkStreamChatOverlay, Converter={StaticResource BoolToVisibility}}">
 
-                        <!-- Pozisyon -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="150"/>
@@ -516,7 +338,6 @@
                             </ComboBox>
                         </Grid>
 
-                        <!-- Max Mesaj Sayısı -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="150"/>
@@ -537,7 +358,6 @@
                                        Foreground="{StaticResource TextMain}"/>
                         </Grid>
 
-                        <!-- Mesaj Süresi -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="150"/>
@@ -559,7 +379,6 @@
                             </TextBlock>
                         </Grid>
 
-                        <!-- Font Boyutu -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="150"/>
@@ -581,7 +400,6 @@
                             </TextBlock>
                         </Grid>
 
-                        <!-- Şeffaflık -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="150"/>
@@ -601,178 +419,14 @@
                                        Foreground="{StaticResource TextMain}"/>
                         </Grid>
 
-                        <!-- Gölge Efekti -->
-                        <CheckBox Content="Gölge efekti (okunabilirlik için)" 
+                        <CheckBox Content="Gölge efekti" 
                                   IsChecked="{Binding StreamChatOverlayShadow, Mode=TwoWay}" 
-                                  Margin="0,5,0,0"
                                   Foreground="{StaticResource TextMain}"/>
-
-                        <!-- Bilgi Notu -->
-                        <Border Background="#E8F5E9" BorderBrush="#A5D6A7" BorderThickness="1" 
-                                CornerRadius="4" Padding="10" Margin="0,15,0,0">
-                            <StackPanel>
-                                <TextBlock Text="💡 Bilgi" FontWeight="SemiBold" Foreground="#2E7D32" FontSize="11"/>
-                                <TextBlock TextWrapping="Wrap" Foreground="#2E7D32" FontSize="10" Margin="0,5,0,0">
-                                    • Overlay sadece yayın sırasında aktif olur
-                                    • Tüm platformlardan gelen chatler gösterilir
-                                    • Her platform için farklı renk kullanılır (YouTube=Kırmızı, Twitch=Mor, vb.)
-                                </TextBlock>
-                            </StackPanel>
-                        </Border>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- ========== MOLA EKRANI AYARLARI ========== -->
-            <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
-                <StackPanel>
-                    <TextBlock Text="☕ Mola Ekranı" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
-
-                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextMuted}" FontSize="12" Margin="0,0,0,15">
-                        Mola verdiğinizde izleyicilerinize gösterilecek ekranı özelleştirin. GIF kullanarak animasyonlu mola ekranı oluşturabilirsiniz.
-                    </TextBlock>
-
-                    <!-- Görsel Seçimi -->
-                    <TextBlock Text="Mola Görseli (GIF/PNG/JPG)" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
-                    <Grid Margin="0,0,0,15">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding BreakScreenImagePath}" IsReadOnly="True" Height="35" 
-                                 VerticalContentAlignment="Center" 
-                                 Background="#2A2A3A" Foreground="{StaticResource TextMain}"/>
-                        <Button Grid.Column="1" Content="📁 Seç" Command="{Binding BrowseBreakScreenImageCommand}" 
-                                Margin="10,0,0,0" Height="35" Width="60"/>
-                        <Button Grid.Column="2" Content="✕" Command="{Binding ClearBreakScreenImageCommand}" 
-                                Margin="5,0,0,0" Height="35" Width="35" 
-                                ToolTip="Görseli Kaldır"
-                                Visibility="{Binding HasBreakScreenImage, Converter={StaticResource BoolToVisibility}}"/>
-                    </Grid>
-
-                    <!-- Görsel Önizleme -->
-                    <Border Background="#1A1A2E" CornerRadius="8" Padding="10" Margin="0,0,0,15" 
-                            Visibility="{Binding HasBreakScreenImage, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel>
-                            <TextBlock Text="Önizleme" FontSize="11" Foreground="{StaticResource TextMuted}" Margin="0,0,0,8"/>
-                            <Border Background="#0D0D15" CornerRadius="4" Padding="5" HorizontalAlignment="Center">
-                                <Image Source="{Binding BreakScreenImagePath, Converter={StaticResource StringToImageSource}}" 
-                                       MaxHeight="150" MaxWidth="300" Stretch="Uniform"/>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Başlık -->
-                    <Grid Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Başlık" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
-                        <TextBox Grid.Column="1" Text="{Binding BreakScreenTitle, UpdateSourceTrigger=PropertyChanged}" 
-                                 Height="35" VerticalContentAlignment="Center"/>
-                    </Grid>
-
-                    <!-- Alt Başlık -->
-                    <Grid Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Alt Başlık" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
-                        <TextBox Grid.Column="1" Text="{Binding BreakScreenSubtitle, UpdateSourceTrigger=PropertyChanged}" 
-                                 Height="35" VerticalContentAlignment="Center"/>
-                    </Grid>
-
-                    <!-- Geri Sayım -->
-                    <CheckBox Content="Geri sayım sayacını göster" 
-                              IsChecked="{Binding BreakScreenShowCountdown, Mode=TwoWay}" 
-                              Margin="0,5,0,15"
-                              Foreground="{StaticResource TextMain}"/>
-
-                    <!-- Renkler -->
-                    <TextBlock Text="Renk Ayarları" FontWeight="SemiBold" Foreground="{StaticResource TextMain}" Margin="0,5,0,10"/>
-
-                    <!-- Arka Plan Rengi -->
-                    <StackPanel Margin="0,0,0,15">
-                        <TextBlock Text="Arka Plan Rengi" Foreground="{StaticResource TextMuted}" Margin="0,0,0,8"/>
-                        <StackPanel Orientation="Horizontal">
-                            <!-- Renk Önizleme -->
-                            <Border Width="40" Height="40" CornerRadius="4" BorderBrush="#555" BorderThickness="1" Margin="0,0,10,0"
-                                    Background="{Binding BreakScreenBackgroundColor, Converter={StaticResource StringToBrush}}"/>
-                            <!-- Hazır Renkler -->
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Content="" Width="32" Height="32" Background="#181825" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#181825" ToolTip="Koyu Mor" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#1a1a2e" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#1a1a2e" ToolTip="Koyu Lacivert" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#0f0f0f" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#0f0f0f" ToolTip="Siyah" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#1e3a5f" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#1e3a5f" ToolTip="Koyu Mavi" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#2d132c" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#2d132c" ToolTip="Koyu Bordo" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#1b4332" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#1b4332" ToolTip="Koyu Yeşil" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#3d3d3d" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakBgColorCommand}" CommandParameter="#3d3d3d" ToolTip="Gri" Cursor="Hand"/>
-                            </StackPanel>
-                            <!-- Manuel Giriş -->
-                            <TextBox Text="{Binding BreakScreenBackgroundColor, UpdateSourceTrigger=PropertyChanged}" 
-                                     Width="80" Height="32" Margin="10,0,0,0"
-                                     VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
-                                     FontFamily="Consolas" FontSize="12"/>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- Metin Rengi -->
-                    <StackPanel Margin="0,0,0,10">
-                        <TextBlock Text="Metin Rengi" Foreground="{StaticResource TextMuted}" Margin="0,0,0,8"/>
-                        <StackPanel Orientation="Horizontal">
-                            <!-- Renk Önizleme -->
-                            <Border Width="40" Height="40" CornerRadius="4" BorderBrush="#555" BorderThickness="1" Margin="0,0,10,0"
-                                    Background="{Binding BreakScreenTextColor, Converter={StaticResource StringToBrush}}"/>
-                            <!-- Hazır Renkler -->
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Content="" Width="32" Height="32" Background="#FFFFFF" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#FFFFFF" ToolTip="Beyaz" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#F0F0F0" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#F0F0F0" ToolTip="Açık Gri" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#FFD700" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#FFD700" ToolTip="Altın" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#00FFFF" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#00FFFF" ToolTip="Cyan" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#FF6B6B" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#FF6B6B" ToolTip="Kırmızı" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#98D8C8" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#98D8C8" ToolTip="Mint" Cursor="Hand"/>
-                                <Button Content="" Width="32" Height="32" Background="#DDA0DD" Margin="2" BorderThickness="1" BorderBrush="#333"
-                                        Command="{Binding SetBreakTextColorCommand}" CommandParameter="#DDA0DD" ToolTip="Pembe" Cursor="Hand"/>
-                            </StackPanel>
-                            <!-- Manuel Giriş -->
-                            <TextBox Text="{Binding BreakScreenTextColor, UpdateSourceTrigger=PropertyChanged}" 
-                                     Width="80" Height="32" Margin="10,0,0,0"
-                                     VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
-                                     FontFamily="Consolas" FontSize="12"/>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- Bilgi Notu -->
-                    <Border Background="#FFF8E1" BorderBrush="#FFE082" BorderThickness="1" 
-                            CornerRadius="4" Padding="10" Margin="0,10,0,0">
-                        <StackPanel>
-                            <TextBlock Text="💡 İpucu" FontWeight="SemiBold" Foreground="#F57C00" FontSize="11"/>
-                            <TextBlock TextWrapping="Wrap" Foreground="#E65100" FontSize="10" Margin="0,5,0,0">
-                                • GIF dosyaları animasyonlu mola ekranı için idealdir
-                                • Önerilen boyut: 1920x1080 (yayın çözünürlüğünüzle aynı)
-                                • Şeffaf PNG kullanarak özel efektler oluşturabilirsiniz
-                            </TextBlock>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Border>
-
+            <!-- ========== YEREL KAYIT ========== -->
             <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" Margin="0,0,0,20">
                 <StackPanel>
                     <TextBlock Text="Yerel Kayıt" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15" Foreground="{StaticResource Primary}"/>
@@ -792,6 +446,7 @@
                 </StackPanel>
             </Border>
 
+            <!-- ========== KAYDET BUTONU ========== -->
             <Button Content="💾 Ayarları Kaydet" Command="{Binding SaveCommand}" 
                     HorizontalAlignment="Right" Width="200" Height="50" 
                     Style="{StaticResource SaveButtonStyle}"/>

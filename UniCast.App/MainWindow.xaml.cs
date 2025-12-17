@@ -30,23 +30,18 @@ namespace UniCast.App
         private bool _isDisposed;
         private readonly object _disposeLock = new();
 
-        // DÜZELTME v17.3: Ingestor task'larını takip et (fire-and-forget önleme)
+        // Ingestor task'larını takip et
         private readonly List<Task> _ingestorTasks = new();
 
-        // Chat Ingestors
-        private YouTubeChatScraper? _ytIngestor;  // Scraper kullanıyoruz (API key gerektirmez)
+        // Chat Ingestors - Sadece aktif olanlar
+        private YouTubeChatScraper? _ytIngestor;
         private TwitchChatIngestor? _twitchIngestor;
-        private TikTokChatIngestor? _tikTokIngestor;
-        private InstagramLiveChatScraper? _instagramIngestor;  // WebView2 tabanlı scraper (fallback)
-        private InstagramChatHost? _instagramChatHost;  // WebView2 host for Instagram chat (fallback)
-        private ExtensionBridgeIngestor? _extensionBridgeIngestor;  // Browser Extension tabanlı (önerilen)
-        private FacebookChatScraper? _facebookIngestor;  // Cookie tabanlı scraper
-        private FacebookChatHost? _facebookChatHost;  // WebView2 host for Facebook chat
+        private ExtensionBridgeIngestor? _extensionBridgeIngestor;  // Browser Extension (Instagram, Facebook, TikTok)
 
         // Stream Chat Overlay (yayına gömülü chat)
         private StreamChatOverlayService? _streamChatOverlayService;
 
-        // ViewModels (IDisposable olanlar)
+        // ViewModels
         private PreviewViewModel? _previewViewModel;
         private ControlViewModel? _controlViewModel;
         private ChatViewModel? _chatViewModel;
@@ -128,7 +123,6 @@ namespace UniCast.App
             catch (Exception ex)
             {
                 Log.Error(ex, "[MainWindow] Overlay başlatma hatası: {Message}", ex.Message);
-                // Overlay olmadan da uygulama çalışabilir
                 _overlay = null;
             }
         }
@@ -158,7 +152,6 @@ namespace UniCast.App
 
             try
             {
-                // DÜZELTME v17.3: Task'ları takip et (fire-and-forget yerine)
                 _ingestorTasks.Clear();
 
                 // YouTube - Scraper (API key gerektirmez!)
@@ -166,14 +159,13 @@ namespace UniCast.App
                 {
                     _ytIngestor = new YouTubeChatScraper(settings.YouTubeVideoId);
                     _ingestorTasks.Add(StartIngestorSafeAsync(_ytIngestor, "YouTube", ct));
-                    Log.Information("[MainWindow] YouTube Chat Scraper aktif - API key gerektirmez");
+                    Log.Information("[MainWindow] YouTube Chat Scraper aktif");
                 }
 
-                // Twitch - YENİ!
+                // Twitch
                 if (!string.IsNullOrWhiteSpace(settings.TwitchChannelName))
                 {
                     _twitchIngestor = new TwitchChatIngestor(settings.TwitchChannelName);
-                    // OAuth opsiyonel - anonim okuma desteklenir
                     if (!string.IsNullOrWhiteSpace(settings.TwitchOAuthToken))
                     {
                         _twitchIngestor.OAuthToken = settings.TwitchOAuthToken;
@@ -182,26 +174,8 @@ namespace UniCast.App
                     _ingestorTasks.Add(StartIngestorSafeAsync(_twitchIngestor, "Twitch", ct));
                 }
 
-                // TikTok (Mock - API henüz implement edilmedi)
-                if (!string.IsNullOrWhiteSpace(settings.TikTokUsername))
-                {
-                    _tikTokIngestor = new TikTokChatIngestor(settings.TikTokUsername);
-                    _ingestorTasks.Add(StartIngestorSafeAsync(_tikTokIngestor, "TikTok", ct));
-                    Log.Warning("[MainWindow] TikTok chat sadece mock modda çalışıyor - gerçek API henüz entegre edilmedi");
-                }
-
-                // Instagram - Sadece stream başladığında başlatılıyor (OnStreamStarted'da)
-                // Uygulama açılışında başlatmıyoruz çünkü:
-                // 1. Henüz yayın yok, gereksiz API çağrısı yapılıyor
-                // 2. Sürekli yayın araması Instagram rate limit'e takılıyor
-                // 3. Hesap cezalandırılabilir
-                if (!string.IsNullOrWhiteSpace(settings.InstagramUsername))
-                {
-                    Log.Debug("[MainWindow] Instagram chat stream başladığında aktifleşecek");
-                }
-
-                // Facebook - Yeni scraper bazlı sistem OnStreamStarted'da başlatılıyor
-                // Eski mock ingestor artık kullanılmıyor
+                // Instagram, Facebook, TikTok - Browser Extension ile çalışıyor
+                // Stream başladığında OnStreamStarted'da başlatılıyor
 
                 Log.Debug("[MainWindow] {Count} adet chat ingestor başlatıldı", _ingestorTasks.Count);
             }
@@ -241,12 +215,13 @@ namespace UniCast.App
                 var ct = _cts?.Token ?? CancellationToken.None;
                 _ingestorTasks.Clear();
 
+                bool extensionBridgeNeeded = false;
+
                 foreach (var target in targets.Where(t => t.Enabled))
                 {
                     switch (target.Platform)
                     {
                         case StreamPlatform.YouTube:
-                            // YouTube Video ID'yi ayarlardan veya URL'den çıkar
                             var videoId = ExtractYouTubeVideoId(target.Url, target.StreamKey);
                             if (!string.IsNullOrWhiteSpace(videoId))
                             {
@@ -276,120 +251,24 @@ namespace UniCast.App
                             break;
 
                         case StreamPlatform.Facebook:
-                            // Facebook için WebView2 tabanlı FacebookChatHost kullan
-                            // YENİ: Okuyucu hesap yaklaşımı - cookie yerine reader credentials kullan
-                            var readerEmail = SettingsStore.Data.FacebookReaderEmail;
-                            var readerPassword = SettingsStore.Data.FacebookReaderPassword;
-                            var liveUrl = SettingsStore.Data.FacebookLiveVideoUrl;
-                            var isReaderConnected = SettingsStore.Data.FacebookReaderConnected;
-
-                            if (!string.IsNullOrWhiteSpace(readerEmail) &&
-                                !string.IsNullOrWhiteSpace(readerPassword) &&
-                                !string.IsNullOrWhiteSpace(liveUrl))
-                            {
-                                Log.Debug("[MainWindow] Facebook chat ingestor başlatılıyor (Okuyucu Hesap)...");
-
-                                // UI thread'de çalıştır (WebView2 gereksinimi)
-                                Dispatcher.InvokeAsync(async () =>
-                                {
-                                    try
-                                    {
-                                        // Cleanup old host
-                                        if (_facebookChatHost != null)
-                                        {
-                                            Log.Debug("[MainWindow] Eski FacebookChatHost temizleniyor...");
-                                            await _facebookChatHost.StopChatAsync();
-
-                                            var mainGrid = Content as Grid;
-                                            if (mainGrid != null && mainGrid.Children.Contains(_facebookChatHost))
-                                            {
-                                                mainGrid.Children.Remove(_facebookChatHost);
-                                            }
-
-                                            _facebookChatHost.Dispose();
-                                            _facebookChatHost = null;
-                                        }
-
-                                        // Yeni host oluştur (okuyucu hesap bilgileri ile)
-                                        _facebookChatHost = new FacebookChatHost(readerEmail, readerPassword);
-
-                                        // MainGrid'e ekle (WebView2 için gerekli)
-                                        var grid = Content as Grid;
-                                        if (grid != null)
-                                        {
-                                            grid.Children.Add(_facebookChatHost);
-                                            Log.Debug("[MainWindow] FacebookChatHost MainGrid'e eklendi");
-                                        }
-                                        else
-                                        {
-                                            Log.Warning("[MainWindow] MainGrid bulunamadı - FacebookChatHost eklenemedi");
-                                        }
-
-                                        // Chat başlat - bu SetWebViewControls() çağrısını içerir
-                                        _facebookIngestor = await _facebookChatHost.StartChatAsync(liveUrl);
-                                        Log.Information("[MainWindow] Facebook Chat başlatıldı (Okuyucu Hesap) - VideoUrl: {Url}",
-                                            liveUrl.Length > 50 ? liveUrl.Substring(0, 50) + "..." : liveUrl);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Log.Error(ex, "[MainWindow] Facebook chat başlatma hatası: {Message}", ex.Message);
-
-                                        // Cleanup on error
-                                        if (_facebookChatHost != null)
-                                        {
-                                            var mainGrid = Content as Grid;
-                                            if (mainGrid != null && mainGrid.Children.Contains(_facebookChatHost))
-                                            {
-                                                mainGrid.Children.Remove(_facebookChatHost);
-                                            }
-                                            _facebookChatHost.Dispose();
-                                            _facebookChatHost = null;
-                                        }
-                                    }
-                                });
-                            }
-                            else if (!string.IsNullOrWhiteSpace(readerEmail))
-                            {
-                                Log.Warning("[MainWindow] Facebook Chat - Okuyucu hesap var ama Live Video URL eksik");
-                            }
-                            else
-                            {
-                                Log.Warning("[MainWindow] Facebook Chat - Okuyucu hesap bilgileri eksik. Ayarlar'dan Facebook okuyucu hesap bilgilerini girin.");
-                            }
-                            break;
-
                         case StreamPlatform.TikTok:
-                            var tikTokUsername = SettingsStore.Data.TikTokUsername;
-                            if (!string.IsNullOrWhiteSpace(tikTokUsername))
-                            {
-                                _tikTokIngestor = new TikTokChatIngestor(tikTokUsername);
-                                _ingestorTasks.Add(StartIngestorSafeAsync(_tikTokIngestor, "TikTok", ct));
-                                Log.Warning("[MainWindow] TikTok Chat - Mock modda");
-                            }
-                            break;
-
                         case StreamPlatform.Instagram:
-                            // Instagram için Browser Extension tabanlı chat bridge kullan
-                            // Bu yöntem login/2FA sorunlarını ortadan kaldırır
-                            Log.Debug("[MainWindow] Instagram chat ingestor başlatılıyor (Extension Bridge)...");
-
-                            // Mevcut extension bridge'i temizle (senkron)
-                            if (_extensionBridgeIngestor != null)
-                            {
-                                _extensionBridgeIngestor.StopAsync().Wait(TimeSpan.FromSeconds(2));
-                                _extensionBridgeIngestor.Dispose();
-                                _extensionBridgeIngestor = null;
-                            }
-
-                            // Yeni extension bridge başlat
-                            _extensionBridgeIngestor = new ExtensionBridgeIngestor(9876);
-                            _ingestorTasks.Add(StartIngestorSafeAsync(_extensionBridgeIngestor, "Instagram (Extension)", ct));
-
-                            Log.Information("[MainWindow] Instagram Chat (Extension Bridge) başlatıldı");
-                            Log.Information("[MainWindow] → Tarayıcınızda Instagram Live sayfasını açın");
-                            Log.Information("[MainWindow] → Extension otomatik olarak yorumları aktaracak");
+                            // Browser Extension ile çalışıyor
+                            extensionBridgeNeeded = true;
                             break;
                     }
+                }
+
+                // Extension Bridge başlat (Instagram, Facebook, TikTok için)
+                if (extensionBridgeNeeded && _extensionBridgeIngestor == null)
+                {
+                    Log.Debug("[MainWindow] Extension Bridge başlatılıyor...");
+                    _extensionBridgeIngestor = new ExtensionBridgeIngestor(9876);
+                    _ingestorTasks.Add(StartIngestorSafeAsync(_extensionBridgeIngestor, "Extension Bridge", ct));
+
+                    Log.Information("[MainWindow] Extension Bridge başlatıldı - Port: 9876");
+                    Log.Information("[MainWindow] → Tarayıcınızda ilgili Live sayfasını açın");
+                    Log.Information("[MainWindow] → Extension otomatik olarak yorumları aktaracak");
                 }
 
                 Log.Information("[MainWindow] Stream başladı - {Count} chat ingestor aktif", _ingestorTasks.Count);
@@ -509,67 +388,11 @@ namespace UniCast.App
             {
                 _ytIngestor?.StopAsync();
                 _twitchIngestor?.StopAsync();
-                _tikTokIngestor?.StopAsync();
-                _instagramIngestor?.StopAsync();
-                _facebookIngestor?.StopAsync();
-
-                // FacebookChatHost'u UI thread'de temizle
-                if (_facebookChatHost != null)
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        try
-                        {
-                            _facebookChatHost.StopChatAsync().Wait(TimeSpan.FromSeconds(3));
-
-                            var mainGrid = Content as Grid;
-                            if (mainGrid != null && mainGrid.Children.Contains(_facebookChatHost))
-                            {
-                                mainGrid.Children.Remove(_facebookChatHost);
-                            }
-
-                            _facebookChatHost.Dispose();
-                            Log.Debug("[MainWindow] FacebookChatHost temizlendi");
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Warning(ex, "[MainWindow] FacebookChatHost temizleme hatası");
-                        }
-                    });
-                    _facebookChatHost = null;
-                }
-
-                // InstagramChatHost'u UI thread'de temizle
-                if (_instagramChatHost != null)
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        try
-                        {
-                            _instagramChatHost.StopChatAsync().Wait(TimeSpan.FromSeconds(3));
-
-                            var mainGrid = Content as Grid;
-                            if (mainGrid != null && mainGrid.Children.Contains(_instagramChatHost))
-                            {
-                                mainGrid.Children.Remove(_instagramChatHost);
-                            }
-
-                            _instagramChatHost.Dispose();
-                            Log.Debug("[MainWindow] InstagramChatHost temizlendi");
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Warning(ex, "[MainWindow] InstagramChatHost temizleme hatası");
-                        }
-                    });
-                    _instagramChatHost = null;
-                }
+                _extensionBridgeIngestor?.StopAsync();
 
                 _ytIngestor = null;
                 _twitchIngestor = null;
-                _tikTokIngestor = null;
-                _instagramIngestor = null;
-                _facebookIngestor = null;
+                // Extension bridge'i kapatmıyoruz, tekrar kullanılabilir
 
                 _ingestorTasks.Clear();
             }
@@ -769,8 +592,6 @@ namespace UniCast.App
             if (_previewView != null)
                 return;
 
-            // DÜZELTME: PreviewView kendi DataContext'ini yönetiyor (PreviewViewDataContext)
-            // Dışarıdan DataContext atamıyoruz, PreviewView constructor'da hallediyor
             _previewViewModel = new PreviewViewModel();
             _previewView = new PreviewView(_previewViewModel);
 
@@ -780,7 +601,6 @@ namespace UniCast.App
 
         private void LoadTargetsTab()
         {
-            // TargetsView için - henüz yoksa basit bir placeholder
             if (TargetsTabContent == null || TargetsTabContent.Content != null)
                 return;
 
@@ -833,15 +653,11 @@ namespace UniCast.App
 
         #endregion
 
-        #region Overlay Control Methods (PreviewView ve ControlViewModel tarafından çağrılır)
+        #region Overlay Control Methods
 
-        /// <summary>
-        /// Overlay boyutunu günceller.
-        /// </summary>
         public void UpdateOverlaySize(double width, double height)
         {
-            if (_overlay == null)
-                return;
+            if (_overlay == null) return;
 
             try
             {
@@ -853,13 +669,9 @@ namespace UniCast.App
             }
         }
 
-        /// <summary>
-        /// Overlay pozisyonunu günceller.
-        /// </summary>
         public void UpdateOverlayPosition(int x, int y)
         {
-            if (_overlay == null)
-                return;
+            if (_overlay == null) return;
 
             try
             {
@@ -871,14 +683,9 @@ namespace UniCast.App
             }
         }
 
-        /// <summary>
-        /// Overlay ayarlarını yeniden yükler.
-        /// PreviewView.RefreshOverlayButton_Click tarafından çağrılır.
-        /// </summary>
         public void RefreshOverlay()
         {
-            if (_overlay == null)
-                return;
+            if (_overlay == null) return;
 
             try
             {
@@ -891,14 +698,9 @@ namespace UniCast.App
             }
         }
 
-        /// <summary>
-        /// Mola modunu başlatır.
-        /// ControlViewModel.StartBreakCommand tarafından çağrılır.
-        /// </summary>
         public void StartBreak(int minutes)
         {
-            if (_overlay == null)
-                return;
+            if (_overlay == null) return;
 
             try
             {
@@ -911,14 +713,9 @@ namespace UniCast.App
             }
         }
 
-        /// <summary>
-        /// Mola modunu durdurur.
-        /// ControlViewModel.StopBreakCommand tarafından çağrılır.
-        /// </summary>
         public void StopBreak()
         {
-            if (_overlay == null)
-                return;
+            if (_overlay == null) return;
 
             try
             {
@@ -931,13 +728,9 @@ namespace UniCast.App
             }
         }
 
-        /// <summary>
-        /// Overlay görünürlüğünü değiştirir.
-        /// </summary>
         public void ToggleOverlayVisibility()
         {
-            if (_overlay == null)
-                return;
+            if (_overlay == null) return;
 
             try
             {
@@ -952,13 +745,9 @@ namespace UniCast.App
             }
         }
 
-        /// <summary>
-        /// Overlay'e mesaj gönderir.
-        /// </summary>
         public void SendMessageToOverlay(string message, string? sender = null)
         {
-            if (_overlay == null)
-                return;
+            if (_overlay == null) return;
 
             try
             {
@@ -1047,7 +836,7 @@ namespace UniCast.App
                         Log.Error(ex, "[MainWindow] Tab event temizleme hatası");
                     }
 
-                    // 4. DÜZELTME v17.3: Ingestor task'larını bekle
+                    // 4. Ingestor task'larını bekle
                     if (_ingestorTasks.Count > 0)
                     {
                         try
@@ -1057,7 +846,6 @@ namespace UniCast.App
                         }
                         catch (AggregateException ae)
                         {
-                            // DÜZELTME v25: Task iptal edildiğinde normal - loglama eklendi
                             System.Diagnostics.Debug.WriteLine($"[MainWindow] Ingestor task'ları AggregateException: {ae.InnerExceptions.Count} inner exception");
                         }
                         catch (Exception ex)
@@ -1073,10 +861,10 @@ namespace UniCast.App
                     // 5. Chat Ingestors'ı durdur
                     DisposeIngestors();
 
-                    // 5. ViewModels'i dispose et
+                    // 6. ViewModels'i dispose et
                     DisposeViewModels();
 
-                    // 6. Overlay'i kapat
+                    // 7. Overlay'i kapat
                     try
                     {
                         _overlay?.Close();
@@ -1087,7 +875,7 @@ namespace UniCast.App
                         Log.Error(ex, "[MainWindow] Overlay kapatma hatası");
                     }
 
-                    // 7. Stream controller'ı durdur
+                    // 8. Stream controller'ı durdur
                     try
                     {
                         if (StreamController.Instance.IsRunning)
@@ -1100,7 +888,7 @@ namespace UniCast.App
                         Log.Error(ex, "[MainWindow] StreamController durdurma hatası");
                     }
 
-                    // 8. CTS dispose et
+                    // 9. CTS dispose et
                     try
                     {
                         _cts?.Dispose();
@@ -1124,9 +912,7 @@ namespace UniCast.App
             {
                 (_ytIngestor, "YouTube"),
                 (_twitchIngestor, "Twitch"),
-                (_tikTokIngestor, "TikTok"),
-                (_instagramIngestor, "Instagram"),
-                (_facebookIngestor, "Facebook")
+                (_extensionBridgeIngestor, "Extension Bridge")
             };
 
             foreach (var (ingestor, name) in ingestors)
@@ -1146,71 +932,9 @@ namespace UniCast.App
                 }
             }
 
-            // FacebookChatHost'u ayrıca temizle
-            if (_facebookChatHost != null)
-            {
-                try
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        try
-                        {
-                            var mainGrid = Content as Grid;
-                            if (mainGrid != null && mainGrid.Children.Contains(_facebookChatHost))
-                            {
-                                mainGrid.Children.Remove(_facebookChatHost);
-                            }
-                            _facebookChatHost.Dispose();
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Debug(ex, "[MainWindow] FacebookChatHost UI cleanup hatası");
-                        }
-                    });
-                    Log.Debug("[MainWindow] FacebookChatHost disposed");
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "[MainWindow] FacebookChatHost dispose hatası");
-                }
-                _facebookChatHost = null;
-            }
-
-            // InstagramChatHost'u ayrıca temizle
-            if (_instagramChatHost != null)
-            {
-                try
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        try
-                        {
-                            var mainGrid = Content as Grid;
-                            if (mainGrid != null && mainGrid.Children.Contains(_instagramChatHost))
-                            {
-                                mainGrid.Children.Remove(_instagramChatHost);
-                            }
-                            _instagramChatHost.Dispose();
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Debug(ex, "[MainWindow] InstagramChatHost UI cleanup hatası");
-                        }
-                    });
-                    Log.Debug("[MainWindow] InstagramChatHost disposed");
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "[MainWindow] InstagramChatHost dispose hatası");
-                }
-                _instagramChatHost = null;
-            }
-
             _ytIngestor = null;
             _twitchIngestor = null;
-            _tikTokIngestor = null;
-            _instagramIngestor = null;
-            _facebookIngestor = null;
+            _extensionBridgeIngestor = null;
         }
 
         private void DisposeViewModels()

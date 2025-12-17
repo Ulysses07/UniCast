@@ -71,14 +71,8 @@ namespace UniCast.App
             if (_twitchIngestor != null)
                 _twitchIngestor.StateChanged += OnIngestorStateChanged;
 
-            if (_tikTokIngestor != null)
-                _tikTokIngestor.StateChanged += OnIngestorStateChanged;
-
-            if (_instagramIngestor != null)
-                _instagramIngestor.StateChanged += OnIngestorStateChanged;
-
-            if (_facebookIngestor != null)
-                _facebookIngestor.StateChanged += OnIngestorStateChanged;
+            if (_extensionBridgeIngestor != null)
+                _extensionBridgeIngestor.StateChanged += OnIngestorStateChanged;
         }
 
         #endregion
@@ -207,7 +201,6 @@ namespace UniCast.App
             }
             catch (Exception ex)
             {
-                // DÜZELTME v24: Boş catch yerine debug log
                 Log.Debug(ex, "[MainWindow] StreamController erişim hatası");
             }
         }
@@ -237,14 +230,17 @@ namespace UniCast.App
                 if (_twitchIngestor != null)
                     UpdatePlatformIndicator(ChatPlatform.Twitch, _twitchIngestor.State, _twitchIngestor.LastError);
 
-                if (_tikTokIngestor != null)
-                    UpdatePlatformIndicator(ChatPlatform.TikTok, _tikTokIngestor.State, _tikTokIngestor.LastError);
+                // Extension Bridge tüm platformları (Instagram, Facebook, TikTok) yönetir
+                if (_extensionBridgeIngestor != null)
+                {
+                    // Extension Bridge bağlı ise, tüm extension-based platformları bağlı göster
+                    var state = _extensionBridgeIngestor.State;
+                    var error = _extensionBridgeIngestor.LastError;
 
-                if (_instagramIngestor != null)
-                    UpdatePlatformIndicator(ChatPlatform.Instagram, _instagramIngestor.State, _instagramIngestor.LastError);
-
-                if (_facebookIngestor != null)
-                    UpdatePlatformIndicator(ChatPlatform.Facebook, _facebookIngestor.State, _facebookIngestor.LastError);
+                    UpdatePlatformIndicator(ChatPlatform.Instagram, state, error);
+                    UpdatePlatformIndicator(ChatPlatform.Facebook, state, error);
+                    UpdatePlatformIndicator(ChatPlatform.TikTok, state, error);
+                }
             });
         }
 
@@ -278,12 +274,8 @@ namespace UniCast.App
                     _ytIngestor.StateChanged -= OnIngestorStateChanged;
                 if (_twitchIngestor != null)
                     _twitchIngestor.StateChanged -= OnIngestorStateChanged;
-                if (_tikTokIngestor != null)
-                    _tikTokIngestor.StateChanged -= OnIngestorStateChanged;
-                if (_instagramIngestor != null)
-                    _instagramIngestor.StateChanged -= OnIngestorStateChanged;
-                if (_facebookIngestor != null)
-                    _facebookIngestor.StateChanged -= OnIngestorStateChanged;
+                if (_extensionBridgeIngestor != null)
+                    _extensionBridgeIngestor.StateChanged -= OnIngestorStateChanged;
 
                 Log.Debug("[MainWindow] Status bar temizlendi");
             }

@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.Linq;
+﻿using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-using Microsoft.Win32;
 using UniCast.App.Services;
 using UniCast.App.ViewModels;
 using UniCast.Core.Models;
-using UniCast.Core.Settings;
 using Application = System.Windows.Application;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Point = System.Windows.Point;
-using UserControl = System.Windows.Controls.UserControl;
 
 namespace UniCast.App.Views
 {
@@ -21,7 +15,7 @@ namespace UniCast.App.Views
     /// Preview View - Sahne editörü.
     /// DÜZELTME: MVVM uyumlu hale getirildi, SceneItems ViewModel'den yönetiliyor.
     /// </summary>
-    public partial class PreviewView : UserControl
+    public partial class PreviewView : System.Windows.Controls.UserControl
     {
         // DÜZELTME: readonly kaldırıldı - constructor'da değiştirilebilmeli
         private PreviewViewModel _viewModel;

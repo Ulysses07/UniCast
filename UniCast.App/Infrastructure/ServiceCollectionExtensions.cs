@@ -3,7 +3,6 @@ using UniCast.App.Services;
 using UniCast.App.Services.Capture;
 using UniCast.App.ViewModels;
 using UniCast.Core.Chat;
-using UniCast.Core.Chat.Ingestors;
 
 namespace UniCast.App.Infrastructure
 {
@@ -18,7 +17,6 @@ namespace UniCast.App.Infrastructure
             // --- Singleton Servisler (Uygulama boyunca tek instance) ---
 
             // Stream Controller - Ana yayın yöneticisi
-            // DÜZELTME: StreamControllerAdapter IStreamController'ı implemente eder
             services.AddSingleton<IStreamController, StreamControllerAdapter>();
 
             // Device Service - Kamera/mikrofon listesi
@@ -28,20 +26,10 @@ namespace UniCast.App.Infrastructure
             services.AddSingleton(ChatBus.Instance);
 
             // Audio Service - Ses seviyesi izleme
-            // DÜZELTME v22: Interface kullanımı eklendi
             services.AddSingleton<IAudioService, AudioService>();
 
             // Preview Service - Kamera önizleme (Singleton - tek kamera kaynağı)
-            // DÜZELTME v22: Interface kullanımı eklendi
             services.AddSingleton<IPreviewService, PreviewService>();
-
-            // --- Transient Servisler (Her istekte yeni instance) ---
-
-            // Chat Ingestor'lar
-            services.AddTransient<YouTubeChatIngestor>();
-            services.AddTransient<TikTokChatIngestor>();
-            services.AddTransient<InstagramLiveChatScraper>();
-            services.AddTransient<FacebookChatIngestor>();
 
             // --- ViewModels ---
 
