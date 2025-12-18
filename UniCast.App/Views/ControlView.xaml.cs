@@ -8,6 +8,7 @@ using UniCast.App.ViewModels;
 using UniCast.Core.Chat;
 using Serilog;
 using UserControl = System.Windows.Controls.UserControl;
+using MessageBox = System.Windows.MessageBox;
 
 namespace UniCast.App.Views
 {
@@ -85,10 +86,20 @@ namespace UniCast.App.Views
             {
                 if (_vm.IsRunning)
                 {
-                    // Durdur
-                    Log.Debug("[ControlView] Yayın durdurma komutu tetikleniyor...");
-                    if (_vm.StopCommand.CanExecute(null))
-                        _vm.StopCommand.Execute(null);
+                    // Durdurma onayı iste
+                    var result = MessageBox.Show(
+                        "Yayını durdurmak istediğinize emin misiniz?\n\nTüm platformlardaki yayınınız sonlandırılacak.",
+                        "Yayını Durdur",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question,
+                        MessageBoxResult.No);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        Log.Debug("[ControlView] Yayın durdurma komutu tetikleniyor...");
+                        if (_vm.StopCommand.CanExecute(null))
+                            _vm.StopCommand.Execute(null);
+                    }
                 }
                 else
                 {
@@ -219,6 +230,7 @@ namespace UniCast.App.Views
         public double AudioLevel => ControlViewModel.AudioLevel;
         public bool IsMuted => ControlViewModel.IsMuted;
         public System.Windows.Media.ImageSource? PreviewImage => ControlViewModel.PreviewImage;
+        public string StreamDuration => ControlViewModel.StreamDuration;
 
         // Commands
         public System.Windows.Input.ICommand StartCommand => ControlViewModel.StartCommand;

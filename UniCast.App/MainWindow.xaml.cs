@@ -80,6 +80,9 @@ namespace UniCast.App
             // Chat sistemini başlat
             InitializeChatSystem();
 
+            // Klavye kısayollarını etkinleştir
+            PreviewKeyDown += MainWindow_PreviewKeyDown;
+
             Log.Information("[MainWindow] Başlatıldı");
         }
 
@@ -763,6 +766,88 @@ namespace UniCast.App
 
         #region Event Handlers
 
+        /// <summary>
+        /// Global klavye kısayolları
+        /// F5 - Yayın Başlat/Durdur
+        /// F6 - Mola Modu
+        /// F7 - Mikrofon Mute/Unmute
+        /// Ctrl+P - Önizleme Aç/Kapat
+        /// </summary>
+        private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // TextBox veya benzer input alanlarında klavye kısayollarını devre dışı bırak
+            if (e.OriginalSource is System.Windows.Controls.TextBox)
+                return;
+
+            try
+            {
+                switch (e.Key)
+                {
+                    case System.Windows.Input.Key.F5:
+                        // Yayın Başlat/Durdur
+                        if (_controlViewModel != null)
+                        {
+                            if (_controlViewModel.IsRunning)
+                            {
+                                // Durdurma onayı
+                                var result = MessageBox.Show(
+                                    "Yayını durdurmak istediğinize emin misiniz?",
+                                    "Yayını Durdur (F5)",
+                                    MessageBoxButton.YesNo,
+                                    MessageBoxImage.Question);
+
+                                if (result == MessageBoxResult.Yes && _controlViewModel.StopCommand.CanExecute(null))
+                                    _controlViewModel.StopCommand.Execute(null);
+                            }
+                            else
+                            {
+                                if (_controlViewModel.StartCommand.CanExecute(null))
+                                    _controlViewModel.StartCommand.Execute(null);
+                            }
+                        }
+                        e.Handled = true;
+                        break;
+
+                    case System.Windows.Input.Key.F6:
+                        // Mola Modu
+                        if (_controlViewModel != null && _controlViewModel.ToggleBreakCommand.CanExecute(null))
+                        {
+                            _controlViewModel.ToggleBreakCommand.Execute(null);
+                            var status = _controlViewModel.IsOnBreak ? "başladı" : "bitti";
+                            ToastService.Instance.ShowInfo($"☕ Mola {status}");
+                        }
+                        e.Handled = true;
+                        break;
+
+                    case System.Windows.Input.Key.F7:
+                        // Mikrofon Mute/Unmute
+                        if (_controlViewModel != null && _controlViewModel.ToggleMuteCommand.CanExecute(null))
+                        {
+                            _controlViewModel.ToggleMuteCommand.Execute(null);
+                        }
+                        e.Handled = true;
+                        break;
+
+                    case System.Windows.Input.Key.P:
+                        // Ctrl+P - Önizleme Aç/Kapat
+                        if (System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control)
+                        {
+                            if (_controlViewModel != null && _controlViewModel.StartPreviewCommand.CanExecute(null))
+                            {
+                                _controlViewModel.StartPreviewCommand.Execute(null);
+                                ToastService.Instance.ShowInfo("📷 Önizleme değiştirildi");
+                            }
+                            e.Handled = true;
+                        }
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] Klavye kısayolu hatası: {Key}", e.Key);
+            }
+        }
+
         private void OnChatMessageReceived(object? sender, ChatMessageEventArgs e)
         {
             try
@@ -830,6 +915,7 @@ namespace UniCast.App
                     try
                     {
                         MainTabControl.SelectionChanged -= OnTabSelectionChanged;
+                        PreviewKeyDown -= MainWindow_PreviewKeyDown;
                     }
                     catch (Exception ex)
                     {

@@ -18,6 +18,11 @@
         <local:StringToImageSourceConverter x:Key="StringToImageSource"/>
         <local:StringToSolidColorBrushConverter x:Key="StringToBrush"/>
 
+        <!-- Platform Converter'ları -->
+        <local:PlatformToIconConverter x:Key="PlatformToIcon"/>
+        <local:PlatformToColorConverter x:Key="PlatformToColor"/>
+        <local:PlatformToLabelConverter x:Key="PlatformToLabel"/>
+
         <SolidColorBrush x:Key="BgDark" Color="#18181B"/>
         <SolidColorBrush x:Key="BgLight" Color="#2D2D30"/>
         <SolidColorBrush x:Key="Primary" Color="#9146FF"/>

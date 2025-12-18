@@ -653,6 +653,9 @@ namespace UniCast.App.ViewModels
                 SaveMessage = "✅ Ayarlar başarıyla kaydedildi";
                 HasUnsavedChanges = false;
 
+                // Toast bildirimi göster
+                ToastService.Instance.ShowSuccess("Ayarlar kaydedildi");
+
                 OnSettingsSaved?.Invoke(this, new SettingsSavedEventArgs
                 {
                     Success = true,

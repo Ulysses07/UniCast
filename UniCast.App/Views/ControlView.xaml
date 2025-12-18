@@ -80,6 +80,17 @@
 
                 <!-- Metrikler -->
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Yayın Süresi -->
+                    <Border Background="#1a1a1a" CornerRadius="4" Padding="10,5" Margin="0,0,10,0"
+                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⏱️" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding StreamDuration}" 
+                                       Foreground="#4CAF50" FontSize="13" FontWeight="Bold"
+                                       VerticalAlignment="Center" MinWidth="65"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- FPS/Bitrate -->
                     <Border Background="#1a1a1a" CornerRadius="4" Padding="10,5" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal">

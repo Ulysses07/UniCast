@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:services="clr-namespace:UniCast.App.Services"
         mc:Ignorable="d"
         Title="UniCast Studio" Height="650" Width="1100"
         WindowStartupLocation="CenterScreen"
@@ -118,8 +119,11 @@
                                Foreground="{StaticResource TextMuted}" FontSize="11" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Right: Chat Stats -->
+                <!-- Right: Chat Stats + Shortcuts -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0">
+                    <TextBlock Text="F5" Foreground="#555" FontSize="9" VerticalAlignment="Center" 
+                               ToolTip="F5: Yayın Başlat/Durdur&#x0a;F6: Mola&#x0a;F7: Mikrofon&#x0a;Ctrl+P: Önizleme"
+                               Margin="0,0,8,0" Cursor="Help"/>
                     <TextBlock x:Name="ChatStatsText" Text="💬 0 mesaj/dk" 
                                Foreground="{StaticResource TextMuted}" FontSize="11" 
                                VerticalAlignment="Center" Margin="0,0,15,0"/>
@@ -180,6 +184,43 @@
                 <Button x:Name="BtnLicense" Content=" 🔑    Lisans"       Style="{StaticResource NavButton}" Margin="0,0,15,0" Click="BtnNav_Click" Tag="5"/>
             </StackPanel>
         </Border>
+
+        <!-- Toast Bildirimleri -->
+        <ItemsControl x:Name="ToastContainer"
+                      Grid.Column="1"
+                      ItemsSource="{Binding Toasts, Source={x:Static services:ToastService.Instance}}"
+                      VerticalAlignment="Bottom"
+                      HorizontalAlignment="Right"
+                      Margin="0,0,20,50"
+                      Panel.ZIndex="1000">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Background="{Binding Background}" 
+                            CornerRadius="6" 
+                            Padding="15,10" 
+                            Margin="0,5,0,0"
+                            MinWidth="250"
+                            MaxWidth="400"
+                            Opacity="{Binding Opacity}">
+                        <Border.Effect>
+                            <DropShadowEffect ShadowDepth="2" Opacity="0.3" BlurRadius="8"/>
+                        </Border.Effect>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Icon}" 
+                                       FontSize="16" 
+                                       Foreground="White" 
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding Message}" 
+                                       Foreground="White" 
+                                       FontSize="13"
+                                       TextWrapping="Wrap"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
 
     </Grid>
 </Window>

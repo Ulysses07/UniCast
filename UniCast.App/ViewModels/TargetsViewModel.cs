@@ -96,20 +96,20 @@ namespace UniCast.App.ViewModels
         {
             EditingItem = item;
             SelectedPlatform = item.Platform;
-            DisplayName = item.DisplayName;
+            DisplayName = item.DisplayName ?? "";
 
             // URL ve StreamKey'i ayır
             // Eğer StreamKey kaydedilmişse onu kullan, yoksa URL'den ayırmaya çalış
             if (!string.IsNullOrEmpty(item.StreamKey))
             {
                 // StreamKey varsa, URL'den StreamKey'i çıkar
-                Url = item.Url.Replace("/" + item.StreamKey, "").TrimEnd('/');
+                Url = (item.Url ?? "").Replace("/" + item.StreamKey, "").TrimEnd('/');
                 StreamKey = item.StreamKey;
             }
             else
             {
                 // StreamKey yoksa, URL'i olduğu gibi kullan
-                Url = item.Url;
+                Url = item.Url ?? "";
                 StreamKey = "";
             }
         }
@@ -150,6 +150,10 @@ namespace UniCast.App.ViewModels
                 }
 
                 TargetsStore.Save(Targets.ToList());
+
+                // Toast bildirimi
+                Services.ToastService.Instance.ShowSuccess($"✏️ {DisplayName} güncellendi");
+
                 EditingItem = null;
             }
             else
@@ -167,6 +171,9 @@ namespace UniCast.App.ViewModels
 
                 Targets.Add(newItem);
                 TargetsStore.Save(Targets.ToList());
+
+                // Toast bildirimi
+                Services.ToastService.Instance.ShowSuccess($"✓ {DisplayName} eklendi");
             }
 
             ClearForm();
@@ -187,8 +194,12 @@ namespace UniCast.App.ViewModels
                 CancelEdit();
             }
 
+            var name = item.DisplayName;
             Targets.Remove(item);
             TargetsStore.Save(Targets.ToList());
+
+            // Toast bildirimi
+            Services.ToastService.Instance.ShowInfo($"🗑️ {name} silindi");
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

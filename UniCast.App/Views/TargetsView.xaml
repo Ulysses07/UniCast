@@ -223,14 +223,25 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <Border Background="{StaticResource BgDark}" CornerRadius="25" Width="50" Height="50">
-                                    <TextBlock Text="{Binding Platform}" FontSize="10" FontWeight="Bold" 
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Gray"/>
+                                <Border Background="{Binding Platform, Converter={StaticResource PlatformToColor}}" 
+                                        CornerRadius="25" Width="50" Height="50">
+                                    <TextBlock Text="{Binding Platform, Converter={StaticResource PlatformToIcon}}" 
+                                               FontSize="20" FontWeight="Bold" 
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" 
+                                               Foreground="White"/>
                                 </Border>
 
                                 <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding DisplayName}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextMain}"/>
-                                    <TextBlock Text="{Binding Url}" FontSize="11" Foreground="{StaticResource TextMuted}" TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding DisplayName}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextMain}"/>
+                                        <Border Background="{Binding Platform, Converter={StaticResource PlatformToColor}}" 
+                                                CornerRadius="3" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Platform, Converter={StaticResource PlatformToLabel}}" 
+                                                       FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Url}" FontSize="11" Foreground="{StaticResource TextMuted}" 
+                                               TextTrimming="CharacterEllipsis" MaxWidth="350"/>
                                 </StackPanel>
 
                                 <!-- Düzenle Butonu -->

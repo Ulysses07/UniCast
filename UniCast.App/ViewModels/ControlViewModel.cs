@@ -64,7 +64,14 @@ namespace UniCast.App.ViewModels
                     AudioLevel = level * 100;
                 });
             };
-            _onMuteChangeHandler = muted => IsMuted = muted;
+            _onMuteChangeHandler = muted =>
+            {
+                IsMuted = muted;
+                if (muted)
+                    Services.ToastService.Instance.ShowInfo("🔇 Mikrofon kapatıldı");
+                else
+                    Services.ToastService.Instance.ShowInfo("🎤 Mikrofon açıldı");
+            };
 
             // Event'lere subscribe ol
             _preview.OnFrame += _onFrameHandler;
@@ -157,6 +164,39 @@ namespace UniCast.App.ViewModels
             }
         }
 
+        // Yayın Süresi Sayacı
+        private DateTime _streamStartTime;
+        private System.Windows.Threading.DispatcherTimer? _streamTimer;
+
+        private string _streamDuration = "00:00:00";
+        public string StreamDuration
+        {
+            get => _streamDuration;
+            private set { _streamDuration = value; OnPropertyChanged(); }
+        }
+
+        private void StartStreamTimer()
+        {
+            _streamStartTime = DateTime.Now;
+            _streamTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _streamTimer.Tick += (s, e) =>
+            {
+                var elapsed = DateTime.Now - _streamStartTime;
+                StreamDuration = elapsed.ToString(@"hh\:mm\:ss");
+            };
+            _streamTimer.Start();
+        }
+
+        private void StopStreamTimer()
+        {
+            _streamTimer?.Stop();
+            _streamTimer = null;
+            StreamDuration = "00:00:00";
+        }
+
         private string _advisory = "";
         public string Advisory
         {
@@ -232,6 +272,12 @@ namespace UniCast.App.ViewModels
                     IsRunning = true;
                     Status = "Yayında";
 
+                    // Yayın süre sayacını başlat
+                    StartStreamTimer();
+
+                    // Toast bildirimi göster
+                    Services.ToastService.Instance.ShowSuccess("🎬 Yayın başladı!");
+
                     // Chat ingestors için event fırlat
                     StreamStarted?.Invoke(targets);
 
@@ -261,6 +307,9 @@ namespace UniCast.App.ViewModels
                     IsRunning = false;
                     Status = "Hata";
                     Advisory = result.UserMessage ?? "Bilinmeyen bir hata oluştu.";
+
+                    // Toast bildirimi göster
+                    Services.ToastService.Instance.ShowError("Yayın başlatılamadı");
                 }
             }
             catch (Exception ex)
@@ -303,6 +352,12 @@ namespace UniCast.App.ViewModels
                 Status = "Durduruldu";
                 Metric = "";
 
+                // Yayın süre sayacını durdur
+                StopStreamTimer();
+
+                // Toast bildirimi göster
+                Services.ToastService.Instance.ShowInfo("⏹ Yayın durduruldu");
+
                 // Chat ingestors için event fırlat
                 StreamStopped?.Invoke();
             }
@@ -316,6 +371,9 @@ namespace UniCast.App.ViewModels
         {
             if (_disposed) return;
             _disposed = true;
+
+            // Yayın süre sayacını durdur
+            StopStreamTimer();
 
             // DÜZELTME: Event handler'ları unsubscribe et
             _preview.OnFrame -= _onFrameHandler;
