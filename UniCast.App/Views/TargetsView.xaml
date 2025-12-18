@@ -5,6 +5,142 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600">
 
+    <UserControl.Resources>
+        <!-- Ana Buton Stili (Ekle/Güncelle) -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource Primary}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                CornerRadius="4" Padding="15,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#9b6dff"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#6a3fcf"/>
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- İptal Buton Stili -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#555"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                CornerRadius="4" Padding="15,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#666"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#444"/>
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- İkon Buton Stili (Düzenle) -->
+        <Style x:Key="IconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                CornerRadius="18" Padding="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#444"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#333"/>
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Sil Butonu Stili (Kırmızı hover) -->
+        <Style x:Key="DeleteButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                CornerRadius="18" Padding="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#4a2020"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#6a2020"/>
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid Margin="20">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="300"/>
@@ -13,7 +149,8 @@
 
         <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="20" VerticalAlignment="Top">
             <StackPanel>
-                <TextBlock Text="🔗 Yeni Hedef Ekle" FontSize="18" FontWeight="Bold" Foreground="{StaticResource Primary}" Margin="0,0,0,15"/>
+                <!-- Dinamik Başlık -->
+                <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource Primary}" Margin="0,0,0,15"/>
 
                 <TextBlock Text="Platform" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
                 <ComboBox ItemsSource="{Binding PlatformOptions}" 
@@ -27,16 +164,32 @@
                 </ComboBox>
 
                 <TextBlock Text="İsim (Örn: Ana Kanal)" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding DisplayName}" Margin="0,0,0,15" Height="35"/>
+                <TextBox Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" Height="35"/>
 
                 <TextBlock Text="RTMP URL" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding Url}" Margin="0,0,0,15" Height="35"/>
+                <TextBox Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" Height="35"/>
 
                 <TextBlock Text="Yayın Anahtarı (Stream Key)" Foreground="{StaticResource TextMuted}" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding StreamKey}" Margin="0,0,0,20" Height="35"/>
+                <TextBox Text="{Binding StreamKey, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,20" Height="35"/>
 
-                <Button Content="Listeye Ekle" Command="{Binding AddCommand}" 
-                        Background="{StaticResource Primary}" BorderThickness="0" Height="45" FontWeight="SemiBold"/>
+                <!-- Butonlar -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Ekle/Güncelle Butonu -->
+                    <Button Content="{Binding SubmitButtonText}" Command="{Binding AddCommand}" 
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Grid.Column="0" Margin="0,0,5,0"/>
+
+                    <!-- İptal Butonu (Sadece düzenleme modunda görünür) -->
+                    <Button Content="İptal" Command="{Binding CancelEditCommand}" 
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Grid.Column="1" Width="70"
+                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}"/>
+                </Grid>
             </StackPanel>
         </Border>
 
@@ -44,11 +197,29 @@
             <ItemsControl ItemsSource="{Binding Targets}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="{StaticResource BgLight}" CornerRadius="6" Margin="0,0,0,10" Padding="15">
+                        <!-- Tıklanabilir kart -->
+                        <Border Background="{StaticResource BgLight}" CornerRadius="6" Margin="0,0,0,10" Padding="15"
+                                Cursor="Hand">
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" 
+                                              Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                              CommandParameter="{Binding}"/>
+                            </Border.InputBindings>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#3a3a3a"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="50"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
@@ -62,10 +233,21 @@
                                     <TextBlock Text="{Binding Url}" FontSize="11" Foreground="{StaticResource TextMuted}" TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
 
-                                <Button Grid.Column="2" Content="🗑️" 
+                                <!-- Düzenle Butonu -->
+                                <Button Grid.Column="2" Content="✏️" 
+                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource IconButtonStyle}"
+                                        Foreground="#888" FontSize="14"
+                                        ToolTip="Düzenle" Margin="0,0,5,0"/>
+
+                                <!-- Sil Butonu -->
+                                <Button Grid.Column="3" Content="🗑️" 
                                         Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                         CommandParameter="{Binding}"
-                                        Background="Transparent" BorderThickness="0" Foreground="#FF5555" FontSize="16" Cursor="Hand"/>
+                                        Style="{StaticResource DeleteButtonStyle}"
+                                        Foreground="#FF5555" FontSize="16"
+                                        ToolTip="Sil"/>
                             </Grid>
                         </Border>
                     </DataTemplate>

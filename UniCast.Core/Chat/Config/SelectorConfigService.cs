@@ -55,11 +55,35 @@ namespace UniCast.Core.Chat.Config
         [JsonPropertyName("commentContainer")]
         public string? CommentContainer { get; set; }
 
+        [JsonPropertyName("fallbackContainers")]
+        public string[]? FallbackContainers { get; set; }
+
         [JsonPropertyName("authorLink")]
         public string? AuthorLink { get; set; }
 
         [JsonPropertyName("commentText")]
         public string? CommentText { get; set; }
+
+        [JsonPropertyName("observerTarget")]
+        public string? ObserverTarget { get; set; }
+    }
+
+    /// <summary>
+    /// Facebook selector konfigürasyonu
+    /// </summary>
+    public class FacebookSelectorConfig
+    {
+        [JsonPropertyName("version")]
+        public int Version { get; set; }
+
+        [JsonPropertyName("updatedAt")]
+        public DateTime UpdatedAt { get; set; }
+
+        [JsonPropertyName("selectors")]
+        public FacebookSelectors Selectors { get; set; } = new();
+
+        [JsonPropertyName("notes")]
+        public string? Notes { get; set; }
     }
 
     /// <summary>
@@ -99,9 +123,11 @@ namespace UniCast.Core.Chat.Config
 
         private static readonly FacebookSelectors DefaultFacebookSelectors = new()
         {
-            CommentContainer = "div.xv55zj0.x1vvkbs",
+            CommentContainer = ".xv55zj0.x1vvkbs",
+            FallbackContainers = new[] { "div[role='article']", "[aria-label*='yorum']", "[aria-label*='comment']" },
             AuthorLink = "a",
-            CommentText = "div[dir='auto']"
+            CommentText = "div[dir='auto']",
+            ObserverTarget = "body"
         };
 
         private readonly HttpClient _httpClient;
@@ -111,6 +137,8 @@ namespace UniCast.Core.Chat.Config
         // Cache
         private InstagramSelectorConfig? _instagramConfig;
         private DateTime _instagramConfigFetchedAt = DateTime.MinValue;
+        private FacebookSelectorConfig? _facebookConfig;
+        private DateTime _facebookConfigFetchedAt = DateTime.MinValue;
         private readonly TimeSpan _cacheExpiry = TimeSpan.FromHours(1);
 
         public SelectorConfigService(string? serverUrl = null)
@@ -206,12 +234,83 @@ namespace UniCast.Core.Chat.Config
 
         /// <summary>
         /// Facebook selector'larını getirir.
+        /// Önce cache'e, sonra sunucuya, en son fallback'e bakar.
+        /// </summary>
+        public async Task<FacebookSelectors> GetFacebookSelectorsAsync(CancellationToken ct = default)
+        {
+            await _lock.WaitAsync(ct);
+            try
+            {
+                // Cache geçerli mi?
+                if (_facebookConfig != null && DateTime.UtcNow - _facebookConfigFetchedAt < _cacheExpiry)
+                {
+                    Log.Debug("[SelectorConfig] Facebook selectors cache'den alındı (v{Version})", _facebookConfig.Version);
+                    return _facebookConfig.Selectors;
+                }
+
+                // Sunucudan çek
+                try
+                {
+                    var url = $"{_serverUrl}/api/v1/config/facebook-selectors";
+                    Log.Debug("[SelectorConfig] Facebook selectors sunucudan çekiliyor: {Url}", url);
+
+                    var response = await _httpClient.GetAsync(url, ct);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var json = await response.Content.ReadAsStringAsync(ct);
+                        var config = JsonSerializer.Deserialize<FacebookSelectorConfig>(json);
+
+                        if (config?.Selectors != null)
+                        {
+                            _facebookConfig = config;
+                            _facebookConfigFetchedAt = DateTime.UtcNow;
+                            Log.Information("[SelectorConfig] Facebook selectors güncellendi (v{Version}, {Date})",
+                                config.Version, config.UpdatedAt);
+                            return config.Selectors;
+                        }
+                    }
+                    else
+                    {
+                        Log.Warning("[SelectorConfig] Facebook selectors sunucu hatası: {Status}", response.StatusCode);
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    Log.Warning("[SelectorConfig] Facebook selectors sunucuya bağlanılamadı: {Error}", ex.Message);
+                }
+                catch (TaskCanceledException)
+                {
+                    Log.Warning("[SelectorConfig] Facebook selectors istek zaman aşımına uğradı");
+                }
+                catch (JsonException ex)
+                {
+                    Log.Warning("[SelectorConfig] Facebook selectors JSON parse hatası: {Error}", ex.Message);
+                }
+
+                // Fallback kullan
+                Log.Information("[SelectorConfig] Fallback Facebook selectors kullanılıyor");
+                return DefaultFacebookSelectors;
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Facebook selector'larını senkron olarak getirir.
         /// </summary>
         public FacebookSelectors GetFacebookSelectors()
         {
-            // Şimdilik sadece fallback döndür
-            // İleride sunucudan çekme eklenebilir
-            return DefaultFacebookSelectors;
+            try
+            {
+                return GetFacebookSelectorsAsync().GetAwaiter().GetResult();
+            }
+            catch
+            {
+                return DefaultFacebookSelectors;
+            }
         }
 
         /// <summary>
@@ -221,6 +320,8 @@ namespace UniCast.Core.Chat.Config
         {
             _instagramConfig = null;
             _instagramConfigFetchedAt = DateTime.MinValue;
+            _facebookConfig = null;
+            _facebookConfigFetchedAt = DateTime.MinValue;
             Log.Debug("[SelectorConfig] Cache temizlendi");
         }
 

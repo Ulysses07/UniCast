@@ -36,9 +36,30 @@ namespace UniCast.App.ViewModels
         private string _streamKey = "";
         public string StreamKey { get => _streamKey; set { _streamKey = value; OnPropertyChanged(); } }
 
+        // Düzenleme Modu
+        private TargetItem? _editingItem = null;
+        public TargetItem? EditingItem
+        {
+            get => _editingItem;
+            set
+            {
+                _editingItem = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsEditing));
+                OnPropertyChanged(nameof(FormTitle));
+                OnPropertyChanged(nameof(SubmitButtonText));
+            }
+        }
+
+        public bool IsEditing => EditingItem != null;
+        public string FormTitle => IsEditing ? "✏️ Hedef Düzenle" : "🔗 Yeni Hedef Ekle";
+        public string SubmitButtonText => IsEditing ? "Güncelle" : "Listeye Ekle";
+
         // Komutlar
         public ICommand AddCommand { get; }
         public ICommand RemoveCommand { get; }
+        public ICommand EditCommand { get; }
+        public ICommand CancelEditCommand { get; }
 
         public TargetsViewModel()
         {
@@ -52,11 +73,16 @@ namespace UniCast.App.ViewModels
             RefreshTargets();
 
             // Komutları Bağla
-            AddCommand = new RelayCommand(_ => AddTarget());
+            AddCommand = new RelayCommand(_ => AddOrUpdateTarget());
             RemoveCommand = new RelayCommand(obj =>
             {
                 if (obj is TargetItem item) RemoveTarget(item);
             });
+            EditCommand = new RelayCommand(obj =>
+            {
+                if (obj is TargetItem item) StartEdit(item);
+            });
+            CancelEditCommand = new RelayCommand(_ => CancelEdit());
         }
 
         private void RefreshTargets()
@@ -66,7 +92,35 @@ namespace UniCast.App.ViewModels
             foreach (var t in loaded) Targets.Add(t);
         }
 
-        private void AddTarget()
+        private void StartEdit(TargetItem item)
+        {
+            EditingItem = item;
+            SelectedPlatform = item.Platform;
+            DisplayName = item.DisplayName;
+
+            // URL ve StreamKey'i ayır
+            // Eğer StreamKey kaydedilmişse onu kullan, yoksa URL'den ayırmaya çalış
+            if (!string.IsNullOrEmpty(item.StreamKey))
+            {
+                // StreamKey varsa, URL'den StreamKey'i çıkar
+                Url = item.Url.Replace("/" + item.StreamKey, "").TrimEnd('/');
+                StreamKey = item.StreamKey;
+            }
+            else
+            {
+                // StreamKey yoksa, URL'i olduğu gibi kullan
+                Url = item.Url;
+                StreamKey = "";
+            }
+        }
+
+        private void CancelEdit()
+        {
+            EditingItem = null;
+            ClearForm();
+        }
+
+        private void AddOrUpdateTarget()
         {
             if (string.IsNullOrWhiteSpace(DisplayName) || string.IsNullOrWhiteSpace(Url))
                 return;
@@ -79,20 +133,47 @@ namespace UniCast.App.ViewModels
                 fullUrl += StreamKey;
             }
 
-            var newItem = new TargetItem
+            if (IsEditing && EditingItem != null)
             {
-                Id = Guid.NewGuid().ToString(),
-                Platform = SelectedPlatform,
-                DisplayName = DisplayName,
-                Url = fullUrl,
-                StreamKey = StreamKey,
-                Enabled = true
-            };
+                // Güncelleme modu
+                EditingItem.Platform = SelectedPlatform;
+                EditingItem.DisplayName = DisplayName;
+                EditingItem.Url = fullUrl;
+                EditingItem.StreamKey = StreamKey;
 
-            Targets.Add(newItem);
-            TargetsStore.Save(Targets.ToList());
+                // ObservableCollection'ı yenilemek için
+                var index = Targets.IndexOf(EditingItem);
+                if (index >= 0)
+                {
+                    Targets.RemoveAt(index);
+                    Targets.Insert(index, EditingItem);
+                }
 
-            // DÜZELTME: Setter zaten OnPropertyChanged çağırıyor, tekrar çağırmaya gerek yok
+                TargetsStore.Save(Targets.ToList());
+                EditingItem = null;
+            }
+            else
+            {
+                // Ekleme modu
+                var newItem = new TargetItem
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Platform = SelectedPlatform,
+                    DisplayName = DisplayName,
+                    Url = fullUrl,
+                    StreamKey = StreamKey,
+                    Enabled = true
+                };
+
+                Targets.Add(newItem);
+                TargetsStore.Save(Targets.ToList());
+            }
+
+            ClearForm();
+        }
+
+        private void ClearForm()
+        {
             DisplayName = "";
             Url = "";
             StreamKey = "";
@@ -100,6 +181,12 @@ namespace UniCast.App.ViewModels
 
         private void RemoveTarget(TargetItem item)
         {
+            // Eğer düzenlenen öğe siliniyorsa, düzenleme modundan çık
+            if (EditingItem == item)
+            {
+                CancelEdit();
+            }
+
             Targets.Remove(item);
             TargetsStore.Save(Targets.ToList());
         }

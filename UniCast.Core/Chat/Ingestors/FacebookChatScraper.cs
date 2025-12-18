@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
+using UniCast.Core.Chat.Config;
 
 namespace UniCast.Core.Chat.Ingestors
 {
@@ -14,6 +15,7 @@ namespace UniCast.Core.Chat.Ingestors
         private TaskCompletionSource<bool>? _initTcs;
         private bool _observerInjected;
         private static string? _cachedScript;
+        private static FacebookSelectors? _cachedSelectors;
 
         private Func<Task>? _ensureWebViewReady;
         private Func<string, Task>? _navigateToUrl;
@@ -64,6 +66,24 @@ namespace UniCast.Core.Chat.Ingestors
                 throw new InvalidOperationException("WebView2 kontrolleri ayarlanmamış.");
             if (string.IsNullOrEmpty(LiveVideoUrl))
                 throw new InvalidOperationException("Live Video URL gerekli.");
+
+            // Selector'ları sunucudan çek
+            try
+            {
+                var newSelectors = await SelectorConfigService.Instance.GetFacebookSelectorsAsync(ct);
+                if (_cachedSelectors == null ||
+                    _cachedSelectors.CommentContainer != newSelectors.CommentContainer)
+                {
+                    _cachedSelectors = newSelectors;
+                    _cachedScript = null; // Yeni selector'lar geldi, script'i yeniden oluştur
+                    Log.Information("[FB Scraper] Selector'lar güncellendi: {Container}", newSelectors.CommentContainer);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[FB Scraper] Selector'lar alınamadı, fallback kullanılıyor");
+                _cachedSelectors ??= SelectorConfigService.Instance.GetFacebookSelectors();
+            }
 
             Log.Information("[FB Scraper] Bağlanılıyor: {Url}", LiveVideoUrl);
             await _ensureWebViewReady();
@@ -197,6 +217,12 @@ namespace UniCast.Core.Chat.Ingestors
         {
             if (_cachedScript != null) return _cachedScript;
 
+            // Selector'ları al
+            var selectors = _cachedSelectors ?? SelectorConfigService.Instance.GetFacebookSelectors();
+            var mainSelector = selectors.CommentContainer ?? ".xv55zj0.x1vvkbs";
+            var fallbacks = selectors.FallbackContainers ?? new[] { "div[role='article']", "[aria-label*='yorum']" };
+            var authorSelector = selectors.AuthorLink ?? "a";
+
             var sb = new StringBuilder();
             sb.Append("(function(){");
             sb.Append("'use strict';");
@@ -206,18 +232,32 @@ namespace UniCast.Core.Chat.Ingestors
             sb.Append("var seenIds=new Set();");
             sb.Append("var observer=null;");
 
+            // Selector'ları JavaScript'e aktar
+            sb.Append($"var mainSelector='{EscapeJs(mainSelector)}';");
+            sb.Append($"var fallbackSelectors={JsonSerializer.Serialize(fallbacks)};");
+            sb.Append($"var authorSelector='{EscapeJs(authorSelector)}';");
+
             // log function
             sb.Append("function log(m){");
             sb.Append("window.chrome.webview.postMessage(JSON.stringify({type:'debug',message:m}));");
             sb.Append("}");
 
-            // extractComments - DOM tabanlı (birden fazla selector dene)
+            // getContainers function - selector'ları dene
+            sb.Append("function getContainers(){");
+            sb.Append("var containers=document.querySelectorAll(mainSelector);");
+            sb.Append("if(containers.length===0){");
+            sb.Append("for(var i=0;i<fallbackSelectors.length;i++){");
+            sb.Append("containers=document.querySelectorAll(fallbackSelectors[i]);");
+            sb.Append("if(containers.length>0)break;");
+            sb.Append("}");
+            sb.Append("}");
+            sb.Append("return containers;");
+            sb.Append("}");
+
+            // extractComments - DOM tabanlı (dinamik selector)
             sb.Append("function extractComments(){");
             sb.Append("var comments=[];");
-            // Birden fazla selector dene
-            sb.Append("var containers=document.querySelectorAll('.xv55zj0.x1vvkbs');");
-            sb.Append("if(containers.length===0)containers=document.querySelectorAll('div[role=\"article\"]');");
-            sb.Append("if(containers.length===0)containers=document.querySelectorAll('[aria-label*=\"yorum\"]');");
+            sb.Append("var containers=getContainers();");
             sb.Append("log('Selector sonucu: '+containers.length+' container');");
             sb.Append("for(var i=0;i<containers.length;i++){");
             sb.Append("var c=containers[i];");
@@ -225,8 +265,8 @@ namespace UniCast.Core.Chat.Ingestors
             sb.Append("var innerTextPre=c.innerText||'';");
             sb.Append("if(i<3)log('Container['+i+'] innerText (ilk 200): '+innerTextPre.substring(0,200).replace(/\\n/g,' | '));");
             sb.Append("if(i<3)log('Container['+i+'] tagName: '+c.tagName+', className: '+(c.className||'').substring(0,50));");
-            // Yazar - ilk <a> tag'ından
-            sb.Append("var authorLink=c.querySelector('a');");
+            // Yazar - dinamik selector
+            sb.Append("var authorLink=c.querySelector(authorSelector);");
             sb.Append("var author=authorLink?authorLink.textContent.trim():'Unknown';");
             sb.Append("if(i<3)log('Container['+i+'] author: '+author);");
             // Mesaj - innerText'ten yazar adını çıkar
@@ -316,9 +356,7 @@ namespace UniCast.Core.Chat.Ingestors
             sb.Append("window.__fbLiveScanComments=scan;");
             // Periyodik tarama - her 5 saniyede bir
             sb.Append("setInterval(function(){");
-            sb.Append("var containers=document.querySelectorAll('.xv55zj0.x1vvkbs');");
-            sb.Append("if(containers.length===0)containers=document.querySelectorAll('div[role=\"article\"]');");
-            sb.Append("if(containers.length===0)containers=document.querySelectorAll('[aria-label*=\"yorum\"]');");
+            sb.Append("var containers=getContainers();");
             sb.Append("log('Periyodik tarama: '+containers.length+' container');");
             sb.Append("scan();");
             sb.Append("},5000);");
@@ -388,6 +426,15 @@ namespace UniCast.Core.Chat.Ingestors
             {
                 Log.Debug(ex, "[FB Scraper] Rescan hatası");
             }
+        }
+
+        /// <summary>
+        /// JavaScript string için escape - tek tırnak ve backslash
+        /// </summary>
+        private static string EscapeJs(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s;
+            return s.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "");
         }
 
         protected override void Dispose(bool disposing)

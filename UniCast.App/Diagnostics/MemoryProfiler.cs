@@ -42,6 +42,7 @@ namespace UniCast.App.Diagnostics
         private readonly Timer _samplingTimer;
         private readonly ConcurrentQueue<MemorySample> _samples = new();
         private readonly Process _currentProcess;
+        private readonly CancellationTokenSource _cts = new(); // DÜZELTME v43: CancellationToken desteği
         private bool _isMonitoring;
         private bool _disposed;
 
@@ -176,14 +177,14 @@ namespace UniCast.App.Diagnostics
             }
 
             // Trend analizi - son 10 sample
-            var recentSamples = samples.Length > 10 
-                ? samples[^10..] 
+            var recentSamples = samples.Length > 10
+                ? samples[^10..]
                 : samples;
 
             var firstSample = recentSamples[0];
             var lastSample = recentSamples[^1];
 
-            var growthRate = (double)(lastSample.ManagedMemoryBytes - firstSample.ManagedMemoryBytes) 
+            var growthRate = (double)(lastSample.ManagedMemoryBytes - firstSample.ManagedMemoryBytes)
                             / firstSample.ManagedMemoryBytes;
 
             var isPotentialLeak = growthRate > Config.LeakDetectionGrowthRate;
@@ -196,7 +197,7 @@ namespace UniCast.App.Diagnostics
                 FirstSampleMB = firstSample.ManagedMemoryBytes / (1024 * 1024),
                 LastSampleMB = lastSample.ManagedMemoryBytes / (1024 * 1024),
                 AnalysisPeriod = lastSample.Timestamp - firstSample.Timestamp,
-                Recommendation = isPotentialLeak 
+                Recommendation = isPotentialLeak
                     ? "Potansiyel memory leak algılandı. Object allocation'ları kontrol edin."
                     : "Normal bellek kullanımı."
             };
@@ -308,24 +309,53 @@ namespace UniCast.App.Diagnostics
             try
             {
                 // GC notification için background task
+                // DÜZELTME v43: Sadece burst GC'leri logla (spam önleme)
                 Task.Run(async () =>
                 {
+                    int lastLoggedGen2 = _gen2Collections;
+                    DateTime lastLogTime = DateTime.UtcNow;
+
                     while (!_disposed)
                     {
                         var currentGen0 = GC.CollectionCount(0);
                         var currentGen1 = GC.CollectionCount(1);
                         var currentGen2 = GC.CollectionCount(2);
 
-                        if (currentGen2 > _gen2Collections)
+                        // DÜZELTME v43: Sadece şu durumlarda logla:
+                        // 1. Son 30 saniyede 5+ Gen2 GC olduysa (burst)
+                        // 2. Veya en az 60 saniye geçtiyse (periyodik rapor)
+                        var gen2Diff = currentGen2 - lastLoggedGen2;
+                        var timeSinceLastLog = DateTime.UtcNow - lastLogTime;
+
+                        if (gen2Diff >= 5 || (gen2Diff > 0 && timeSinceLastLog.TotalSeconds >= 60))
                         {
-                            Log.Debug("[MemoryProfiler] Gen2 GC gerçekleşti (#{Count})", currentGen2);
+                            if (gen2Diff >= 5)
+                            {
+                                Log.Warning("[MemoryProfiler] Gen2 GC burst: {Count} GC in {Seconds}s (total: #{Total})",
+                                    gen2Diff, (int)timeSinceLastLog.TotalSeconds, currentGen2);
+                            }
+                            else
+                            {
+                                Log.Debug("[MemoryProfiler] Gen2 GC özeti: {Count} GC (total: #{Total})",
+                                    gen2Diff, currentGen2);
+                            }
+                            lastLoggedGen2 = currentGen2;
+                            lastLogTime = DateTime.UtcNow;
                         }
 
                         _gen0Collections = currentGen0;
                         _gen1Collections = currentGen1;
                         _gen2Collections = currentGen2;
 
-                        await Task.Delay(1000);
+                        // DÜZELTME v43: CancellationToken ile iptal edilebilir delay
+                        try
+                        {
+                            await Task.Delay(1000, _cts.Token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break; // Normal shutdown
+                        }
                     }
                 });
             }
@@ -344,9 +374,13 @@ namespace UniCast.App.Diagnostics
             if (_disposed) return;
             _disposed = true;
 
+            // DÜZELTME v43: CancellationToken ile GC notification task'ını durdur
+            try { _cts.Cancel(); } catch { }
+
             StopMonitoring();
             _samplingTimer.Dispose();
             _currentProcess.Dispose();
+            _cts.Dispose(); // DÜZELTME v43
 
             OnMemoryWarning = null;
             OnMemoryLeakDetected = null;

@@ -405,22 +405,23 @@ try
 
         var config = new FacebookSelectorConfig
         {
-            Version = 1,
-            UpdatedAt = new DateTime(2025, 1, 12, 0, 0, 0, DateTimeKind.Utc),
+            Version = 2,  // v2 - FallbackContainers array eklendi
+            UpdatedAt = DateTime.UtcNow,
             Selectors = new FacebookSelectors
             {
-                CommentContainer = "div.xv55zj0.x1vvkbs",
+                CommentContainer = ".xv55zj0.x1vvkbs",
+                FallbackContainers = new[]
+                {
+                    "div[role='article']",
+                    "[aria-label*='yorum']",
+                    "[aria-label*='comment']"
+                },
                 AuthorLink = "a",
-                CommentText = "div[dir='auto']"
-            },
-            FallbackSelectors = new FacebookSelectors
-            {
-                CommentContainer = "div[role='article']",
-                AuthorLink = "a[role='link']",
-                CommentText = "span"
+                CommentText = "div[dir='auto']",
+                ObserverTarget = "body"
             },
             PollingIntervalMs = 5000,
-            Notes = "Facebook Live Chat için DOM selector'ları."
+            Notes = "Facebook Live Chat için DOM selector'ları. v2 - fallbackContainers array formatı."
         };
 
         Log.Debug("Facebook selectors requested from {IP}", clientIp);
@@ -445,7 +446,7 @@ try
 
         var config = new AllSelectorsConfig
         {
-            Version = 1,
+            Version = 2,
             UpdatedAt = DateTime.UtcNow,
             Instagram = new InstagramSelectors
             {
@@ -455,9 +456,16 @@ try
             },
             Facebook = new FacebookSelectors
             {
-                CommentContainer = "div.xv55zj0.x1vvkbs",
+                CommentContainer = ".xv55zj0.x1vvkbs",
+                FallbackContainers = new[]
+                {
+                    "div[role='article']",
+                    "[aria-label*='yorum']",
+                    "[aria-label*='comment']"
+                },
                 AuthorLink = "a",
-                CommentText = "div[dir='auto']"
+                CommentText = "div[dir='auto']",
+                ObserverTarget = "body"
             }
         };
 
@@ -1034,11 +1042,17 @@ public record FacebookSelectors
     /// <summary>Yorum container selector'ı</summary>
     public string? CommentContainer { get; init; }
 
+    /// <summary>Fallback container selector'ları (sırayla denenir)</summary>
+    public string[]? FallbackContainers { get; init; }
+
     /// <summary>Yazar link selector'ı</summary>
     public string? AuthorLink { get; init; }
 
     /// <summary>Yorum metni selector'ı</summary>
     public string? CommentText { get; init; }
+
+    /// <summary>MutationObserver hedef elementi</summary>
+    public string? ObserverTarget { get; init; }
 }
 
 /// <summary>Facebook selector konfigürasyonu</summary>
@@ -1050,11 +1064,8 @@ public record FacebookSelectorConfig
     /// <summary>Son güncelleme tarihi</summary>
     public DateTime UpdatedAt { get; init; }
 
-    /// <summary>Ana selector'lar</summary>
+    /// <summary>Selector'lar (fallbackContainers array içinde)</summary>
     public FacebookSelectors Selectors { get; init; } = new();
-
-    /// <summary>Fallback selector'lar</summary>
-    public FacebookSelectors? FallbackSelectors { get; init; }
 
     /// <summary>Polling aralığı (ms)</summary>
     public int PollingIntervalMs { get; init; } = 5000;
