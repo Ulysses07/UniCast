@@ -58,6 +58,7 @@
 	<ItemGroup>
 		<!-- Logging -->
 		<PackageReference Include="Serilog" Version="3.1.1" />
+		<PackageReference Include="System.Diagnostics.EventLog" Version="10.0.1" />
 
 		<!-- WMI erişimi (System.Management) -->
 		<PackageReference Include="System.Management" Version="8.0.0" />
