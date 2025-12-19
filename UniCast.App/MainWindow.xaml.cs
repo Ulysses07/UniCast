@@ -97,8 +97,11 @@ namespace UniCast.App
                 // Tab değişikliği event'i
                 MainTabControl.SelectionChanged += OnTabSelectionChanged;
 
-                // İlk tab'ı yükle (genellikle Preview)
+                // İlk tab'ı yükle (genellikle Control/Yayın Paneli)
                 LoadTabContent(0);
+
+                // İlk tab için aktif navigasyon göstergesini ayarla
+                UpdateActiveNavButton(0);
             }
             catch (Exception ex)
             {
@@ -535,6 +538,27 @@ namespace UniCast.App
             {
                 MainTabControl.SelectedIndex = index;
                 LoadTabContent(index);
+                UpdateActiveNavButton(index);
+            }
+        }
+
+        /// <summary>
+        /// Aktif navigasyon butonunu işaretler
+        /// </summary>
+        private void UpdateActiveNavButton(int activeIndex)
+        {
+            var navButtons = new[] { BtnControl, BtnPreview, BtnTargets, BtnChat, BtnSettings, BtnLicense };
+
+            for (int i = 0; i < navButtons.Length; i++)
+            {
+                if (i == activeIndex)
+                {
+                    navButtons[i].Style = (Style)FindResource("NavButtonActive");
+                }
+                else
+                {
+                    navButtons[i].Style = (Style)FindResource("NavButton");
+                }
             }
         }
 

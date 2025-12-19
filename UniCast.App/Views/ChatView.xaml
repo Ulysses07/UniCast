@@ -5,54 +5,87 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800">
 
-	<Grid Margin="20">
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="*"/>
-		</Grid.RowDefinitions>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-		<Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="10" Margin="0,0,0,15">
-			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-				<CheckBox Content="YouTube" IsChecked="{Binding ShowYouTube}" Margin="10,0" Foreground="{StaticResource TextMain}"/>
-				<CheckBox Content="TikTok" IsChecked="{Binding ShowTikTok}" Margin="10,0" Foreground="{StaticResource TextMain}"/>
-				<CheckBox Content="Instagram" IsChecked="{Binding ShowInstagram}" Margin="10,0" Foreground="{StaticResource TextMain}"/>
-				<CheckBox Content="Facebook" IsChecked="{Binding ShowFacebook}" Margin="10,0" Foreground="{StaticResource TextMain}"/>
-			</StackPanel>
-		</Border>
+        <Border Background="{StaticResource BgLight}" CornerRadius="8" Padding="10" Margin="0,0,0,15">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <CheckBox Content="YouTube" IsChecked="{Binding ShowYouTube}" Margin="10,0" 
+						  Style="{StaticResource ModernCheckBox}"/>
+                <CheckBox Content="Twitch" IsChecked="{Binding ShowTwitch}" Margin="10,0" 
+						  Style="{StaticResource ModernCheckBox}"/>
+                <CheckBox Content="TikTok" IsChecked="{Binding ShowTikTok}" Margin="10,0" 
+						  Style="{StaticResource ModernCheckBox}"/>
+                <CheckBox Content="Instagram" IsChecked="{Binding ShowInstagram}" Margin="10,0" 
+						  Style="{StaticResource ModernCheckBox}"/>
+                <CheckBox Content="Facebook" IsChecked="{Binding ShowFacebook}" Margin="10,0" 
+						  Style="{StaticResource ModernCheckBox}"/>
+            </StackPanel>
+        </Border>
 
-		<ListView Grid.Row="1" ItemsSource="{Binding View}"
+        <ListView Grid.Row="1" ItemsSource="{Binding View}"
                   Background="Transparent" BorderThickness="0"
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-			<ListView.ItemTemplate>
-				<DataTemplate>
-					<Border Background="{StaticResource BgLight}" CornerRadius="8" Margin="0,2" Padding="10">
-						<StackPanel>
-							<StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-								<TextBlock Text="{Binding Author}" FontWeight="Bold" Foreground="{StaticResource Primary}"/>
-								<TextBlock Text=" • " Foreground="Gray" Margin="5,0"/>
-								<TextBlock Text="{Binding Source}" FontSize="10" Foreground="Gray" VerticalAlignment="Center"/>
-							</StackPanel>
-							<TextBlock Text="{Binding Text}" TextWrapping="Wrap" Foreground="{StaticResource TextMain}"/>
-						</StackPanel>
-					</Border>
-				</DataTemplate>
-			</ListView.ItemTemplate>
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  x:Name="ChatListView">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Border Background="{StaticResource BgLight}" CornerRadius="8" Margin="0,2" Padding="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-			<ListView.ItemContainerStyle>
-				<Style TargetType="ListViewItem">
-					<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-					<Setter Property="Background" Value="Transparent"/>
-					<Setter Property="BorderThickness" Value="0"/>
-					<Setter Property="Margin" Value="0,2"/>
-					<Setter Property="Template">
-						<Setter.Value>
-							<ControlTemplate TargetType="ListViewItem">
-								<ContentPresenter/>
-							</ControlTemplate>
-						</Setter.Value>
-					</Setter>
-				</Style>
-			</ListView.ItemContainerStyle>
-		</ListView>
-	</Grid>
+                            <!-- Platform İkonu -->
+                            <Border Grid.Column="0" 
+									Background="{Binding Platform, Converter={StaticResource ChatPlatformToColor}}" 
+									CornerRadius="4" 
+									Width="28" Height="28" 
+									Margin="0,0,10,0"
+									VerticalAlignment="Top">
+                                <TextBlock Text="{Binding Platform, Converter={StaticResource ChatPlatformToIcon}}" 
+										   FontSize="14" 
+										   Foreground="White" 
+										   HorizontalAlignment="Center" 
+										   VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Mesaj İçeriği -->
+                            <StackPanel Grid.Column="1">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                    <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" Foreground="{StaticResource Primary}"/>
+                                    <TextBlock Text=" • " Foreground="Gray" Margin="5,0"/>
+                                    <Border Background="{Binding Platform, Converter={StaticResource ChatPlatformToColor}}" 
+											CornerRadius="3" Padding="5,1" VerticalAlignment="Center" Opacity="0.8">
+                                        <TextBlock Text="{Binding Platform, Converter={StaticResource ChatPlatformToLabel}}" 
+												   FontSize="9" Foreground="White" FontWeight="SemiBold"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{StaticResource TextMain}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Margin" Value="0,2"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <ContentPresenter/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListView.ItemContainerStyle>
+        </ListView>
+    </Grid>
 </UserControl>

@@ -23,6 +23,11 @@
         <local:PlatformToColorConverter x:Key="PlatformToColor"/>
         <local:PlatformToLabelConverter x:Key="PlatformToLabel"/>
 
+        <!-- Chat Platform Converter'ları -->
+        <local:ChatPlatformToIconConverter x:Key="ChatPlatformToIcon"/>
+        <local:ChatPlatformToColorConverter x:Key="ChatPlatformToColor"/>
+        <local:ChatPlatformToLabelConverter x:Key="ChatPlatformToLabel"/>
+
         <SolidColorBrush x:Key="BgDark" Color="#18181B"/>
         <SolidColorBrush x:Key="BgLight" Color="#2D2D30"/>
         <SolidColorBrush x:Key="Primary" Color="#9146FF"/>
@@ -93,16 +98,244 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Margin="2">
-                            <ContentPresenter VerticalAlignment="Center" Margin="10,0,0,0"/>
-                        </Border>
+                        <Grid>
+                            <!-- Aktif göstergesi (sol çizgi) -->
+                            <Border x:Name="ActiveIndicator" 
+                                    Width="4" 
+                                    HorizontalAlignment="Left" 
+                                    Background="{TemplateBinding BorderBrush}" 
+                                    CornerRadius="0,2,2,0"/>
+
+                            <!-- Ana içerik -->
+                            <Border x:Name="MainBorder" 
+                                    Background="{TemplateBinding Background}" 
+                                    CornerRadius="4" 
+                                    Margin="6,2,2,2">
+                                <ContentPresenter VerticalAlignment="Center" Margin="10,0,0,0"/>
+                            </Border>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Foreground" Value="White"/>
-                                <Setter Property="Background" Value="#33FFFFFF"/>
+                                <Setter TargetName="MainBorder" Property="Background" Value="#33FFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Aktif Navigasyon Butonu Stili -->
+        <Style x:Key="NavButtonActive" TargetType="Button" BasedOn="{StaticResource NavButton}">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Primary}"/>
+            <Setter Property="Background" Value="#22FFFFFF"/>
+        </Style>
+
+        <!-- Modern Dark Mode CheckBox Stili -->
+        <Style x:Key="ModernCheckBox" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Background" Value="#3E3E42"/>
+            <Setter Property="BorderBrush" Value="#555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="5,0,0,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Checkbox kutusu -->
+                            <Border x:Name="checkBoxBorder" 
+                                    Width="18" Height="18" 
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="3">
+                                <!-- Tik işareti -->
+                                <Path x:Name="checkMark" 
+                                      Data="M 2,5 L 5,8 L 10,2" 
+                                      Stroke="{StaticResource Primary}" 
+                                      StrokeThickness="2"
+                                      Visibility="Collapsed"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- İçerik -->
+                            <ContentPresenter Grid.Column="1" 
+                                              Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              RecognizesAccessKey="True"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="checkMark" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="checkBoxBorder" Property="Background" Value="#2D2D30"/>
+                                <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{StaticResource Primary}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{StaticResource PrimaryHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="checkBoxBorder" Property="Background" Value="#444"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#666"/>
+                                <Setter TargetName="checkBoxBorder" Property="Background" Value="#222"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Toggle Switch Stili -->
+        <Style x:Key="ToggleSwitch" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Background" Value="#3E3E42"/>
+            <Setter Property="Padding" Value="10,0,0,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Toggle track -->
+                            <Border x:Name="track" 
+                                    Width="44" Height="24" 
+                                    Background="#3E3E42"
+                                    CornerRadius="12"
+                                    BorderBrush="#555"
+                                    BorderThickness="1">
+
+                                <!-- Toggle thumb -->
+                                <Border x:Name="thumb"
+                                        Width="18" Height="18"
+                                        Background="#888"
+                                        CornerRadius="9"
+                                        HorizontalAlignment="Left"
+                                        Margin="2,0,0,0">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform x:Name="thumbTranslate" X="0"/>
+                                    </Border.RenderTransform>
+                                </Border>
+                            </Border>
+
+                            <!-- İçerik -->
+                            <ContentPresenter Grid.Column="1" 
+                                              Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              RecognizesAccessKey="True"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="track" Property="Background" Value="{StaticResource Primary}"/>
+                                <Setter TargetName="track" Property="BorderBrush" Value="{StaticResource Primary}"/>
+                                <Setter TargetName="thumb" Property="Background" Value="White"/>
+                                <Setter TargetName="thumbTranslate" Property="X" Value="20"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="thumb" Property="Background" Value="#AAA"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="thumb" Property="Background" Value="White"/>
+                                <Setter TargetName="track" Property="Background" Value="{StaticResource PrimaryHover}"/>
+                            </MultiTrigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#666"/>
+                                <Setter TargetName="track" Property="Background" Value="#222"/>
+                                <Setter TargetName="thumb" Property="Background" Value="#444"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Slider Stili -->
+        <Style x:Key="ModernSlider" TargetType="Slider">
+            <Setter Property="Background" Value="#3E3E42"/>
+            <Setter Property="Foreground" Value="{StaticResource Primary}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto" MinHeight="{TemplateBinding MinHeight}"/>
+                            </Grid.RowDefinitions>
+
+                            <Border x:Name="TrackBackground"
+                                    Grid.Row="1"
+                                    Height="6"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="3"
+                                    VerticalAlignment="Center"/>
+
+                            <Track Grid.Row="1" x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="{StaticResource Primary}" 
+                                                        Height="6" 
+                                                        CornerRadius="3,0,0,3"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="18" Height="18" 
+                                                         Fill="{StaticResource Primary}"
+                                                         Stroke="White" StrokeThickness="2"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Loading Spinner Stili -->
+        <Style x:Key="LoadingSpinner" TargetType="Border">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="BorderThickness" Value="3"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Primary}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <RotateTransform Angle="0"/>
                 </Setter.Value>
             </Setter>
         </Style>

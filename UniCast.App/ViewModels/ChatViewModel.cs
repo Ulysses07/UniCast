@@ -26,12 +26,18 @@ namespace UniCast.App.ViewModels
         public ICollectionView View { get; }
 
         // Filtreleme Ayarları
-        private bool _yt = true, _tt = true, _ig = true, _fb = true;
+        private bool _yt = true, _tw = true, _tt = true, _ig = true, _fb = true;
 
         public bool ShowYouTube
         {
             get => _yt;
             set { _yt = value; OnPropertyChanged(); View.Refresh(); }
+        }
+
+        public bool ShowTwitch
+        {
+            get => _tw;
+            set { _tw = value; OnPropertyChanged(); View.Refresh(); }
         }
 
         public bool ShowTikTok
@@ -61,6 +67,7 @@ namespace UniCast.App.ViewModels
                 return m.Platform switch
                 {
                     ChatPlatform.YouTube => ShowYouTube,
+                    ChatPlatform.Twitch => ShowTwitch,
                     ChatPlatform.TikTok => ShowTikTok,
                     ChatPlatform.Instagram => ShowInstagram,
                     ChatPlatform.Facebook => ShowFacebook,

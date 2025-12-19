@@ -164,6 +164,20 @@ namespace UniCast.App.ViewModels
             }
         }
 
+        // Loading durumu (yayın başlatılırken/durdurulurken)
+        private bool _isLoading;
+        public bool IsLoading
+        {
+            get => _isLoading;
+            private set
+            {
+                _isLoading = value;
+                OnPropertyChanged();
+                (StartCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (StopCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+
         // Yayın Süresi Sayacı
         private DateTime _streamStartTime;
         private System.Windows.Threading.DispatcherTimer? _streamTimer;
@@ -248,6 +262,9 @@ namespace UniCast.App.ViewModels
 
             try
             {
+                // Loading başlat
+                IsLoading = true;
+
                 // DÜZELTME: Null check eklendi
                 if (_provider == null)
                 {
@@ -317,6 +334,10 @@ namespace UniCast.App.ViewModels
                 Status = "Kritik Hata";
                 Advisory = $"Beklenmedik hata: {ex.Message}";
                 IsRunning = false;
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 

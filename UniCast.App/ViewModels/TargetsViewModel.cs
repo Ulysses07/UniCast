@@ -23,7 +23,44 @@ namespace UniCast.App.ViewModels
         public StreamPlatform SelectedPlatform
         {
             get => _selectedPlatform;
-            set { _selectedPlatform = value; OnPropertyChanged(); }
+            set
+            {
+                _selectedPlatform = value;
+                OnPropertyChanged();
+
+                // Düzenleme modunda değilse ve URL boşsa, otomatik doldur
+                if (!IsEditing && string.IsNullOrWhiteSpace(Url))
+                {
+                    AutoFillPlatformUrl(value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Platform seçimine göre RTMP URL'sini otomatik doldurur
+        /// </summary>
+        private void AutoFillPlatformUrl(StreamPlatform platform)
+        {
+            var (url, name) = platform switch
+            {
+                StreamPlatform.YouTube => ("rtmp://a.rtmp.youtube.com/live2", "YouTube"),
+                StreamPlatform.Twitch => ("rtmp://live.twitch.tv/app", "Twitch"),
+                StreamPlatform.TikTok => ("rtmp://rtmp-push.tiktok.com/live", "TikTok"),
+                StreamPlatform.Instagram => ("rtmp://live-upload.instagram.com/rtmp", "Instagram"),
+                StreamPlatform.Facebook => ("rtmps://live-api-s.facebook.com:443/rtmp", "Facebook"),
+                _ => ("", "")
+            };
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                Url = url;
+
+                // İsim de boşsa platform adını kullan
+                if (string.IsNullOrWhiteSpace(DisplayName))
+                {
+                    DisplayName = name;
+                }
+            }
         }
 
         // Alanlar
@@ -60,6 +97,7 @@ namespace UniCast.App.ViewModels
         public ICommand RemoveCommand { get; }
         public ICommand EditCommand { get; }
         public ICommand CancelEditCommand { get; }
+        public ICommand CopyStreamKeyCommand { get; }
 
         public TargetsViewModel()
         {
@@ -83,6 +121,44 @@ namespace UniCast.App.ViewModels
                 if (obj is TargetItem item) StartEdit(item);
             });
             CancelEditCommand = new RelayCommand(_ => CancelEdit());
+            CopyStreamKeyCommand = new RelayCommand(obj =>
+            {
+                if (obj is TargetItem item) CopyStreamKey(item);
+            });
+        }
+
+        private void CopyStreamKey(TargetItem item)
+        {
+            try
+            {
+                var streamKey = item.StreamKey;
+
+                // Eğer StreamKey boşsa, URL'den çıkarmaya çalış
+                if (string.IsNullOrEmpty(streamKey))
+                {
+                    // URL'in son bölümünü stream key olarak kabul et
+                    var url = item.Url ?? "";
+                    var lastSlash = url.LastIndexOf('/');
+                    if (lastSlash >= 0 && lastSlash < url.Length - 1)
+                    {
+                        streamKey = url.Substring(lastSlash + 1);
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(streamKey))
+                {
+                    System.Windows.Clipboard.SetText(streamKey);
+                    Services.ToastService.Instance.ShowSuccess($"📋 Stream Key kopyalandı");
+                }
+                else
+                {
+                    Services.ToastService.Instance.ShowWarning("Stream Key bulunamadı");
+                }
+            }
+            catch (Exception ex)
+            {
+                Services.ToastService.Instance.ShowError($"Kopyalama hatası: {ex.Message}");
+            }
         }
 
         private void RefreshTargets()
@@ -188,13 +264,24 @@ namespace UniCast.App.ViewModels
 
         private void RemoveTarget(TargetItem item)
         {
+            // Silme onayı iste
+            var result = System.Windows.MessageBox.Show(
+                $"\"{item.DisplayName}\" platformunu silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz.",
+                "Platform Sil",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning,
+                System.Windows.MessageBoxResult.No);
+
+            if (result != System.Windows.MessageBoxResult.Yes)
+                return;
+
             // Eğer düzenlenen öğe siliniyorsa, düzenleme modundan çık
             if (EditingItem == item)
             {
                 CancelEdit();
             }
 
-            var name = item.DisplayName;
+            var name = item.DisplayName ?? "";
             Targets.Remove(item);
             TargetsStore.Save(Targets.ToList());
 

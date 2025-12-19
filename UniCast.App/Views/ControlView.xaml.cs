@@ -231,6 +231,7 @@ namespace UniCast.App.Views
         public bool IsMuted => ControlViewModel.IsMuted;
         public System.Windows.Media.ImageSource? PreviewImage => ControlViewModel.PreviewImage;
         public string StreamDuration => ControlViewModel.StreamDuration;
+        public bool IsLoading => ControlViewModel.IsLoading;
 
         // Commands
         public System.Windows.Input.ICommand StartCommand => ControlViewModel.StartCommand;
