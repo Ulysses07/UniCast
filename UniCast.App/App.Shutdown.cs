@@ -64,6 +64,7 @@ namespace UniCast.App
                 // Tüm shutdown işlemlerini sırayla yap
                 var shutdownTasks = new List<(string Name, Func<Task> Action, int TimeoutMs)>
                 {
+                    ("Telemetry Shutdown", ShutdownTelemetryAsync, 2000), // Enterprise: Telemetry verilerini gönder
                     ("Stream Durdurma", StopStreamingAsync, ShutdownConfig.StreamStopTimeoutMs),
                     ("Chat Sistemi", StopChatSystemAsync, ShutdownConfig.IngestorStopTimeoutMs),
                     ("Professional Services", CleanupProfessionalServicesAsync, 2000), // v29
@@ -138,6 +139,25 @@ namespace UniCast.App
         #endregion
 
         #region Shutdown Tasks
+
+        /// <summary>
+        /// Telemetry servisini kapat ve bekleyen verileri gönder
+        /// </summary>
+        private async Task ShutdownTelemetryAsync()
+        {
+            try
+            {
+                Log.Debug("[Shutdown] Telemetry servisi kapatılıyor...");
+                await Services.TelemetryService.Instance.ShutdownAsync().ConfigureAwait(false);
+                Services.TelemetryService.Instance.Dispose();
+                Services.FeatureFlagService.Instance.Dispose();
+                Log.Debug("[Shutdown] Enterprise services disposed");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Shutdown] Telemetry shutdown hatası: {ex.Message}");
+            }
+        }
 
         /// <summary>
         /// Stream'i durdur

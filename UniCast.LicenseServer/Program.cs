@@ -592,6 +592,118 @@ try
     .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
     .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
+    // ==================== FEATURE FLAGS ENDPOINTS ====================
+
+    var featureGroup = app.MapGroup("/api/v1/features")
+        .WithTags("Features")
+        .WithOpenApi();
+
+    // GET /api/v1/features - Tüm feature flag'leri döndür
+    featureGroup.MapGet("", () =>
+    {
+        var flags = new List<object>
+        {
+            // Streaming özellikleri
+            new { key = "multiplatform_streaming", enabled = true, description = "Çoklu platform yayını" },
+            new { key = "youtube_chat", enabled = true, description = "YouTube chat entegrasyonu" },
+            new { key = "twitch_chat", enabled = true, description = "Twitch chat entegrasyonu" },
+            new { key = "facebook_chat", enabled = true, description = "Facebook chat entegrasyonu" },
+            new { key = "instagram_chat", enabled = true, description = "Instagram chat entegrasyonu" },
+            new { key = "tiktok_chat", enabled = true, description = "TikTok chat entegrasyonu" },
+            
+            // Encoder özellikleri
+            new { key = "hardware_encoding", enabled = true, description = "GPU hızlandırmalı encoding" },
+            new { key = "nvenc_support", enabled = true, description = "NVIDIA NVENC desteği" },
+            new { key = "qsv_support", enabled = true, description = "Intel QuickSync desteği" },
+            new { key = "hdr_support", enabled = false, description = "HDR yayın desteği (beta)" },
+            
+            // UI özellikleri
+            new { key = "dark_mode", enabled = true, description = "Karanlık tema" },
+            new { key = "chat_overlay", enabled = true, description = "Chat overlay" },
+            new { key = "custom_themes", enabled = false, description = "Özel temalar (yakında)" },
+            
+            // Deneysel özellikler
+            new { key = "experimental_features", enabled = false, description = "Deneysel özellikler" },
+            new { key = "beta_updates", enabled = false, description = "Beta güncellemeleri al" },
+            
+            // Analytics
+            new { key = "telemetry_enabled", enabled = true, description = "Anonim kullanım verileri" },
+            new { key = "crash_reporting", enabled = true, description = "Hata raporlama" }
+        };
+
+        Log.Debug("Feature flags returned: {Count} flags", flags.Count);
+        return Results.Ok(flags);
+    })
+    .WithName("GetFeatureFlags")
+    .WithSummary("Tüm feature flag'leri döndürür")
+    .WithDescription("Uygulama özelliklerinin aktif/pasif durumunu döndürür")
+    .Produces<List<object>>(StatusCodes.Status200OK);
+
+    // ==================== TELEMETRY ENDPOINTS ====================
+
+    var telemetryGroup = app.MapGroup("/api/v1/telemetry")
+        .WithTags("Telemetry")
+        .WithOpenApi();
+
+    // POST /api/v1/telemetry - Telemetri verisi al
+    telemetryGroup.MapPost("", async (HttpContext httpContext, [FromBody] TelemetryPayloadRequest payload) =>
+    {
+        try
+        {
+            var clientIp = GetClientIp(httpContext);
+            
+            // Rate limiting
+            if (!RateLimiter.IsAllowed($"telemetry:{clientIp}", 100, TimeSpan.FromMinutes(1)))
+            {
+                return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+            }
+
+            // Basit validasyon
+            if (payload.Events == null || payload.Events.Count == 0)
+            {
+                return Results.BadRequest(new { error = "No events provided" });
+            }
+
+            if (payload.Events.Count > 100)
+            {
+                return Results.BadRequest(new { error = "Too many events (max 100)" });
+            }
+
+            // Event'leri işle (şimdilik sadece logla)
+            var crashCount = payload.Events.Count(e => e.Type == "Crash");
+            var errorCount = payload.Events.Count(e => e.Type == "Error");
+            var eventCount = payload.Events.Count(e => e.Type == "Event");
+            var metricCount = payload.Events.Count(e => e.Type == "Metric");
+
+            Log.Information("[Telemetry] Received {Total} events from {IP} (v{Version}): {Events} events, {Errors} errors, {Crashes} crashes, {Metrics} metrics",
+                payload.Events.Count, clientIp, payload.AppVersion ?? "unknown",
+                eventCount, errorCount, crashCount, metricCount);
+
+            // Crash'leri ayrı logla
+            foreach (var crash in payload.Events.Where(e => e.Type == "Crash"))
+            {
+                Log.Warning("[Telemetry:Crash] {ExceptionType}: {Message} | Session: {SessionId}",
+                    crash.Properties?.GetValueOrDefault("exception_type", "Unknown"),
+                    crash.Properties?.GetValueOrDefault("message", "No message"),
+                    crash.SessionId ?? "unknown");
+            }
+
+            return Results.Ok(new { received = payload.Events.Count, timestamp = DateTime.UtcNow });
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "[Telemetry] Error processing telemetry data");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    })
+    .WithName("PostTelemetry")
+    .WithSummary("Telemetri verisi gönderir")
+    .WithDescription("Uygulama kullanım verileri, hatalar ve crash raporları")
+    .Accepts<TelemetryPayloadRequest>("application/json")
+    .Produces(StatusCodes.Status200OK)
+    .Produces(StatusCodes.Status400BadRequest)
+    .ProducesProblem(StatusCodes.Status429TooManyRequests);
+
     // ==================== ADMIN ENDPOINTS ====================
 
     var adminGroup = app.MapGroup("/api/v1/admin")
@@ -1088,4 +1200,40 @@ public record AllSelectorsConfig
 
     /// <summary>Facebook selector'ları</summary>
     public FacebookSelectors? Facebook { get; init; }
+}
+// ==================== TELEMETRY MODELS ====================
+
+/// <summary>Telemetry payload request</summary>
+public record TelemetryPayloadRequest
+{
+    /// <summary>Event listesi</summary>
+    public List<TelemetryEventRequest> Events { get; init; } = new();
+
+    /// <summary>Uygulama versiyonu</summary>
+    public string? AppVersion { get; init; }
+
+    /// <summary>Platform</summary>
+    public string? Platform { get; init; }
+}
+
+/// <summary>Telemetry event</summary>
+public record TelemetryEventRequest
+{
+    /// <summary>Event tipi (Event, Error, Crash, Metric)</summary>
+    public string Type { get; init; } = "Event";
+
+    /// <summary>Event adı</summary>
+    public string Name { get; init; } = "";
+
+    /// <summary>Timestamp</summary>
+    public DateTime Timestamp { get; init; }
+
+    /// <summary>Session ID</summary>
+    public string? SessionId { get; init; }
+
+    /// <summary>Anonymous ID</summary>
+    public string? AnonymousId { get; init; }
+
+    /// <summary>Özellikler</summary>
+    public Dictionary<string, object>? Properties { get; init; }
 }

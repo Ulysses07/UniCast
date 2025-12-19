@@ -8,6 +8,7 @@ using UniCast.App.Infrastructure;
 using UniCast.App.Input;
 using UniCast.App.Logging;
 using UniCast.App.Security;
+using UniCast.App.Services;
 using UniCast.App.Views;
 using UniCast.Licensing;
 using UniCast.Licensing.Models;
@@ -106,7 +107,29 @@ namespace UniCast.App
 
                 Log.Information("Lisans doğrulandı. Tür: {LicenseType}", licenseResult.License?.Type);
 
-                // 5. Ana Pencereyi Aç
+                // 5. Enterprise Services - Feature Flags & Telemetry
+                // NOT: ConfigureAwait(false) KULLANILMIYOR çünkü sonrasında UI işlemleri var
+                try
+                {
+                    Log.Debug("Feature Flags servisi başlatılıyor...");
+                    await FeatureFlagService.Instance.InitializeAsync();
+
+                    Log.Debug("Telemetry servisi başlatılıyor...");
+                    TelemetryService.Instance.Initialize();
+                    
+                    // Kullanıcı telemetry'yi kapatmışsa devre dışı bırak
+                    if (!FeatureFlagService.Instance.IsEnabled("telemetry_enabled", true))
+                    {
+                        TelemetryService.Instance.Enabled = false;
+                        Log.Information("Telemetry kullanıcı tercihi ile devre dışı");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Enterprise services başlatılamadı, varsayılanlar kullanılacak");
+                }
+
+                // 6. Ana Pencereyi Aç
                 try
                 {
                     Log.Debug("MainWindow oluşturuluyor...");
