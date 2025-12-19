@@ -1,73 +1,79 @@
 using System;
-using System.Diagnostics;
-using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Diagnostics;
+using System.IO;
 using Serilog;
-using Timer = System.Threading.Timer;
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
 
 namespace UniCast.App.Services
 {
     /// <summary>
-    /// DÜZELTME v19: Otomatik güncelleme servisi
-    /// GitHub Releases veya custom update server desteği
+    /// Auto Update Service - Uygulama güncellemelerini kontrol eder ve yükler.
+    /// unicastapp.com'dan güncelleme bilgisi çeker.
     /// </summary>
     public sealed class AutoUpdateService : IDisposable
     {
         #region Singleton
 
         private static readonly Lazy<AutoUpdateService> _instance =
-            new(() => new AutoUpdateService(), LazyThreadSafetyMode.ExecutionAndPublication);
+            new(() => new AutoUpdateService(), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
 
         public static AutoUpdateService Instance => _instance.Value;
-
-        #endregion
-
-        #region Configuration
-
-        private static class Config
-        {
-            public const string UpdateServerUrl = "https://api.github.com/repos/unicast-app/unicast/releases/latest";
-            public const string BackupUpdateUrl = "https://update.unicast.app/check";
-            public const int CheckIntervalHours = 6;
-            public const int DownloadTimeoutMinutes = 10;
-            public const string UpdateFolderName = "Updates";
-        }
 
         #endregion
 
         #region Fields
 
         private readonly HttpClient _httpClient;
-        private readonly Timer _checkTimer;
-        private readonly string _currentVersion;
-        private readonly string _updateFolder;
-
-        private UpdateInfo? _availableUpdate;
-        private bool _isChecking;
-        private bool _isDownloading;
         private bool _disposed;
-
-        #endregion
-
-        #region Events
-
-        public event EventHandler<UpdateAvailableEventArgs>? OnUpdateAvailable;
-        public event EventHandler<UpdateProgressEventArgs>? OnDownloadProgress;
-        public event EventHandler<UpdateReadyEventArgs>? OnUpdateReady;
-        public event EventHandler<UpdateErrorEventArgs>? OnUpdateError;
 
         #endregion
 
         #region Properties
 
-        public bool IsUpdateAvailable => _availableUpdate != null;
-        public UpdateInfo? AvailableUpdate => _availableUpdate;
-        public bool IsChecking => _isChecking;
-        public bool IsDownloading => _isDownloading;
+        /// <summary>
+        /// Güncelleme bilgisi URL'i
+        /// </summary>
+        public string UpdateUrl { get; set; } = "https://unicastapp.com/downloads/update.json";
+
+        /// <summary>
+        /// Mevcut versiyon
+        /// </summary>
+        public Version CurrentVersion { get; }
+
+        /// <summary>
+        /// Son kontrol zamanı
+        /// </summary>
+        public DateTime? LastCheckTime { get; private set; }
+
+        /// <summary>
+        /// Güncelleme mevcut mu
+        /// </summary>
+        public bool UpdateAvailable { get; private set; }
+
+        /// <summary>
+        /// Yeni versiyon bilgisi
+        /// </summary>
+        public UpdateInfo? LatestUpdate { get; private set; }
+
+        #endregion
+
+        #region Events
+
+        /// <summary>
+        /// Güncelleme bulunduğunda tetiklenir
+        /// </summary>
+        public event EventHandler<UpdateInfo>? UpdateFound;
+
+        /// <summary>
+        /// İndirme ilerlemesi
+        /// </summary>
+        public event EventHandler<int>? DownloadProgress;
 
         #endregion
 
@@ -75,205 +81,165 @@ namespace UniCast.App.Services
 
         private AutoUpdateService()
         {
+            CurrentVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
+
             var handler = new SocketsHttpHandler
             {
-                PooledConnectionLifetime = TimeSpan.FromMinutes(10),
-                PooledConnectionIdleTimeout = TimeSpan.FromMinutes(5),
-                MaxConnectionsPerServer = 2,
-                ConnectTimeout = TimeSpan.FromSeconds(30)
+                PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+                ConnectTimeout = TimeSpan.FromSeconds(10)
             };
 
             _httpClient = new HttpClient(handler)
             {
-                Timeout = TimeSpan.FromMinutes(Config.DownloadTimeoutMinutes)
+                Timeout = TimeSpan.FromSeconds(30)
             };
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "UniCast-Updater");
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", $"UniCast/{CurrentVersion}");
 
-            _currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
-
-            _updateFolder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "UniCast", Config.UpdateFolderName);
-
-            Directory.CreateDirectory(_updateFolder);
-
-            _checkTimer = new Timer(
-                async _ => await CheckForUpdatesAsync(),
-                null,
-                TimeSpan.FromMinutes(5), // İlk kontrol 5 dakika sonra
-                TimeSpan.FromHours(Config.CheckIntervalHours));
+            Log.Debug("[AutoUpdate] Service initialized. Current version: {Version}", CurrentVersion);
         }
 
         #endregion
 
-        #region Public Methods
+        #region Public API
 
         /// <summary>
-        /// Manuel güncelleme kontrolü
+        /// Güncelleme kontrolü yapar
         /// </summary>
-        public async Task<UpdateInfo?> CheckForUpdatesAsync(CancellationToken ct = default)
+        public async Task<bool> CheckForUpdatesAsync(bool silent = true)
         {
-            if (_isChecking) return _availableUpdate;
-
-            _isChecking = true;
-
             try
             {
-                Log.Information("[AutoUpdate] Güncelleme kontrol ediliyor...");
+                Log.Debug("[AutoUpdate] Checking for updates...");
 
-                var updateInfo = await FetchUpdateInfoAsync(ct);
+                var response = await _httpClient.GetAsync(UpdateUrl).ConfigureAwait(false);
 
-                if (updateInfo != null && IsNewerVersion(updateInfo.Version))
+                if (!response.IsSuccessStatusCode)
                 {
-                    _availableUpdate = updateInfo;
-
-                    Log.Information("[AutoUpdate] Yeni sürüm mevcut: {Version}", updateInfo.Version);
-
-                    OnUpdateAvailable?.Invoke(this, new UpdateAvailableEventArgs
-                    {
-                        UpdateInfo = updateInfo
-                    });
-
-                    return updateInfo;
+                    Log.Warning("[AutoUpdate] Server returned {StatusCode}", response.StatusCode);
+                    return false;
                 }
 
-                Log.Debug("[AutoUpdate] Güncel sürüm kullanılıyor: {Version}", _currentVersion);
-                return null;
+                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var updateInfo = JsonSerializer.Deserialize<UpdateInfo>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (updateInfo == null)
+                {
+                    Log.Warning("[AutoUpdate] Invalid update info");
+                    return false;
+                }
+
+                LastCheckTime = DateTime.Now;
+                var latestVersion = Version.Parse(updateInfo.Version);
+
+                if (latestVersion > CurrentVersion)
+                {
+                    UpdateAvailable = true;
+                    LatestUpdate = updateInfo;
+
+                    Log.Information("[AutoUpdate] New version available: {Version} (current: {Current})",
+                        updateInfo.Version, CurrentVersion);
+
+                    // Event tetikle
+                    UpdateFound?.Invoke(this, updateInfo);
+
+                    // Kullanıcıya sor (silent değilse)
+                    if (!silent)
+                    {
+                        await ShowUpdateDialogAsync(updateInfo);
+                    }
+
+                    return true;
+                }
+                else
+                {
+                    Log.Debug("[AutoUpdate] Already up to date. Current: {Current}, Latest: {Latest}",
+                        CurrentVersion, latestVersion);
+                    UpdateAvailable = false;
+                    return false;
+                }
             }
             catch (Exception ex)
             {
-                Log.Warning(ex, "[AutoUpdate] Güncelleme kontrolü başarısız");
-
-                OnUpdateError?.Invoke(this, new UpdateErrorEventArgs
-                {
-                    Error = ex,
-                    Phase = UpdatePhase.Checking
-                });
-
-                return null;
-            }
-            finally
-            {
-                _isChecking = false;
+                Log.Warning(ex, "[AutoUpdate] Update check failed");
+                return false;
             }
         }
 
         /// <summary>
-        /// Güncellemeyi indir
+        /// Güncellemeyi indirir ve başlatır
         /// </summary>
-        public async Task<bool> DownloadUpdateAsync(CancellationToken ct = default)
+        public async Task<bool> DownloadAndInstallAsync()
         {
-            if (_availableUpdate == null)
+            if (LatestUpdate == null || string.IsNullOrEmpty(LatestUpdate.DownloadUrl))
             {
-                Log.Warning("[AutoUpdate] İndirilecek güncelleme yok");
+                Log.Warning("[AutoUpdate] No update info available");
                 return false;
             }
 
-            if (_isDownloading) return false;
-
-            _isDownloading = true;
-
             try
             {
-                var downloadUrl = _availableUpdate.DownloadUrl;
-                var fileName = $"UniCast_{_availableUpdate.Version}.exe";
-                var filePath = Path.Combine(_updateFolder, fileName);
+                Log.Information("[AutoUpdate] Downloading update from {Url}", LatestUpdate.DownloadUrl);
 
-                Log.Information("[AutoUpdate] İndiriliyor: {Url}", downloadUrl);
+                // Temp dosyaya indir
+                var tempPath = Path.Combine(Path.GetTempPath(), $"UniCast-Setup-{LatestUpdate.Version}.exe");
 
-                using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
-                response.EnsureSuccessStatusCode();
-
-                var totalBytes = response.Content.Headers.ContentLength ?? -1;
-                var downloadedBytes = 0L;
-
-                await using var contentStream = await response.Content.ReadAsStreamAsync(ct);
-                await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
-
-                var buffer = new byte[8192];
-                int bytesRead;
-
-                while ((bytesRead = await contentStream.ReadAsync(buffer, ct)) > 0)
+                using (var response = await _httpClient.GetAsync(LatestUpdate.DownloadUrl, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false))
                 {
-                    await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), ct);
-                    downloadedBytes += bytesRead;
+                    response.EnsureSuccessStatusCode();
 
-                    if (totalBytes > 0)
+                    var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                    var downloadedBytes = 0L;
+
+                    using var contentStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                    using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+
+                    var buffer = new byte[8192];
+                    int bytesRead;
+
+                    while ((bytesRead = await contentStream.ReadAsync(buffer).ConfigureAwait(false)) > 0)
                     {
-                        var progress = (double)downloadedBytes / totalBytes * 100;
+                        await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead)).ConfigureAwait(false);
+                        downloadedBytes += bytesRead;
 
-                        OnDownloadProgress?.Invoke(this, new UpdateProgressEventArgs
+                        if (totalBytes > 0)
                         {
-                            DownloadedBytes = downloadedBytes,
-                            TotalBytes = totalBytes,
-                            ProgressPercent = progress
-                        });
+                            var progress = (int)((downloadedBytes * 100) / totalBytes);
+                            DownloadProgress?.Invoke(this, progress);
+                        }
                     }
                 }
 
-                _availableUpdate.LocalFilePath = filePath;
+                Log.Information("[AutoUpdate] Download complete: {Path}", tempPath);
 
-                Log.Information("[AutoUpdate] İndirme tamamlandı: {Path}", filePath);
-
-                OnUpdateReady?.Invoke(this, new UpdateReadyEventArgs
+                // SHA256 kontrolü (varsa)
+                if (!string.IsNullOrEmpty(LatestUpdate.Sha256))
                 {
-                    UpdateInfo = _availableUpdate,
-                    InstallerPath = filePath
-                });
+                    var hash = await ComputeFileHashAsync(tempPath).ConfigureAwait(false);
+                    if (!string.Equals(hash, LatestUpdate.Sha256, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Log.Error("[AutoUpdate] Hash mismatch! Expected: {Expected}, Got: {Actual}",
+                            LatestUpdate.Sha256, hash);
+                        File.Delete(tempPath);
+                        return false;
+                    }
+                    Log.Debug("[AutoUpdate] Hash verified");
+                }
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "[AutoUpdate] İndirme başarısız");
+                // Installer'ı başlat ve uygulamayı kapat
+                Log.Information("[AutoUpdate] Starting installer...");
 
-                OnUpdateError?.Invoke(this, new UpdateErrorEventArgs
+                Process.Start(new ProcessStartInfo
                 {
-                    Error = ex,
-                    Phase = UpdatePhase.Downloading
-                });
-
-                return false;
-            }
-            finally
-            {
-                _isDownloading = false;
-            }
-        }
-
-        /// <summary>
-        /// Güncellemeyi yükle ve uygulamayı yeniden başlat
-        /// </summary>
-        public bool InstallUpdate()
-        {
-            if (_availableUpdate?.LocalFilePath == null)
-            {
-                Log.Warning("[AutoUpdate] Yüklenecek dosya yok");
-                return false;
-            }
-
-            if (!File.Exists(_availableUpdate.LocalFilePath))
-            {
-                Log.Error("[AutoUpdate] Installer dosyası bulunamadı: {Path}", _availableUpdate.LocalFilePath);
-                return false;
-            }
-
-            try
-            {
-                Log.Information("[AutoUpdate] Güncelleme başlatılıyor...");
-
-                // Installer'ı başlat
-                var psi = new ProcessStartInfo
-                {
-                    FileName = _availableUpdate.LocalFilePath,
-                    Arguments = "/SILENT /RESTARTAPPLICATIONS",
+                    FileName = tempPath,
+                    Arguments = "/SILENT", // Inno Setup silent install
                     UseShellExecute = true
-                };
-
-                Process.Start(psi);
+                });
 
                 // Uygulamayı kapat
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
                 {
                     System.Windows.Application.Current.Shutdown();
                 });
@@ -282,56 +248,20 @@ namespace UniCast.App.Services
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[AutoUpdate] Güncelleme yükleme başarısız");
-
-                OnUpdateError?.Invoke(this, new UpdateErrorEventArgs
-                {
-                    Error = ex,
-                    Phase = UpdatePhase.Installing
-                });
-
+                Log.Error(ex, "[AutoUpdate] Download/install failed");
                 return false;
             }
         }
 
         /// <summary>
-        /// Güncellemeyi ertele
+        /// Güncellemeyi atla (bu versiyon için)
         /// </summary>
-        public void DismissUpdate()
+        public void SkipVersion()
         {
-            _availableUpdate = null;
-            Log.Debug("[AutoUpdate] Güncelleme ertelendi");
-        }
-
-        /// <summary>
-        /// Eski güncelleme dosyalarını temizle
-        /// </summary>
-        public void CleanupOldUpdates()
-        {
-            try
+            if (LatestUpdate != null)
             {
-                var files = Directory.GetFiles(_updateFolder, "*.exe");
-                foreach (var file in files)
-                {
-                    try
-                    {
-                        var fileInfo = new FileInfo(file);
-                        if (fileInfo.CreationTime < DateTime.Now.AddDays(-7))
-                        {
-                            File.Delete(file);
-                            Log.Debug("[AutoUpdate] Eski dosya silindi: {File}", file);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // DÜZELTME v26: Boş catch'e loglama eklendi
-                        System.Diagnostics.Debug.WriteLine($"[AutoUpdateService.CleanupOldInstallersAsync] Dosya silme hatası: {ex.Message}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "[AutoUpdate] Temizlik hatası");
+                // Settings'e kaydet - bu versiyonu atla
+                Log.Information("[AutoUpdate] User skipped version {Version}", LatestUpdate.Version);
             }
         }
 
@@ -339,152 +269,88 @@ namespace UniCast.App.Services
 
         #region Private Methods
 
-        private async Task<UpdateInfo?> FetchUpdateInfoAsync(CancellationToken ct)
+        private async Task ShowUpdateDialogAsync(UpdateInfo updateInfo)
         {
-            try
+            await Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                // GitHub Releases API
-                var response = await _httpClient.GetStringAsync(Config.UpdateServerUrl, ct);
-                var json = JsonDocument.Parse(response);
-                var root = json.RootElement;
+                var message = $"Yeni sürüm mevcut!\n\n" +
+                              $"Mevcut: {CurrentVersion}\n" +
+                              $"Yeni: {updateInfo.Version}\n\n" +
+                              $"{updateInfo.ReleaseNotes ?? ""}\n\n" +
+                              $"Şimdi güncellemek ister misiniz?";
 
-                var tagName = root.GetProperty("tag_name").GetString()?.TrimStart('v') ?? "";
-                var body = root.GetProperty("body").GetString() ?? "";
-                var publishedAt = root.GetProperty("published_at").GetDateTime();
+                var result = MessageBox.Show(
+                    message,
+                    "UniCast - Güncelleme",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Information);
 
-                // Asset bul (Windows installer)
-                string? downloadUrl = null;
-                long fileSize = 0;
-
-                if (root.TryGetProperty("assets", out var assets))
+                switch (result)
                 {
-                    foreach (var asset in assets.EnumerateArray())
-                    {
-                        var name = asset.GetProperty("name").GetString() ?? "";
-                        if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
-                            name.EndsWith(".msi", StringComparison.OrdinalIgnoreCase))
-                        {
-                            downloadUrl = asset.GetProperty("browser_download_url").GetString();
-                            fileSize = asset.GetProperty("size").GetInt64();
-                            break;
-                        }
-                    }
+                    case MessageBoxResult.Yes:
+                        _ = DownloadAndInstallAsync();
+                        break;
+                    case MessageBoxResult.No:
+                        SkipVersion();
+                        break;
+                    // Cancel = sonra hatırlat
                 }
-
-                if (string.IsNullOrEmpty(downloadUrl))
-                {
-                    Log.Warning("[AutoUpdate] İndirme linki bulunamadı");
-                    return null;
-                }
-
-                return new UpdateInfo
-                {
-                    Version = tagName,
-                    ReleaseNotes = body,
-                    DownloadUrl = downloadUrl,
-                    FileSize = fileSize,
-                    PublishedAt = publishedAt
-                };
-            }
-            catch (HttpRequestException)
-            {
-                // Backup URL dene
-                try
-                {
-                    var response = await _httpClient.GetStringAsync(Config.BackupUpdateUrl, ct);
-                    return JsonSerializer.Deserialize<UpdateInfo>(response);
-                }
-                catch
-                {
-                    throw;
-                }
-            }
+            });
         }
 
-        private bool IsNewerVersion(string newVersion)
+        private static async Task<string> ComputeFileHashAsync(string filePath)
         {
-            try
-            {
-                var current = Version.Parse(_currentVersion.Split('-')[0]);
-                var available = Version.Parse(newVersion.Split('-')[0]);
-
-                return available > current;
-            }
-            catch
-            {
-                return false;
-            }
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            using var stream = File.OpenRead(filePath);
+            var hash = await Task.Run(() => sha256.ComputeHash(stream)).ConfigureAwait(false);
+            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
         }
 
         #endregion
 
-        #region Dispose
+        #region IDisposable
 
         public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
-
-            _checkTimer.Dispose();
             _httpClient.Dispose();
-
-            OnUpdateAvailable = null;
-            OnDownloadProgress = null;
-            OnUpdateReady = null;
-            OnUpdateError = null;
+            Log.Debug("[AutoUpdate] Service disposed");
         }
 
         #endregion
     }
 
-    #region Types
+    #region Models
 
+    /// <summary>
+    /// Güncelleme bilgisi modeli
+    /// </summary>
     public class UpdateInfo
     {
-        public string Version { get; init; } = "";
-        public string ReleaseNotes { get; init; } = "";
-        public string DownloadUrl { get; init; } = "";
-        public long FileSize { get; init; }
-        public DateTime PublishedAt { get; init; }
-        public string? LocalFilePath { get; set; }
+        /// <summary>Yeni versiyon (örn: "1.2.0")</summary>
+        public string Version { get; set; } = "";
 
-        public string FileSizeDisplay => FileSize switch
-        {
-            < 1024 => $"{FileSize} B",
-            < 1024 * 1024 => $"{FileSize / 1024.0:F1} KB",
-            _ => $"{FileSize / (1024.0 * 1024):F1} MB"
-        };
-    }
+        /// <summary>İndirme URL'i</summary>
+        public string DownloadUrl { get; set; } = "";
 
-    public enum UpdatePhase
-    {
-        Checking,
-        Downloading,
-        Installing
-    }
+        /// <summary>Dosya boyutu (bytes)</summary>
+        public long FileSize { get; set; }
 
-    public class UpdateAvailableEventArgs : EventArgs
-    {
-        public UpdateInfo UpdateInfo { get; init; } = null!;
-    }
+        /// <summary>SHA256 hash (doğrulama için)</summary>
+        public string? Sha256 { get; set; }
 
-    public class UpdateProgressEventArgs : EventArgs
-    {
-        public long DownloadedBytes { get; init; }
-        public long TotalBytes { get; init; }
-        public double ProgressPercent { get; init; }
-    }
+        /// <summary>Yayın notları</summary>
+        public string? ReleaseNotes { get; set; }
 
-    public class UpdateReadyEventArgs : EventArgs
-    {
-        public UpdateInfo UpdateInfo { get; init; } = null!;
-        public string InstallerPath { get; init; } = "";
-    }
+        /// <summary>Zorunlu güncelleme mi</summary>
+        public bool Mandatory { get; set; }
 
-    public class UpdateErrorEventArgs : EventArgs
-    {
-        public Exception Error { get; init; } = null!;
-        public UpdatePhase Phase { get; init; }
+        /// <summary>Minimum desteklenen versiyon</summary>
+        public string? MinimumVersion { get; set; }
+
+        /// <summary>Yayın tarihi</summary>
+        public DateTime ReleaseDate { get; set; }
     }
 
     #endregion

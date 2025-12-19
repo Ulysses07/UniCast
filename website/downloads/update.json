@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "downloadUrl": "https://unicastapp.com/downloads/UniCast-Setup-1.0.0.exe",
+  "fileSize": 45000000,
+  "sha256": "",
+  "releaseNotes": "🎉 UniCast 1.0.0 - İlk Sürüm\n\n• YouTube, Twitch, Facebook, Instagram, TikTok desteği\n• Çoklu platform chat birleştirme\n• GPU hızlandırmalı encoding (NVENC, QSV)\n• Chat overlay\n• Yerel kayıt",
+  "mandatory": false,
+  "minimumVersion": "1.0.0",
+  "releaseDate": "2025-12-19T00:00:00Z"
+}

@@ -147,15 +147,16 @@ namespace UniCast.App
         {
             try
             {
-                Log.Debug("[Shutdown] Telemetry servisi kapatılıyor...");
+                Log.Debug("[Shutdown] Enterprise services kapatılıyor...");
                 await Services.TelemetryService.Instance.ShutdownAsync().ConfigureAwait(false);
                 Services.TelemetryService.Instance.Dispose();
                 Services.FeatureFlagService.Instance.Dispose();
+                Services.AutoUpdateService.Instance.Dispose();
                 Log.Debug("[Shutdown] Enterprise services disposed");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Shutdown] Telemetry shutdown hatası: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[Shutdown] Enterprise services shutdown hatası: {ex.Message}");
             }
         }
 

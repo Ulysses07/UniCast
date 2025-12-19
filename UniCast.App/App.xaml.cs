@@ -165,6 +165,25 @@ namespace UniCast.App
                     // DÜZELTME v24: Diagnostics servisleri başlat (arka planda)
                     _ = StartDiagnosticsAsync();
 
+                    // Auto-Update kontrolü (arka planda, sessiz)
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await Task.Delay(5000); // 5 saniye bekle, UI yüklensin
+                            var hasUpdate = await AutoUpdateService.Instance.CheckForUpdatesAsync(silent: false);
+                            if (hasUpdate)
+                            {
+                                Log.Information("[AutoUpdate] Güncelleme mevcut: {Version}", 
+                                    AutoUpdateService.Instance.LatestUpdate?.Version);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Debug(ex, "[AutoUpdate] Güncelleme kontrolü başarısız (normal)");
+                        }
+                    });
+
                     // DÜZELTME v24: Startup timing bitir
                     _startupStopwatch?.Stop();
                     Log.Information("[Startup] Toplam süre: {TotalMs}ms", _startupStopwatch?.ElapsedMilliseconds);
