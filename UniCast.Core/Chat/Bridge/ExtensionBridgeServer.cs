@@ -73,6 +73,7 @@ namespace UniCast.Core.Chat.Bridge
                 Log.Information("[ExtensionBridge] WebSocket server başlatıldı: ws://localhost:{Port}", _port);
 
                 _acceptTask = AcceptClientsAsync(_cts.Token);
+                await Task.CompletedTask; // CS1998 hatasını önlemek için eklendi
             }
             catch (HttpListenerException ex) when (ex.ErrorCode == 5) // Access denied
             {

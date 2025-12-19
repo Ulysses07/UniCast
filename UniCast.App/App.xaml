@@ -223,11 +223,7 @@
                                         Background="#888"
                                         CornerRadius="9"
                                         HorizontalAlignment="Left"
-                                        Margin="2,0,0,0">
-                                    <Border.RenderTransform>
-                                        <TranslateTransform x:Name="thumbTranslate" X="0"/>
-                                    </Border.RenderTransform>
-                                </Border>
+                                        Margin="2,0,0,0"/>
                             </Border>
 
                             <!-- İçerik -->
@@ -241,7 +237,7 @@
                                 <Setter TargetName="track" Property="Background" Value="{StaticResource Primary}"/>
                                 <Setter TargetName="track" Property="BorderBrush" Value="{StaticResource Primary}"/>
                                 <Setter TargetName="thumb" Property="Background" Value="White"/>
-                                <Setter TargetName="thumbTranslate" Property="X" Value="20"/>
+                                <Setter TargetName="thumb" Property="Margin" Value="22,0,0,0"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="thumb" Property="Background" Value="#AAA"/>
