@@ -173,11 +173,11 @@ namespace UniCast.Core.Chat.Config
                     var url = $"{_serverUrl}/api/v1/config/instagram-selectors";
                     Log.Debug("[SelectorConfig] Instagram selectors sunucudan çekiliyor: {Url}", url);
 
-                    var response = await _httpClient.GetAsync(url, ct);
+                    var response = await _httpClient.GetAsync(url, ct).ConfigureAwait(false);
 
                     if (response.IsSuccessStatusCode)
                     {
-                        var json = await response.Content.ReadAsStringAsync(ct);
+                        var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
                         var config = JsonSerializer.Deserialize<InstagramSelectorConfig>(json);
 
                         if (config?.Selectors != null)
@@ -254,11 +254,11 @@ namespace UniCast.Core.Chat.Config
                     var url = $"{_serverUrl}/api/v1/config/facebook-selectors";
                     Log.Debug("[SelectorConfig] Facebook selectors sunucudan çekiliyor: {Url}", url);
 
-                    var response = await _httpClient.GetAsync(url, ct);
+                    var response = await _httpClient.GetAsync(url, ct).ConfigureAwait(false);
 
                     if (response.IsSuccessStatusCode)
                     {
-                        var json = await response.Content.ReadAsStringAsync(ct);
+                        var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
                         var config = JsonSerializer.Deserialize<FacebookSelectorConfig>(json);
 
                         if (config?.Selectors != null)

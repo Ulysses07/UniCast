@@ -178,7 +178,7 @@ namespace UniCast.Core.Chat.Ingestors
                     Log.Information("[{Platform}] Yeniden bağlanma denemesi {Attempt}/{Max}, bekle {Delay}ms",
                         Platform, attempt, maxAttempts, delay);
 
-                    await Task.Delay(delay, ct);
+                    await Task.Delay(delay, ct).ConfigureAwait(false);
                     await ConnectAsync(ct);
 
                     State = ConnectionState.Connected;

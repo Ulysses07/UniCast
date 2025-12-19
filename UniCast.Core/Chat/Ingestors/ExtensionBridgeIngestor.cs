@@ -51,7 +51,7 @@ namespace UniCast.Core.Chat.Ingestors
             _server.OnClientDisconnected += OnServerClientDisconnected;
 
             // Server'ı başlat
-            await _server.StartAsync();
+            await _server.StartAsync().ConfigureAwait(false);
 
             Log.Information("[ExtensionBridge] WebSocket server hazır. Extension bekleniyor...");
             Log.Information("[ExtensionBridge] Kullanıcıya: Instagram Live sayfasını tarayıcıda açın");
@@ -65,7 +65,7 @@ namespace UniCast.Core.Chat.Ingestors
                 _server.OnClientConnected -= OnServerClientConnected;
                 _server.OnClientDisconnected -= OnServerClientDisconnected;
 
-                await _server.StopAsync();
+                await _server.StopAsync().ConfigureAwait(false);
                 _server.Dispose();
                 _server = null;
             }
@@ -82,7 +82,7 @@ namespace UniCast.Core.Chat.Ingestors
             {
                 while (!ct.IsCancellationRequested)
                 {
-                    await Task.Delay(1000, ct);
+                    await Task.Delay(1000, ct).ConfigureAwait(false);
 
                     // Bağlantı durumunu kontrol et
                     if (_server != null && _server.ClientCount == 0 && _clientConnected)

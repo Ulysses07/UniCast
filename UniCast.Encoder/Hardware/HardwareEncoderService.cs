@@ -791,7 +791,7 @@ namespace UniCast.Encoder.Hardware
             var startTime = DateTime.UtcNow;
             var startCpuUsage = Process.GetCurrentProcess().TotalProcessorTime;
 
-            await Task.Delay(100);
+            await Task.Delay(100).ConfigureAwait(false);
 
             var endTime = DateTime.UtcNow;
             var endCpuUsage = Process.GetCurrentProcess().TotalProcessorTime;

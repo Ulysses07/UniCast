@@ -655,7 +655,7 @@ namespace UniCast.Licensing
                 if (attempt < MaxRetryAttempts - 1)
                 {
                     var delay = RetryDelayMs * (int)Math.Pow(2, attempt); // Exponential backoff
-                    await Task.Delay(delay);
+                    await Task.Delay(delay).ConfigureAwait(false);
                 }
             }
 
@@ -676,7 +676,7 @@ namespace UniCast.Licensing
                            ?? new ActivationResponse { Success = false, Message = "Geçersiz yanıt" };
                 }
 
-                var errorContent = await response.Content.ReadAsStringAsync();
+                var errorContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 return new ActivationResponse
                 {
                     Success = false,

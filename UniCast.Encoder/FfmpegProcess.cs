@@ -138,7 +138,7 @@ namespace UniCast.Encoder
                         }
                         else
                         {
-                            await Task.Delay(50, ct);
+                            await Task.Delay(50, ct).ConfigureAwait(false);
                         }
                     }
                 }
@@ -207,7 +207,7 @@ namespace UniCast.Encoder
             }
             finally
             {
-                await Task.Delay(100);
+                await Task.Delay(100).ConfigureAwait(false);
 
                 try
                 {

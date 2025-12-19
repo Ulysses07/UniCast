@@ -241,7 +241,7 @@ namespace UniCast.Encoder.Timing
             if (remainingMs > 1)
             {
                 // Büyük beklemeler için Task.Delay
-                await Task.Delay(TimeSpan.FromMilliseconds(remainingMs - 1), ct);
+                await Task.Delay(TimeSpan.FromMilliseconds(remainingMs - 1), ct).ConfigureAwait(false);
             }
 
             // Son kısım için spin-wait (daha hassas)

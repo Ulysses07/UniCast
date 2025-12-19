@@ -468,9 +468,8 @@ namespace UniCast.Licensing.Protection
                 "apimonitor", "fiddler", "wireshark", "charles"
             };
 
-            // TODO: Kullanıcı settings'den ek whitelist yüklenebilir
-            // var userWhitelist = SettingsStore.Data?.WhitelistedProcesses ?? Array.Empty<string>();
-            // foreach (var proc in userWhitelist) whitelist.Add(proc);
+            // NOTE: Gelecekte kullanıcı settings'den ek whitelist yüklenebilir
+            // Şimdilik sabit liste yeterli
 
             return whitelist;
         }

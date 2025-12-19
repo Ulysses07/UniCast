@@ -192,13 +192,13 @@ namespace UniCast.Core.Chat.Ingestors
             var url = $"https://www.googleapis.com/youtube/v3/videos" +
                       $"?part=liveStreamingDetails&id={_identifier}&key={ApiKey}";
 
-            var response = await _httpClient.GetAsync(url, ct);
+            var response = await _httpClient.GetAsync(url, ct).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             // DÜZELTME v18: Quota kullanımını kaydet
             AddQuotaUsage(QuotaCosts.VideosListCost);
 
-            var json = await response.Content.ReadAsStringAsync(ct);
+            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             var doc = JsonDocument.Parse(json);
 
             var items = doc.RootElement.GetProperty("items");
@@ -234,7 +234,7 @@ namespace UniCast.Core.Chat.Ingestors
                     AdjustPollingInterval();
 
                     await FetchMessagesAsync(ct);
-                    await Task.Delay(_pollingIntervalMs, ct);
+                    await Task.Delay(_pollingIntervalMs, ct).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -244,7 +244,7 @@ namespace UniCast.Core.Chat.Ingestors
                 {
                     Log.Error("[YouTube] {Message}", ex.Message);
                     // Quota bitince 1 saat bekle
-                    await Task.Delay(TimeSpan.FromHours(1), ct);
+                    await Task.Delay(TimeSpan.FromHours(1), ct).ConfigureAwait(false);
                 }
                 catch (HttpRequestException ex)
                 {
@@ -306,13 +306,13 @@ namespace UniCast.Core.Chat.Ingestors
             if (!string.IsNullOrEmpty(_nextPageToken))
                 url += $"&pageToken={_nextPageToken}";
 
-            var response = await _httpClient.GetAsync(url, ct);
+            var response = await _httpClient.GetAsync(url, ct).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             // DÜZELTME v18: Quota kullanımını kaydet
             AddQuotaUsage(QuotaCosts.LiveChatMessagesCost);
 
-            var json = await response.Content.ReadAsStringAsync(ct);
+            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             var doc = JsonDocument.Parse(json);
 
             // Polling interval'ı güncelle

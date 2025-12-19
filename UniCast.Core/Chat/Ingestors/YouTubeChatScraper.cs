@@ -103,14 +103,14 @@ namespace UniCast.Core.Chat.Ingestors
             // Live chat sayfasını al
             var chatUrl = $"https://www.youtube.com/live_chat?v={_identifier}&is_popout=1";
 
-            var response = await _httpClient.GetAsync(chatUrl, ct);
+            var response = await _httpClient.GetAsync(chatUrl, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"YouTube'a bağlanılamadı: {response.StatusCode}");
             }
 
-            var html = await response.Content.ReadAsStringAsync(ct);
+            var html = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             // YouTube'un internal API key'ini bul
             var apiKeyMatch = Regex.Match(html, @"""INNERTUBE_API_KEY""\s*:\s*""([^""]+)""");
@@ -232,7 +232,7 @@ namespace UniCast.Core.Chat.Ingestors
                 try
                 {
                     await FetchMessagesAsync(ct);
-                    await Task.Delay(_pollingIntervalMs, ct);
+                    await Task.Delay(_pollingIntervalMs, ct).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -241,7 +241,7 @@ namespace UniCast.Core.Chat.Ingestors
                 catch (Exception ex)
                 {
                     Log.Warning(ex, "[YouTube Scraper] Mesaj alma hatası, yeniden deneniyor...");
-                    await Task.Delay(5000, ct);
+                    await Task.Delay(5000, ct).ConfigureAwait(false);
                 }
             }
         }
@@ -274,7 +274,7 @@ namespace UniCast.Core.Chat.Ingestors
             var jsonContent = JsonSerializer.Serialize(requestBody);
             var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(url, content, ct);
+            var response = await _httpClient.PostAsync(url, content, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -282,7 +282,7 @@ namespace UniCast.Core.Chat.Ingestors
                 return;
             }
 
-            var json = await response.Content.ReadAsStringAsync(ct);
+            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
             try
             {

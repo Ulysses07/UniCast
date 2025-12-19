@@ -90,7 +90,7 @@ namespace UniCast.Core.Chat.Ingestors
             _registerMessageHandler?.Invoke(OnWebMessageReceived);
             _initTcs = new TaskCompletionSource<bool>();
             await _navigateToUrl(LiveVideoUrl);
-            await Task.Delay(3000, ct);
+            await Task.Delay(3000, ct).ConfigureAwait(false);
             await InjectObserverAsync(ct);
             Log.Information("[FB Scraper] Bağlantı başarılı");
         }
@@ -397,7 +397,7 @@ namespace UniCast.Core.Chat.Ingestors
             {
                 try
                 {
-                    await Task.Delay(30000, ct);
+                    await Task.Delay(30000, ct).ConfigureAwait(false);
                     if (_executeScript != null)
                     {
                         var r = await _executeScript("window.__fbLiveChatObserver?'active':'inactive'");

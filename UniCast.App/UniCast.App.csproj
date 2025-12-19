@@ -16,7 +16,7 @@
 		<NoWarn>$(NoWarn);NU1701</NoWarn>
 	</PropertyGroup>
 
-	
+
 
 	<ItemGroup>
 		<PackageReference Include="DirectShowLib" Version="1.0.0" />
@@ -38,6 +38,16 @@
 		<ProjectReference Include="..\UniCast.Core\UniCast.Core.csproj" />
 		<ProjectReference Include="..\UniCast.Encoder\UniCast.Encoder.csproj" />
 		<ProjectReference Include="..\UniCast.Licensing\UniCast.Licensing.csproj" />
+	</ItemGroup>
+
+	<!-- FFmpeg - Build sırasında otomatik kopyalanır -->
+	<ItemGroup>
+		<None Include="External\ffmpeg.exe" Condition="Exists('External\ffmpeg.exe')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="External\ffprobe.exe" Condition="Exists('External\ffprobe.exe')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 </Project>

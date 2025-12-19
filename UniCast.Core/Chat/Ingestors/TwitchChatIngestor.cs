@@ -79,7 +79,7 @@ namespace UniCast.Core.Chat.Ingestors
             {
                 // TCP bağlantısı
                 _tcpClient = new TcpClient();
-                await _tcpClient.ConnectAsync(TwitchIrcServer, UseSsl ? TwitchIrcSslPort : TwitchIrcPort, ct);
+                await _tcpClient.ConnectAsync(TwitchIrcServer, UseSsl ? TwitchIrcSslPort : TwitchIrcPort, ct).ConfigureAwait(false);
 
                 var stream = _tcpClient.GetStream();
                 _reader = new StreamReader(stream);
@@ -89,8 +89,8 @@ namespace UniCast.Core.Chat.Ingestors
                 if (!string.IsNullOrEmpty(OAuthToken) && !string.IsNullOrEmpty(BotUsername))
                 {
                     // OAuth ile giriş
-                    await _writer.WriteLineAsync($"PASS {OAuthToken}");
-                    await _writer.WriteLineAsync($"NICK {BotUsername.ToLowerInvariant()}");
+                    await _writer.WriteLineAsync($"PASS {OAuthToken}").ConfigureAwait(false);
+                    await _writer.WriteLineAsync($"NICK {BotUsername.ToLowerInvariant()}").ConfigureAwait(false);
                     _isAuthenticated = true;
                     Log.Debug("[Twitch] OAuth ile giriş yapılıyor: {Username}", BotUsername);
                 }
@@ -98,17 +98,17 @@ namespace UniCast.Core.Chat.Ingestors
                 {
                     // Anonim giriş (sadece okuma)
                     var anonUser = $"justinfan{Random.Shared.Next(10000, 99999)}";
-                    await _writer.WriteLineAsync("PASS SCHMOOPIIE");
-                    await _writer.WriteLineAsync($"NICK {anonUser}");
+                    await _writer.WriteLineAsync("PASS SCHMOOPIIE").ConfigureAwait(false);
+                    await _writer.WriteLineAsync($"NICK {anonUser}").ConfigureAwait(false);
                     _isAuthenticated = false;
                     Log.Information("[Twitch] Anonim giriş yapılıyor: {Username}", anonUser);
                 }
 
                 // Capability request - zengin mesaj bilgileri için
-                await _writer.WriteLineAsync("CAP REQ :twitch.tv/tags twitch.tv/commands");
+                await _writer.WriteLineAsync("CAP REQ :twitch.tv/tags twitch.tv/commands").ConfigureAwait(false);
 
                 // Kanala katıl
-                await _writer.WriteLineAsync($"JOIN #{_identifier}");
+                await _writer.WriteLineAsync($"JOIN #{_identifier}").ConfigureAwait(false);
 
                 Log.Information("[Twitch] #{Channel} kanalına bağlandı", _identifier);
             }
@@ -125,8 +125,8 @@ namespace UniCast.Core.Chat.Ingestors
             {
                 if (_writer != null)
                 {
-                    await _writer.WriteLineAsync($"PART #{_identifier}");
-                    await _writer.WriteLineAsync("QUIT");
+                    await _writer.WriteLineAsync($"PART #{_identifier}").ConfigureAwait(false);
+                    await _writer.WriteLineAsync("QUIT").ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -158,18 +158,18 @@ namespace UniCast.Core.Chat.Ingestors
             {
                 try
                 {
-                    var line = await _reader.ReadLineAsync(ct);
+                    var line = await _reader.ReadLineAsync(ct).ConfigureAwait(false);
 
                     if (string.IsNullOrEmpty(line))
                     {
-                        await Task.Delay(100, ct);
+                        await Task.Delay(100, ct).ConfigureAwait(false);
                         continue;
                     }
 
                     // PING/PONG - bağlantıyı canlı tut
                     if (line.StartsWith("PING"))
                     {
-                        await _writer.WriteLineAsync(line.Replace("PING", "PONG"));
+                        await _writer.WriteLineAsync(line.Replace("PING", "PONG")).ConfigureAwait(false);
                         continue;
                     }
 
@@ -224,7 +224,7 @@ namespace UniCast.Core.Chat.Ingestors
                 catch (Exception ex)
                 {
                     Log.Error(ex, "[Twitch] Beklenmeyen hata");
-                    await Task.Delay(1000, ct);
+                    await Task.Delay(1000, ct).ConfigureAwait(false);
                 }
             }
         }
@@ -324,7 +324,7 @@ namespace UniCast.Core.Chat.Ingestors
                 return;
             }
 
-            await _writer.WriteLineAsync($"PRIVMSG #{_identifier} :{message}");
+            await _writer.WriteLineAsync($"PRIVMSG #{_identifier} :{message}").ConfigureAwait(false);
         }
 
         protected override void Dispose(bool disposing)
