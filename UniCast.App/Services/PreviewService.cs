@@ -11,10 +11,10 @@ namespace UniCast.App.Services
 {
     /// <summary>
     /// Kamera önizleme servisi.
-    /// DÜZELTME v50: FPS optimizasyonu
-    /// - MSMF backend (DSHOW yerine - daha hızlı)
-    /// - Dinamik frame timing (işleme süresini hesaba katar)
-    /// - Buffer optimizasyonu
+    /// DÜZELTME v52: Thread-safe lock ve düzgün toggle desteği
+    /// - Race condition düzeltildi (start/stop çakışması)
+    /// - SemaphoreSlim ile thread-safe erişim
+    /// - Kamera kilitli kalma sorunu çözüldü
     /// </summary>
     public sealed class PreviewService : IPreviewService
     {
@@ -32,108 +32,258 @@ namespace UniCast.App.Services
         private int _targetFps = 30;
         private double _targetFrameTimeMs = 33.33;
 
+        // DÜZELTME v54: WriteableBitmap reuse - GC pressure azaltma
+        private WriteableBitmap? _writeableBitmap;
+        private int _bitmapWidth;
+        private int _bitmapHeight;
+        private byte[]? _copyBuffer; // Reusable buffer for pixel copying
+
+        // DÜZELTME v52: Thread-safe lock
+        private readonly SemaphoreSlim _operationLock = new(1, 1);
+        private volatile bool _isStarting;
+        private volatile bool _isStopping;
+
         public async Task StartAsync(int cameraIndex, int width, int height, int fps)
         {
-            if (IsRunning || _disposed) return;
+            if (_disposed) return;
 
-            if (cameraIndex < 0) cameraIndex = 0;
-            _targetFps = fps > 0 ? fps : 30;
-            _targetFrameTimeMs = 1000.0 / _targetFps;
+            // DÜZELTME v52: Aynı anda birden fazla start/stop çağrısını engelle
+            if (_isStarting || _isStopping)
+            {
+                System.Diagnostics.Debug.WriteLine("[PreviewService] Başka bir işlem devam ediyor, bekleniyor...");
+                // Mevcut işlemin bitmesini bekle
+                await Task.Delay(100);
+                if (_isStarting || _isStopping) return;
+            }
 
+            bool lockAcquired = false;
             try
             {
-                // DÜZELTME v50: MSMF backend kullan (Windows Media Foundation - daha hızlı)
-                _capture = new VideoCapture(cameraIndex, VideoCaptureAPIs.MSMF);
-
-                // MSMF başarısız olursa DSHOW'a fallback
-                if (!_capture.IsOpened())
+                lockAcquired = await _operationLock.WaitAsync(3000); // 3 saniye timeout
+                if (!lockAcquired)
                 {
-                    _capture.Dispose();
-                    _capture = new VideoCapture(cameraIndex, VideoCaptureAPIs.DSHOW);
-                }
-
-                if (!_capture.IsOpened())
-                {
-                    System.Diagnostics.Debug.WriteLine("[PreviewService] Kamera açılamadı.");
+                    System.Diagnostics.Debug.WriteLine("[PreviewService] Lock alınamadı, işlem iptal");
                     return;
                 }
 
-                // Kamera ayarları
+                _isStarting = true;
+
+                // Zaten çalışıyorsa önce durdur
+                if (IsRunning)
+                {
+                    System.Diagnostics.Debug.WriteLine("[PreviewService] Zaten çalışıyor, önce durduruluyor...");
+                    await StopInternalAsync().ConfigureAwait(false);
+                    await Task.Delay(200).ConfigureAwait(false); // Kamera serbest kalması için bekle
+                }
+
+                if (cameraIndex < 0) cameraIndex = 0;
+                _targetFps = fps > 0 ? fps : 30;
+                _targetFrameTimeMs = 1000.0 / _targetFps;
+
+                // Eski kaynakları temizle
+                CleanupCaptureInternal();
+
+                System.Diagnostics.Debug.WriteLine($"[PreviewService] Kamera açılıyor: index={cameraIndex}, MSMF backend");
+
+                // DÜZELTME v53: VideoCapture oluşturmayı background thread'de yap
+                // DÜZELTME v55: ConfigureAwait(false) eklendi - UI thread'e dönme zorunluluğu yok
+                var captureResult = await Task.Run(() =>
+                {
+                    try
+                    {
+                        // MSMF backend
+                        var capture = new VideoCapture(cameraIndex, VideoCaptureAPIs.MSMF);
+
+                        // MSMF başarısız olursa DSHOW'a fallback
+                        if (capture == null || !capture.IsOpened())
+                        {
+                            System.Diagnostics.Debug.WriteLine("[PreviewService] MSMF başarısız, DSHOW deneniyor...");
+                            capture?.Dispose();
+                            Thread.Sleep(100);
+                            capture = new VideoCapture(cameraIndex, VideoCaptureAPIs.DSHOW);
+                        }
+
+                        return capture;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[PreviewService] VideoCapture oluşturma hatası: {ex.Message}");
+                        return null;
+                    }
+                }).ConfigureAwait(false);
+
+                _capture = captureResult;
+
+                if (_capture == null || !_capture.IsOpened())
+                {
+                    System.Diagnostics.Debug.WriteLine("[PreviewService] Kamera açılamadı - tüm backend'ler başarısız.");
+                    CleanupCaptureInternal();
+                    return;
+                }
+
+                // Kamera ayarları - bunlar hızlı, UI thread'de kalabilir
                 _capture.Set(VideoCaptureProperties.FrameWidth, width);
                 _capture.Set(VideoCaptureProperties.FrameHeight, height);
                 _capture.Set(VideoCaptureProperties.Fps, fps);
-
-                // DÜZELTME v50: Buffer ayarları - düşük latency için
                 _capture.Set(VideoCaptureProperties.BufferSize, 1);
 
-                // Gerçek FPS'i logla
+                // Gerçek değerleri kontrol et
                 var actualFps = _capture.Get(VideoCaptureProperties.Fps);
                 var actualWidth = _capture.Get(VideoCaptureProperties.FrameWidth);
                 var actualHeight = _capture.Get(VideoCaptureProperties.FrameHeight);
+
+                // Geçersiz resolution kontrolü
+                if (actualWidth < 1 || actualHeight < 1)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PreviewService] Geçersiz resolution: {actualWidth}x{actualHeight}, kamera kilitli olabilir");
+                    CleanupCaptureInternal();
+                    return;
+                }
+
                 System.Diagnostics.Debug.WriteLine($"[PreviewService] Kamera açıldı: {actualWidth}x{actualHeight} @ {actualFps} FPS");
 
                 _cts?.Dispose();
                 _cts = new CancellationTokenSource();
-                IsRunning = true;
 
                 _frame = new Mat();
+                IsRunning = true;
 
                 _previewTask = Task.Run(() => CaptureLoopOptimized(_cts.Token), _cts.Token);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[PreviewService] Start Error: {ex.Message}");
-                await StopAsync();
+                CleanupCaptureInternal();
+                IsRunning = false;
+            }
+            finally
+            {
+                _isStarting = false;
+                if (lockAcquired)
+                {
+                    try { _operationLock.Release(); } catch { }
+                }
             }
         }
 
         /// <summary>
-        /// DÜZELTME v50: Optimize edilmiş capture loop
-        /// - Dinamik timing (işleme süresini hesaba katar)
-        /// - Daha az allocation
+        /// DÜZELTME v52: Internal cleanup - lock olmadan çağrılır
+        /// DÜZELTME v54: WriteableBitmap temizliği eklendi
+        /// </summary>
+        private void CleanupCaptureInternal()
+        {
+            var capture = _capture;
+            _capture = null;
+
+            if (capture != null)
+            {
+                try
+                {
+                    if (capture.IsOpened())
+                    {
+                        capture.Release();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PreviewService] Release hatası: {ex.Message}");
+                }
+
+                try
+                {
+                    capture.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PreviewService] Dispose hatası: {ex.Message}");
+                }
+            }
+
+            var frame = _frame;
+            _frame = null;
+
+            if (frame != null)
+            {
+                try { frame.Dispose(); } catch { }
+            }
+
+            // DÜZELTME v54: WriteableBitmap temizliği
+            _writeableBitmap = null;
+            _bitmapWidth = 0;
+            _bitmapHeight = 0;
+        }
+
+        /// <summary>
+        /// DÜZELTME v54: WriteableBitmap reuse ile GC pressure azaltıldı
+        /// Her frame'de yeni bitmap oluşturmak yerine mevcut bitmap'e yazılıyor
         /// </summary>
         private void CaptureLoopOptimized(CancellationToken ct)
         {
             var stopwatch = new Stopwatch();
 
-            while (!ct.IsCancellationRequested && _capture != null && _capture.IsOpened() && _frame != null)
+            while (!ct.IsCancellationRequested && IsRunning)
             {
+                var capture = _capture;
+                var frame = _frame;
+
+                if (capture == null || frame == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("[PreviewService] Capture veya frame null, loop sonlandırılıyor");
+                    break;
+                }
+
+                // IsOpened kontrolü - her frame'de değil, arada bir yap
+                if (!capture.IsOpened())
+                {
+                    System.Diagnostics.Debug.WriteLine("[PreviewService] Capture artık açık değil, loop sonlandırılıyor");
+                    break;
+                }
+
                 stopwatch.Restart();
 
                 try
                 {
-                    // Frame oku
                     bool readSuccess = false;
                     try
                     {
-                        readSuccess = _capture.Read(_frame);
+                        readSuccess = capture.Read(frame);
                     }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"[PreviewService] Read Error: {ex.Message}");
+                        break;
                     }
 
-                    if (!readSuccess || _frame.Empty())
+                    if (!readSuccess || frame.Empty())
                     {
                         Thread.Sleep(5);
                         continue;
                     }
 
-                    // Frame'i WPF'e çevir
                     try
                     {
-                        var bmp = _frame.ToWriteableBitmap();
-                        bmp.Freeze();
-                        OnFrame?.Invoke(bmp);
+                        // DÜZELTME v55: BeginInvoke kullan (non-blocking)
+                        // Invoke UI thread'i bekler ve bloklayabilir
+                        System.Windows.Application.Current?.Dispatcher?.BeginInvoke(
+                            System.Windows.Threading.DispatcherPriority.Render,
+                            new Action(() =>
+                            {
+                                try
+                                {
+                                    UpdateWriteableBitmap(frame);
+                                }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[PreviewService] UpdateWriteableBitmap Error: {ex.Message}");
+                                }
+                            }));
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[PreviewService] Frame Convert Error: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[PreviewService] Dispatcher Error: {ex.Message}");
                     }
 
                     stopwatch.Stop();
-
-                    // DÜZELTME v50: Dinamik delay - işleme süresini çıkar
                     var elapsedMs = stopwatch.Elapsed.TotalMilliseconds;
                     var remainingMs = _targetFrameTimeMs - elapsedMs;
 
@@ -152,77 +302,167 @@ namespace UniCast.App.Services
                     Thread.Sleep(50);
                 }
             }
+
+            System.Diagnostics.Debug.WriteLine("[PreviewService] Capture loop sonlandı");
+        }
+
+        /// <summary>
+        /// DÜZELTME v54: Mat'ı WriteableBitmap'e kopyala (reuse)
+        /// Bu metod UI thread'de çalışmalı
+        /// </summary>
+        private void UpdateWriteableBitmap(Mat frame)
+        {
+            if (frame == null || frame.Empty()) return;
+
+            int width = frame.Width;
+            int height = frame.Height;
+            var sourceStride = (int)frame.Step();
+            int totalBytes = sourceStride * height;
+
+            // WriteableBitmap boyutu değiştiyse veya yoksa yeniden oluştur
+            if (_writeableBitmap == null || _bitmapWidth != width || _bitmapHeight != height)
+            {
+                _writeableBitmap = new WriteableBitmap(
+                    width, height,
+                    96, 96,
+                    System.Windows.Media.PixelFormats.Bgr24,
+                    null);
+                _bitmapWidth = width;
+                _bitmapHeight = height;
+                _copyBuffer = null; // Buffer'ı yeniden oluştur
+                System.Diagnostics.Debug.WriteLine($"[PreviewService] WriteableBitmap oluşturuldu: {width}x{height}");
+            }
+
+            // Buffer boyutu yetmiyorsa yeniden oluştur
+            if (_copyBuffer == null || _copyBuffer.Length < totalBytes)
+            {
+                _copyBuffer = new byte[totalBytes];
+            }
+
+            try
+            {
+                _writeableBitmap.Lock();
+
+                var sourcePtr = frame.Data;
+                var destPtr = _writeableBitmap.BackBuffer;
+                var stride = _writeableBitmap.BackBufferStride;
+
+                // Mat'tan buffer'a kopyala
+                System.Runtime.InteropServices.Marshal.Copy(sourcePtr, _copyBuffer, 0, totalBytes);
+
+                // Buffer'dan WriteableBitmap'e kopyala
+                if (stride == sourceStride)
+                {
+                    System.Runtime.InteropServices.Marshal.Copy(_copyBuffer, 0, destPtr, totalBytes);
+                }
+                else
+                {
+                    // Stride farklıysa satır satır kopyala
+                    for (int y = 0; y < height; y++)
+                    {
+                        System.Runtime.InteropServices.Marshal.Copy(
+                            _copyBuffer,
+                            y * sourceStride,
+                            destPtr + y * stride,
+                            Math.Min(stride, sourceStride));
+                    }
+                }
+
+                _writeableBitmap.AddDirtyRect(new System.Windows.Int32Rect(0, 0, width, height));
+            }
+            finally
+            {
+                _writeableBitmap.Unlock();
+            }
+
+            // Event'i tetikle
+            OnFrame?.Invoke(_writeableBitmap);
         }
 
         public async Task StopAsync()
         {
-            if (!IsRunning && _capture == null) return;
+            if (!IsRunning && _capture == null && _previewTask == null) return;
 
+            // DÜZELTME v52: Zaten durduruluyorsa bekle
+            if (_isStopping)
+            {
+                System.Diagnostics.Debug.WriteLine("[PreviewService] Zaten durduruluyor, bekleniyor...");
+                await Task.Delay(100);
+                return;
+            }
+
+            bool lockAcquired = false;
+            try
+            {
+                lockAcquired = await _operationLock.WaitAsync(3000);
+                if (!lockAcquired)
+                {
+                    System.Diagnostics.Debug.WriteLine("[PreviewService] Stop için lock alınamadı");
+                    return;
+                }
+
+                await StopInternalAsync();
+            }
+            finally
+            {
+                if (lockAcquired)
+                {
+                    try { _operationLock.Release(); } catch { }
+                }
+            }
+        }
+
+        /// <summary>
+        /// DÜZELTME v52: Internal stop - lock olmadan çağrılır
+        /// </summary>
+        private async Task StopInternalAsync()
+        {
+            _isStopping = true;
             IsRunning = false;
 
-            if (_cts != null)
+            try
             {
-                try
+                // CTS'i iptal et
+                var cts = _cts;
+                if (cts != null)
                 {
-                    _cts.Cancel();
+                    try { cts.Cancel(); } catch { }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] CTS cancel hatası: {ex.Message}");
-                }
-            }
 
-            if (_previewTask != null)
-            {
-                try
+                // Task'ın bitmesini bekle
+                var task = _previewTask;
+                if (task != null)
                 {
-                    await _previewTask.ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] Task bekleme hatası: {ex.Message}");
+                    try
+                    {
+                        await task.WaitAsync(TimeSpan.FromSeconds(2));
+                    }
+                    catch (TimeoutException)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[PreviewService] Task timeout, devam ediliyor");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[PreviewService] Task bekleme hatası: {ex.Message}");
+                    }
                 }
                 _previewTask = null;
-            }
 
-            if (_frame != null)
-            {
-                try
-                {
-                    _frame.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] Frame dispose hatası: {ex.Message}");
-                }
-                _frame = null;
-            }
+                // Kaynakları temizle
+                CleanupCaptureInternal();
 
-            if (_capture != null)
-            {
-                try
+                // CTS'i dispose et
+                if (cts != null)
                 {
-                    _capture.Release();
-                    _capture.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] Capture dispose hatası: {ex.Message}");
-                }
-                _capture = null;
-            }
-
-            if (_cts != null)
-            {
-                try
-                {
-                    _cts.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] CTS dispose hatası: {ex.Message}");
+                    try { cts.Dispose(); } catch { }
                 }
                 _cts = null;
+
+                System.Diagnostics.Debug.WriteLine("[PreviewService] Stop tamamlandı");
+            }
+            finally
+            {
+                _isStopping = false;
             }
         }
 
@@ -231,27 +471,21 @@ namespace UniCast.App.Services
             if (_disposed) return;
             _disposed = true;
 
-            // Event'i temizle
             OnFrame = null;
+            IsRunning = false;
 
-            // Güvenli senkron temizlik
             try
             {
                 _cts?.Cancel();
                 _previewTask?.Wait(TimeSpan.FromSeconds(1));
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PreviewService.Dispose] Senkron temizlik hatası: {ex.Message}");
-            }
+            catch { }
 
-            // Kaynakları temizle
-            try { _frame?.Dispose(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[PreviewService.Dispose] Frame dispose hatası: {ex.Message}"); }
-            try { _capture?.Release(); _capture?.Dispose(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[PreviewService.Dispose] Capture dispose hatası: {ex.Message}"); }
-            try { _cts?.Dispose(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[PreviewService.Dispose] CTS dispose hatası: {ex.Message}"); }
+            CleanupCaptureInternal();
 
-            _frame = null;
-            _capture = null;
+            try { _cts?.Dispose(); } catch { }
+            try { _operationLock.Dispose(); } catch { }
+
             _cts = null;
             _previewTask = null;
 

@@ -60,10 +60,11 @@ namespace UniCast.App.ViewModels
             _onFrameHandler = bmp => PreviewImage = bmp;
             _onLevelChangeHandler = level =>
             {
-                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                // DÜZELTME v55: BeginInvoke kullan (non-blocking)
+                System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     AudioLevel = level * 100;
-                });
+                }));
             };
             _onMuteChangeHandler = muted =>
             {
@@ -113,7 +114,7 @@ namespace UniCast.App.ViewModels
         {
             try
             {
-                await InitializeAudio();
+                await InitializeAudio().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -125,7 +126,7 @@ namespace UniCast.App.ViewModels
         private async Task InitializeAudio()
         {
             var s = Services.SettingsStore.Data;
-            await _audioService.InitializeAsync(s.SelectedAudioDevice ?? "");
+            await _audioService.InitializeAsync(s.SelectedAudioDevice ?? "").ConfigureAwait(false);
         }
 
         // --- PREVIEW ---
@@ -136,15 +137,37 @@ namespace UniCast.App.ViewModels
             private set { _previewImage = value; OnPropertyChanged(); }
         }
 
-        // DÜZELTME v50: Seçilen kamerayı kullan (hardcoded -1 yerine)
-        public async Task StartPreviewAsync()
+        /// <summary>
+        /// DÜZELTME v55: Tüm preview başlatma işlemi arka planda
+        /// - UI thread hiç bloklanmaz
+        /// - Kamera açılışı 30 saniye sürse bile UI responsive kalır
+        /// </summary>
+        public Task StartPreviewAsync()
         {
             var s = Services.SettingsStore.Data;
-            if (!_preview.IsRunning)
+            if (_preview.IsRunning) return Task.CompletedTask;
+
+            // DÜZELTME v55: Fire-and-forget - UI thread'i hiç beklemesin
+            // Tüm işlem arka planda yapılır, UI hemen serbest kalır
+            _ = Task.Run(async () =>
             {
-                int cameraIndex = await GetCameraIndexAsync(s.SelectedVideoDevice ?? s.DefaultCamera);
-                await _preview.StartAsync(cameraIndex, s.Width, s.Height, s.Fps);
-            }
+                try
+                {
+                    // 1. Kamera index'i bul (FFmpeg process çalıştırır)
+                    int cameraIndex = await GetCameraIndexAsync(s.SelectedVideoDevice ?? s.DefaultCamera)
+                        .ConfigureAwait(false);
+
+                    // 2. Preview'ı başlat (VideoCapture oluşturma dahil - yavaş işlem)
+                    await _preview.StartAsync(cameraIndex, s.Width, s.Height, s.Fps)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ControlViewModel] StartPreviewAsync hatası: {ex.Message}");
+                }
+            });
+
+            return Task.CompletedTask;
         }
 
         // DÜZELTME v50: Kamera adından index bulma metodu
@@ -155,7 +178,7 @@ namespace UniCast.App.ViewModels
             try
             {
                 var deviceService = new DeviceService();
-                var devices = await deviceService.GetVideoDevicesAsync();
+                var devices = await deviceService.GetVideoDevicesAsync().ConfigureAwait(false);
 
                 for (int i = 0; i < devices.Count; i++)
                 {
