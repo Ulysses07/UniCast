@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
@@ -10,8 +11,10 @@ namespace UniCast.App.Services
 {
     /// <summary>
     /// Kamera önizleme servisi.
-    /// OpenCV kullanarak kameradan frame alır ve WPF'e aktarır.
-    /// DÜZELTME: Thread.Sleep yerine async-friendly Task.Delay kullanımı.
+    /// DÜZELTME v50: FPS optimizasyonu
+    /// - MSMF backend (DSHOW yerine - daha hızlı)
+    /// - Dinamik frame timing (işleme süresini hesaba katar)
+    /// - Buffer optimizasyonu
     /// </summary>
     public sealed class PreviewService : IPreviewService
     {
@@ -25,25 +28,49 @@ namespace UniCast.App.Services
 
         private Mat? _frame;
 
+        // FPS tracking
+        private int _targetFps = 30;
+        private double _targetFrameTimeMs = 33.33;
+
         public async Task StartAsync(int cameraIndex, int width, int height, int fps)
         {
             if (IsRunning || _disposed) return;
 
             if (cameraIndex < 0) cameraIndex = 0;
+            _targetFps = fps > 0 ? fps : 30;
+            _targetFrameTimeMs = 1000.0 / _targetFps;
 
             try
             {
-                _capture = new VideoCapture(cameraIndex, VideoCaptureAPIs.DSHOW);
+                // DÜZELTME v50: MSMF backend kullan (Windows Media Foundation - daha hızlı)
+                _capture = new VideoCapture(cameraIndex, VideoCaptureAPIs.MSMF);
+
+                // MSMF başarısız olursa DSHOW'a fallback
+                if (!_capture.IsOpened())
+                {
+                    _capture.Dispose();
+                    _capture = new VideoCapture(cameraIndex, VideoCaptureAPIs.DSHOW);
+                }
 
                 if (!_capture.IsOpened())
                 {
-                    System.Diagnostics.Debug.WriteLine("Preview: Kamera açılamadı.");
+                    System.Diagnostics.Debug.WriteLine("[PreviewService] Kamera açılamadı.");
                     return;
                 }
 
+                // Kamera ayarları
                 _capture.Set(VideoCaptureProperties.FrameWidth, width);
                 _capture.Set(VideoCaptureProperties.FrameHeight, height);
                 _capture.Set(VideoCaptureProperties.Fps, fps);
+
+                // DÜZELTME v50: Buffer ayarları - düşük latency için
+                _capture.Set(VideoCaptureProperties.BufferSize, 1);
+
+                // Gerçek FPS'i logla
+                var actualFps = _capture.Get(VideoCaptureProperties.Fps);
+                var actualWidth = _capture.Get(VideoCaptureProperties.FrameWidth);
+                var actualHeight = _capture.Get(VideoCaptureProperties.FrameHeight);
+                System.Diagnostics.Debug.WriteLine($"[PreviewService] Kamera açıldı: {actualWidth}x{actualHeight} @ {actualFps} FPS");
 
                 _cts?.Dispose();
                 _cts = new CancellationTokenSource();
@@ -51,25 +78,31 @@ namespace UniCast.App.Services
 
                 _frame = new Mat();
 
-                _previewTask = CaptureLoopAsync(_cts.Token);
+                _previewTask = Task.Run(() => CaptureLoopOptimized(_cts.Token), _cts.Token);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Preview Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[PreviewService] Start Error: {ex.Message}");
                 await StopAsync();
             }
         }
 
         /// <summary>
-        /// DÜZELTME: Async capture loop - Thread.Sleep yerine Task.Delay
+        /// DÜZELTME v50: Optimize edilmiş capture loop
+        /// - Dinamik timing (işleme süresini hesaba katar)
+        /// - Daha az allocation
         /// </summary>
-        private async Task CaptureLoopAsync(CancellationToken ct)
+        private void CaptureLoopOptimized(CancellationToken ct)
         {
+            var stopwatch = new Stopwatch();
+
             while (!ct.IsCancellationRequested && _capture != null && _capture.IsOpened() && _frame != null)
             {
+                stopwatch.Restart();
+
                 try
                 {
-                    // Frame okuma (senkron - OpenCV kısıtlaması)
+                    // Frame oku
                     bool readSuccess = false;
                     try
                     {
@@ -77,30 +110,37 @@ namespace UniCast.App.Services
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Preview Read Error: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[PreviewService] Read Error: {ex.Message}");
                     }
 
                     if (!readSuccess || _frame.Empty())
                     {
-                        // DÜZELTME: Thread.Sleep yerine Task.Delay
-                        await Task.Delay(10, ct);
+                        Thread.Sleep(5);
                         continue;
                     }
 
-                    WriteableBitmap? bmp = null;
+                    // Frame'i WPF'e çevir
                     try
                     {
-                        bmp = _frame.ToWriteableBitmap();
+                        var bmp = _frame.ToWriteableBitmap();
                         bmp.Freeze();
                         OnFrame?.Invoke(bmp);
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Preview Frame Error: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[PreviewService] Frame Convert Error: {ex.Message}");
                     }
 
-                    // DÜZELTME: Thread.Sleep yerine Task.Delay (async-friendly)
-                    await Task.Delay(Constants.Preview.FrameIntervalMs, ct);
+                    stopwatch.Stop();
+
+                    // DÜZELTME v50: Dinamik delay - işleme süresini çıkar
+                    var elapsedMs = stopwatch.Elapsed.TotalMilliseconds;
+                    var remainingMs = _targetFrameTimeMs - elapsedMs;
+
+                    if (remainingMs > 1)
+                    {
+                        Thread.Sleep((int)remainingMs);
+                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -108,17 +148,8 @@ namespace UniCast.App.Services
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Preview Loop Error: {ex.Message}");
-
-                    // Hata durumunda kısa bekle
-                    try
-                    {
-                        await Task.Delay(100, ct);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        break;
-                    }
+                    System.Diagnostics.Debug.WriteLine($"[PreviewService] Loop Error: {ex.Message}");
+                    Thread.Sleep(50);
                 }
             }
         }
@@ -137,7 +168,6 @@ namespace UniCast.App.Services
                 }
                 catch (Exception ex)
                 {
-                    // DÜZELTME v26: Boş catch'e loglama eklendi
                     System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] CTS cancel hatası: {ex.Message}");
                 }
             }
@@ -150,7 +180,6 @@ namespace UniCast.App.Services
                 }
                 catch (Exception ex)
                 {
-                    // DÜZELTME v26: Boş catch'e loglama eklendi
                     System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] Task bekleme hatası: {ex.Message}");
                 }
                 _previewTask = null;
@@ -164,7 +193,6 @@ namespace UniCast.App.Services
                 }
                 catch (Exception ex)
                 {
-                    // DÜZELTME v26: Boş catch'e loglama eklendi
                     System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] Frame dispose hatası: {ex.Message}");
                 }
                 _frame = null;
@@ -179,7 +207,6 @@ namespace UniCast.App.Services
                 }
                 catch (Exception ex)
                 {
-                    // DÜZELTME v26: Boş catch'e loglama eklendi
                     System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] Capture dispose hatası: {ex.Message}");
                 }
                 _capture = null;
@@ -193,7 +220,6 @@ namespace UniCast.App.Services
                 }
                 catch (Exception ex)
                 {
-                    // DÜZELTME v26: Boş catch'e loglama eklendi
                     System.Diagnostics.Debug.WriteLine($"[PreviewService.StopAsync] CTS dispose hatası: {ex.Message}");
                 }
                 _cts = null;
@@ -216,7 +242,6 @@ namespace UniCast.App.Services
             }
             catch (Exception ex)
             {
-                // DÜZELTME v26: Boş catch'e loglama eklendi
                 System.Diagnostics.Debug.WriteLine($"[PreviewService.Dispose] Senkron temizlik hatası: {ex.Message}");
             }
 

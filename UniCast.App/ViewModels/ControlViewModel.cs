@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
+using UniCast.App.Services.Capture;
 using UniCast.Core.Models;
 
 
@@ -135,11 +136,44 @@ namespace UniCast.App.ViewModels
             private set { _previewImage = value; OnPropertyChanged(); }
         }
 
+        // DÜZELTME v50: Seçilen kamerayı kullan (hardcoded -1 yerine)
         public async Task StartPreviewAsync()
         {
             var s = Services.SettingsStore.Data;
             if (!_preview.IsRunning)
-                await _preview.StartAsync(-1, s.Width, s.Height, s.Fps);
+            {
+                int cameraIndex = await GetCameraIndexAsync(s.SelectedVideoDevice ?? s.DefaultCamera);
+                await _preview.StartAsync(cameraIndex, s.Width, s.Height, s.Fps);
+            }
+        }
+
+        // DÜZELTME v50: Kamera adından index bulma metodu
+        private async Task<int> GetCameraIndexAsync(string? deviceName)
+        {
+            if (string.IsNullOrEmpty(deviceName)) return 0;
+
+            try
+            {
+                var deviceService = new DeviceService();
+                var devices = await deviceService.GetVideoDevicesAsync();
+
+                for (int i = 0; i < devices.Count; i++)
+                {
+                    if (devices[i].Name == deviceName)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ControlViewModel] Kamera bulundu: {deviceName} -> index {i}");
+                        return i;
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[ControlViewModel] Kamera bulunamadı: {deviceName}, varsayılan kullanılıyor");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ControlViewModel] Kamera index hatası: {ex.Message}");
+            }
+
+            return 0; // Varsayılan: ilk kamera
         }
 
         public Task StopPreviewAsync() => _preview.StopAsync();

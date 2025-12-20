@@ -18,6 +18,7 @@ namespace UniCast.App.Services
     /// <summary>
     /// Telemetry Service - Anonim kullanım verileri ve crash raporlama.
     /// GDPR uyumlu, opt-out destekli, minimal veri toplama.
+    /// DÜZELTME v50: SemaphoreSlim dispose hatası düzeltildi.
     /// </summary>
     public sealed class TelemetryService : IDisposable
     {
@@ -48,7 +49,7 @@ namespace UniCast.App.Services
         private readonly Stopwatch _sessionTimer = new();
 
         private Timer? _flushTimer;
-        private bool _disposed;
+        private volatile bool _disposed;  // DÜZELTME v50: volatile eklendi
         private bool _enabled = true;
 
         #endregion
@@ -118,7 +119,7 @@ namespace UniCast.App.Services
         /// </summary>
         public void Initialize()
         {
-            if (!_enabled) return;
+            if (!_enabled || _disposed) return;
 
             // Global exception handler
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
@@ -148,7 +149,7 @@ namespace UniCast.App.Services
         /// </summary>
         public async Task ShutdownAsync()
         {
-            if (!_enabled) return;
+            if (!_enabled || _disposed) return;
 
             TrackEvent("app_closed", new Dictionary<string, object>
             {
@@ -168,7 +169,7 @@ namespace UniCast.App.Services
         /// </summary>
         public void TrackEvent(string eventName, Dictionary<string, object>? properties = null)
         {
-            if (!_enabled) return;
+            if (!_enabled || _disposed) return;
 
             var telemetryEvent = new TelemetryEvent
             {
@@ -226,7 +227,7 @@ namespace UniCast.App.Services
         /// </summary>
         public void TrackError(string errorType, string message, string? stackTrace = null)
         {
-            if (!_enabled) return;
+            if (!_enabled || _disposed) return;
 
             var telemetryEvent = new TelemetryEvent
             {
@@ -252,7 +253,7 @@ namespace UniCast.App.Services
         /// </summary>
         public void TrackCrash(Exception exception)
         {
-            if (!_enabled) return;
+            if (!_enabled || _disposed) return;
 
             var telemetryEvent = new TelemetryEvent
             {
@@ -282,7 +283,7 @@ namespace UniCast.App.Services
         /// </summary>
         public void TrackMetric(string metricName, double value, string? unit = null)
         {
-            if (!_enabled) return;
+            if (!_enabled || _disposed) return;
 
             var telemetryEvent = new TelemetryEvent
             {
@@ -307,6 +308,8 @@ namespace UniCast.App.Services
 
         private void EnqueueEvent(TelemetryEvent telemetryEvent)
         {
+            if (_disposed) return;  // DÜZELTME v50: Dispose kontrolü
+
             // Queue doluysa eski event'leri at
             while (_eventQueue.Count >= MaxQueueSize)
             {
@@ -318,15 +321,25 @@ namespace UniCast.App.Services
 
         private async Task FlushAsync()
         {
-            if (!_enabled || _eventQueue.IsEmpty) return;
+            // DÜZELTME v50: Dispose kontrolü en başta
+            if (_disposed || !_enabled || _eventQueue.IsEmpty) return;
 
-            if (!await _flushLock.WaitAsync(0).ConfigureAwait(false))
-            {
-                return; // Zaten flush yapılıyor
-            }
-
+            // DÜZELTME v50: Try-catch ile semaphore erişimi
+            bool lockAcquired = false;
             try
             {
+                // Dispose edilmişse çık
+                if (_disposed) return;
+
+                lockAcquired = await _flushLock.WaitAsync(0).ConfigureAwait(false);
+                if (!lockAcquired)
+                {
+                    return; // Zaten flush yapılıyor
+                }
+
+                // Lock alındıktan sonra tekrar kontrol
+                if (_disposed) return;
+
                 var events = new List<TelemetryEvent>();
                 while (_eventQueue.TryDequeue(out var evt) && events.Count < 50)
                 {
@@ -344,6 +357,9 @@ namespace UniCast.App.Services
 
                 for (int retry = 0; retry < MaxRetries; retry++)
                 {
+                    // DÜZELTME v50: Her retry'da dispose kontrolü
+                    if (_disposed) return;
+
                     try
                     {
                         var response = await _httpClient.PostAsJsonAsync(ServerUrl, payload).ConfigureAwait(false);
@@ -356,22 +372,56 @@ namespace UniCast.App.Services
 
                         Log.Warning("[Telemetry] Server returned {StatusCode}", response.StatusCode);
                     }
+                    catch (ObjectDisposedException)
+                    {
+                        // DÜZELTME v50: HttpClient dispose edilmiş, çık
+                        return;
+                    }
                     catch (Exception ex)
                     {
                         Log.Warning(ex, "[Telemetry] Flush attempt {Retry} failed", retry + 1);
+
+                        if (_disposed) return;
                         await Task.Delay(1000 * (retry + 1)).ConfigureAwait(false);
                     }
                 }
 
-                // Başarısız olursa event'leri geri kuyruğa ekle
-                foreach (var evt in events)
+                // Başarısız olursa event'leri geri kuyruğa ekle (dispose edilmemişse)
+                if (!_disposed)
                 {
-                    _eventQueue.Enqueue(evt);
+                    foreach (var evt in events)
+                    {
+                        _eventQueue.Enqueue(evt);
+                    }
                 }
+            }
+            catch (ObjectDisposedException)
+            {
+                // DÜZELTME v50: SemaphoreSlim dispose edilmiş, sessizce çık
+                return;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[Telemetry] FlushAsync error");
             }
             finally
             {
-                _flushLock.Release();
+                // DÜZELTME v50: Release öncesi dispose kontrolü
+                if (lockAcquired && !_disposed)
+                {
+                    try
+                    {
+                        _flushLock.Release();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // Dispose edilmiş, yok say
+                    }
+                    catch (SemaphoreFullException)
+                    {
+                        // Zaten release edilmiş, yok say
+                    }
+                }
             }
         }
 
@@ -421,14 +471,38 @@ namespace UniCast.App.Services
         public void Dispose()
         {
             if (_disposed) return;
-            _disposed = true;
+            _disposed = true;  // DÜZELTME v50: Önce flag'i set et
 
+            // Event handler'ları kaldır
             AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
             TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
 
+            // DÜZELTME v50: Önce timer'ı durdur
             _flushTimer?.Dispose();
-            _flushLock.Dispose();
-            _httpClient.Dispose();
+            _flushTimer = null;
+
+            // DÜZELTME v50: Kısa bir süre bekle (devam eden flush için)
+            Thread.Sleep(100);
+
+            // Kaynakları dispose et
+            try
+            {
+                _flushLock.Dispose();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[TelemetryService] FlushLock dispose error: {ex.Message}");
+            }
+
+            try
+            {
+                _httpClient.Dispose();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[TelemetryService] HttpClient dispose error: {ex.Message}");
+            }
+
             _sessionTimer.Stop();
 
             Log.Debug("[Telemetry] Service disposed");
