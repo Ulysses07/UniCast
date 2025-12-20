@@ -12,9 +12,7 @@ namespace UniCast.App.Services
     /// <summary>
     /// Kamera önizleme servisi.
     /// DÜZELTME v52: Thread-safe lock ve düzgün toggle desteği
-    /// - Race condition düzeltildi (start/stop çakışması)
-    /// - SemaphoreSlim ile thread-safe erişim
-    /// - Kamera kilitli kalma sorunu çözüldü
+    /// DÜZELTME v57: NullReferenceException düzeltildi (thread-safe local copy)
     /// </summary>
     public sealed class PreviewService : IPreviewService
     {
@@ -36,7 +34,7 @@ namespace UniCast.App.Services
         private WriteableBitmap? _writeableBitmap;
         private int _bitmapWidth;
         private int _bitmapHeight;
-        private byte[]? _copyBuffer; // Reusable buffer for pixel copying
+        private byte[]? _copyBuffer;
 
         // DÜZELTME v52: Thread-safe lock
         private readonly SemaphoreSlim _operationLock = new(1, 1);
@@ -51,15 +49,14 @@ namespace UniCast.App.Services
             if (_isStarting || _isStopping)
             {
                 System.Diagnostics.Debug.WriteLine("[PreviewService] Başka bir işlem devam ediyor, bekleniyor...");
-                // Mevcut işlemin bitmesini bekle
-                await Task.Delay(100);
+                await Task.Delay(100).ConfigureAwait(false);
                 if (_isStarting || _isStopping) return;
             }
 
             bool lockAcquired = false;
             try
             {
-                lockAcquired = await _operationLock.WaitAsync(3000); // 3 saniye timeout
+                lockAcquired = await _operationLock.WaitAsync(3000).ConfigureAwait(false);
                 if (!lockAcquired)
                 {
                     System.Diagnostics.Debug.WriteLine("[PreviewService] Lock alınamadı, işlem iptal");
@@ -73,7 +70,7 @@ namespace UniCast.App.Services
                 {
                     System.Diagnostics.Debug.WriteLine("[PreviewService] Zaten çalışıyor, önce durduruluyor...");
                     await StopInternalAsync().ConfigureAwait(false);
-                    await Task.Delay(200).ConfigureAwait(false); // Kamera serbest kalması için bekle
+                    await Task.Delay(200).ConfigureAwait(false);
                 }
 
                 if (cameraIndex < 0) cameraIndex = 0;
@@ -86,7 +83,6 @@ namespace UniCast.App.Services
                 System.Diagnostics.Debug.WriteLine($"[PreviewService] Kamera açılıyor: index={cameraIndex}, MSMF backend");
 
                 // DÜZELTME v53: VideoCapture oluşturmayı background thread'de yap
-                // DÜZELTME v55: ConfigureAwait(false) eklendi - UI thread'e dönme zorunluluğu yok
                 var captureResult = await Task.Run(() =>
                 {
                     try
@@ -114,23 +110,25 @@ namespace UniCast.App.Services
 
                 _capture = captureResult;
 
-                if (_capture == null || !_capture.IsOpened())
+                // DÜZELTME v57: Thread-safe local copy kullan
+                var capture = _capture;
+                if (capture == null || !capture.IsOpened())
                 {
                     System.Diagnostics.Debug.WriteLine("[PreviewService] Kamera açılamadı - tüm backend'ler başarısız.");
                     CleanupCaptureInternal();
                     return;
                 }
 
-                // Kamera ayarları - bunlar hızlı, UI thread'de kalabilir
-                _capture.Set(VideoCaptureProperties.FrameWidth, width);
-                _capture.Set(VideoCaptureProperties.FrameHeight, height);
-                _capture.Set(VideoCaptureProperties.Fps, fps);
-                _capture.Set(VideoCaptureProperties.BufferSize, 1);
+                // Kamera ayarları - local copy ile thread-safe
+                capture.Set(VideoCaptureProperties.FrameWidth, width);
+                capture.Set(VideoCaptureProperties.FrameHeight, height);
+                capture.Set(VideoCaptureProperties.Fps, fps);
+                capture.Set(VideoCaptureProperties.BufferSize, 1);
 
                 // Gerçek değerleri kontrol et
-                var actualFps = _capture.Get(VideoCaptureProperties.Fps);
-                var actualWidth = _capture.Get(VideoCaptureProperties.FrameWidth);
-                var actualHeight = _capture.Get(VideoCaptureProperties.FrameHeight);
+                var actualFps = capture.Get(VideoCaptureProperties.Fps);
+                var actualWidth = capture.Get(VideoCaptureProperties.FrameWidth);
+                var actualHeight = capture.Get(VideoCaptureProperties.FrameHeight);
 
                 // Geçersiz resolution kontrolü
                 if (actualWidth < 1 || actualHeight < 1)
@@ -215,7 +213,6 @@ namespace UniCast.App.Services
 
         /// <summary>
         /// DÜZELTME v54: WriteableBitmap reuse ile GC pressure azaltıldı
-        /// Her frame'de yeni bitmap oluşturmak yerine mevcut bitmap'e yazılıyor
         /// </summary>
         private void CaptureLoopOptimized(CancellationToken ct)
         {
@@ -223,6 +220,7 @@ namespace UniCast.App.Services
 
             while (!ct.IsCancellationRequested && IsRunning)
             {
+                // DÜZELTME v57: Thread-safe local copy
                 var capture = _capture;
                 var frame = _frame;
 
@@ -232,10 +230,18 @@ namespace UniCast.App.Services
                     break;
                 }
 
-                // IsOpened kontrolü - her frame'de değil, arada bir yap
-                if (!capture.IsOpened())
+                // IsOpened kontrolü
+                try
                 {
-                    System.Diagnostics.Debug.WriteLine("[PreviewService] Capture artık açık değil, loop sonlandırılıyor");
+                    if (!capture.IsOpened())
+                    {
+                        System.Diagnostics.Debug.WriteLine("[PreviewService] Capture artık açık değil, loop sonlandırılıyor");
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PreviewService] IsOpened kontrolü hatası: {ex.Message}");
                     break;
                 }
 
@@ -263,14 +269,17 @@ namespace UniCast.App.Services
                     try
                     {
                         // DÜZELTME v55: BeginInvoke kullan (non-blocking)
-                        // Invoke UI thread'i bekler ve bloklayabilir
                         System.Windows.Application.Current?.Dispatcher?.BeginInvoke(
                             System.Windows.Threading.DispatcherPriority.Render,
                             new Action(() =>
                             {
                                 try
                                 {
-                                    UpdateWriteableBitmap(frame);
+                                    // DÜZELTME v57: frame hala geçerli mi kontrol et
+                                    if (_frame != null && !_frame.Empty())
+                                    {
+                                        UpdateWriteableBitmap(_frame);
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
@@ -308,7 +317,6 @@ namespace UniCast.App.Services
 
         /// <summary>
         /// DÜZELTME v54: Mat'ı WriteableBitmap'e kopyala (reuse)
-        /// Bu metod UI thread'de çalışmalı
         /// </summary>
         private void UpdateWriteableBitmap(Mat frame)
         {
@@ -318,6 +326,12 @@ namespace UniCast.App.Services
             int height = frame.Height;
             var sourceStride = (int)frame.Step();
             int totalBytes = sourceStride * height;
+
+            // Geçersiz boyut kontrolü
+            if (width <= 0 || height <= 0 || totalBytes <= 0)
+            {
+                return;
+            }
 
             // WriteableBitmap boyutu değiştiyse veya yoksa yeniden oluştur
             if (_writeableBitmap == null || _bitmapWidth != width || _bitmapHeight != height)
@@ -329,7 +343,7 @@ namespace UniCast.App.Services
                     null);
                 _bitmapWidth = width;
                 _bitmapHeight = height;
-                _copyBuffer = null; // Buffer'ı yeniden oluştur
+                _copyBuffer = null;
                 System.Diagnostics.Debug.WriteLine($"[PreviewService] WriteableBitmap oluşturuldu: {width}x{height}");
             }
 
@@ -346,6 +360,13 @@ namespace UniCast.App.Services
                 var sourcePtr = frame.Data;
                 var destPtr = _writeableBitmap.BackBuffer;
                 var stride = _writeableBitmap.BackBufferStride;
+
+                // Pointer geçerlilik kontrolü
+                if (sourcePtr == IntPtr.Zero || destPtr == IntPtr.Zero)
+                {
+                    _writeableBitmap.Unlock();
+                    return;
+                }
 
                 // Mat'tan buffer'a kopyala
                 System.Runtime.InteropServices.Marshal.Copy(sourcePtr, _copyBuffer, 0, totalBytes);
@@ -387,21 +408,21 @@ namespace UniCast.App.Services
             if (_isStopping)
             {
                 System.Diagnostics.Debug.WriteLine("[PreviewService] Zaten durduruluyor, bekleniyor...");
-                await Task.Delay(100);
+                await Task.Delay(100).ConfigureAwait(false);
                 return;
             }
 
             bool lockAcquired = false;
             try
             {
-                lockAcquired = await _operationLock.WaitAsync(3000);
+                lockAcquired = await _operationLock.WaitAsync(3000).ConfigureAwait(false);
                 if (!lockAcquired)
                 {
                     System.Diagnostics.Debug.WriteLine("[PreviewService] Stop için lock alınamadı");
                     return;
                 }
 
-                await StopInternalAsync();
+                await StopInternalAsync().ConfigureAwait(false);
             }
             finally
             {
@@ -435,7 +456,7 @@ namespace UniCast.App.Services
                 {
                     try
                     {
-                        await task.WaitAsync(TimeSpan.FromSeconds(2));
+                        await task.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
                     }
                     catch (TimeoutException)
                     {

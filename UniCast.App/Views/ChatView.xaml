@@ -64,7 +64,16 @@
 												   FontSize="9" Foreground="White" FontWeight="SemiBold"/>
                                     </Border>
                                 </StackPanel>
-                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{StaticResource TextMain}"/>
+                                <!-- DÜZELTME: Seçilebilir mesaj -->
+                                <TextBox Text="{Binding Message, Mode=OneWay}" 
+                                         TextWrapping="Wrap" 
+                                         Foreground="{StaticResource TextMain}"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         IsReadOnly="True"
+                                         IsTabStop="False"
+                                         Cursor="IBeam"
+                                         Padding="0"/>
                             </StackPanel>
                         </Grid>
                     </Border>

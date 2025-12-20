@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -10,9 +11,6 @@ using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
 
-
-
-
 // Çakışma önlemek için alias
 using CoreChatMessage = UniCast.Core.Chat.ChatMessage;
 using CoreChatPlatform = UniCast.Core.Chat.ChatPlatform;
@@ -21,6 +19,7 @@ namespace UniCast.App.Overlay
 {
     /// <summary>
     /// Overlay penceresi - yayın üzerinde gösterilen chat ve bilgiler
+    /// DÜZELTME: Resize ve toggle visibility desteği eklendi
     /// </summary>
     public partial class OverlayWindow : Window
     {
@@ -90,6 +89,36 @@ namespace UniCast.App.Overlay
         {
             Left = x;
             Top = y;
+        }
+
+        /// <summary>
+        /// Overlay görünürlüğünü toggle et
+        /// </summary>
+        public void ToggleVisibility()
+        {
+            if (IsVisible)
+            {
+                Hide();
+            }
+            else
+            {
+                Show();
+                Activate();
+            }
+        }
+
+        /// <summary>
+        /// Overlay'i göster
+        /// </summary>
+        public new void Show()
+        {
+            base.Show();
+            
+            // Pencere minimize edilmişse normal state'e getir
+            if (WindowState == WindowState.Minimized)
+            {
+                WindowState = WindowState.Normal;
+            }
         }
 
         /// <summary>
@@ -316,14 +345,60 @@ namespace UniCast.App.Overlay
 
         #region Event Handlers
 
-        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        /// <summary>
+        /// Header'dan sürükleme
+        /// </summary>
+        private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            DragMove();
+            if (e.ClickCount == 2)
+            {
+                // Çift tıklama - varsayılan boyuta dön
+                Width = 400;
+                Height = 600;
+            }
+            else
+            {
+                DragMove();
+            }
         }
 
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
             Hide();
+        }
+
+        /// <summary>
+        /// Sağ alt köşe resize grip
+        /// </summary>
+        private void ResizeGrip_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            double newWidth = Width + e.HorizontalChange;
+            double newHeight = Height + e.VerticalChange;
+
+            Width = Math.Max(MinWidth, Math.Min(newWidth, 1920));
+            Height = Math.Max(MinHeight, Math.Min(newHeight, 1080));
+
+            SaveSizeToSettings();
+        }
+
+        /// <summary>
+        /// Sağ kenar resize
+        /// </summary>
+        private void RightResize_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            double newWidth = Width + e.HorizontalChange;
+            Width = Math.Max(MinWidth, Math.Min(newWidth, 1920));
+            SaveSizeToSettings();
+        }
+
+        /// <summary>
+        /// Alt kenar resize
+        /// </summary>
+        private void BottomResize_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            double newHeight = Height + e.VerticalChange;
+            Height = Math.Max(MinHeight, Math.Min(newHeight, 1080));
+            SaveSizeToSettings();
         }
 
         private void UptimeTimer_Tick(object? sender, EventArgs e)
@@ -355,6 +430,24 @@ namespace UniCast.App.Overlay
         #endregion
 
         #region Private Methods
+
+        /// <summary>
+        /// Boyutu ayarlara kaydet
+        /// </summary>
+        private void SaveSizeToSettings()
+        {
+            try
+            {
+                var settings = SettingsStore.Data;
+                settings.OverlayWidth = (int)Width;
+                settings.OverlayHeight = (int)Height;
+                SettingsStore.Save();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OverlayWindow] Boyut kaydetme hatası: {ex.Message}");
+            }
+        }
 
         private void UpdateBreakTimer()
         {

@@ -3,13 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="UniCast Overlay"
         Width="400" Height="600"
+        MinWidth="200" MinHeight="150"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
-        ResizeMode="NoResize"
-        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        ResizeMode="NoResize">
 
     <Border Background="#E6181825" CornerRadius="10">
         <Grid>
@@ -19,8 +19,9 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <Border Grid.Row="0" Background="#20FFFFFF" CornerRadius="10,10,0,0" Padding="10,8">
+            <!-- Header (Sürüklenebilir) -->
+            <Border Grid.Row="0" Background="#20FFFFFF" CornerRadius="10,10,0,0" Padding="10,8"
+                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -42,7 +43,7 @@
                     <Button Grid.Column="2" Content="─" Width="24" Height="24"
                             Background="Transparent" Foreground="#888" BorderThickness="0"
                             Click="MinimizeButton_Click" Cursor="Hand"
-                            ToolTip="Gizle"/>
+                            ToolTip="Gizle (F8 ile tekrar açabilirsiniz)"/>
                 </Grid>
             </Border>
 
@@ -124,6 +125,40 @@
                                HorizontalAlignment="Right"/>
                 </Grid>
             </Border>
+
+            <!-- Resize Kenarları - Önce bunlar (altta kalır) -->
+
+            <!-- Sağ kenar (köşeyi hariç tut) -->
+            <Thumb Grid.Row="0" Grid.RowSpan="2"
+                   Width="6" HorizontalAlignment="Right" 
+                   Cursor="SizeWE" Opacity="0"
+                   DragDelta="RightResize_DragDelta"/>
+
+            <!-- Alt kenar (köşeyi hariç tut) -->
+            <Thumb Grid.Row="2"
+                   Height="6" VerticalAlignment="Bottom" 
+                   Margin="0,0,20,0"
+                   Cursor="SizeNS" Opacity="0"
+                   DragDelta="BottomResize_DragDelta"/>
+
+            <!-- Köşe Resize Grip - En son (üstte kalır) -->
+            <Thumb x:Name="ResizeGrip" Grid.Row="2"
+                   Width="20" Height="20"
+                   HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                   Cursor="SizeNWSE"
+                   DragDelta="ResizeGrip_DragDelta">
+                <Thumb.Template>
+                    <ControlTemplate TargetType="Thumb">
+                        <Grid Background="Transparent">
+                            <!-- Resize çizgileri -->
+                            <Path Data="M 4,16 L 16,4 M 8,16 L 16,8 M 12,16 L 16,12" 
+                                  Stroke="#666" StrokeThickness="1.5"
+                                  Margin="0,0,4,4"
+                                  HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Thumb.Template>
+            </Thumb>
         </Grid>
     </Border>
 </Window>

@@ -9,6 +9,7 @@ namespace UniCast.App.Input
 {
     /// <summary>
     /// DÜZELTME v19: Klavye kısayolları yönetimi
+    /// DÜZELTME v57: Modifier tuşları tek başına basıldığında hata düzeltildi
     /// Global ve yerel kısayol tuşları desteği
     /// </summary>
     public sealed class KeyboardShortcutManager
@@ -257,16 +258,44 @@ namespace UniCast.App.Input
                 return;
             }
 
-            var gesture = new KeyGesture(e.Key, Keyboard.Modifiers);
-
-            if (_gestureMap.TryGetValue(gesture, out var id))
+            // DÜZELTME v57: Modifier tuşları tek başına basıldığında atla
+            // KeyGesture sadece modifier + başka bir tuş kombinasyonunu destekler
+            // Ctrl, Alt, Shift, Win tuşları tek başına KeyGesture oluşturamaz
+            if (IsModifierKey(e.Key))
             {
-                if (_shortcuts.TryGetValue(id, out var binding) && binding.IsEnabled)
+                return;
+            }
+
+            try
+            {
+                var gesture = new KeyGesture(e.Key, Keyboard.Modifiers);
+
+                if (_gestureMap.TryGetValue(gesture, out var id))
                 {
-                    ExecuteShortcut(id);
-                    e.Handled = true;
+                    if (_shortcuts.TryGetValue(id, out var binding) && binding.IsEnabled)
+                    {
+                        ExecuteShortcut(id);
+                        e.Handled = true;
+                    }
                 }
             }
+            catch (NotSupportedException)
+            {
+                // Geçersiz tuş kombinasyonu - sessizce atla
+                // Örn: NumLock, CapsLock, bazı özel tuşlar
+            }
+        }
+
+        /// <summary>
+        /// DÜZELTME v57: Modifier tuşu kontrolü
+        /// </summary>
+        private static bool IsModifierKey(Key key)
+        {
+            return key == Key.LeftCtrl || key == Key.RightCtrl ||
+                   key == Key.LeftAlt || key == Key.RightAlt ||
+                   key == Key.LeftShift || key == Key.RightShift ||
+                   key == Key.LWin || key == Key.RWin ||
+                   key == Key.System;
         }
 
         private void ExecuteShortcut(string id)

@@ -20,6 +20,7 @@ namespace UniCast.App
     /// <summary>
     /// Ana pencere - Tab yönetimi, overlay kontrolü ve kaynak koordinasyonu.
     /// DÜZELTME v50: Hafifletilmiş constructor, lazy initialization.
+    /// DÜZELTME v57: F8 ve Ctrl+O ile overlay toggle kısayolları.
     /// </summary>
     public partial class MainWindow : Window, IDisposable
     {
@@ -748,16 +749,17 @@ namespace UniCast.App
             }
         }
 
+        /// <summary>
+        /// Overlay görünürlüğünü toggle et
+        /// DÜZELTME v57: ToggleVisibility() metodu kullanılıyor
+        /// </summary>
         public void ToggleOverlayVisibility()
         {
             if (_overlay == null) return;
 
             try
             {
-                if (_overlay.IsVisible)
-                    _overlay.Hide();
-                else
-                    _overlay.Show();
+                _overlay.ToggleVisibility();
             }
             catch (Exception ex)
             {
@@ -785,6 +787,7 @@ namespace UniCast.App
 
         /// <summary>
         /// Global klavye kısayolları
+        /// DÜZELTME v57: F8 ve Ctrl+O ile overlay toggle eklendi
         /// </summary>
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
@@ -840,6 +843,14 @@ namespace UniCast.App
                         e.Handled = true;
                         break;
 
+                    case System.Windows.Input.Key.F8:
+                        // DÜZELTME v57: Overlay Göster/Gizle
+                        ToggleOverlayVisibility();
+                        var overlayStatus = _overlay?.IsVisible == true ? "gösterildi" : "gizlendi";
+                        ToastService.Instance.ShowInfo($"🖼️ Overlay {overlayStatus}");
+                        e.Handled = true;
+                        break;
+
                     case System.Windows.Input.Key.P:
                         // Ctrl+P - Önizleme Aç/Kapat
                         if (System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control)
@@ -849,6 +860,17 @@ namespace UniCast.App
                                 _controlViewModel.StartPreviewCommand.Execute(null);
                                 ToastService.Instance.ShowInfo("📷 Önizleme değiştirildi");
                             }
+                            e.Handled = true;
+                        }
+                        break;
+
+                    case System.Windows.Input.Key.O:
+                        // DÜZELTME v57: Ctrl+O - Overlay Göster/Gizle (alternatif)
+                        if (System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control)
+                        {
+                            ToggleOverlayVisibility();
+                            var status = _overlay?.IsVisible == true ? "gösterildi" : "gizlendi";
+                            ToastService.Instance.ShowInfo($"🖼️ Overlay {status}");
                             e.Handled = true;
                         }
                         break;

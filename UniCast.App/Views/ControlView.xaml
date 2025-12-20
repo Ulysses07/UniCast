@@ -282,19 +282,27 @@
                               ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="#1a1a1a" CornerRadius="5" Padding="8,5" Margin="0,1">
-                                    <StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" 
-                                                       Foreground="{StaticResource Primary}" FontSize="11"/>
-                                            <TextBlock Text=" • " Foreground="#555" FontSize="10"/>
-                                            <TextBlock Text="{Binding Platform}" Foreground="#555" 
-                                                       FontSize="9" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap" 
-                                                   Foreground="{StaticResource TextMain}" FontSize="11" 
-                                                   Margin="0,2,0,0"/>
-                                    </StackPanel>
+                                <!-- DÜZELTME v57: Çift tıklama ile kopyalama -->
+                                <Border Background="#1a1a1a" CornerRadius="5" Padding="8,5" Margin="0,1"
+                                        ToolTip="Çift tıkla = Tümünü kopyala | Tek tıkla = Seç">
+                                    <TextBox IsReadOnly="True" 
+                                             IsTabStop="False"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             Cursor="IBeam"
+                                             Padding="0"
+                                             TextWrapping="Wrap"
+                                             FontSize="11"
+                                             Foreground="{StaticResource TextMain}"
+                                             MouseDoubleClick="ChatText_MouseDoubleClick">
+                                        <TextBox.Text>
+                                            <MultiBinding StringFormat="{}{0} • {1}&#x0a;{2}">
+                                                <Binding Path="DisplayName"/>
+                                                <Binding Path="Platform"/>
+                                                <Binding Path="Message"/>
+                                            </MultiBinding>
+                                        </TextBox.Text>
+                                    </TextBox>
                                 </Border>
                             </DataTemplate>
                         </ListView.ItemTemplate>

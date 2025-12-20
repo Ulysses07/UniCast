@@ -155,6 +155,33 @@ namespace UniCast.App.Views
         }
 
         /// <summary>
+        /// DÜZELTME v57: Chat mesajına çift tıklayınca tümünü kopyala
+        /// </summary>
+        private void ChatText_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            try
+            {
+                if (sender is System.Windows.Controls.TextBox textBox && !string.IsNullOrEmpty(textBox.Text))
+                {
+                    // Tüm metni seç
+                    textBox.SelectAll();
+
+                    // Clipboard'a kopyala
+                    System.Windows.Clipboard.SetText(textBox.Text);
+
+                    // Toast bildirimi göster
+                    ToastService.Instance.ShowInfo("📋 Mesaj kopyalandı!");
+
+                    e.Handled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ControlView] Kopyalama hatası: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Layout ayarlarını dosyaya kaydeder.
         /// </summary>
         private void SaveLayoutSettings()
