@@ -7,39 +7,64 @@
         AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        Topmost="True">
 
-	<Border CornerRadius="15" Background="#1a1a2e">
-		<Border.Effect>
-			<DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.5"/>
-		</Border.Effect>
+    <Window.Resources>
+        <!-- Spinning animation for logo -->
+        <Storyboard x:Key="PulseAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="LogoIcon"
+                             Storyboard.TargetProperty="Opacity"
+                             From="1" To="0.6" Duration="0:0:0.8"
+                             AutoReverse="True"/>
+        </Storyboard>
 
-		<Grid Margin="40">
-			<Grid.RowDefinitions>
-				<RowDefinition Height="*"/>
-				<RowDefinition Height="Auto"/>
-				<RowDefinition Height="Auto"/>
-				<RowDefinition Height="Auto"/>
-			</Grid.RowDefinitions>
+        <!-- Progress bar animation -->
+        <Storyboard x:Key="IndeterminateAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="IndeterminateIndicator"
+                             Storyboard.TargetProperty="(Canvas.Left)"
+                             From="-100" To="420" Duration="0:0:1.5"/>
+        </Storyboard>
+    </Window.Resources>
 
-			<!-- Logo & Title -->
-			<StackPanel Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center">
-				<TextBlock Text="🎬" FontSize="64" HorizontalAlignment="Center"/>
-				<TextBlock Text="UniCast"
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Window.Loaded">
+            <BeginStoryboard Storyboard="{StaticResource PulseAnimation}"/>
+        </EventTrigger>
+    </Window.Triggers>
+
+    <Border CornerRadius="15" Background="#1a1a2e">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.5"/>
+        </Border.Effect>
+
+        <Grid Margin="40">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Logo & Title -->
+            <StackPanel Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock x:Name="LogoIcon" Text="🎬" FontSize="64" HorizontalAlignment="Center"/>
+                <TextBlock Text="UniCast"
                            FontSize="42"
                            FontWeight="Bold"
                            Foreground="White"
                            HorizontalAlignment="Center"
                            Margin="0,10,0,0"/>
-				<TextBlock Text="Multi-Platform Streaming"
+                <TextBlock Text="Multi-Platform Streaming"
                            FontSize="14"
                            Foreground="#888"
                            HorizontalAlignment="Center"
                            Margin="0,5,0,0"/>
-			</StackPanel>
+            </StackPanel>
 
-			<!-- Status Text -->
-			<TextBlock x:Name="StatusText"
+            <!-- Status Text -->
+            <TextBlock x:Name="StatusText"
                        Grid.Row="1"
                        Text="Başlatılıyor..."
                        Foreground="#aaa"
@@ -47,24 +72,55 @@
                        HorizontalAlignment="Center"
                        Margin="0,20,0,10"/>
 
-			<!-- Progress Bar -->
-			<ProgressBar x:Name="LoadingBar"
-                         Grid.Row="2"
-                         Height="4"
-                         Minimum="0"
-                         Maximum="100"
-                         Value="0"
-                         Background="#16213e"
-                         Foreground="#e94560"
-                         BorderThickness="0"/>
+            <!-- Progress Bar Container -->
+            <Grid Grid.Row="2" Height="4">
+                <!-- Background -->
+                <Border Background="#16213e" CornerRadius="2"/>
 
-			<!-- Version -->
-			<TextBlock Grid.Row="3"
+                <!-- Determinate Progress -->
+                <Border x:Name="ProgressFill" 
+                        Background="#e94560" 
+                        CornerRadius="2"
+                        HorizontalAlignment="Left"
+                        Width="0"/>
+
+                <!-- Indeterminate Indicator (hidden by default) -->
+                <Canvas x:Name="IndeterminateCanvas" 
+                        Visibility="Collapsed" 
+                        ClipToBounds="True">
+                    <Border x:Name="IndeterminateIndicator"
+                            Canvas.Left="-100"
+                            Width="100"
+                            Height="4"
+                            CornerRadius="2">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="Transparent" Offset="0"/>
+                                <GradientStop Color="#e94560" Offset="0.5"/>
+                                <GradientStop Color="Transparent" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                </Canvas>
+            </Grid>
+
+            <!-- Sub-status (detailed info) -->
+            <TextBlock x:Name="SubStatusText"
+                       Grid.Row="3"
+                       Text=""
+                       Foreground="#666"
+                       FontSize="11"
+                       HorizontalAlignment="Center"
+                       Margin="0,8,0,0"/>
+
+            <!-- Version -->
+            <TextBlock x:Name="VersionText"
+                       Grid.Row="4"
                        Text="v1.0.0"
                        Foreground="#555"
                        FontSize="11"
                        HorizontalAlignment="Center"
                        Margin="0,15,0,0"/>
-		</Grid>
-	</Border>
+        </Grid>
+    </Border>
 </Window>

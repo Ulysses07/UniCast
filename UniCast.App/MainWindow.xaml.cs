@@ -19,7 +19,7 @@ namespace UniCast.App
 {
     /// <summary>
     /// Ana pencere - Tab yönetimi, overlay kontrolü ve kaynak koordinasyonu.
-    /// Proper dispose pattern uygulanmış.
+    /// DÜZELTME v50: Hafifletilmiş constructor, lazy initialization.
     /// </summary>
     public partial class MainWindow : Window, IDisposable
     {
@@ -36,7 +36,7 @@ namespace UniCast.App
         // Chat Ingestors - Sadece aktif olanlar
         private YouTubeChatScraper? _ytIngestor;
         private TwitchChatIngestor? _twitchIngestor;
-        private ExtensionBridgeIngestor? _extensionBridgeIngestor;  // Browser Extension (Instagram, Facebook, TikTok)
+        private ExtensionBridgeIngestor? _extensionBridgeIngestor;
 
         // Stream Chat Overlay (yayına gömülü chat)
         private StreamChatOverlayService? _streamChatOverlayService;
@@ -55,6 +55,9 @@ namespace UniCast.App
         private SettingsView? _settingsView;
         private LicenseView? _licenseView;
 
+        // DÜZELTME v50: Lazy init flag
+        private bool _lazyInitComplete;
+
         #endregion
 
         #region Constructor
@@ -65,30 +68,73 @@ namespace UniCast.App
 
             _cts = new CancellationTokenSource();
 
-            // Loglama bağlantıları kur
+            // DÜZELTME v50: Sadece kritik bağlantıları kur (hızlı)
             WireUpLogging();
 
-            // FFmpeg kontrolü
-            EnsureFfmpegExists();
-
-            // UI başlat
+            // DÜZELTME v50: UI başlat (hızlı - sadece tab event)
             InitializeUI();
-
-            // Overlay başlat
-            InitializeOverlay();
-
-            // Chat sistemini başlat
-            InitializeChatSystem();
 
             // Klavye kısayollarını etkinleştir
             PreviewKeyDown += MainWindow_PreviewKeyDown;
 
-            Log.Information("[MainWindow] Başlatıldı");
+            // DÜZELTME v50: Loaded event'inde lazy init
+            Loaded += MainWindow_Loaded;
+
+            Log.Information("[MainWindow] Constructor tamamlandı (hafif)");
         }
 
         #endregion
 
         #region Initialization
+
+        /// <summary>
+        /// DÜZELTME v50: Window yüklendikten sonra arka planda init
+        /// </summary>
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (_lazyInitComplete) return;
+            _lazyInitComplete = true;
+
+            Log.Debug("[MainWindow] Lazy initialization başlıyor...");
+
+            // Arka planda başlat - UI donmaz
+            await Task.Run(() =>
+            {
+                try
+                {
+                    // 1. FFmpeg uyarısı (App'de kontrol edildi)
+                    if (!App.FfmpegAvailable)
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            ToastService.Instance.ShowWarning("⚠️ FFmpeg bulunamadı! Stream özellikleri çalışmayabilir.");
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "[MainWindow] FFmpeg uyarısı gösterilemedi");
+                }
+            });
+
+            // 2. Overlay başlat (UI thread'de)
+            InitializeOverlay();
+
+            // 3. Chat sistemi (arka planda)
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    Dispatcher.Invoke(() => InitializeChatSystem());
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "[MainWindow] Chat sistemi başlatılamadı");
+                }
+            });
+
+            Log.Debug("[MainWindow] Lazy initialization tamamlandı");
+        }
 
         private void InitializeUI()
         {
@@ -180,9 +226,6 @@ namespace UniCast.App
                     _ingestorTasks.Add(StartIngestorSafeAsync(_twitchIngestor, "Twitch", ct));
                 }
 
-                // Instagram, Facebook, TikTok - Browser Extension ile çalışıyor
-                // Stream başladığında OnStreamStarted'da başlatılıyor
-
                 Log.Debug("[MainWindow] {Count} adet chat ingestor başlatıldı", _ingestorTasks.Count);
             }
             catch (Exception ex)
@@ -259,7 +302,6 @@ namespace UniCast.App
                         case StreamPlatform.Facebook:
                         case StreamPlatform.TikTok:
                         case StreamPlatform.Instagram:
-                            // Browser Extension ile çalışıyor
                             extensionBridgeNeeded = true;
                             break;
                     }
@@ -373,10 +415,7 @@ namespace UniCast.App
             try
             {
                 StopAllChatIngestors();
-
-                // Stream Chat Overlay'i durdur
                 _ = StopStreamChatOverlayAsync();
-
                 Log.Information("[MainWindow] Stream durdu - Chat ingestor'lar kapatıldı");
             }
             catch (Exception ex)
@@ -398,7 +437,6 @@ namespace UniCast.App
 
                 _ytIngestor = null;
                 _twitchIngestor = null;
-                // Extension bridge'i kapatmıyoruz, tekrar kullanılabilir
 
                 _ingestorTasks.Clear();
             }
@@ -471,51 +509,6 @@ namespace UniCast.App
             catch (Exception ex)
             {
                 Log.Error(ex, "[MainWindow] Log bağlantısı kurulamadı");
-            }
-        }
-
-        private void EnsureFfmpegExists()
-        {
-            try
-            {
-                var ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe");
-
-                if (!File.Exists(ffmpegPath))
-                {
-                    // PATH'de ara
-                    var pathDirs = Environment.GetEnvironmentVariable("PATH")?.Split(';') ?? Array.Empty<string>();
-                    var found = pathDirs.Any(dir =>
-                    {
-                        try
-                        {
-                            return File.Exists(Path.Combine(dir, "ffmpeg.exe"));
-                        }
-                        catch
-                        {
-                            return false;
-                        }
-                    });
-
-                    if (!found)
-                    {
-                        Log.Warning("[MainWindow] FFmpeg bulunamadı! Stream özellikleri çalışmayabilir.");
-
-                        Dispatcher.InvokeAsync(() =>
-                        {
-                            MessageBox.Show(
-                                "FFmpeg bulunamadı!\n\n" +
-                                "Stream özellikleri çalışmayabilir.\n" +
-                                "FFmpeg'i indirip uygulama klasörüne veya PATH'e ekleyin.",
-                                "Uyarı",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Warning);
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "[MainWindow] FFmpeg kontrolü hatası");
             }
         }
 
@@ -792,10 +785,6 @@ namespace UniCast.App
 
         /// <summary>
         /// Global klavye kısayolları
-        /// F5 - Yayın Başlat/Durdur
-        /// F6 - Mola Modu
-        /// F7 - Mikrofon Mute/Unmute
-        /// Ctrl+P - Önizleme Aç/Kapat
         /// </summary>
         private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
@@ -813,7 +802,6 @@ namespace UniCast.App
                         {
                             if (_controlViewModel.IsRunning)
                             {
-                                // Durdurma onayı
                                 var result = MessageBox.Show(
                                     "Yayını durdurmak istediğinize emin misiniz?",
                                     "Yayını Durdur (F5)",
@@ -876,7 +864,6 @@ namespace UniCast.App
         {
             try
             {
-                // Overlay'e mesajı gönder
                 _overlay?.ShowChatMessage(e.Message);
             }
             catch (Exception ex)
@@ -940,6 +927,7 @@ namespace UniCast.App
                     {
                         MainTabControl.SelectionChanged -= OnTabSelectionChanged;
                         PreviewKeyDown -= MainWindow_PreviewKeyDown;
+                        Loaded -= MainWindow_Loaded;
                     }
                     catch (Exception ex)
                     {

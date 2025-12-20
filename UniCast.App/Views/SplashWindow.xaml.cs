@@ -1,95 +1,170 @@
 ﻿using System;
-using System.Threading.Tasks;
 using System.Windows;
-using UniCast.App.Infrastructure;
+using System.Windows.Media.Animation;
 
 namespace UniCast.App.Views
 {
     /// <summary>
-    /// Uygulama açılış ekranı
+    /// Uygulama açılış ekranı.
+    /// DÜZELTME v50: App.xaml.cs'den kontrol edilebilir, gerçek progress gösterir.
     /// </summary>
     public partial class SplashWindow : Window
     {
-        public bool InitializationSuccess { get; private set; }
-        public string? ErrorMessage { get; private set; }
+        private Storyboard? _indeterminateStoryboard;
+        private double _maxWidth;
 
         public SplashWindow()
         {
             InitializeComponent();
+
+            // Versiyon bilgisini ayarla
+            try
+            {
+                var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                VersionText.Text = $"v{version?.Major}.{version?.Minor}.{version?.Build}";
+            }
+            catch
+            {
+                VersionText.Text = "v1.0.0";
+            }
+
             Loaded += SplashWindow_Loaded;
         }
 
-        // DÜZELTME v20: AsyncVoidHandler ile güvenli async event handler
         private void SplashWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            AsyncVoidHandler.Handle(
-                async () => await InitializeAndCloseAsync(),
-                showErrorDialog: false);
+            // Progress bar max width'i hesapla
+            _maxWidth = ActualWidth - 80; // 40 margin each side
+
+            // Indeterminate animation'ı hazırla
+            _indeterminateStoryboard = (Storyboard)FindResource("IndeterminateAnimation");
         }
 
-        private async Task InitializeAndCloseAsync()
+        /// <summary>
+        /// Progress değerini günceller (0-100).
+        /// </summary>
+        public void SetProgress(int value, string status, string? subStatus = null)
         {
-            try
+            if (!Dispatcher.CheckAccess())
             {
-                await InitializeApplicationAsync();
-                InitializationSuccess = true;
+                Dispatcher.Invoke(() => SetProgress(value, status, subStatus));
+                return;
             }
-            catch (Exception ex)
+
+            // Status text
+            StatusText.Text = status;
+
+            // Sub-status text
+            if (!string.IsNullOrEmpty(subStatus))
+                SubStatusText.Text = subStatus;
+
+            // Progress bar
+            if (value >= 0 && value <= 100)
             {
-                InitializationSuccess = false;
-                ErrorMessage = ex.Message;
-            }
-            finally
-            {
-                Close();
-            }
-        }
+                // Determinate mode
+                IndeterminateCanvas.Visibility = Visibility.Collapsed;
+                ProgressFill.Visibility = Visibility.Visible;
 
-        private async Task InitializeApplicationAsync()
-        {
-            // Step 1: Temel kontroller
-            UpdateProgress(0, "Sistem kontrolleri yapılıyor...");
-            await Task.Delay(AppConstants.UI.ToastDurationSeconds * 100); // ~300ms
+                var targetWidth = (_maxWidth > 0 ? _maxWidth : 420) * (value / 100.0);
 
-            // Step 2: Yapılandırma yükleme
-            UpdateProgress(20, "Yapılandırma yükleniyor...");
-            await Task.Delay(300);
-
-            // Step 3: Lisans kontrolü
-            UpdateProgress(40, "Lisans doğrulanıyor...");
-            await Task.Delay(500);
-
-            // Step 4: Servisler başlatılıyor
-            UpdateProgress(60, "Servisler başlatılıyor...");
-            await Task.Delay(400);
-
-            // Step 5: UI hazırlanıyor
-            UpdateProgress(80, "Arayüz hazırlanıyor...");
-            await Task.Delay(300);
-
-            // Step 6: Tamamlandı
-            UpdateProgress(100, "Hazır!");
-            await Task.Delay(200);
-        }
-
-        private void UpdateProgress(int value, string status)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                if (LoadingBar != null)
+                // Animate progress
+                var animation = new DoubleAnimation(targetWidth, TimeSpan.FromMilliseconds(200))
                 {
-                    LoadingBar.Value = value;
-                }
-                if (StatusText != null)
-                {
-                    StatusText.Text = status;
-                }
-            });
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                };
+                ProgressFill.BeginAnimation(WidthProperty, animation);
+            }
         }
 
-        public void SetProgress(int value, string status)
+        /// <summary>
+        /// Indeterminate mode'a geçer (süresiz bekleme).
+        /// </summary>
+        public void SetIndeterminate(string status, string? subStatus = null)
         {
-            UpdateProgress(value, status);
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.Invoke(() => SetIndeterminate(status, subStatus));
+                return;
+            }
+
+            StatusText.Text = status;
+
+            if (!string.IsNullOrEmpty(subStatus))
+                SubStatusText.Text = subStatus;
+
+            // Indeterminate mode
+            ProgressFill.Visibility = Visibility.Collapsed;
+            IndeterminateCanvas.Visibility = Visibility.Visible;
+
+            _indeterminateStoryboard?.Begin(this, true);
+        }
+
+        /// <summary>
+        /// Sadece status text'i günceller.
+        /// </summary>
+        public void SetStatus(string status, string? subStatus = null)
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.Invoke(() => SetStatus(status, subStatus));
+                return;
+            }
+
+            StatusText.Text = status;
+
+            if (subStatus != null)
+                SubStatusText.Text = subStatus;
+        }
+
+        /// <summary>
+        /// Hata durumunu gösterir.
+        /// </summary>
+        public void SetError(string errorMessage)
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.Invoke(() => SetError(errorMessage));
+                return;
+            }
+
+            StatusText.Text = "❌ Hata";
+            StatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(233, 69, 96)); // #e94560
+
+            SubStatusText.Text = errorMessage;
+            SubStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(170, 170, 170));
+
+            // Progress bar'ı kırmızı yap
+            ProgressFill.Background = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(233, 69, 96));
+
+            // Animasyonları durdur
+            _indeterminateStoryboard?.Stop(this);
+        }
+
+        /// <summary>
+        /// Başarılı tamamlanma durumunu gösterir.
+        /// </summary>
+        public void SetComplete(string message = "Hazır!")
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.Invoke(() => SetComplete(message));
+                return;
+            }
+
+            StatusText.Text = $"✓ {message}";
+            StatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(76, 175, 80)); // Green
+
+            SubStatusText.Text = "";
+
+            // Progress'i %100 yap
+            SetProgress(100, StatusText.Text);
+
+            // Animasyonları durdur
+            _indeterminateStoryboard?.Stop(this);
         }
     }
 }

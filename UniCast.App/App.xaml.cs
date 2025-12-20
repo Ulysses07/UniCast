@@ -33,6 +33,13 @@ namespace UniCast.App
         private EventHandler<Diagnostics.HealthStatusChangedEventArgs>? _healthStatusHandler;
         private EventHandler<Diagnostics.PerformanceAlertEventArgs>? _performanceAlertHandler;
 
+        // DÜZELTME v50: Splash window referansı
+        private SplashWindow? _splash;
+
+        // DÜZELTME v50: Startup cache - MainWindow'a aktarılacak
+        public static bool FfmpegAvailable { get; private set; }
+        public static bool DevicesCached { get; private set; }
+
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -40,20 +47,166 @@ namespace UniCast.App
             // DÜZELTME v24: Startup timing başlat
             _startupStopwatch = Stopwatch.StartNew();
 
-            // 1. Loglama (DynamicLogLevel ile)
+            // 1. Loglama (DynamicLogLevel ile) - ÇOK HIZLI
             ConfigureLogging();
 
-            // 2. Hata Yakalama
+            // 2. Hata Yakalama - ÇOK HIZLI
             SetupExceptionHandling();
 
             Log.Information("===================================================");
             Log.Information($"UniCast Başlatılıyor... Versiyon: {GetType().Assembly.GetName().Version}");
             Log.Information("===================================================");
 
-            // DÜZELTME v17.1: Önceki oturumdan kalan orphan FFmpeg process'leri temizle
-            CleanupOrphanFfmpegProcesses();
+            // 3. Splash Screen AÇ
+            try
+            {
+                _splash = new SplashWindow();
+                _splash.Show();
+                _splash.SetProgress(5, "Başlatılıyor...");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Splash ekranı açılamadı.");
+            }
 
-            // DÜZELTME v24: Configuration Validation (kritik ayarları kontrol et)
+            try
+            {
+                // ═══════════════════════════════════════════════════════════
+                // SPLASH AŞAMASI: Kritik işlemler (UI bloklanabilir)
+                // ═══════════════════════════════════════════════════════════
+
+                // 4. Orphan FFmpeg temizliği - HIZLI
+                _splash?.SetProgress(10, "Sistem kontrolleri...", "Önceki oturum temizleniyor");
+                CleanupOrphanFfmpegProcesses();
+
+                // 5. Config Validation - HIZLI
+                _splash?.SetProgress(15, "Yapılandırma kontrol ediliyor...");
+                if (!ValidateConfiguration())
+                {
+                    _splash?.Close();
+                    Shutdown(1);
+                    return;
+                }
+
+                // 6. FFmpeg kontrolü - ORTA (~500ms)
+                _splash?.SetProgress(25, "FFmpeg kontrol ediliyor...");
+                FfmpegAvailable = await Task.Run(() => CheckFfmpegAvailability());
+                Log.Information("[Startup] FFmpeg: {Status}", FfmpegAvailable ? "Mevcut" : "Bulunamadı");
+
+                // 7. LİSANS KONTROLÜ - YAVAŞ (~1sn network)
+                _splash?.SetProgress(35, "Lisans doğrulanıyor...");
+                var licenseResult = await InitializeLicenseAsync();
+
+                if (!licenseResult.IsValid)
+                {
+                    _splash?.Close();
+                    await HandleLicenseFailureAsync(licenseResult);
+                    return;
+                }
+
+                LicenseManager.Instance.StatusChanged += OnLicenseStatusChanged;
+                Log.Information("Lisans doğrulandı. Tür: {LicenseType}", licenseResult.License?.Type);
+
+                // 8. Enterprise Services - ORTA (~500ms)
+                _splash?.SetProgress(50, "Servisler başlatılıyor...", "Telemetry & Feature Flags");
+                await InitializeEnterpriseServicesAsync();
+
+                // 9. Cihaz listesi ön-cache - YAVAŞ (~1-2sn)
+                _splash?.SetProgress(65, "Cihazlar taranıyor...", "Kamera ve mikrofon listesi");
+                DevicesCached = await CacheDeviceListAsync();
+
+                // 10. Hardware encoder detection - ORTA (~500ms)
+                _splash?.SetProgress(80, "Donanım tespit ediliyor...", "GPU encoder kontrolü");
+                await DetectHardwareEncodersAsync();
+
+                // ═══════════════════════════════════════════════════════════
+                // MAINWINDOW AŞAMASI: UI açılır, geri kalan lazy yüklenir
+                // ═══════════════════════════════════════════════════════════
+
+                _splash?.SetProgress(90, "Arayüz hazırlanıyor...");
+
+                // 11. Ana Pencereyi Aç
+                try
+                {
+                    Log.Debug("MainWindow oluşturuluyor...");
+                    var mainWindow = new MainWindow();
+
+                    this.MainWindow = mainWindow;
+                    mainWindow.Closed += (s, args) =>
+                    {
+                        Log.Debug("MainWindow kapandı, uygulama kapatılıyor...");
+                        Shutdown();
+                    };
+
+                    _splash?.SetProgress(95, "Hazır!", "Uygulama açılıyor...");
+                    await Task.Delay(200); // Kullanıcı "Hazır!" görsün
+
+                    Log.Debug("MainWindow.Show() çağrılıyor...");
+                    mainWindow.Show();
+
+                    // Splash'ı kapat
+                    _splash?.Close();
+                    _splash = null;
+
+                    // Keyboard shortcuts başlat
+                    try
+                    {
+                        KeyboardShortcutManager.Instance.Initialize(mainWindow);
+                        Log.Debug("[Shortcuts] Klavye kısayolları başlatıldı");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "[Shortcuts] Klavye kısayolları başlatılamadı");
+                    }
+
+                    // Diagnostics arka planda (MainWindow açıldıktan sonra)
+                    _ = StartDiagnosticsAsync();
+
+                    // Auto-Update kontrolü (5sn sonra, sessiz)
+                    _ = CheckForUpdatesAsync();
+
+                    // Startup timing
+                    _startupStopwatch?.Stop();
+                    Log.Information("[Startup] Toplam süre: {TotalMs}ms", _startupStopwatch?.ElapsedMilliseconds);
+
+                    Log.Information("MainWindow başarıyla açıldı");
+                }
+                catch (Exception ex)
+                {
+                    Log.Fatal(ex, "MainWindow açılamadı: {Message}", ex.Message);
+                    _splash?.SetError(ex.Message);
+                    await Task.Delay(2000);
+                    _splash?.Close();
+
+                    MessageBox.Show(
+                        $"Ana pencere açılamadı:\n\n{ex.Message}\n\n{ex.StackTrace}",
+                        "UniCast - Kritik Hata",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    Shutdown(1);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Uygulama başlatma hatası: {Message}", ex.Message);
+                _splash?.SetError(ex.Message);
+                await Task.Delay(2000);
+                _splash?.Close();
+
+                MessageBox.Show(
+                    $"Uygulama başlatılamadı:\n\n{ex.Message}",
+                    "UniCast - Kritik Hata",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Shutdown(1);
+            }
+        }
+
+        /// <summary>
+        /// DÜZELTME v50: Configuration validation
+        /// </summary>
+        private bool ValidateConfiguration()
+        {
             try
             {
                 var configResult = ConfigValidator.Instance.Validate();
@@ -67,160 +220,118 @@ namespace UniCast.App
                             "UniCast - Yapılandırma Hatası",
                             MessageBoxButton.OK,
                             MessageBoxImage.Error);
-                        Shutdown(1);
-                        return;
+                        return false;
                     }
                     Log.Warning("[Config] Uyarı: {Error}", error.Message);
                 }
+                return true;
             }
             catch (Exception ex)
             {
                 Log.Warning(ex, "[Config] Yapılandırma doğrulama hatası (devam ediliyor)");
-            }
-
-            // 3. Splash Screen
-            SplashWindow? splash = null;
-            try
-            {
-                splash = new SplashWindow();
-                splash.Show();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Splash ekranı açılamadı.");
-            }
-
-            try
-            {
-                // 4. LİSANS KONTROLÜ
-                var licenseResult = await InitializeLicenseAsync().ConfigureAwait(true);
-
-                if (!licenseResult.IsValid)
-                {
-                    splash?.Close();
-                    await HandleLicenseFailureAsync(licenseResult).ConfigureAwait(true);
-                    return;
-                }
-
-                // Lisans olaylarını dinle
-                LicenseManager.Instance.StatusChanged += OnLicenseStatusChanged;
-
-                Log.Information("Lisans doğrulandı. Tür: {LicenseType}", licenseResult.License?.Type);
-
-                // 5. Enterprise Services - Feature Flags & Telemetry
-                // NOT: ConfigureAwait(false) KULLANILMIYOR çünkü sonrasında UI işlemleri var
-                try
-                {
-                    Log.Debug("Feature Flags servisi başlatılıyor...");
-                    await FeatureFlagService.Instance.InitializeAsync();
-
-                    Log.Debug("Telemetry servisi başlatılıyor...");
-                    TelemetryService.Instance.Initialize();
-                    
-                    // Kullanıcı telemetry'yi kapatmışsa devre dışı bırak
-                    if (!FeatureFlagService.Instance.IsEnabled("telemetry_enabled", true))
-                    {
-                        TelemetryService.Instance.Enabled = false;
-                        Log.Information("Telemetry kullanıcı tercihi ile devre dışı");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning(ex, "Enterprise services başlatılamadı, varsayılanlar kullanılacak");
-                }
-
-                // 6. Ana Pencereyi Aç
-                try
-                {
-                    Log.Debug("MainWindow oluşturuluyor...");
-                    var mainWindow = new MainWindow();
-
-                    // KRİTİK: MainWindow'u Application.MainWindow olarak ayarla
-                    this.MainWindow = mainWindow;
-
-                    // KRİTİK: MainWindow kapandığında uygulamayı kapat
-                    mainWindow.Closed += (s, args) =>
-                    {
-                        Log.Debug("MainWindow kapandı, uygulama kapatılıyor...");
-                        Shutdown();
-                    };
-
-                    Log.Debug("MainWindow.Show() çağrılıyor...");
-                    mainWindow.Show();
-
-                    // KRİTİK: Splash'ı MainWindow'dan SONRA kapat!
-                    splash?.Close();
-
-                    // DÜZELTME v24: Keyboard shortcuts başlat
-                    try
-                    {
-                        KeyboardShortcutManager.Instance.Initialize(mainWindow);
-                        Log.Debug("[Shortcuts] Klavye kısayolları başlatıldı");
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Warning(ex, "[Shortcuts] Klavye kısayolları başlatılamadı");
-                    }
-
-                    // DÜZELTME v24: Diagnostics servisleri başlat (arka planda)
-                    _ = StartDiagnosticsAsync();
-
-                    // Auto-Update kontrolü (arka planda, sessiz)
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            await Task.Delay(5000); // 5 saniye bekle, UI yüklensin
-                            var hasUpdate = await AutoUpdateService.Instance.CheckForUpdatesAsync(silent: false);
-                            if (hasUpdate)
-                            {
-                                Log.Information("[AutoUpdate] Güncelleme mevcut: {Version}", 
-                                    AutoUpdateService.Instance.LatestUpdate?.Version);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Debug(ex, "[AutoUpdate] Güncelleme kontrolü başarısız (normal)");
-                        }
-                    });
-
-                    // DÜZELTME v24: Startup timing bitir
-                    _startupStopwatch?.Stop();
-                    Log.Information("[Startup] Toplam süre: {TotalMs}ms", _startupStopwatch?.ElapsedMilliseconds);
-
-                    Log.Information("MainWindow başarıyla açıldı");
-                }
-                catch (Exception ex)
-                {
-                    Log.Fatal(ex, "MainWindow açılamadı: {Message}", ex.Message);
-                    MessageBox.Show(
-                        $"Ana pencere açılamadı:\n\n{ex.Message}\n\n{ex.StackTrace}",
-                        "UniCast - Kritik Hata",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-                    Shutdown(1);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Fatal(ex, "Uygulama başlatma hatası: {Message}", ex.Message);
-                splash?.Close();
-
-                MessageBox.Show(
-                    $"Uygulama başlatılamadı:\n\n{ex.Message}",
-                    "UniCast - Kritik Hata",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-                Shutdown(1);
+                return true; // Hata olsa bile devam et
             }
         }
 
         /// <summary>
-        /// DÜZELTME v24: Diagnostics servislerini arka planda başlat
-        /// DÜZELTME v29: Professional features (hardware encoder, memory pool) eklendi
-        /// - Lambda yerine named handler'lar kullanıldı (memory leak önleme)
+        /// DÜZELTME v50: FFmpeg kontrolü (arka plan thread'de)
         /// </summary>
-        private async Task StartDiagnosticsAsync()
+        private bool CheckFfmpegAvailability()
+        {
+            try
+            {
+                var ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg.exe");
+
+                if (File.Exists(ffmpegPath))
+                {
+                    Log.Debug("[FFmpeg] Uygulama klasöründe bulundu");
+                    return true;
+                }
+
+                // PATH'de ara
+                var pathDirs = Environment.GetEnvironmentVariable("PATH")?.Split(';') ?? Array.Empty<string>();
+                foreach (var dir in pathDirs)
+                {
+                    try
+                    {
+                        if (File.Exists(Path.Combine(dir, "ffmpeg.exe")))
+                        {
+                            Log.Debug("[FFmpeg] PATH'de bulundu: {Dir}", dir);
+                            return true;
+                        }
+                    }
+                    catch { }
+                }
+
+                Log.Warning("[FFmpeg] Bulunamadı! Stream özellikleri çalışmayabilir.");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[FFmpeg] Kontrol hatası");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// DÜZELTME v50: Enterprise services başlatma
+        /// </summary>
+        private async Task InitializeEnterpriseServicesAsync()
+        {
+            try
+            {
+                Log.Debug("Feature Flags servisi başlatılıyor...");
+                await FeatureFlagService.Instance.InitializeAsync();
+
+                Log.Debug("Telemetry servisi başlatılıyor...");
+                TelemetryService.Instance.Initialize();
+
+                if (!FeatureFlagService.Instance.IsEnabled("telemetry_enabled", true))
+                {
+                    TelemetryService.Instance.Enabled = false;
+                    Log.Information("Telemetry kullanıcı tercihi ile devre dışı");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Enterprise services başlatılamadı, varsayılanlar kullanılacak");
+            }
+        }
+
+        /// <summary>
+        /// DÜZELTME v50: Cihaz listesini ön-cache'le (MainWindow açılmadan önce)
+        /// </summary>
+        private async Task<bool> CacheDeviceListAsync()
+        {
+            try
+            {
+                var deviceService = new Services.Capture.DeviceService();
+
+                // Video ve audio cihazlarını paralel olarak al
+                var videoTask = deviceService.GetVideoDevicesAsync();
+                var audioTask = deviceService.GetAudioDevicesAsync();
+
+                await Task.WhenAll(videoTask, audioTask);
+
+                var videoDevices = await videoTask;
+                var audioDevices = await audioTask;
+
+                Log.Information("[DeviceCache] {VideoCount} kamera, {AudioCount} mikrofon bulundu",
+                    videoDevices.Count, audioDevices.Count);
+
+                return videoDevices.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[DeviceCache] Cihaz listesi alınamadı");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// DÜZELTME v50: Hardware encoder detection
+        /// </summary>
+        private async Task DetectHardwareEncodersAsync()
         {
             try
             {
@@ -228,58 +339,90 @@ namespace UniCast.App
                 {
                     try
                     {
-                        // DÜZELTME v29: Hardware encoder detection (arka planda)
-                        try
+                        var encoders = await UniCast.Encoder.Hardware.HardwareEncoderService.Instance.DetectEncodersAsync();
+                        if (encoders.Count > 0)
                         {
-                            var encoders = await UniCast.Encoder.Hardware.HardwareEncoderService.Instance.DetectEncodersAsync();
-                            if (encoders.Count > 0)
-                            {
-                                var best = UniCast.Encoder.Hardware.HardwareEncoderService.Instance.BestEncoder;
-                                Log.Information("[HardwareEncoder] Tespit edildi: {Name} ({Count} encoder mevcut)",
-                                    best?.Name ?? "Unknown", encoders.Count);
-                            }
-                            else
-                            {
-                                Log.Information("[HardwareEncoder] Hardware encoder bulunamadı, software encoding kullanılacak");
-                            }
+                            var best = UniCast.Encoder.Hardware.HardwareEncoderService.Instance.BestEncoder;
+                            Log.Information("[HardwareEncoder] Tespit edildi: {Name} ({Count} encoder mevcut)",
+                                best?.Name ?? "Unknown", encoders.Count);
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            Log.Warning(ex, "[HardwareEncoder] Detection hatası");
+                            Log.Information("[HardwareEncoder] Hardware encoder bulunamadı, software encoding kullanılacak");
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "[HardwareEncoder] Detection hatası");
+                    }
 
-                        // DÜZELTME v29: Memory pool pre-allocation
-                        try
-                        {
-                            UniCast.Encoder.Memory.FrameBufferPool.Instance.PreAllocate(
-                                UniCast.Encoder.Memory.FrameBufferPool.FrameSizes.Size1080p, 4);
-                            Log.Debug("[MemoryPool] 1080p buffer'lar pre-allocate edildi");
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Warning(ex, "[MemoryPool] Pre-allocation hatası");
-                        }
+                    // Memory pool pre-allocation
+                    try
+                    {
+                        UniCast.Encoder.Memory.FrameBufferPool.Instance.PreAllocate(
+                            UniCast.Encoder.Memory.FrameBufferPool.FrameSizes.Size1080p, 4);
+                        Log.Debug("[MemoryPool] 1080p buffer'lar pre-allocate edildi");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "[MemoryPool] Pre-allocation hatası");
+                    }
 
-                        // DÜZELTME v29: GPU Compositor check
-                        try
+                    // GPU Compositor check
+                    try
+                    {
+                        if (UniCast.Encoder.Compositing.GpuCompositor.Instance.IsAvailable)
                         {
-                            if (UniCast.Encoder.Compositing.GpuCompositor.Instance.IsAvailable)
-                            {
-                                Log.Information("[GpuCompositor] GPU: {Gpu}, DirectX {Level}",
-                                    UniCast.Encoder.Compositing.GpuCompositor.Instance.GpuName,
-                                    UniCast.Encoder.Compositing.GpuCompositor.Instance.FeatureLevel);
-                            }
-                            else
-                            {
-                                Log.Debug("[GpuCompositor] GPU compositing kullanılamıyor, CPU fallback aktif");
-                            }
+                            Log.Information("[GpuCompositor] GPU: {Gpu}, DirectX {Level}",
+                                UniCast.Encoder.Compositing.GpuCompositor.Instance.GpuName,
+                                UniCast.Encoder.Compositing.GpuCompositor.Instance.FeatureLevel);
                         }
-                        catch (Exception ex)
-                        {
-                            Log.Debug(ex, "[GpuCompositor] Initialization check hatası");
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Debug(ex, "[GpuCompositor] Check hatası");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[HardwareEncoder] Async detection hatası");
+            }
+        }
 
-                        // DÜZELTME v24: Named handler'lar oluştur
+        /// <summary>
+        /// DÜZELTME v50: Auto-update kontrolü (MainWindow açıldıktan 5sn sonra)
+        /// </summary>
+        private async Task CheckForUpdatesAsync()
+        {
+            try
+            {
+                await Task.Delay(5000);
+                var hasUpdate = await AutoUpdateService.Instance.CheckForUpdatesAsync(silent: false);
+                if (hasUpdate)
+                {
+                    Log.Information("[AutoUpdate] Güncelleme mevcut: {Version}",
+                        AutoUpdateService.Instance.LatestUpdate?.Version);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "[AutoUpdate] Güncelleme kontrolü başarısız (normal)");
+            }
+        }
+
+        /// <summary>
+        /// DÜZELTME v24: Diagnostics servislerini arka planda başlat
+        /// </summary>
+        private async Task StartDiagnosticsAsync()
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        // Named handler'lar oluştur
                         _memoryWarningHandler = OnMemoryWarning;
                         _healthStatusHandler = OnHealthStatusChanged;
                         _performanceAlertHandler = OnPerformanceAlert;
@@ -339,7 +482,6 @@ namespace UniCast.App
 #if DEBUG
                 Log.Warning("DEBUG modu: Güvenlik kontrolleri atlanıyor...");
 
-                // DÜZELTME v24: ConfigureAwait(false) eklendi
                 var result = await Task.Run(() =>
                 {
                     try
@@ -357,7 +499,8 @@ namespace UniCast.App
 
                 if (result.Status == LicenseStatus.NotFound)
                 {
-                    // UI thread'e dön
+                    _splash?.SetIndeterminate("Lisans bekleniyor...");
+
                     var choice = await Dispatcher.InvokeAsync(() =>
                         MessageBox.Show(
                             "Lisans bulunamadı. Deneme sürümünü başlatmak ister misiniz?\n\n" +
@@ -494,10 +637,10 @@ namespace UniCast.App
         {
             Log.Information("Uygulama kapatılıyor. Çıkış Kodu: {ExitCode}", e.ApplicationExitCode);
 
-            // DÜZELTME v24: Diagnostics servislerini durdur
+            // Diagnostics servislerini durdur
             StopDiagnostics();
 
-            // DÜZELTME v18: Gelişmiş graceful shutdown
+            // Graceful shutdown
             PerformGracefulShutdown();
 
             try
@@ -514,14 +657,10 @@ namespace UniCast.App
             base.OnExit(e);
         }
 
-        /// <summary>
-        /// DÜZELTME v24: Diagnostics servislerini durdur ve event handler'ları temizle
-        /// </summary>
         private void StopDiagnostics()
         {
             try
             {
-                // DÜZELTME v24: Event handler'ları temizle (memory leak önleme)
                 if (_memoryWarningHandler != null)
                 {
                     DiagnosticsMemoryProfiler.Instance.OnMemoryWarning -= _memoryWarningHandler;
@@ -561,7 +700,6 @@ namespace UniCast.App
 
             var logPath = Path.Combine(logFolder, "log-.txt");
 
-            // DÜZELTME v24: DynamicLogLevel ile runtime log level değiştirme
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.ControlledBy(DynamicLogLevel.Instance.LevelSwitch)
                 .Enrich.With<StreamKeyMaskingEnricher>()
@@ -575,7 +713,6 @@ namespace UniCast.App
                     shared: true)
                 .CreateLogger();
 
-            // Debug modunda verbose log
 #if DEBUG
             DynamicLogLevel.Instance.EnableDebugMode();
 #endif
@@ -587,7 +724,6 @@ namespace UniCast.App
             {
                 Log.Fatal(e.Exception, "Kritik UI Hatası: {Message}", e.Exception.Message);
 
-                // DÜZELTME v24: Crash report kaydet
                 try
                 {
                     var report = Services.CrashReporter.CreateCrashReport(e.Exception, "UI", false);
@@ -639,9 +775,6 @@ namespace UniCast.App
             };
         }
 
-        /// <summary>
-        /// DÜZELTME v17.1: Önceki oturumdan kalan orphan FFmpeg process'leri temizler.
-        /// </summary>
         private void CleanupOrphanFfmpegProcesses()
         {
             try
