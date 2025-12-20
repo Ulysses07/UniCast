@@ -7,7 +7,8 @@
         mc:Ignorable="d"
         Title="UniCast Studio" Height="650" Width="1100"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BgDark}">
+        Background="{StaticResource BgDark}"
+        Icon="Resources/app.ico">
 
     <Grid>
         <Grid.ColumnDefinitions>
