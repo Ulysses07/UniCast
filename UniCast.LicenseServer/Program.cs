@@ -595,8 +595,7 @@ try
     // ==================== FEATURE FLAGS ENDPOINTS ====================
 
     var featureGroup = app.MapGroup("/api/v1/features")
-        .WithTags("Features")
-        .WithOpenApi();
+        .WithTags("Features");
 
     // GET /api/v1/features - Tüm feature flag'leri döndür
     featureGroup.MapGet("", () =>
@@ -642,18 +641,17 @@ try
     // ==================== TELEMETRY ENDPOINTS ====================
 
     var telemetryGroup = app.MapGroup("/api/v1/telemetry")
-        .WithTags("Telemetry")
-        .WithOpenApi();
+        .WithTags("Telemetry");
 
     // POST /api/v1/telemetry - Telemetri verisi al
-    telemetryGroup.MapPost("", async (HttpContext httpContext, [FromBody] TelemetryPayloadRequest payload) =>
+    telemetryGroup.MapPost("", (HttpContext httpContext, [FromBody] TelemetryPayloadRequest payload) =>
     {
         try
         {
             var clientIp = GetClientIp(httpContext);
             
             // Rate limiting
-            if (!RateLimiter.IsAllowed($"telemetry:{clientIp}", 100, TimeSpan.FromMinutes(1)))
+            if (!rateLimiter.TryAcquire($"telemetry:{clientIp}", default))
             {
                 return Results.StatusCode(StatusCodes.Status429TooManyRequests);
             }
