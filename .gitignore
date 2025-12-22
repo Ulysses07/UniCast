@@ -26,3 +26,4 @@ test-results.txt
 # User-specific files
 *.rsuser
 *.userosscache
+/installer/UniCast-Setup.exe
