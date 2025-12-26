@@ -27,3 +27,9 @@ test-results.txt
 *.rsuser
 *.userosscache
 /installer/UniCast-Setup.exe
+/installer
+/publish
+/UniCast.LicenseServer/publish/publish
+/UniCast.LicenseServer/publish/UniCast.LicenseServer.dll
+/UniCast.LicenseServer/publish/UniCast.LicenseServer.exe
+/UniCast.LicenseServer/publish/UniCast.LicenseServer.pdb
