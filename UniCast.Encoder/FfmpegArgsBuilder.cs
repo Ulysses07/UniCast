@@ -74,7 +74,8 @@ namespace UniCast.Encoder
             string? encoderName,
             string? rtbufSize = null,
             int? threadQueueSize = null,
-            string? chatOverlayPipeName = null)
+            string? chatOverlayPipeName = null,
+            int cameraRotation = 0)
         {
             var sb = new StringBuilder();
 
@@ -142,7 +143,16 @@ namespace UniCast.Encoder
             bool hasVertical = targets.Any(t => IsVertical(MapPlatform(t.Platform)));
             if (!string.IsNullOrEmpty(localRecordPath)) hasHorizontal = true;
 
-            bool needsFilter = (overlayIndex != -1) || (chatOverlayIndex != -1) || hasVertical;
+            // Rotation normalize et
+            int rotation = cameraRotation switch
+            {
+                90 or -270 => 90,
+                180 or -180 => 180,
+                270 or -90 => 270,
+                _ => 0
+            };
+
+            bool needsFilter = (overlayIndex != -1) || (chatOverlayIndex != -1) || hasVertical || rotation != 0;
             string vMain = "0:v";
             string mapHorizontal = "0:v";
             string mapVertical = "0:v";
@@ -150,6 +160,29 @@ namespace UniCast.Encoder
             if (needsFilter)
             {
                 sb.Append(" -filter_complex \"");
+
+                // Rotation uygula (varsa) - diğer filtrelerden önce
+                if (rotation != 0)
+                {
+                    // FFmpeg transpose değerleri:
+                    // 0 = 90° counter-clockwise and vertical flip (270° clockwise)
+                    // 1 = 90° clockwise
+                    // 2 = 90° counter-clockwise
+                    // 3 = 90° clockwise and vertical flip
+                    string transposeFilter = rotation switch
+                    {
+                        90 => "transpose=1",
+                        180 => "transpose=1,transpose=1",
+                        270 => "transpose=2",
+                        _ => ""
+                    };
+
+                    if (!string.IsNullOrEmpty(transposeFilter))
+                    {
+                        sb.Append($"[{vMain}]{transposeFilter}[v_rotated];");
+                        vMain = "[v_rotated]";
+                    }
+                }
 
                 // İlk overlay (varsa)
                 if (overlayIndex != -1)

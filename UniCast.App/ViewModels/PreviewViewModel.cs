@@ -48,7 +48,7 @@ namespace UniCast.App.ViewModels
                 try
                 {
                     var s = SettingsStore.Data;
-                    await _service.StartAsync(-1, s.Width, s.Height, s.Fps);
+                    await _service.StartAsync(-1, s.Width, s.Height, s.Fps, s.CameraRotation);
                 }
                 catch (Exception ex)
                 {

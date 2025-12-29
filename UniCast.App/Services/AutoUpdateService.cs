@@ -39,7 +39,7 @@ namespace UniCast.App.Services
         /// <summary>
         /// Güncelleme bilgisi URL'i
         /// </summary>
-        public string UpdateUrl { get; set; } = "https://unicastapp.com/downloads/update.json";
+        public string UpdateUrl { get; set; } = "https://downloads.unicastapp.com/update.json";
 
         /// <summary>
         /// Mevcut versiyon

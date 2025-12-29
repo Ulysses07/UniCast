@@ -1,8 +1,9 @@
-ï»¿using System;
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.Versioning;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
@@ -14,8 +15,8 @@ using UniCast.Licensing.Protection;
 namespace UniCast.Licensing
 {
     /// <summary>
-    /// Merkezi lisans yÃ¶netim sÄ±nÄ±fÄ±.
-    /// TÃ¼m koruma katmanlarÄ±nÄ± koordine eder.
+    /// Merkezi lisans yönetim sýnýfý.
+    /// Tüm koruma katmanlarýný koordine eder.
     /// Thread-safe, proper dispose pattern.
     /// </summary>
     public sealed class LicenseManager : ILicenseManager
@@ -25,6 +26,11 @@ namespace UniCast.Licensing
 
         private readonly string _licenseFilePath;
         private readonly HttpClient _httpClient;
+        private static readonly JsonSerializerOptions _jsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        };
         private readonly SemaphoreSlim _lock = new(1, 1);
 
         private LicenseData? _currentLicense;
@@ -32,7 +38,7 @@ namespace UniCast.Licensing
         private Timer? _validationTimer;
         private bool _disposed;
 
-        // Event handler referanslarÄ± (memory leak Ã¶nleme)
+        // Event handler referanslarý (memory leak önleme)
         private EventHandler<ThreatDetectedEventArgs>? _threatHandler;
 
         // Olaylar
@@ -48,7 +54,7 @@ namespace UniCast.Licensing
 
         private LicenseManager()
         {
-            // Lisans dosyasÄ± konumu
+            // Lisans dosyasý konumu
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var licenseDir = Path.Combine(appData, "UniCast", "License");
 
@@ -58,7 +64,7 @@ namespace UniCast.Licensing
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[LicenseManager] Lisans dizini oluÅŸturulamadÄ±");
+                Log.Error(ex, "[LicenseManager] Lisans dizini oluþturulamadý");
             }
 
             _licenseFilePath = Path.Combine(licenseDir, "license.dat");
@@ -82,8 +88,8 @@ namespace UniCast.Licensing
         #region Public API
 
         /// <summary>
-        /// Lisans sistemini baÅŸlatÄ±r ve mevcut lisansÄ± doÄŸrular.
-        /// Uygulama baÅŸlangÄ±cÄ±nda Ã§aÄŸrÄ±lmalÄ±.
+        /// Lisans sistemini baþlatýr ve mevcut lisansý doðrular.
+        /// Uygulama baþlangýcýnda çaðrýlmalý.
         /// </summary>
         [SupportedOSPlatform("windows")]
         public async Task<LicenseValidationResult> InitializeAsync()
@@ -93,41 +99,41 @@ namespace UniCast.Licensing
             try
             {
 #if DEBUG
-                Log.Warning("[LicenseManager] DEBUG modu: GÃ¼venlik kontrolleri atlanÄ±yor");
+                Log.Warning("[LicenseManager] DEBUG modu: Güvenlik kontrolleri atlanýyor");
 #else
-                // 1. Runtime korumasÄ±nÄ± baÅŸlat
+                // 1. Runtime korumasýný baþlat
                 RuntimeProtection.Initialize();
                 _threatHandler = OnThreatDetected;
                 RuntimeProtection.ThreatDetected += _threatHandler;
 
-                // 2. Assembly bÃ¼tÃ¼nlÃ¼ÄŸÃ¼nÃ¼ kontrol et
+                // 2. Assembly bütünlüðünü kontrol et
                 AssemblyIntegrity.Initialize();
                 var integrityResult = AssemblyIntegrity.VerifyAll();
                 if (!integrityResult.IsValid)
                 {
-                    Log.Warning("[LicenseManager] Assembly bÃ¼tÃ¼nlÃ¼k kontrolÃ¼ baÅŸarÄ±sÄ±z: {Report}", integrityResult.GetReport());
+                    Log.Warning("[LicenseManager] Assembly bütünlük kontrolü baþarýsýz: {Report}", integrityResult.GetReport());
                     return LicenseValidationResult.Failure(
                         LicenseStatus.Tampered,
-                        "Uygulama dosyalarÄ± deÄŸiÅŸtirilmiÅŸ",
+                        "Uygulama dosyalarý deðiþtirilmiþ",
                         integrityResult.GetReport());
                 }
 
-                // 3. GÃ¼venlik kontrolÃ¼
+                // 3. Güvenlik kontrolü
                 var securityResult = RuntimeProtection.PerformSecurityChecks();
                 if (!securityResult.IsSecure)
                 {
-                    Log.Warning("[LicenseManager] GÃ¼venlik kontrolÃ¼ baÅŸarÄ±sÄ±z: {Report}", securityResult.GetReport());
+                    Log.Warning("[LicenseManager] Güvenlik kontrolü baþarýsýz: {Report}", securityResult.GetReport());
                     return LicenseValidationResult.Failure(
                         LicenseStatus.Tampered,
-                        "GÃ¼venlik tehdidi tespit edildi",
+                        "Güvenlik tehdidi tespit edildi",
                         securityResult.GetReport());
                 }
 #endif
 
-                // 4. Mevcut lisansÄ± doÄŸrula
+                // 4. Mevcut lisansý doðrula
                 var result = await ValidateCurrentLicenseAsync();
 
-                // 5. Periyodik doÄŸrulama zamanlayÄ±cÄ±sÄ±
+                // 5. Periyodik doðrulama zamanlayýcýsý
                 StartValidationTimer();
 
                 ValidationCompleted?.Invoke(this, result);
@@ -135,21 +141,21 @@ namespace UniCast.Licensing
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[LicenseManager] InitializeAsync hatasÄ±");
+                Log.Error(ex, "[LicenseManager] InitializeAsync hatasý");
 
 #if DEBUG
-                Log.Warning("[LicenseManager] DEBUG: Hata yutuldu, trial baÅŸlatÄ±lÄ±yor");
+                Log.Warning("[LicenseManager] DEBUG: Hata yutuldu, trial baþlatýlýyor");
                 return StartTrial();
 #else
                 return LicenseValidationResult.Failure(
                     LicenseStatus.Tampered,
-                    $"Lisans baÅŸlatma hatasÄ±: {ex.Message}");
+                    $"Lisans baþlatma hatasý: {ex.Message}");
 #endif
             }
         }
 
         /// <summary>
-        /// Lisans anahtarÄ± ile aktivasyon yapar.
+        /// Lisans anahtarý ile aktivasyon yapar.
         /// </summary>
         [SupportedOSPlatform("windows")]
         public async Task<LicenseValidationResult> ActivateAsync(string licenseKey)
@@ -159,27 +165,27 @@ namespace UniCast.Licensing
             await _lock.WaitAsync();
             try
             {
-                // Format kontrolÃ¼
+                // Format kontrolü
                 if (!LicenseKeyFormat.Validate(licenseKey))
                 {
-                    Log.Warning("[LicenseManager] GeÃ§ersiz lisans key formatÄ±");
+                    Log.Warning("[LicenseManager] Geçersiz lisans key formatý");
                     return LicenseValidationResult.Failure(
                         LicenseStatus.InvalidSignature,
-                        "GeÃ§ersiz lisans anahtarÄ± formatÄ±");
+                        "Geçersiz lisans anahtarý formatý");
                 }
 
                 // Hardware bilgisi
                 var hwInfo = HardwareFingerprint.Validate();
                 if (!hwInfo.IsValid)
                 {
-                    Log.Warning("[LicenseManager] Hardware ID oluÅŸturulamadÄ±. Score: {Score}", hwInfo.Score);
+                    Log.Warning("[LicenseManager] Hardware ID oluþturulamadý. Score: {Score}", hwInfo.Score);
                     return LicenseValidationResult.Failure(
                         LicenseStatus.HardwareMismatch,
-                        "DonanÄ±m kimliÄŸi oluÅŸturulamadÄ±",
+                        "Donaným kimliði oluþturulamadý",
                         hwInfo.GetDiagnosticsReport());
                 }
 
-                // Sunucuya aktivasyon isteÄŸi (retry mekanizmasÄ± ile)
+                // Sunucuya aktivasyon isteði (retry mekanizmasý ile)
                 var request = new ActivationRequest
                 {
                     LicenseKey = LicenseKeyFormat.Normalize(licenseKey),
@@ -197,38 +203,38 @@ namespace UniCast.Licensing
 
                 if (response.Success && response.License != null)
                 {
-                    // Ä°mza doÄŸrulama
+                    // Ýmza doðrulama
                     if (!LicenseSigner.Verify(response.License))
                     {
-                        Log.Warning("[LicenseManager] Lisans imza doÄŸrulamasÄ± baÅŸarÄ±sÄ±z");
+                        Log.Warning("[LicenseManager] Lisans imza doðrulamasý baþarýsýz");
                         return LicenseValidationResult.Failure(
                             LicenseStatus.InvalidSignature,
-                            "Lisans imzasÄ± doÄŸrulanamadÄ±");
+                            "Lisans imzasý doðrulanamadý");
                     }
 
-                    // LisansÄ± kaydet
+                    // Lisansý kaydet
                     _currentLicense = response.License;
                     _currentStatus = LicenseStatus.Valid;
                     LicenseEncryption.SaveEncrypted(_currentLicense, _licenseFilePath);
 
-                    Log.Information("[LicenseManager] Aktivasyon baÅŸarÄ±lÄ±. TÃ¼r: {Type}", _currentLicense.Type);
+                    Log.Information("[LicenseManager] Aktivasyon baþarýlý. Tür: {Type}", _currentLicense.Type);
 
                     var result = LicenseValidationResult.Success(_currentLicense);
                     RaiseStatusChanged(LicenseStatus.Valid);
                     return result;
                 }
 
-                Log.Warning("[LicenseManager] Aktivasyon baÅŸarÄ±sÄ±z: {Message}", response.Message);
+                Log.Warning("[LicenseManager] Aktivasyon baþarýsýz: {Message}", response.Message);
                 return LicenseValidationResult.Failure(
                     LicenseStatus.NotFound,
-                    response.Message ?? "Aktivasyon baÅŸarÄ±sÄ±z");
+                    response.Message ?? "Aktivasyon baþarýsýz");
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[LicenseManager] ActivateAsync hatasÄ±");
+                Log.Error(ex, "[LicenseManager] ActivateAsync hatasý");
                 return LicenseValidationResult.Failure(
                     LicenseStatus.ServerUnreachable,
-                    $"Aktivasyon hatasÄ±: {ex.Message}");
+                    $"Aktivasyon hatasý: {ex.Message}");
             }
             finally
             {
@@ -237,7 +243,7 @@ namespace UniCast.Licensing
         }
 
         /// <summary>
-        /// Lisans anahtarÄ± ile aktivasyon yapar (senkron wrapper).
+        /// Lisans anahtarý ile aktivasyon yapar (senkron wrapper).
         /// </summary>
         [SupportedOSPlatform("windows")]
         public ActivationResult ActivateLicense(string licenseKey)
@@ -262,7 +268,7 @@ namespace UniCast.Licensing
         }
 
         /// <summary>
-        /// Mevcut lisansÄ± devre dÄ±ÅŸÄ± bÄ±rakÄ±r (makine deÄŸiÅŸikliÄŸi iÃ§in).
+        /// Mevcut lisansý devre dýþý býrakýr (makine deðiþikliði için).
         /// </summary>
         [SupportedOSPlatform("windows")]
         public async Task<bool> DeactivateAsync()
@@ -280,7 +286,7 @@ namespace UniCast.Licensing
 
                 var hwInfo = HardwareFingerprint.Validate();
 
-                // Sunucuya deaktivasyon isteÄŸi
+                // Sunucuya deaktivasyon isteði
                 var request = new DeactivationRequest
                 {
                     LicenseId = _currentLicense.LicenseId,
@@ -294,13 +300,13 @@ namespace UniCast.Licensing
 
                 if (success)
                 {
-                    // Yerel lisansÄ± gÃ¼venli sil
+                    // Yerel lisansý güvenli sil
                     LicenseEncryption.SecureDelete(_licenseFilePath);
 
                     _currentLicense = null;
                     _currentStatus = LicenseStatus.NotFound;
 
-                    Log.Information("[LicenseManager] Deaktivasyon baÅŸarÄ±lÄ±");
+                    Log.Information("[LicenseManager] Deaktivasyon baþarýlý");
                     RaiseStatusChanged(LicenseStatus.NotFound);
                 }
 
@@ -308,7 +314,7 @@ namespace UniCast.Licensing
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[LicenseManager] DeactivateAsync hatasÄ±");
+                Log.Error(ex, "[LicenseManager] DeactivateAsync hatasý");
                 return false;
             }
             finally
@@ -318,7 +324,7 @@ namespace UniCast.Licensing
         }
 
         /// <summary>
-        /// Mevcut lisansÄ± doÄŸrular.
+        /// Mevcut lisansý doðrular.
         /// </summary>
         [SupportedOSPlatform("windows")]
         public async Task<LicenseValidationResult> ValidateAsync()
@@ -328,8 +334,8 @@ namespace UniCast.Licensing
         }
 
         /// <summary>
-        /// LisansÄ±n geÃ§erli olup olmadÄ±ÄŸÄ±nÄ± kontrol eder.
-        /// Trial veya Lifetime fark etmez, geÃ§erliyse tÃ¼m Ã¶zellikler aÃ§Ä±k.
+        /// Lisansýn geçerli olup olmadýðýný kontrol eder.
+        /// Trial veya Lifetime fark etmez, geçerliyse tüm özellikler açýk.
         /// </summary>
         public bool IsLicenseValid()
         {
@@ -339,7 +345,7 @@ namespace UniCast.Licensing
             if (_currentLicense == null)
                 return false;
 
-            // Trial iÃ§in sÃ¼re kontrolÃ¼
+            // Trial için süre kontrolü
             if (_currentLicense.IsTrial && _currentLicense.IsExpired)
                 return false;
 
@@ -349,7 +355,7 @@ namespace UniCast.Licensing
         }
 
         /// <summary>
-        /// BakÄ±m/destek sÃ¼resinin aktif olup olmadÄ±ÄŸÄ±nÄ± kontrol eder.
+        /// Bakým/destek süresinin aktif olup olmadýðýný kontrol eder.
         /// </summary>
         public bool IsSupportActive()
         {
@@ -360,7 +366,7 @@ namespace UniCast.Licensing
         }
 
         /// <summary>
-        /// Mevcut lisans bilgilerini dÃ¶ndÃ¼rÃ¼r.
+        /// Mevcut lisans bilgilerini döndürür.
         /// </summary>
         [SupportedOSPlatform("windows")]
         public LicenseInfo GetLicenseInfo()
@@ -390,7 +396,7 @@ namespace UniCast.Licensing
         }
 
         /// <summary>
-        /// Trial lisansÄ± baÅŸlatÄ±r.
+        /// Trial lisansý baþlatýr.
         /// </summary>
         [SupportedOSPlatform("windows")]
         public LicenseValidationResult StartTrial()
@@ -402,10 +408,10 @@ namespace UniCast.Licensing
                 var hwInfo = HardwareFingerprint.Validate();
                 if (!hwInfo.IsValid)
                 {
-                    Log.Warning("[LicenseManager] Trial: Hardware ID oluÅŸturulamadÄ±");
+                    Log.Warning("[LicenseManager] Trial: Hardware ID oluþturulamadý");
                     return LicenseValidationResult.Failure(
                         LicenseStatus.HardwareMismatch,
-                        "DonanÄ±m kimliÄŸi oluÅŸturulamadÄ±");
+                        "Donaným kimliði oluþturulamadý");
                 }
 
                 _currentLicense = new LicenseData
@@ -417,7 +423,7 @@ namespace UniCast.Licensing
                     LicenseeEmail = "",
                     IssuedAtUtc = DateTime.UtcNow,
                     ExpiresAtUtc = DateTime.UtcNow.AddDays(14),
-                    SupportExpiryUtc = DateTime.UtcNow.AddDays(14), // Trial iÃ§in destek de 14 gÃ¼n
+                    SupportExpiryUtc = DateTime.UtcNow.AddDays(14), // Trial için destek de 14 gün
                     MaxMachines = 1,
                     Activations =
                     [
@@ -436,17 +442,17 @@ namespace UniCast.Licensing
                 _currentStatus = LicenseStatus.Valid;
                 LicenseEncryption.SaveEncrypted(_currentLicense, _licenseFilePath);
 
-                Log.Information("[LicenseManager] Trial lisansÄ± baÅŸlatÄ±ldÄ±. SÃ¼re: 14 gÃ¼n");
+                Log.Information("[LicenseManager] Trial lisansý baþlatýldý. Süre: 14 gün");
                 RaiseStatusChanged(LicenseStatus.Valid);
 
                 return LicenseValidationResult.Success(_currentLicense);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[LicenseManager] StartTrial hatasÄ±");
+                Log.Error(ex, "[LicenseManager] StartTrial hatasý");
                 return LicenseValidationResult.Failure(
                     LicenseStatus.NotFound,
-                    $"Trial baÅŸlatma hatasÄ±: {ex.Message}");
+                    $"Trial baþlatma hatasý: {ex.Message}");
             }
         }
 
@@ -460,41 +466,41 @@ namespace UniCast.Licensing
             await _lock.WaitAsync();
             try
             {
-                // 1. Lisans dosyasÄ±nÄ± yÃ¼kle
+                // 1. Lisans dosyasýný yükle
                 _currentLicense = LicenseEncryption.LoadEncrypted(_licenseFilePath);
 
                 if (_currentLicense == null)
                 {
                     _currentStatus = LicenseStatus.NotFound;
-                    Log.Debug("[LicenseManager] Lisans dosyasÄ± bulunamadÄ±");
+                    Log.Debug("[LicenseManager] Lisans dosyasý bulunamadý");
                     return LicenseValidationResult.Failure(
                         LicenseStatus.NotFound,
-                        "Lisans bulunamadÄ±");
+                        "Lisans bulunamadý");
                 }
 
-                // 2. SÃ¼re kontrolÃ¼
+                // 2. Süre kontrolü
                 if (_currentLicense.IsExpired)
                 {
                     _currentStatus = LicenseStatus.Expired;
-                    Log.Warning("[LicenseManager] Lisans sÃ¼resi dolmuÅŸ");
+                    Log.Warning("[LicenseManager] Lisans süresi dolmuþ");
                     RaiseStatusChanged(LicenseStatus.Expired);
                     return LicenseValidationResult.Failure(
                         LicenseStatus.Expired,
-                        "Lisans sÃ¼resi dolmuÅŸ");
+                        "Lisans süresi dolmuþ");
                 }
 
-                // 3. Ä°mza kontrolÃ¼ (Trial hariÃ§)
+                // 3. Ýmza kontrolü (Trial hariç)
                 if (!_currentLicense.IsTrial && !LicenseSigner.Verify(_currentLicense))
                 {
                     _currentStatus = LicenseStatus.InvalidSignature;
-                    Log.Warning("[LicenseManager] Lisans imzasÄ± geÃ§ersiz");
+                    Log.Warning("[LicenseManager] Lisans imzasý geçersiz");
                     RaiseStatusChanged(LicenseStatus.InvalidSignature);
                     return LicenseValidationResult.Failure(
                         LicenseStatus.InvalidSignature,
-                        "Lisans imzasÄ± geÃ§ersiz");
+                        "Lisans imzasý geçersiz");
                 }
 
-                // 4. Hardware kontrolÃ¼
+                // 4. Hardware kontrolü
                 var hwInfo = HardwareFingerprint.Validate();
                 var activation = _currentLicense.Activations.Find(a =>
                     a.HardwareId == hwInfo.HardwareId ||
@@ -503,14 +509,14 @@ namespace UniCast.Licensing
                 if (activation == null)
                 {
                     _currentStatus = LicenseStatus.HardwareMismatch;
-                    Log.Warning("[LicenseManager] Hardware uyuÅŸmazlÄ±ÄŸÄ±");
+                    Log.Warning("[LicenseManager] Hardware uyuþmazlýðý");
                     RaiseStatusChanged(LicenseStatus.HardwareMismatch);
                     return LicenseValidationResult.Failure(
                         LicenseStatus.HardwareMismatch,
-                        "Bu lisans farklÄ± bir bilgisayarda kullanÄ±lÄ±yor");
+                        "Bu lisans farklý bir bilgisayarda kullanýlýyor");
                 }
 
-                // 5. Online doÄŸrulama (isteÄŸe baÄŸlÄ±)
+                // 5. Online doðrulama (isteðe baðlý)
                 var timeSinceLastValidation = DateTime.UtcNow - _currentLicense.LastValidationUtc;
                 var shouldValidateOnline = timeSinceLastValidation.TotalHours >= OnlineValidationIntervalHours;
 
@@ -520,12 +526,12 @@ namespace UniCast.Licensing
 
                     if (!onlineResult.IsValid)
                     {
-                        // Grace period kontrolÃ¼
+                        // Grace period kontrolü
                         if (AllowOfflineMode && timeSinceLastValidation.TotalDays < _currentLicense.OfflineGraceDays)
                         {
                             var graceDaysRemaining = _currentLicense.OfflineGraceDays - (int)timeSinceLastValidation.TotalDays;
                             _currentStatus = LicenseStatus.GracePeriod;
-                            Log.Information("[LicenseManager] Grace period aktif. Kalan gÃ¼n: {Days}", graceDaysRemaining);
+                            Log.Information("[LicenseManager] Grace period aktif. Kalan gün: {Days}", graceDaysRemaining);
                             return LicenseValidationResult.Grace(_currentLicense, graceDaysRemaining);
                         }
 
@@ -534,25 +540,25 @@ namespace UniCast.Licensing
                         return onlineResult;
                     }
 
-                    // BaÅŸarÄ±lÄ± online doÄŸrulama - zamanÄ± gÃ¼ncelle
+                    // Baþarýlý online doðrulama - zamaný güncelle
                     _currentLicense.LastValidationUtc = DateTime.UtcNow;
                     LicenseEncryption.SaveEncrypted(_currentLicense, _licenseFilePath);
                 }
 
                 _currentStatus = LicenseStatus.Valid;
-                Log.Debug("[LicenseManager] Lisans doÄŸrulama baÅŸarÄ±lÄ±");
+                Log.Debug("[LicenseManager] Lisans doðrulama baþarýlý");
                 return LicenseValidationResult.Success(_currentLicense);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[LicenseManager] ValidateCurrentLicenseAsync hatasÄ±");
+                Log.Error(ex, "[LicenseManager] ValidateCurrentLicenseAsync hatasý");
 
 #if DEBUG
-                return LicenseValidationResult.Failure(LicenseStatus.NotFound, "Lisans bulunamadÄ±");
+                return LicenseValidationResult.Failure(LicenseStatus.NotFound, "Lisans bulunamadý");
 #else
                 return LicenseValidationResult.Failure(
                     LicenseStatus.Tampered,
-                    $"DoÄŸrulama hatasÄ±: {ex.Message}");
+                    $"Doðrulama hatasý: {ex.Message}");
 #endif
             }
             finally
@@ -585,43 +591,43 @@ namespace UniCast.Licensing
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    Log.Warning("[LicenseManager] Online doÄŸrulama HTTP hatasÄ±: {StatusCode}", response.StatusCode);
+                    Log.Warning("[LicenseManager] Online doðrulama HTTP hatasý: {StatusCode}", response.StatusCode);
                     return LicenseValidationResult.Failure(
                         LicenseStatus.ServerUnreachable,
-                        "Lisans sunucusuna ulaÅŸÄ±lamadÄ±");
+                        "Lisans sunucusuna ulaþýlamadý");
                 }
 
-                var result = await response.Content.ReadFromJsonAsync<OnlineValidationResponse>();
+                var result = await response.Content.ReadFromJsonAsync<OnlineValidationResponse>(_jsonOptions);
 
                 if (result == null || !result.Valid)
                 {
                     return LicenseValidationResult.Failure(
                         result?.Status ?? LicenseStatus.Revoked,
-                        result?.Message ?? "Online doÄŸrulama baÅŸarÄ±sÄ±z");
+                        result?.Message ?? "Online doðrulama baþarýsýz");
                 }
 
                 return LicenseValidationResult.Success(_currentLicense);
             }
             catch (HttpRequestException ex)
             {
-                Log.Warning(ex, "[LicenseManager] Online doÄŸrulama aÄŸ hatasÄ±");
+                Log.Warning(ex, "[LicenseManager] Online doðrulama að hatasý");
                 return LicenseValidationResult.Failure(
                     LicenseStatus.ServerUnreachable,
-                    "Lisans sunucusuna ulaÅŸÄ±lamadÄ±");
+                    "Lisans sunucusuna ulaþýlamadý");
             }
             catch (TaskCanceledException ex)
             {
-                Log.Warning(ex, "[LicenseManager] Online doÄŸrulama timeout");
+                Log.Warning(ex, "[LicenseManager] Online doðrulama timeout");
                 return LicenseValidationResult.Failure(
                     LicenseStatus.ServerUnreachable,
-                    "Sunucu yanÄ±t vermedi");
+                    "Sunucu yanýt vermedi");
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[LicenseManager] Online doÄŸrulama hatasÄ±");
+                Log.Error(ex, "[LicenseManager] Online doðrulama hatasý");
                 return LicenseValidationResult.Failure(
                     LicenseStatus.ServerUnreachable,
-                    $"BaÄŸlantÄ± hatasÄ±: {ex.Message}");
+                    $"Baðlantý hatasý: {ex.Message}");
             }
         }
 
@@ -642,7 +648,7 @@ namespace UniCast.Licensing
                 catch (HttpRequestException ex)
                 {
                     lastException = ex;
-                    Log.Warning("[LicenseManager] {Operation} deneme {Attempt} baÅŸarÄ±sÄ±z: {Message}",
+                    Log.Warning("[LicenseManager] {Operation} deneme {Attempt} baþarýsýz: {Message}",
                         operationName, attempt + 1, ex.Message);
                 }
                 catch (TaskCanceledException ex)
@@ -659,7 +665,7 @@ namespace UniCast.Licensing
                 }
             }
 
-            throw lastException ?? new Exception($"{operationName} baÅŸarÄ±sÄ±z");
+            throw lastException ?? new Exception($"{operationName} baþarýsýz");
         }
 
         private async Task<ActivationResponse> SendActivationRequestAsync(ActivationRequest request)
@@ -672,15 +678,15 @@ namespace UniCast.Licensing
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<ActivationResponse>()
-                           ?? new ActivationResponse { Success = false, Message = "GeÃ§ersiz yanÄ±t" };
+                    return await response.Content.ReadFromJsonAsync<ActivationResponse>(_jsonOptions)
+                           ?? new ActivationResponse { Success = false, Message = "Geçersiz yanýt" };
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 return new ActivationResponse
                 {
                     Success = false,
-                    Message = $"Sunucu hatasÄ±: {response.StatusCode} - {errorContent}"
+                    Message = $"Sunucu hatasý: {response.StatusCode} - {errorContent}"
                 };
             }
             catch (Exception ex)
@@ -688,7 +694,7 @@ namespace UniCast.Licensing
                 return new ActivationResponse
                 {
                     Success = false,
-                    Message = $"BaÄŸlantÄ± hatasÄ±: {ex.Message}"
+                    Message = $"Baðlantý hatasý: {ex.Message}"
                 };
             }
         }
@@ -705,7 +711,7 @@ namespace UniCast.Licensing
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[LicenseManager] Deaktivasyon isteÄŸi hatasÄ±");
+                Log.Error(ex, "[LicenseManager] Deaktivasyon isteði hatasý");
                 return false;
             }
         }
@@ -729,7 +735,7 @@ namespace UniCast.Licensing
                     }
                     catch (Exception ex)
                     {
-                        Log.Error(ex, "[LicenseManager] Periyodik doÄŸrulama hatasÄ±");
+                        Log.Error(ex, "[LicenseManager] Periyodik doðrulama hatasý");
                     }
                 },
                 null,
@@ -753,7 +759,7 @@ namespace UniCast.Licensing
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[LicenseManager] StatusChanged event hatasÄ±");
+                Log.Error(ex, "[LicenseManager] StatusChanged event hatasý");
             }
         }
 
@@ -782,24 +788,24 @@ namespace UniCast.Licensing
 
             _disposed = true;
 
-            // Event handler'larÄ± temizle
+            // Event handler'larý temizle
             if (_threatHandler != null)
             {
                 RuntimeProtection.ThreatDetected -= _threatHandler;
                 _threatHandler = null;
             }
 
-            // Timer'Ä± durdur
+            // Timer'ý durdur
             _validationTimer?.Dispose();
             _validationTimer = null;
 
-            // HTTP client'Ä± dispose et
+            // HTTP client'ý dispose et
             _httpClient.Dispose();
 
             // Lock'u dispose et
             _lock.Dispose();
 
-            // Runtime protection'Ä± kapat
+            // Runtime protection'ý kapat
             RuntimeProtection.Shutdown();
 
             // Event'leri temizle

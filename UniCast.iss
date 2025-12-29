@@ -3,7 +3,7 @@
 ; https://jrsoftware.org/isinfo.php adresinden ücretsiz indir
 
 #define MyAppName "UniCast"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.2"
 #define MyAppPublisher "UniCast"
 #define MyAppURL "https://unicastapp.com"
 #define MyAppExeName "UniCast.App.exe"
@@ -64,7 +64,6 @@ Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs creat
 
 ; FFmpeg (External klasöründen)
 Source: "UniCast.App\External\ffmpeg.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "UniCast.App\External\ffprobe.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Başlat menüsü

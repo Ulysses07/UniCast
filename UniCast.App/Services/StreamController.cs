@@ -498,8 +498,31 @@ namespace UniCast.Core.Services
             args.Append("-tune zerolatency ");
             args.Append($"-g {config.Fps * 2} ");
 
-            // Video filtreleri
-            args.Append($"-vf \"fps={config.Fps},scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p\" ");
+            // Video filtreleri (rotation dahil)
+            var filters = new System.Collections.Generic.List<string>();
+            
+            // Rotation filtresi (0 değilse)
+            int rotation = config.CameraRotation switch
+            {
+                90 or -270 => 90,
+                180 or -180 => 180,
+                270 or -90 => 270,
+                _ => 0
+            };
+            
+            if (rotation == 90)
+                filters.Add("transpose=1");  // 90° clockwise
+            else if (rotation == 180)
+                filters.Add("transpose=1,transpose=1");  // 180°
+            else if (rotation == 270)
+                filters.Add("transpose=2");  // 90° counter-clockwise (270° clockwise)
+            
+            filters.Add($"fps={config.Fps}");
+            filters.Add("scale=1280:720:force_original_aspect_ratio=decrease");
+            filters.Add("pad=1280:720:(ow-iw)/2:(oh-ih)/2");
+            filters.Add("format=yuv420p");
+            
+            args.Append($"-vf \"{string.Join(",", filters)}\" ");
 
             // Audio encoding
             args.Append($"-c:a aac -b:a {config.AudioBitrate}k -ar 44100 -ac 2 ");
@@ -624,6 +647,7 @@ namespace UniCast.Core.Services
         public int Fps { get; set; } = 30;
         public string Preset { get; set; } = "veryfast";
         public bool UseTeeMuxer { get; set; } = false;  // Multi-target için tee muxer kullan
+        public int CameraRotation { get; set; } = 0;  // Kamera döndürme açısı (0, 90, 180, 270)
     }
 
     public sealed class StreamInfo

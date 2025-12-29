@@ -1,5 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -7,67 +5,81 @@ namespace UniCast.Licensing.Models
 {
     /// <summary>
     /// Lisans veri modeli.
-    /// Tüm lisans bilgilerini içerir.
+    /// T�m lisans bilgilerini i�erir.
     /// </summary>
     public sealed class LicenseData
     {
         /// <summary>Benzersiz lisans ID (GUID)</summary>
+        [JsonPropertyName("licenseId")]
         public string LicenseId { get; set; } = "";
 
-        /// <summary>Lisans anahtarı (XXXXX-XXXXX-XXXXX-XXXXX-XXXXX)</summary>
+        /// <summary>Lisans anahtar� (XXXXX-XXXXX-XXXXX-XXXXX-XXXXX)</summary>
+        [JsonPropertyName("licenseKey")]
         public string LicenseKey { get; set; } = "";
 
-        /// <summary>Lisans türü</summary>
+        /// <summary>Lisans t�r�</summary>
+        [JsonPropertyName("type")]
         public LicenseType Type { get; set; } = LicenseType.Trial;
 
-        /// <summary>Lisans sahibi adı</summary>
+        /// <summary>Lisans sahibi ad�</summary>
+        [JsonPropertyName("licenseeName")]
         public string LicenseeName { get; set; } = "";
 
         /// <summary>Lisans sahibi e-posta</summary>
+        [JsonPropertyName("licenseeEmail")]
         public string LicenseeEmail { get; set; } = "";
 
         /// <summary>Lisans verilme tarihi (UTC)</summary>
+        [JsonPropertyName("issuedAtUtc")]
         public DateTime IssuedAtUtc { get; set; }
 
-        /// <summary>Lisans bitiş tarihi (UTC) - Trial için 14 gün, Lifetime için DateTime.MaxValue</summary>
+        /// <summary>Lisans biti� tarihi (UTC) - Trial i�in 14 g�n, Lifetime i�in DateTime.MaxValue</summary>
+        [JsonPropertyName("expiresAtUtc")]
         public DateTime ExpiresAtUtc { get; set; }
 
-        /// <summary>Bakım/Destek bitiş tarihi (UTC) - Yıllık yenilenir</summary>
+        /// <summary>Bak�m/Destek biti� tarihi (UTC) - Y�ll�k yenilenir</summary>
+        [JsonPropertyName("supportExpiryUtc")]
         public DateTime SupportExpiryUtc { get; set; }
 
-        /// <summary>Maksimum makine sayısı</summary>
+        /// <summary>Maksimum makine say�s�</summary>
+        [JsonPropertyName("maxMachines")]
         public int MaxMachines { get; set; } = 1;
 
-        /// <summary>Aktif makine aktivasyonları</summary>
+        /// <summary>Aktif makine aktivasyonlar�</summary>
+        [JsonPropertyName("activations")]
         public List<HardwareActivation> Activations { get; set; } = new();
 
-        /// <summary>Çevrimdışı grace period (gün)</summary>
+        /// <summary>�evrimd��� grace period (g�n)</summary>
+        [JsonPropertyName("offlineGraceDays")]
         public int OfflineGraceDays { get; set; } = 7;
 
-        /// <summary>Son online doğrulama zamanı (UTC)</summary>
+        /// <summary>Son online do�rulama zaman� (UTC)</summary>
+        [JsonPropertyName("lastValidationUtc")]
         public DateTime LastValidationUtc { get; set; }
 
         /// <summary>RSA dijital imza</summary>
+        [JsonPropertyName("signature")]
         public string Signature { get; set; } = "";
 
         /// <summary>Ek metadata</summary>
+        [JsonPropertyName("metadata")]
         public Dictionary<string, string> Metadata { get; set; } = new();
 
         #region Computed Properties
 
-        /// <summary>Trial lisansı mı?</summary>
+        /// <summary>Trial lisans� m�?</summary>
         [JsonIgnore]
         public bool IsTrial => Type == LicenseType.Trial;
 
-        /// <summary>Lifetime lisansı mı?</summary>
+        /// <summary>Lifetime lisans� m�?</summary>
         [JsonIgnore]
         public bool IsLifetime => Type == LicenseType.Lifetime;
 
-        /// <summary>Lisans süresi dolmuş mu? (Trial için geçerli, Lifetime asla dolmaz)</summary>
+        /// <summary>Lisans s�resi dolmu� mu? (Trial i�in ge�erli, Lifetime asla dolmaz)</summary>
         [JsonIgnore]
         public bool IsExpired => DateTime.UtcNow > ExpiresAtUtc;
 
-        /// <summary>Kalan gün sayısı (Trial için)</summary>
+        /// <summary>Kalan g�n say�s� (Trial i�in)</summary>
         [JsonIgnore]
         public int DaysRemaining
         {
@@ -79,11 +91,11 @@ namespace UniCast.Licensing.Models
             }
         }
 
-        /// <summary>Bakım/Destek aktif mi?</summary>
+        /// <summary>Bak�m/Destek aktif mi?</summary>
         [JsonIgnore]
         public bool IsSupportActive => DateTime.UtcNow <= SupportExpiryUtc;
 
-        /// <summary>Bakım/Destek için kalan gün sayısı</summary>
+        /// <summary>Bak�m/Destek i�in kalan g�n say�s�</summary>
         [JsonIgnore]
         public int SupportDaysRemaining
         {
@@ -99,12 +111,11 @@ namespace UniCast.Licensing.Models
         #region Methods
 
         /// <summary>
-        /// İmzalanacak içeriği döndürür.
-        /// İmza hesaplaması için kullanılır.
+        /// �mzalanacak i�eri�i d�nd�r�r.
+        /// �mza hesaplamas� i�in kullan�l�r.
         /// </summary>
         public string GetSignableContent()
         {
-            // İmza dışında tüm kritik alanları içer
             var sb = new StringBuilder();
             sb.Append(LicenseId);
             sb.Append('|');
@@ -124,7 +135,6 @@ namespace UniCast.Licensing.Models
             sb.Append('|');
             sb.Append(MaxMachines);
 
-            // Aktivasyonları dahil et
             foreach (var activation in Activations)
             {
                 sb.Append('|');
@@ -134,13 +144,10 @@ namespace UniCast.Licensing.Models
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Lisans bilgisi özeti.
-        /// </summary>
         public override string ToString()
         {
-            var licenseInfo = IsLifetime ? "Ömür Boyu" : $"Trial ({DaysRemaining} gün)";
-            var supportInfo = IsSupportActive ? $"Destek: {SupportDaysRemaining} gün" : "Destek: Süresi doldu";
+            var licenseInfo = IsLifetime ? "�m�r Boyu" : $"Trial ({DaysRemaining} g�n)";
+            var supportInfo = IsSupportActive ? $"Destek: {SupportDaysRemaining} g�n" : "Destek: S�resi doldu";
             return $"License[{licenseInfo}] {LicenseId[..8]}... - {LicenseeName} - {supportInfo}";
         }
 
@@ -152,89 +159,61 @@ namespace UniCast.Licensing.Models
     /// </summary>
     public sealed class HardwareActivation
     {
-        /// <summary>Tam hardware ID (SHA256)</summary>
+        [JsonPropertyName("hardwareId")]
         public string HardwareId { get; set; } = "";
 
-        /// <summary>Kısa hardware ID (ilk 16 karakter)</summary>
+        [JsonPropertyName("hardwareIdShort")]
         public string HardwareIdShort { get; set; } = "";
 
-        /// <summary>Makine adı</summary>
+        [JsonPropertyName("machineName")]
         public string MachineName { get; set; } = "";
 
-        /// <summary>Aktivasyon tarihi (UTC)</summary>
+        [JsonPropertyName("activatedAtUtc")]
         public DateTime ActivatedAtUtc { get; set; }
 
-        /// <summary>Son görülme tarihi (UTC)</summary>
+        [JsonPropertyName("lastSeenUtc")]
         public DateTime LastSeenUtc { get; set; }
 
-        /// <summary>Bileşen hash'leri (benzerlik kontrolü için)</summary>
+        [JsonPropertyName("componentsHash")]
         public string ComponentsHash { get; set; } = "";
 
-        /// <summary>IP adresi (opsiyonel)</summary>
+        [JsonPropertyName("ipAddress")]
         public string? IpAddress { get; set; }
 
-        /// <summary>OS bilgisi</summary>
+        [JsonPropertyName("osVersion")]
         public string? OsVersion { get; set; }
     }
 
     /// <summary>
-    /// Lisans türleri.
+    /// Lisans t�rleri.
     /// </summary>
     public enum LicenseType
     {
-        /// <summary>Deneme sürümü (14 gün)</summary>
         Trial = 0,
-
-        /// <summary>Ömür boyu lisans (yazılım sonsuza kadar çalışır)</summary>
         Lifetime = 1
     }
 
-
-
     /// <summary>
-    /// Lisans doğrulama durumu.
+    /// Lisans do�rulama durumu.
     /// </summary>
     public enum LicenseStatus
     {
-        /// <summary>Geçerli lisans</summary>
         Valid = 0,
-
-        /// <summary>Lisans bulunamadı</summary>
         NotFound = 1,
-
-        /// <summary>Süresi dolmuş (Trial için)</summary>
         Expired = 2,
-
-        /// <summary>Donanım uyuşmazlığı</summary>
         HardwareMismatch = 3,
-
-        /// <summary>Geçersiz imza</summary>
         InvalidSignature = 4,
-
-        /// <summary>İptal edilmiş</summary>
         Revoked = 5,
-
-        /// <summary>Manipüle edilmiş</summary>
         Tampered = 6,
-
-        /// <summary>Maksimum makine sayısı aşıldı</summary>
         MachineLimitExceeded = 7,
-
-        /// <summary>Sunucuya ulaşılamıyor</summary>
         ServerUnreachable = 8,
-
-        /// <summary>Çevrimdışı grace period</summary>
         GracePeriod = 9,
-
-        /// <summary>Destek/bakım süresi dolmuş (yazılım çalışır ama güncelleme/destek yok)</summary>
         SupportExpired = 10,
-
-        /// <summary>Bilinmeyen hata</summary>
         Unknown = 99
     }
 
     /// <summary>
-    /// Lisans doğrulama sonucu.
+    /// Lisans do�rulama sonucu.
     /// </summary>
     public sealed class LicenseValidationResult
     {
@@ -253,7 +232,7 @@ namespace UniCast.Licensing.Models
             {
                 IsValid = true,
                 Status = LicenseStatus.Valid,
-                Message = "Lisans geçerli",
+                Message = "Lisans ge�erli",
                 License = license
             };
         }
@@ -273,31 +252,28 @@ namespace UniCast.Licensing.Models
         {
             return new LicenseValidationResult
             {
-                IsValid = true, // Grace period'da hala geçerli
+                IsValid = true,
                 Status = LicenseStatus.GracePeriod,
-                Message = $"Çevrimdışı mod - {daysRemaining} gün kaldı",
+                Message = $"�evrimd��� mod - {daysRemaining} g�n kald�",
                 License = license,
                 GraceDaysRemaining = daysRemaining
             };
         }
 
-        /// <summary>
-        /// Destek süresi dolmuş ama yazılım çalışır durumda.
-        /// </summary>
         public static LicenseValidationResult SupportExpired(LicenseData license)
         {
             return new LicenseValidationResult
             {
-                IsValid = true, // Yazılım hala çalışır!
+                IsValid = true,
                 Status = LicenseStatus.SupportExpired,
-                Message = "Bakım/destek süreniz doldu. Yazılım çalışmaya devam edecek ancak güncelleme ve destek alamazsınız.",
+                Message = "Bak�m/destek s�reniz doldu.",
                 License = license
             };
         }
 
         public override string ToString()
         {
-            return $"[{Status}] {(IsValid ? "✓" : "✗")} {Message}";
+            return $"[{Status}] {(IsValid ? "?" : "?")} {Message}";
         }
     }
 }

@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -51,21 +51,21 @@ namespace UniCast.LicenseServer.Services
 
             if (license == null)
             {
-                return ActivationResult.Failed("Lisans bulunamadÄ±");
+                return ActivationResult.Failed("Lisans bulunamadý");
             }
 
             if (license.IsRevoked)
             {
-                return ActivationResult.Failed("Bu lisans iptal edilmiÅŸ");
+                return ActivationResult.Failed("Bu lisans iptal edilmiþ");
             }
 
-            // Trial iÃ§in sÃ¼re kontrolÃ¼ (Lifetime asla dolmaz)
+            // Trial için süre kontrolü (Lifetime asla dolmaz)
             if (license.Type == LicenseType.Trial && license.ExpiresAtUtc < DateTime.UtcNow)
             {
-                return ActivationResult.Failed("Deneme sÃ¼resi dolmuÅŸ");
+                return ActivationResult.Failed("Deneme süresi dolmuþ");
             }
 
-            // Mevcut aktivasyon kontrolÃ¼
+            // Mevcut aktivasyon kontrolü
             var existingActivation = license.Activations.FirstOrDefault(a => a.HardwareId == hardwareId);
             if (existingActivation != null)
             {
@@ -73,13 +73,13 @@ namespace UniCast.LicenseServer.Services
                 existingActivation.IpAddress = ipAddress;
                 await _repository.SaveAsync(license);
 
-                return ActivationResult.Succeeded(license, "Mevcut aktivasyon gÃ¼ncellendi");
+                return ActivationResult.Succeeded(license, "Mevcut aktivasyon güncellendi");
             }
 
-            // Makine limiti kontrolÃ¼
+            // Makine limiti kontrolü
             if (license.Activations.Count >= license.MaxMachines)
             {
-                return ActivationResult.Failed($"Maksimum makine sayÄ±sÄ±na ({license.MaxMachines}) ulaÅŸÄ±ldÄ±");
+                return ActivationResult.Failed($"Maksimum makine sayýsýna ({license.MaxMachines}) ulaþýldý");
             }
 
             // Yeni aktivasyon
@@ -98,7 +98,7 @@ namespace UniCast.LicenseServer.Services
             license.Signature = await SignLicenseAsync(license);
             await _repository.SaveAsync(license);
 
-            return ActivationResult.Succeeded(license, "Aktivasyon baÅŸarÄ±lÄ±");
+            return ActivationResult.Succeeded(license, "Aktivasyon baþarýlý");
         }
 
         public async Task<bool> DeactivateAsync(string licenseKey, string hardwareId)
@@ -120,27 +120,27 @@ namespace UniCast.LicenseServer.Services
 
             if (license == null)
             {
-                return ValidationResult.Invalid("Lisans bulunamadÄ±");
+                return ValidationResult.Invalid("Lisans bulunamadý");
             }
 
             if (license.IsRevoked)
             {
-                return ValidationResult.Invalid("Lisans iptal edilmiÅŸ");
+                return ValidationResult.Invalid("Lisans iptal edilmiþ");
             }
 
-            // Trial iÃ§in sÃ¼re kontrolÃ¼ (Lifetime asla dolmaz)
+            // Trial için süre kontrolü (Lifetime asla dolmaz)
             if (license.Type == LicenseType.Trial && license.ExpiresAtUtc < DateTime.UtcNow)
             {
-                return ValidationResult.Invalid("Deneme sÃ¼resi dolmuÅŸ");
+                return ValidationResult.Invalid("Deneme süresi dolmuþ");
             }
 
             var activation = license.Activations.FirstOrDefault(a => a.HardwareId == hardwareId);
             if (activation == null)
             {
-                return ValidationResult.Invalid("Bu cihaz iÃ§in aktivasyon bulunamadÄ±");
+                return ValidationResult.Invalid("Bu cihaz için aktivasyon bulunamadý");
             }
 
-            // LastSeen gÃ¼ncelle
+            // LastSeen güncelle
             activation.LastSeenUtc = DateTime.UtcNow;
             license.LastValidationUtc = DateTime.UtcNow;
             await _repository.SaveAsync(license);
@@ -158,8 +158,8 @@ namespace UniCast.LicenseServer.Services
                 LicenseeName = request.LicenseeName,
                 LicenseeEmail = request.LicenseeEmail,
                 IssuedAtUtc = DateTime.UtcNow,
-                ExpiresAtUtc = DateTime.MaxValue, // Ã–mÃ¼r boyu - asla dolmaz
-                SupportExpiryUtc = DateTime.UtcNow.AddDays(request.SupportDurationDays), // Destek sÃ¼resi
+                ExpiresAtUtc = DateTime.MaxValue, // Ömür boyu - asla dolmaz
+                SupportExpiryUtc = DateTime.UtcNow.AddDays(request.SupportDurationDays), // Destek süresi
                 MaxMachines = request.MaxMachines,
                 Activations = new List<HardwareActivation>()
             };
@@ -199,7 +199,7 @@ namespace UniCast.LicenseServer.Services
             var license = await _repository.FindByIdAsync(licenseId);
             if (license == null) return false;
 
-            // Destek sÃ¼resi dolmuÅŸsa bugÃ¼nden itibaren, dolmadÄ±ysa mevcut tarihten itibaren uzat
+            // Destek süresi dolmuþsa bugünden itibaren, dolmadýysa mevcut tarihten itibaren uzat
             var baseDate = license.SupportExpiryUtc > DateTime.UtcNow
                 ? license.SupportExpiryUtc
                 : DateTime.UtcNow;
@@ -223,7 +223,7 @@ namespace UniCast.LicenseServer.Services
         private string GenerateLicenseKey()
         {
             var segments = new string[5];
-            var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // KarÄ±ÅŸtÄ±rÄ±labilir karakterler Ã§Ä±karÄ±ldÄ±
+            var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Karýþtýrýlabilir karakterler çýkarýldý
             var random = RandomNumberGenerator.Create();
             var bytes = new byte[5];
 
@@ -235,7 +235,7 @@ namespace UniCast.LicenseServer.Services
 
             // Son segment checksum
             var combined = string.Join("", segments.Take(4));
-            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(combined));
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(combined + "UniCastLicenseChecksum2025"));
             segments[4] = new string(hash.Take(5).Select(b => chars[b % chars.Length]).ToArray());
 
             return string.Join("-", segments);
@@ -249,7 +249,7 @@ namespace UniCast.LicenseServer.Services
                 return string.Empty;
             }
 
-            // Ä°mzaya dahil edilecek veriler
+            // Ýmzaya dahil edilecek veriler
             var data = $"{license.LicenseId}|{license.LicenseKey}|{license.Type}|{license.ExpiresAtUtc:O}|{license.SupportExpiryUtc:O}";
             var dataBytes = Encoding.UTF8.GetBytes(data);
 

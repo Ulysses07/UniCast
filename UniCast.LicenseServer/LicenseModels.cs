@@ -1,9 +1,9 @@
-ï»¿using System;
+using System;
 
 namespace UniCast.Licensing
 {
     /// <summary>
-    /// Lisans tÃ¼rleri
+    /// Lisans türleri
     /// </summary>
     public enum LicenseType
     {
@@ -20,14 +20,14 @@ namespace UniCast.Licensing
     }
 
     /// <summary>
-    /// Lisans Ã¶zellikleri (bit flags)
+    /// Lisans özellikleri (bit flags)
     /// </summary>
     [Flags]
     public enum LicenseFeatures : long
     {
         None = 0,
 
-        // Temel Ã¶zellikler
+        // Temel özellikler
         BasicStreaming = 1L << 0,
         MultiPlatform = 1L << 1,
         ChatIntegration = 1L << 2,
@@ -35,13 +35,13 @@ namespace UniCast.Licensing
         Recording = 1L << 4,
         NoWatermark = 1L << 5,
 
-        // Profesyonel Ã¶zellikler
+        // Profesyonel özellikler
         CustomBranding = 1L << 10,
         AdvancedAnalytics = 1L << 11,
         MultiCam = 1L << 12,
         VirtualCamera = 1L << 13,
 
-        // Ä°leri dÃ¼zey Ã¶zellikler
+        // Ýleri düzey özellikler
         RTMP = 1L << 20,
         SRT = 1L << 21,
         CloudStorage = 1L << 22,
@@ -87,14 +87,14 @@ namespace UniCast.Licensing
         public string TypeDisplayName => Type switch
         {
             LicenseType.Trial => "Deneme",
-            LicenseType.Personal => "KiÅŸisel",
+            LicenseType.Personal => "Kiþisel",
             LicenseType.Professional => "Profesyonel",
-            LicenseType.Business => "Ä°ÅŸletme",
+            LicenseType.Business => "Ýþletme",
             LicenseType.Enterprise => "Kurumsal",
-            LicenseType.MonthlySubscription => "AylÄ±k Abonelik",
-            LicenseType.YearlySubscription => "YÄ±llÄ±k Abonelik",
-            LicenseType.Lifetime => "Ã–mÃ¼r Boyu",
-            LicenseType.Educational => "EÄŸitim",
+            LicenseType.MonthlySubscription => "Aylýk Abonelik",
+            LicenseType.YearlySubscription => "Yýllýk Abonelik",
+            LicenseType.Lifetime => "Ömür Boyu",
+            LicenseType.Educational => "Eðitim",
             LicenseType.NFR => "NFR",
             _ => "Bilinmiyor"
         };
@@ -123,7 +123,7 @@ namespace UniCast.Licensing
     }
 
     /// <summary>
-    /// DoÄŸrulama sonucu
+    /// Doðrulama sonucu
     /// </summary>
     public class ValidationResult
     {
@@ -147,7 +147,7 @@ namespace UniCast.Licensing
     }
 
     /// <summary>
-    /// DoÄŸrulama baÅŸarÄ±sÄ±zlÄ±k nedenleri
+    /// Doðrulama baþarýsýzlýk nedenleri
     /// </summary>
     public enum ValidationFailureReason
     {
@@ -163,7 +163,7 @@ namespace UniCast.Licensing
     }
 
     /// <summary>
-    /// ÅžifrelenmiÅŸ lisans verisi
+    /// Þifrelenmiþ lisans verisi
     /// </summary>
     public class EncryptedLicenseData
     {

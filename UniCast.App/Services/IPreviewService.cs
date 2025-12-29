@@ -27,7 +27,8 @@ namespace UniCast.App.Services
         /// <param name="width">Frame width</param>
         /// <param name="height">Frame height</param>
         /// <param name="fps">Frames per second</param>
-        Task StartAsync(int cameraIndex, int width, int height, int fps);
+        /// <param name="rotation">Camera rotation in degrees (0, 90, 180, 270)</param>
+        Task StartAsync(int cameraIndex, int width, int height, int fps, int rotation = 0);
 
         /// <summary>
         /// Stop camera preview

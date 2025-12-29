@@ -30,6 +30,9 @@ namespace UniCast.App.Services
         private int _targetFps = 30;
         private double _targetFrameTimeMs = 33.33;
 
+        // Camera rotation (0, 90, 180, 270)
+        private int _rotation = 0;
+
         // DÜZELTME v54: WriteableBitmap reuse - GC pressure azaltma
         private WriteableBitmap? _writeableBitmap;
         private int _bitmapWidth;
@@ -41,7 +44,7 @@ namespace UniCast.App.Services
         private volatile bool _isStarting;
         private volatile bool _isStopping;
 
-        public async Task StartAsync(int cameraIndex, int width, int height, int fps)
+        public async Task StartAsync(int cameraIndex, int width, int height, int fps, int rotation = 0)
         {
             if (_disposed) return;
 
@@ -76,6 +79,16 @@ namespace UniCast.App.Services
                 if (cameraIndex < 0) cameraIndex = 0;
                 _targetFps = fps > 0 ? fps : 30;
                 _targetFrameTimeMs = 1000.0 / _targetFps;
+
+                // Rotation değerini normalize et
+                _rotation = rotation switch
+                {
+                    90 or -270 => 90,
+                    180 or -180 => 180,
+                    270 or -90 => 270,
+                    _ => 0
+                };
+                System.Diagnostics.Debug.WriteLine($"[PreviewService] Camera rotation: {_rotation}°");
 
                 // Eski kaynakları temizle
                 CleanupCaptureInternal();
@@ -264,6 +277,30 @@ namespace UniCast.App.Services
                     {
                         Thread.Sleep(5);
                         continue;
+                    }
+
+                    // Rotation uygula (0 değilse)
+                    if (_rotation != 0)
+                    {
+                        try
+                        {
+                            var rotateCode = _rotation switch
+                            {
+                                90 => RotateFlags.Rotate90Clockwise,
+                                180 => RotateFlags.Rotate180,
+                                270 => RotateFlags.Rotate90Counterclockwise,
+                                _ => (RotateFlags?)null
+                            };
+
+                            if (rotateCode.HasValue)
+                            {
+                                Cv2.Rotate(frame, frame, rotateCode.Value);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[PreviewService] Rotation Error: {ex.Message}");
+                        }
                     }
 
                     try

@@ -179,7 +179,8 @@ namespace UniCast.App.Services
                     AudioBitrate = profile.AudioBitrateKbps,
                     Fps = profile.Fps,
                     Preset = profile.VideoPreset,
-                    UseTeeMuxer = activeTargets.Count > 1  // Tee muxer flag
+                    UseTeeMuxer = activeTargets.Count > 1,  // Tee muxer flag
+                    CameraRotation = SettingsStore.Data.CameraRotation  // Kamera döndürme
                 };
 
                 var success = await _inner.StartAsync(config, ct);

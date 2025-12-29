@@ -206,6 +206,32 @@
                         <TextBox Grid.Column="4" Text="{Binding VideoKbps}" Height="30" VerticalContentAlignment="Center"/>
                     </Grid>
 
+                    <!-- Kamera Döndürme (9:16 dikey yayın için) -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Kamera Döndürme" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}"/>
+                        <ComboBox Grid.Column="1" SelectedValue="{Binding CameraRotation, Mode=TwoWay}" 
+                                  SelectedValuePath="Tag" Height="35" MaxWidth="300" HorizontalAlignment="Left">
+                            <ComboBoxItem Tag="0">
+                                <TextBlock Text="0° - Döndürme Yok" Foreground="Black"/>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="90">
+                                <TextBlock Text="90° - Saat Yönünde" Foreground="Black"/>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="180">
+                                <TextBlock Text="180° - Baş Aşağı" Foreground="Black"/>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="270">
+                                <TextBlock Text="270° - Saat Yönü Tersi" Foreground="Black"/>
+                            </ComboBoxItem>
+                        </ComboBox>
+                    </Grid>
+                    <TextBlock Text="💡 Dikey (9:16) yayın için: Kamerayı fiziksel olarak 90° döndürün, sonra 270° seçin" 
+                               FontSize="11" Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
                     <TextBlock Text="Ses Senkronizasyonu (Gecikme)" Margin="0,10,0,5" Foreground="{StaticResource TextMuted}"/>
                     <Grid>
                         <Grid.ColumnDefinitions>

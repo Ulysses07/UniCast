@@ -315,6 +315,14 @@ namespace UniCast.App.Services
         public int Fps { get; set; } = 30;
         public string VideoEncoder { get; set; } = "libx264";
         public string VideoPreset { get; set; } = "veryfast";
+        
+        /// <summary>
+        /// Kamera döndürme açısı (derece).
+        /// Kullanım: Kamerayı fiziksel olarak 90° döndürüp, yazılımda 270° seçerek
+        /// tam dikey (9:16) görüntü elde edilebilir.
+        /// Değerler: 0 (döndürme yok), 90, 180, 270
+        /// </summary>
+        public int CameraRotation { get; set; } = 0;
 
         // Video ayarları için alias property'ler (eski kod uyumluluğu)
         [System.Text.Json.Serialization.JsonIgnore]

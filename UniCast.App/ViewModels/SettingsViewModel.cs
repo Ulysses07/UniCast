@@ -43,6 +43,7 @@ namespace UniCast.App.ViewModels
             _fps = _settings.Fps;
             _width = _settings.Width;
             _height = _settings.Height;
+            _cameraRotation = _settings.CameraRotation;
             _recordFolder = _settings.RecordFolder ?? "";
             _enableLocalRecord = _settings.EnableLocalRecord;
 
@@ -228,6 +229,13 @@ namespace UniCast.App.ViewModels
         {
             get => _height;
             set { _height = value; HasUnsavedChanges = true; OnPropertyChanged(); }
+        }
+
+        private int _cameraRotation;
+        public int CameraRotation
+        {
+            get => _cameraRotation;
+            set { _cameraRotation = value; HasUnsavedChanges = true; OnPropertyChanged(); }
         }
 
         private string _recordFolder;
@@ -592,6 +600,7 @@ namespace UniCast.App.ViewModels
                     s.Fps = Fps;
                     s.Width = Width;
                     s.Height = Height;
+                    s.CameraRotation = CameraRotation;
                     s.RecordFolder = (RecordFolder ?? "").Trim();
                     s.EnableLocalRecord = EnableLocalRecord;
 

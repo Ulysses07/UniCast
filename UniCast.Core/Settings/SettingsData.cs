@@ -30,6 +30,14 @@ namespace UniCast.Core.Settings
         public int Height { get; set; } = 720;
         public int Fps { get; set; } = 30;
 
+        /// <summary>
+        /// Kamera döndürme açısı (derece).
+        /// Kullanım: Kamerayı fiziksel olarak 90° döndürüp, yazılımda -90° döndürerek
+        /// tam dikey (9:16) görüntü elde edilebilir.
+        /// Değerler: 0 (döndürme yok), 90, 180, 270 (veya -90)
+        /// </summary>
+        public int CameraRotation { get; set; } = 0;
+
 
         // --- Yerel Kayıt ---
         public string? RecordFolder { get; set; } =
@@ -227,6 +235,16 @@ namespace UniCast.Core.Settings
             if (OverlayX < 0) OverlayX = 0;
             if (OverlayY < 0) OverlayY = 0;
             if (AudioDelayMs < 0) AudioDelayMs = 0;
+
+            // Camera rotation normalization (0, 90, 180, 270)
+            CameraRotation = CameraRotation switch
+            {
+                90 or -270 => 90,
+                180 or -180 => 180,
+                270 or -90 => 270,
+                _ => 0
+            };
+
             if (!SceneItems.Any(x => x.Type == OverlayType.Chat))
             {
                 SceneItems.Add(new OverlayItem

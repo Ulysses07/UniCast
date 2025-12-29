@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -9,37 +9,28 @@ using UniCast.Licensing.Models;
 namespace UniCast.Licensing.Crypto
 {
     /// <summary>
-    /// KATMAN 2: RSA-2048 dijital imza ile lisans bütünlük koruması.
+    /// KATMAN 2: RSA-2048 dijital imza ile lisans b�t�nl�k korumas�.
     /// Private key SADECE sunucuda bulunur.
-    /// Public key uygulamaya gömülüdür (imza doğrulama için).
+    /// Public key uygulamaya g�m�l�d�r (imza do�rulama i�in).
     /// </summary>
     public static class LicenseSigner
     {
-        // ÖNEMLİ: Production'da GenerateAndSaveKeyPair() ile oluşturulan key'leri kullanın!
-        // Bu public key uygulamaya gömülür - Private key ASLA client'a gönderilmez!
-
-        // Production Public Key - Bu key'i değiştirmeyin, sadece GenerateAndSaveKeyPair ile oluşturulan key'i kullanın
         private static readonly string EmbeddedPublicKey;
-
-        // Sunucu tarafında kullanılacak private key path
         private const string PrivateKeyFileName = "license_private.pem";
         private const string PublicKeyFileName = "license_public.pem";
 
         static LicenseSigner()
         {
-            // Embedded public key'i yükle veya varsayılanı kullan
             var keyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Keys", PublicKeyFileName);
 
             if (File.Exists(keyPath))
             {
                 EmbeddedPublicKey = File.ReadAllText(keyPath);
-                System.Diagnostics.Debug.WriteLine($"[LicenseSigner] Production public key yüklendi: {keyPath}");
+                System.Diagnostics.Debug.WriteLine($"[LicenseSigner] Production public key y�klendi: {keyPath}");
             }
             else
             {
 #if DEBUG
-                // DÜZELTME v27: Development key SADECE DEBUG modunda kullanılır
-                // Bu key ile imzalanan lisanslar production'da çalışmaz!
                 System.Diagnostics.Debug.WriteLine("[LicenseSigner] WARNING: Using development key - NOT FOR PRODUCTION!");
                 EmbeddedPublicKey = @"-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwr8ywjC1J9lh4uPQhWeZ
@@ -51,35 +42,13 @@ VUEHp1Nss8XnoNcY68+hYi5gcqHMFac9EdHdUnvGhtqXOn0LmSTZ6KJSKY6Q5USp
 pwIDAQAB
 -----END PUBLIC KEY-----";
 #else
-                // DÜZELTME v27: Production'da key dosyası ZORUNLU!
-                // GenerateAndSaveKeyPair() ile key oluşturup Keys/ klasörüne koyun.
-                var errorMessage = $"KRITIK HATA: Production public key bulunamadı!\n" +
-                                   $"Beklenen konum: {keyPath}\n" +
-                                   $"Çözüm: GenerateAndSaveKeyPair() ile key oluşturun.";
-                
+                var errorMessage = $"KRITIK HATA: Production public key bulunamad�!\nBeklenen konum: {keyPath}";
                 System.Diagnostics.Debug.WriteLine($"[LicenseSigner] {errorMessage}");
-                
-                // Boş key ile başlat - Verify() her zaman false dönecek
                 EmbeddedPublicKey = "";
-                
-                // Event log'a yaz (Windows)
-                try
-                {
-                    using var eventLog = new System.Diagnostics.EventLog("Application");
-                    eventLog.Source = "UniCast";
-                    eventLog.WriteEntry(errorMessage, System.Diagnostics.EventLogEntryType.Error);
-                }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[LicenseCrypto] Event log yazma hatası (beklenen): {ex.Message}"); }
 #endif
             }
         }
 
-        /// <summary>
-        /// Yeni RSA-2048 key pair oluşturur ve dosyalara kaydeder.
-        /// İlk kurulumda BİR KEZ çalıştırılmalı!
-        /// </summary>
-        /// <param name="outputDirectory">Key dosyalarının kaydedileceği dizin</param>
-        /// <returns>Oluşturulan public ve private key</returns>
         public static (string PublicKey, string PrivateKey) GenerateAndSaveKeyPair(string? outputDirectory = null)
         {
             var outputDir = outputDirectory ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Keys");
@@ -93,29 +62,18 @@ pwIDAQAB
             var privateKeyPath = Path.Combine(outputDir, PrivateKeyFileName);
             var publicKeyPath = Path.Combine(outputDir, PublicKeyFileName);
 
-            // Private key'i güvenli izinlerle kaydet
             File.WriteAllText(privateKeyPath, privateKey);
             File.WriteAllText(publicKeyPath, publicKey);
-
-            Console.WriteLine($"[LicenseSigner] Key pair oluşturuldu:");
-            Console.WriteLine($"  Private Key: {privateKeyPath}");
-            Console.WriteLine($"  Public Key:  {publicKeyPath}");
-            Console.WriteLine();
-            Console.WriteLine("ÖNEMLİ: Private key'i GÜVENLİ bir yerde saklayın!");
-            Console.WriteLine("        Public key'i client uygulamasına gömün.");
 
             return (publicKey, privateKey);
         }
 
-        /// <summary>
-        /// Lisans verisini RSA-2048 ile imzalar (SUNUCU TARAFI).
-        /// </summary>
         public static string Sign(LicenseData license, string? privateKeyPath = null)
         {
             var keyPath = privateKeyPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Keys", PrivateKeyFileName);
 
             if (!File.Exists(keyPath))
-                throw new FileNotFoundException("Private key dosyası bulunamadı. Önce GenerateAndSaveKeyPair() çalıştırın.", keyPath);
+                throw new FileNotFoundException("Private key dosyas� bulunamad�.", keyPath);
 
             var privateKey = File.ReadAllText(keyPath);
             var dataToSign = license.GetSignableContent();
@@ -124,52 +82,41 @@ pwIDAQAB
             using var rsa = RSA.Create();
             rsa.ImportFromPem(privateKey);
 
-            var signatureBytes = rsa.SignData(
-                dataBytes,
-                HashAlgorithmName.SHA256,
-                RSASignaturePadding.Pkcs1);
-
+            var signatureBytes = rsa.SignData(dataBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             return Convert.ToBase64String(signatureBytes);
         }
 
-        /// <summary>
-        /// Lisans imzasını doğrular (CLIENT TARAFI).
-        /// Gömülü public key kullanılır.
-        /// </summary>
         public static bool Verify(LicenseData license)
         {
             if (string.IsNullOrEmpty(license.Signature))
                 return false;
 
-            // Trial lisanslar için özel kontrol
             if (license.IsTrial && license.Signature == "TRIAL_LOCAL")
                 return true;
 
             try
             {
                 var dataToVerify = license.GetSignableContent();
+                System.Diagnostics.Debug.WriteLine($"[LicenseSigner] DataToVerify: {dataToVerify}");
+                System.Diagnostics.Debug.WriteLine($"[LicenseSigner] Signature length: {license.Signature?.Length}");
+
                 var dataBytes = Encoding.UTF8.GetBytes(dataToVerify);
                 var signatureBytes = Convert.FromBase64String(license.Signature);
 
                 using var rsa = RSA.Create();
                 rsa.ImportFromPem(EmbeddedPublicKey);
 
-                return rsa.VerifyData(
-                    dataBytes,
-                    signatureBytes,
-                    HashAlgorithmName.SHA256,
-                    RSASignaturePadding.Pkcs1);
+                var result = rsa.VerifyData(dataBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                System.Diagnostics.Debug.WriteLine($"[LicenseSigner] Verify result: {result}");
+                return result;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[LicenseSigner] Verify hatası: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[LicenseSigner] Verify hatas�: {ex.Message}");
                 return false;
             }
         }
 
-        /// <summary>
-        /// Public key fingerprint'ini döndürür (debug için).
-        /// </summary>
         public static string GetPublicKeyFingerprint()
         {
             try
@@ -188,47 +135,41 @@ pwIDAQAB
     }
 
     /// <summary>
-    /// Lisans dosyası şifreleme (AES-256 + DPAPI).
-    /// Lisans dosyası disk'te şifreli saklanır.
+    /// Lisans dosyas� �ifreleme (AES-256 + DPAPI).
     /// </summary>
     public static class LicenseEncryption
     {
-        // AES key türetme için makineye özgü entropi
         private static readonly byte[] AdditionalEntropy =
         {
             0x55, 0x43, 0x4C, 0x69, 0x63, 0x65, 0x6E, 0x73,
             0x65, 0x45, 0x6E, 0x63, 0x72, 0x79, 0x70, 0x74
         };
 
-        private const byte CurrentVersion = 2; // Versiyon artırıldı
-        private static readonly byte[] MagicHeader = { 0x55, 0x43, 0x4C, 0x49 }; // "UCLI"
+        private const byte CurrentVersion = 2;
+        private static readonly byte[] MagicHeader = { 0x55, 0x43, 0x4C, 0x49 };
 
-        /// <summary>
-        /// Lisans verisini şifreler ve dosyaya yazar.
-        /// </summary>
+        // JSON serialization options - PropertyNameCaseInsensitive �nemli!
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = false
+        };
+
         [SupportedOSPlatform("windows")]
         public static void SaveEncrypted(LicenseData license, string filePath)
         {
             ArgumentNullException.ThrowIfNull(license);
             ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
-            var json = JsonSerializer.Serialize(license, new JsonSerializerOptions
-            {
-                WriteIndented = false
-            });
+            var json = JsonSerializer.Serialize(license, JsonOptions);
 
             var plainBytes = Encoding.UTF8.GetBytes(json);
-            var encryptedBytes = ProtectedData.Protect(
-                plainBytes,
-                AdditionalEntropy,
-                DataProtectionScope.CurrentUser);
+            var encryptedBytes = ProtectedData.Protect(plainBytes, AdditionalEntropy, DataProtectionScope.CurrentUser);
 
-            // Dizini oluştur
             var directory = Path.GetDirectoryName(filePath);
             if (!string.IsNullOrEmpty(directory))
                 Directory.CreateDirectory(directory);
 
-            // Atomic write
             var tempPath = filePath + ".tmp";
 
             try
@@ -236,27 +177,15 @@ pwIDAQAB
                 using (var fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
                 using (var writer = new BinaryWriter(fs))
                 {
-                    // Magic header
                     writer.Write(MagicHeader);
-
-                    // Version
                     writer.Write(CurrentVersion);
-
-                    // Timestamp (replay attack koruması)
                     writer.Write(DateTime.UtcNow.ToBinary());
-
-                    // Data length + data
                     writer.Write(encryptedBytes.Length);
                     writer.Write(encryptedBytes);
-
-                    // Checksum (HMAC-SHA256)
-                    var checksum = ComputeHmac(encryptedBytes);
-                    writer.Write(checksum);
-
+                    writer.Write(ComputeHmac(encryptedBytes));
                     fs.Flush(true);
                 }
 
-                // Atomic rename
                 if (File.Exists(filePath))
                     File.Delete(filePath);
 
@@ -266,16 +195,12 @@ pwIDAQAB
             {
                 if (File.Exists(tempPath))
                 {
-                    // DÜZELTME v26: Boş catch'e loglama eklendi
-                    try { File.Delete(tempPath); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[LicenseCrypto] Temp dosya silme hatası: {ex.Message}"); }
+                    try { File.Delete(tempPath); } catch { }
                 }
                 throw;
             }
         }
 
-        /// <summary>
-        /// Şifrelenmiş lisans dosyasını okur ve çözer.
-        /// </summary>
         [SupportedOSPlatform("windows")]
         public static LicenseData? LoadEncrypted(string filePath)
         {
@@ -287,11 +212,10 @@ pwIDAQAB
                 using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 using var reader = new BinaryReader(fs);
 
-                // Magic header kontrolü
                 var magic = reader.ReadBytes(4);
                 if (!magic.AsSpan().SequenceEqual(MagicHeader))
                 {
-                    System.Diagnostics.Debug.WriteLine("[LicenseEncryption] Geçersiz magic header");
+                    System.Diagnostics.Debug.WriteLine("[LicenseEncryption] Ge�ersiz magic header");
                     return null;
                 }
 
@@ -302,63 +226,47 @@ pwIDAQAB
                     return null;
                 }
 
-                // Timestamp (v2+)
                 if (version >= 2)
                 {
                     var timestamp = DateTime.FromBinary(reader.ReadInt64());
-                    // Çok eski dosyaları reddet (opsiyonel)
-                    if ((DateTime.UtcNow - timestamp).TotalDays > 365)
-                    {
-                        System.Diagnostics.Debug.WriteLine("[LicenseEncryption] Lisans dosyası çok eski");
-                        // return null; // İsteğe bağlı
-                    }
                 }
 
                 var length = reader.ReadInt32();
 
-                // Makul boyut kontrolü
-                if (length <= 0 || length > 1024 * 1024) // Max 1MB
+                if (length <= 0 || length > 1024 * 1024)
                 {
-                    System.Diagnostics.Debug.WriteLine("[LicenseEncryption] Geçersiz veri boyutu");
+                    System.Diagnostics.Debug.WriteLine("[LicenseEncryption] Ge�ersiz veri boyutu");
                     return null;
                 }
 
                 var encryptedBytes = reader.ReadBytes(length);
                 var storedChecksum = reader.ReadBytes(32);
 
-                // Checksum doğrulama
                 var computedChecksum = ComputeHmac(encryptedBytes);
 
                 if (!CryptographicEquals(storedChecksum, computedChecksum))
                 {
-                    System.Diagnostics.Debug.WriteLine("[LicenseEncryption] Checksum doğrulaması başarısız");
+                    System.Diagnostics.Debug.WriteLine("[LicenseEncryption] Checksum do�rulamas� ba�ar�s�z");
                     return null;
                 }
 
-                // Şifre çözme
-                var plainBytes = ProtectedData.Unprotect(
-                    encryptedBytes,
-                    AdditionalEntropy,
-                    DataProtectionScope.CurrentUser);
-
+                var plainBytes = ProtectedData.Unprotect(encryptedBytes, AdditionalEntropy, DataProtectionScope.CurrentUser);
                 var json = Encoding.UTF8.GetString(plainBytes);
-                return JsonSerializer.Deserialize<LicenseData>(json);
+
+                return JsonSerializer.Deserialize<LicenseData>(json, JsonOptions);
             }
             catch (CryptographicException ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[LicenseEncryption] Şifre çözme hatası: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[LicenseEncryption] �ifre ��zme hatas�: {ex.Message}");
                 return null;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[LicenseEncryption] Yükleme hatası: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[LicenseEncryption] Y�kleme hatas�: {ex.Message}");
                 return null;
             }
         }
 
-        /// <summary>
-        /// Lisans dosyasını güvenli şekilde siler.
-        /// </summary>
         public static void SecureDelete(string filePath)
         {
             if (!File.Exists(filePath))
@@ -369,7 +277,6 @@ pwIDAQAB
                 var fileInfo = new FileInfo(filePath);
                 var length = fileInfo.Length;
 
-                // Dosyayı random veri ile üzerine yaz
                 using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Write, FileShare.None))
                 {
                     var random = new byte[4096];
@@ -387,13 +294,9 @@ pwIDAQAB
 
                 File.Delete(filePath);
             }
-            catch (Exception ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine($"[LicenseEncryption] SecureDelete hatası: {ex.Message}");
-
-                // Fallback: Normal silme
-                // DÜZELTME v26: Boş catch'e loglama eklendi
-                try { File.Delete(filePath); } catch (Exception deleteEx) { System.Diagnostics.Debug.WriteLine($"[LicenseCrypto] Normal silme de başarısız: {deleteEx.Message}"); }
+                try { File.Delete(filePath); } catch { }
             }
         }
 
@@ -403,9 +306,6 @@ pwIDAQAB
             return hmac.ComputeHash(data);
         }
 
-        /// <summary>
-        /// Timing-safe karşılaştırma (side-channel attack önleme).
-        /// </summary>
         private static bool CryptographicEquals(byte[] a, byte[] b)
         {
             if (a.Length != b.Length)
@@ -420,19 +320,14 @@ pwIDAQAB
     }
 
     /// <summary>
-    /// Lisans key formatı ve doğrulama.
-    /// Format: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX (25 karakter + 4 tire)
+    /// Lisans key format� ve do�rulama.
     /// </summary>
     public static class LicenseKeyFormat
     {
-        private const string ValidChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // I,O,0,1 yok (karışıklık önleme)
+        private const string ValidChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         private const int SegmentLength = 5;
         private const int SegmentCount = 5;
-        private const int TotalLength = SegmentLength * SegmentCount + (SegmentCount - 1); // 29 karakter
 
-        /// <summary>
-        /// Yeni lisans anahtarı oluşturur.
-        /// </summary>
         public static string Generate()
         {
             var segments = new string[SegmentCount];
@@ -441,7 +336,7 @@ pwIDAQAB
             var bytes = new byte[SegmentLength * SegmentCount];
             rng.GetBytes(bytes);
 
-            for (int s = 0; s < SegmentCount - 1; s++) // Son segment checksum olacak
+            for (int s = 0; s < SegmentCount - 1; s++)
             {
                 var segment = new char[SegmentLength];
                 for (int c = 0; c < SegmentLength; c++)
@@ -452,25 +347,19 @@ pwIDAQAB
                 segments[s] = new string(segment);
             }
 
-            // Son segment'e checksum ekle
             var baseKey = string.Join("", segments.Take(SegmentCount - 1));
             segments[SegmentCount - 1] = ComputeKeyChecksum(baseKey);
 
             return string.Join("-", segments);
         }
 
-        /// <summary>
-        /// Lisans anahtarı formatını ve checksum'ını doğrular.
-        /// </summary>
         public static bool Validate(string? key)
         {
             if (string.IsNullOrWhiteSpace(key))
                 return false;
 
-            // Temizle
             key = key.Trim().ToUpperInvariant().Replace(" ", "");
 
-            // Format kontrolü
             var parts = key.Split('-');
             if (parts.Length != SegmentCount)
                 return false;
@@ -487,16 +376,12 @@ pwIDAQAB
                 }
             }
 
-            // Checksum kontrolü
             var baseKey = string.Join("", parts.Take(SegmentCount - 1));
             var expectedChecksum = ComputeKeyChecksum(baseKey);
 
             return parts[SegmentCount - 1] == expectedChecksum;
         }
 
-        /// <summary>
-        /// Lisans anahtarını normalize eder (büyük harf, tire'li format).
-        /// </summary>
         public static string Normalize(string? key)
         {
             if (string.IsNullOrWhiteSpace(key))
@@ -505,7 +390,7 @@ pwIDAQAB
             var clean = key.Trim().ToUpperInvariant().Replace("-", "").Replace(" ", "");
 
             if (clean.Length != SegmentLength * SegmentCount)
-                return key ?? ""; // Normalize edilemez
+                return key ?? "";
 
             var segments = new string[SegmentCount];
             for (int i = 0; i < SegmentCount; i++)
@@ -514,10 +399,6 @@ pwIDAQAB
             return string.Join("-", segments);
         }
 
-        /// <summary>
-        /// Maskelenmiş key döndürür (UI için).
-        /// Örnek: XXXXX-XXXXX-*****-*****-XXXXX
-        /// </summary>
         public static string Mask(string? key)
         {
             if (string.IsNullOrWhiteSpace(key))
@@ -529,7 +410,6 @@ pwIDAQAB
             if (parts.Length != SegmentCount)
                 return key ?? "";
 
-            // Ortadaki segmentleri maskele
             for (int i = 1; i < SegmentCount - 1; i++)
                 parts[i] = "*****";
 
