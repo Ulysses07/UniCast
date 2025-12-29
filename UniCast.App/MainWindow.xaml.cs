@@ -321,13 +321,29 @@ namespace UniCast.App
                 }
 
                 Log.Information("[MainWindow] Stream başladı - {Count} chat ingestor aktif", _ingestorTasks.Count);
-
-                // Stream Chat Overlay başlat (yayına gömülü chat)
-                StartStreamChatOverlay();
+                
+                // NOT: Chat overlay artık OnStreamStarting'de başlatılıyor (FFmpeg'den önce)
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "[MainWindow] OnStreamStarted hatası");
+            }
+        }
+        
+        /// <summary>
+        /// Stream başlamadan önce çağrılır - chat overlay'i başlatır
+        /// </summary>
+        private void OnStreamStarting(ObservableCollection<TargetItem> targets)
+        {
+            try
+            {
+                // Stream Chat Overlay başlat (yayına gömülü chat)
+                // Bu, FFmpeg başlamadan ÖNCE çağrılır, böylece pipe hazır olur
+                StartStreamChatOverlay();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] OnStreamStarting hatası");
             }
         }
 
@@ -598,6 +614,7 @@ namespace UniCast.App
             _controlView = new ControlView(_controlViewModel, _chatViewModel);
 
             // Stream eventlerine abone ol - chat'leri yönet
+            _controlViewModel.StreamStarting += OnStreamStarting;  // Chat overlay için
             _controlViewModel.StreamStarted += OnStreamStarted;
             _controlViewModel.StreamStopped += OnStreamStopped;
 

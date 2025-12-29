@@ -31,7 +31,8 @@ namespace UniCast.App.ViewModels
         private bool _disposed;
 
         // Events for stream state changes
-        public event Action<ObservableCollection<TargetItem>>? StreamStarted;
+        public event Action<ObservableCollection<TargetItem>>? StreamStarting;  // Yayın başlamadan önce (chat overlay için)
+        public event Action<ObservableCollection<TargetItem>>? StreamStarted;   // Yayın başladıktan sonra
         public event Action? StreamStopped;
 
         // DÜZELTME: Event handler'ları field olarak tut (unsubscribe için)
@@ -368,6 +369,18 @@ namespace UniCast.App.ViewModels
                 {
                     // Preview çalışmıyorsa pipe kullanma
                     _stream.ClearPipeInput();
+                }
+                
+                // Chat overlay ve diğer servislerin başlaması için event fire et
+                // (MainWindow bu event'i dinleyip chat overlay'i başlatacak)
+                StreamStarting?.Invoke(targets);
+                
+                // Chat overlay pipe'ının hazır olması için kısa bir süre bekle
+                var chatOverlayEnabled = Services.SettingsStore.Data.StreamChatOverlayEnabled;
+                if (chatOverlayEnabled)
+                {
+                    Status = "Chat overlay hazırlanıyor...";
+                    await Task.Delay(1500);  // Pipe server'ın başlaması için bekle
                 }
 
                 var result = await _stream.StartWithResultAsync(targets, settings, _cts.Token);

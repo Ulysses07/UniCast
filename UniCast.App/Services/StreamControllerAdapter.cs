@@ -220,12 +220,21 @@ namespace UniCast.App.Services
                     UseTeeMuxer = activeTargets.Count > 1,  // Tee muxer flag
                     CameraRotation = settings.CameraRotation,  // Kamera döndürme
                     UsePipeInput = _usePipeInput,  // Pipe input flag
-                    PipeName = _pipeName  // Pipe adı
+                    PipeName = _pipeName,  // Pipe adı
+                    
+                    // Chat Overlay
+                    ChatOverlayEnabled = settings.StreamChatOverlayEnabled,
+                    ChatOverlayPipeName = settings.StreamChatOverlayEnabled ? "unicast_chat_overlay" : null
                 };
                 
                 if (_usePipeInput)
                 {
                     Log.Information("[StreamControllerAdapter] Pipe input kullanılıyor: {PipeName}", _pipeName);
+                }
+                
+                if (config.ChatOverlayEnabled)
+                {
+                    Log.Information("[StreamControllerAdapter] Chat overlay aktif: {PipeName}", config.ChatOverlayPipeName);
                 }
 
                 var success = await _inner.StartAsync(config, ct);

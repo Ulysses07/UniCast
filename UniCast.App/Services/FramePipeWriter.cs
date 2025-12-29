@@ -38,11 +38,11 @@ namespace UniCast.App.Services
         }
 
         /// <summary>
-        /// Pipe sunucusunu başlat ve FFmpeg'in bağlanmasını bekle
+        /// Pipe sunucusunu başlat (FFmpeg bağlantısını arka planda bekle)
         /// </summary>
-        public async Task StartAsync(int width, int height, int fps, CancellationToken ct = default)
+        public Task StartAsync(int width, int height, int fps, CancellationToken ct = default)
         {
-            if (_disposed) return;
+            if (_disposed) return Task.CompletedTask;
 
             _width = width;
             _height = height;
@@ -64,35 +64,41 @@ namespace UniCast.App.Services
                     0,  // inBufferSize (okuma yapmıyoruz)
                     width * height * 3 * 2);  // outBufferSize (2 frame buffer)
 
-                System.Diagnostics.Debug.WriteLine("[FramePipeWriter] FFmpeg bağlantısı bekleniyor...");
+                // Bağlantıyı arka planda bekle (bloklamadan)
+                _ = WaitForConnectionAsync(ct);
 
-                // FFmpeg bağlanana kadar bekle (timeout ile)
-                var connectTask = _pipeServer.WaitForConnectionAsync(ct);
-                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), ct);
+                System.Diagnostics.Debug.WriteLine("[FramePipeWriter] Pipe hazır, FFmpeg bağlantısı bekleniyor...");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FramePipeWriter] Başlatma hatası: {ex.Message}");
+                Stop();
+            }
 
-                var completedTask = await Task.WhenAny(connectTask, timeoutTask);
+            return Task.CompletedTask;
+        }
 
-                if (completedTask == timeoutTask)
-                {
-                    System.Diagnostics.Debug.WriteLine("[FramePipeWriter] FFmpeg bağlantı zaman aşımı!");
-                    Stop();
-                    return;
-                }
+        /// <summary>
+        /// FFmpeg bağlantısını arka planda bekle
+        /// </summary>
+        private async Task WaitForConnectionAsync(CancellationToken ct)
+        {
+            try
+            {
+                if (_pipeServer == null) return;
 
-                await connectTask; // Exception varsa fırlat
+                await _pipeServer.WaitForConnectionAsync(ct);
 
                 _isConnected = true;
                 System.Diagnostics.Debug.WriteLine("[FramePipeWriter] FFmpeg bağlandı!");
             }
             catch (OperationCanceledException)
             {
-                System.Diagnostics.Debug.WriteLine("[FramePipeWriter] Bağlantı iptal edildi");
-                Stop();
+                System.Diagnostics.Debug.WriteLine("[FramePipeWriter] Bağlantı bekleme iptal edildi");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[FramePipeWriter] Başlatma hatası: {ex.Message}");
-                Stop();
+                System.Diagnostics.Debug.WriteLine($"[FramePipeWriter] Bağlantı hatası: {ex.Message}");
             }
         }
 
