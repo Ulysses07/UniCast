@@ -338,6 +338,37 @@ namespace UniCast.App.ViewModels
                 Status = "Başlatılıyor...";
                 Metric = "";
                 Advisory = "";
+                
+                // Preview çalışıyorsa, pipe streaming'i başlat
+                if (_preview.IsRunning)
+                {
+                    Status = "Video pipe hazırlanıyor...";
+                    await _preview.StartStreamingAsync(_cts.Token);
+                    
+                    var pipeName = _preview.GetPipeName();
+                    if (!string.IsNullOrEmpty(pipeName))
+                    {
+                        // Rotation uygulandıktan sonraki boyutları hesapla
+                        var s = Services.SettingsStore.Data;
+                        int width = s.Width;
+                        int height = s.Height;
+                        
+                        // 90° veya 270° rotation varsa boyutlar yer değiştirir
+                        if (s.CameraRotation == 90 || s.CameraRotation == 270)
+                        {
+                            width = s.Height;
+                            height = s.Width;
+                        }
+                        
+                        _stream.SetPipeInput(pipeName, width, height, s.Fps);
+                        System.Diagnostics.Debug.WriteLine($"[ControlViewModel] Pipe input aktif: {pipeName}, {width}x{height}");
+                    }
+                }
+                else
+                {
+                    // Preview çalışmıyorsa pipe kullanma
+                    _stream.ClearPipeInput();
+                }
 
                 var result = await _stream.StartWithResultAsync(targets, settings, _cts.Token);
 
@@ -381,6 +412,10 @@ namespace UniCast.App.ViewModels
                     IsRunning = false;
                     Status = "Hata";
                     Advisory = result.UserMessage ?? "Bilinmeyen bir hata oluştu.";
+                    
+                    // Hata durumunda pipe'ı temizle
+                    _preview.StopStreaming();
+                    _stream.ClearPipeInput();
 
                     // Toast bildirimi göster
                     Services.ToastService.Instance.ShowError("Yayın başlatılamadı");
@@ -391,6 +426,10 @@ namespace UniCast.App.ViewModels
                 Status = "Kritik Hata";
                 Advisory = $"Beklenmedik hata: {ex.Message}";
                 IsRunning = false;
+                
+                // Hata durumunda pipe'ı temizle
+                _preview.StopStreaming();
+                _stream.ClearPipeInput();
             }
             finally
             {
@@ -429,6 +468,10 @@ namespace UniCast.App.ViewModels
                 IsRunning = false;
                 Status = "Durduruldu";
                 Metric = "";
+                
+                // Streaming pipe'ı durdur (preview çalışmaya devam eder)
+                _preview.StopStreaming();
+                _stream.ClearPipeInput();
 
                 // Yayın süre sayacını durdur
                 StopStreamTimer();

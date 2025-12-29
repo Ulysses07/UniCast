@@ -28,6 +28,13 @@ namespace UniCast.App.Services
         private string? _lastAdvisory;
         private string? _lastMessage;
         private string? _lastMetric;
+        
+        // Pipe input bilgileri (PreviewService'den)
+        private bool _usePipeInput;
+        private string? _pipeName;
+        private int _pipeWidth;
+        private int _pipeHeight;
+        private int _pipeFps;
 
         public StreamControllerAdapter()
         {
@@ -38,6 +45,34 @@ namespace UniCast.App.Services
             _inner.StateChanged += OnStateChanged;
             _inner.StatisticsUpdated += OnStatisticsUpdated;
         }
+        
+        #region Pipe Input Methods
+        
+        /// <summary>
+        /// Video input olarak named pipe kullan (PreviewService'den)
+        /// </summary>
+        public void SetPipeInput(string pipeName, int width, int height, int fps)
+        {
+            _usePipeInput = true;
+            _pipeName = pipeName;
+            _pipeWidth = width;
+            _pipeHeight = height;
+            _pipeFps = fps;
+            Log.Information("[StreamControllerAdapter] Pipe input ayarlandı: {PipeName}, {Width}x{Height}@{Fps}fps", 
+                pipeName, width, height, fps);
+        }
+        
+        /// <summary>
+        /// Pipe input'u devre dışı bırak
+        /// </summary>
+        public void ClearPipeInput()
+        {
+            _usePipeInput = false;
+            _pipeName = null;
+            Log.Information("[StreamControllerAdapter] Pipe input devre dışı");
+        }
+        
+        #endregion
 
         #region IStreamController Properties
 
@@ -170,18 +205,28 @@ namespace UniCast.App.Services
                 }
 
                 // StreamConfiguration oluştur
+                var settings = SettingsStore.Data;
                 var config = new StreamConfiguration
                 {
-                    InputSource = GetInputSource(),
+                    InputSource = _usePipeInput ? "" : GetInputSource(),  // Pipe kullanıyorsa input source boş
                     AudioSource = GetAudioSource(),
                     OutputUrl = outputUrl,
                     VideoBitrate = profile.VideoBitrateKbps,
                     AudioBitrate = profile.AudioBitrateKbps,
-                    Fps = profile.Fps,
+                    Fps = _usePipeInput ? _pipeFps : profile.Fps,
+                    Width = _usePipeInput ? _pipeWidth : settings.Width,
+                    Height = _usePipeInput ? _pipeHeight : settings.Height,
                     Preset = profile.VideoPreset,
                     UseTeeMuxer = activeTargets.Count > 1,  // Tee muxer flag
-                    CameraRotation = SettingsStore.Data.CameraRotation  // Kamera döndürme
+                    CameraRotation = settings.CameraRotation,  // Kamera döndürme
+                    UsePipeInput = _usePipeInput,  // Pipe input flag
+                    PipeName = _pipeName  // Pipe adı
                 };
+                
+                if (_usePipeInput)
+                {
+                    Log.Information("[StreamControllerAdapter] Pipe input kullanılıyor: {PipeName}", _pipeName);
+                }
 
                 var success = await _inner.StartAsync(config, ct);
 

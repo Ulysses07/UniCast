@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
@@ -19,6 +20,11 @@ namespace UniCast.App.Services
         /// Indicates if preview is currently running
         /// </summary>
         bool IsRunning { get; }
+        
+        /// <summary>
+        /// Indicates if streaming pipe is active
+        /// </summary>
+        bool IsStreaming { get; }
 
         /// <summary>
         /// Start camera preview
@@ -34,5 +40,20 @@ namespace UniCast.App.Services
         /// Stop camera preview
         /// </summary>
         Task StopAsync();
+        
+        /// <summary>
+        /// Start streaming frames to FFmpeg via named pipe
+        /// </summary>
+        Task StartStreamingAsync(CancellationToken ct = default);
+        
+        /// <summary>
+        /// Stop streaming frames to FFmpeg
+        /// </summary>
+        void StopStreaming();
+        
+        /// <summary>
+        /// Get the named pipe name for FFmpeg input
+        /// </summary>
+        string? GetPipeName();
     }
 }

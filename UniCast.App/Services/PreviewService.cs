@@ -43,6 +43,53 @@ namespace UniCast.App.Services
         private readonly SemaphoreSlim _operationLock = new(1, 1);
         private volatile bool _isStarting;
         private volatile bool _isStopping;
+        
+        // Frame pipe for FFmpeg streaming
+        private FramePipeWriter? _framePipe;
+        private volatile bool _streamingEnabled;
+        
+        /// <summary>
+        /// FFmpeg'e frame göndermeye başla (yayın başladığında çağrılır)
+        /// </summary>
+        public async Task StartStreamingAsync(CancellationToken ct = default)
+        {
+            if (_framePipe != null) return;
+            
+            var width = _bitmapWidth > 0 ? _bitmapWidth : 1920;
+            var height = _bitmapHeight > 0 ? _bitmapHeight : 1080;
+            
+            _framePipe = new FramePipeWriter();
+            await _framePipe.StartAsync(width, height, _targetFps, ct);
+            _streamingEnabled = true;
+            
+            System.Diagnostics.Debug.WriteLine("[PreviewService] Streaming pipe başlatıldı");
+        }
+        
+        /// <summary>
+        /// FFmpeg'e frame göndermeyi durdur (yayın bittiğinde çağrılır)
+        /// </summary>
+        public void StopStreaming()
+        {
+            _streamingEnabled = false;
+            
+            if (_framePipe != null)
+            {
+                _framePipe.Dispose();
+                _framePipe = null;
+            }
+            
+            System.Diagnostics.Debug.WriteLine("[PreviewService] Streaming pipe durduruldu");
+        }
+        
+        /// <summary>
+        /// Pipe adını al (FFmpeg input için)
+        /// </summary>
+        public string? GetPipeName() => _framePipe?.PipeName;
+        
+        /// <summary>
+        /// Streaming aktif mi?
+        /// </summary>
+        public bool IsStreaming => _streamingEnabled && _framePipe?.IsConnected == true;
 
         public async Task StartAsync(int cameraIndex, int width, int height, int fps, int rotation = 0)
         {
@@ -302,6 +349,19 @@ namespace UniCast.App.Services
                             System.Diagnostics.Debug.WriteLine($"[PreviewService] Rotation Error: {ex.Message}");
                         }
                     }
+                    
+                    // Streaming pipe'a yaz (FFmpeg için)
+                    if (_streamingEnabled && _framePipe != null)
+                    {
+                        try
+                        {
+                            _framePipe.WriteFrame(frame);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[PreviewService] Pipe write error: {ex.Message}");
+                        }
+                    }
 
                     try
                     {
@@ -531,6 +591,9 @@ namespace UniCast.App.Services
 
             OnFrame = null;
             IsRunning = false;
+            
+            // Streaming pipe'ı durdur
+            StopStreaming();
 
             try
             {

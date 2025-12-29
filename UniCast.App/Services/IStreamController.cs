@@ -19,6 +19,17 @@ namespace UniCast.App.Services
 
         IReadOnlyList<StreamTarget> Targets { get; }
 
+        // --- PIPE INPUT DESTEĞİ ---
+        /// <summary>
+        /// Video input olarak named pipe kullan (PreviewService'den)
+        /// </summary>
+        void SetPipeInput(string pipeName, int width, int height, int fps);
+        
+        /// <summary>
+        /// Pipe input'u devre dışı bırak (kamera direkt kullanılır)
+        /// </summary>
+        void ClearPipeInput();
+
         // --- YENİ EKLENEN METOTLAR (StartWithResultAsync) ---
         // UI tarafı artık bunları kullanarak "Başarılı/Başarısız" bilgisini alacak.
 

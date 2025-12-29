@@ -459,23 +459,37 @@ namespace UniCast.Core.Services
             // Input source analizi
             var videoSource = config.InputSource ?? "";
             var audioSource = config.AudioSource;
-
-            // Windows DirectShow cihazı mı kontrol et
-            bool isDirectShowVideo = videoSource.StartsWith("video=") ||
-                                      videoSource.Contains("@device");
-
             bool hasAudio = !string.IsNullOrWhiteSpace(audioSource);
 
-            // DirectShow video input
-            if (isDirectShowVideo)
+            // VIDEO INPUT
+            if (config.UsePipeInput && !string.IsNullOrEmpty(config.PipeName))
             {
-                args.Append("-f dshow ");
-                args.Append("-rtbufsize 100M ");
-                args.Append($"-i \"{videoSource}\" ");
+                // Named pipe'dan raw video oku (PreviewService'den geliyor)
+                // Rotation zaten PreviewService'de uygulandı!
+                args.Append($"-f rawvideo -pix_fmt bgr24 ");
+                args.Append($"-s {config.Width}x{config.Height} ");
+                args.Append($"-r {config.Fps} ");
+                args.Append($"-i \"\\\\.\\pipe\\{config.PipeName}\" ");
+                
+                System.Diagnostics.Debug.WriteLine($"[StreamController] Pipe input: {config.PipeName}, {config.Width}x{config.Height}@{config.Fps}fps");
             }
             else
             {
-                args.Append($"-re -i \"{videoSource}\" ");
+                // Windows DirectShow cihazı mı kontrol et
+                bool isDirectShowVideo = videoSource.StartsWith("video=") ||
+                                          videoSource.Contains("@device");
+
+                // DirectShow video input
+                if (isDirectShowVideo)
+                {
+                    args.Append("-f dshow ");
+                    args.Append("-rtbufsize 100M ");
+                    args.Append($"-i \"{videoSource}\" ");
+                }
+                else
+                {
+                    args.Append($"-re -i \"{videoSource}\" ");
+                }
             }
 
             // Audio input - ayrı olarak ekle
@@ -498,28 +512,32 @@ namespace UniCast.Core.Services
             args.Append("-tune zerolatency ");
             args.Append($"-g {config.Fps * 2} ");
 
-            // Video filtreleri (rotation dahil)
+            // Video filtreleri
             var filters = new System.Collections.Generic.List<string>();
             
-            // Rotation filtresi (0 değilse)
-            int rotation = config.CameraRotation switch
+            // Rotation filtresi - SADECE pipe kullanılmıyorsa ekle
+            // (Pipe kullanıldığında rotation zaten PreviewService'de yapıldı)
+            if (!config.UsePipeInput)
             {
-                90 or -270 => 90,
-                180 or -180 => 180,
-                270 or -90 => 270,
-                _ => 0
-            };
-            
-            if (rotation == 90)
-                filters.Add("transpose=1");  // 90° clockwise
-            else if (rotation == 180)
-                filters.Add("transpose=1,transpose=1");  // 180°
-            else if (rotation == 270)
-                filters.Add("transpose=2");  // 90° counter-clockwise (270° clockwise)
+                int rotation = config.CameraRotation switch
+                {
+                    90 or -270 => 90,
+                    180 or -180 => 180,
+                    270 or -90 => 270,
+                    _ => 0
+                };
+                
+                if (rotation == 90)
+                    filters.Add("transpose=1");  // 90° clockwise
+                else if (rotation == 180)
+                    filters.Add("transpose=1,transpose=1");  // 180°
+                else if (rotation == 270)
+                    filters.Add("transpose=2");  // 90° counter-clockwise (270° clockwise)
+            }
             
             filters.Add($"fps={config.Fps}");
-            filters.Add("scale=1280:720:force_original_aspect_ratio=decrease");
-            filters.Add("pad=1280:720:(ow-iw)/2:(oh-ih)/2");
+            filters.Add($"scale={config.Width}:{config.Height}:force_original_aspect_ratio=decrease");
+            filters.Add($"pad={config.Width}:{config.Height}:(ow-iw)/2:(oh-ih)/2");
             filters.Add("format=yuv420p");
             
             args.Append($"-vf \"{string.Join(",", filters)}\" ");
@@ -645,9 +663,13 @@ namespace UniCast.Core.Services
         public int VideoBitrate { get; set; } = 2500;
         public int AudioBitrate { get; set; } = 128;
         public int Fps { get; set; } = 30;
+        public int Width { get; set; } = 1920;
+        public int Height { get; set; } = 1080;
         public string Preset { get; set; } = "veryfast";
         public bool UseTeeMuxer { get; set; } = false;  // Multi-target için tee muxer kullan
         public int CameraRotation { get; set; } = 0;  // Kamera döndürme açısı (0, 90, 180, 270)
+        public bool UsePipeInput { get; set; } = false;  // Preview'dan pipe ile video al
+        public string? PipeName { get; set; }  // Named pipe adı
     }
 
     public sealed class StreamInfo
