@@ -21,6 +21,7 @@ namespace UniCast.Encoder
 
         /// <summary>
         /// v29: Hardware encoder kullanarak en iyi encoder parametrelerini al
+        /// OBS-level ultra low latency optimizasyonları
         /// </summary>
         private static string GetOptimalEncoderParams(string? encoderName, int bitrate, int fps)
         {
@@ -29,9 +30,21 @@ namespace UniCast.Encoder
             {
                 return encoderName switch
                 {
-                    var e when e.Contains("nvenc") => $"-c:v h264_nvenc -preset p1 -tune ll -rc cbr -b:v {bitrate}k",
+                    // NVENC: OBS-style ultra low latency
+                    // -preset p1: Fastest (OBS'de "Max Performance")
+                    // -tune ull: Ultra Low Latency (OBS'de "Ultra Low Latency")  
+                    // -zerolatency 1: Frame bazlı encoding, B-frame yok
+                    // -rc cbr: Sabit bitrate (streaming için en iyi)
+                    // -delay 0: Minimum encoder delay
+                    var e when e.Contains("nvenc") => $"-c:v h264_nvenc -preset p1 -tune ull -rc cbr -b:v {bitrate}k -delay 0 -zerolatency 1",
+
+                    // AMF: AMD için ultra low latency
                     var e when e.Contains("amf") => $"-c:v h264_amf -usage ultralowlatency -quality speed -rc cbr -b:v {bitrate}k",
-                    var e when e.Contains("qsv") => $"-c:v h264_qsv -preset veryfast -b:v {bitrate}k",
+
+                    // QSV: Intel için low latency
+                    var e when e.Contains("qsv") => $"-c:v h264_qsv -preset veryfast -low_power 1 -b:v {bitrate}k",
+
+                    // Software: En hızlı preset
                     _ => $"-c:v libx264 -preset ultrafast -tune zerolatency -b:v {bitrate}k"
                 };
             }
@@ -43,6 +56,26 @@ namespace UniCast.Encoder
                     HardwareEncoderService.Instance.BestEncoder != null)
                 {
                     var best = HardwareEncoderService.Instance.BestEncoder;
+
+                    // OBS-level parametreler ile override
+                    string? obsParams = best.Type switch
+                    {
+                        HardwareEncoderType.NvencH264 or HardwareEncoderType.NvencHevc =>
+                            $"-c:v h264_nvenc -preset p1 -tune ull -rc cbr -b:v {bitrate}k -delay 0 -zerolatency 1",
+                        HardwareEncoderType.AmfH264 or HardwareEncoderType.AmfHevc =>
+                            $"-c:v h264_amf -usage ultralowlatency -quality speed -rc cbr -b:v {bitrate}k",
+                        HardwareEncoderType.QsvH264 or HardwareEncoderType.QsvHevc =>
+                            $"-c:v h264_qsv -preset veryfast -low_power 1 -b:v {bitrate}k",
+                        _ => null
+                    };
+
+                    if (obsParams != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[FfmpegArgsBuilder] Using OBS-level hardware encoder: {best.Name}");
+                        return obsParams;
+                    }
+
+                    // Fallback: HardwareEncoderService parametreleri
                     var parameters = HardwareEncoderService.Instance.GetEncoderParameters(
                         best.Type,
                         EncoderPreset.LowLatency,
@@ -358,8 +391,17 @@ namespace UniCast.Encoder
             int cameraWidth = Math.Max(outputWidth, outputHeight);
             int cameraHeight = Math.Min(outputWidth, outputHeight);
 
+            // === OBS-LEVEL LOW-LATENCY INPUT FLAGS ===
+            // -probesize 32: Minimum input probing (varsayılan 5MB)
+            // -analyzeduration 0: Input analiz gecikmesini sıfırla
+            // -fflags nobuffer: Input buffering'i devre dışı bırak
+            // -flags low_delay: Düşük gecikme modu
+            sb.Append("-probesize 32 -analyzeduration 0 ");
+            sb.Append("-fflags nobuffer ");
+            sb.Append("-flags low_delay ");
+
             // Input: DirectShow kamera
-            sb.Append($"-f dshow -rtbufsize 100M ");
+            sb.Append($"-f dshow -rtbufsize 50M -thread_queue_size 512 ");
             sb.Append($"-video_size {cameraWidth}x{cameraHeight} -framerate {fps} ");
             sb.Append($"-i \"video={cameraName}\" ");
 
@@ -384,16 +426,16 @@ namespace UniCast.Encoder
                     filters.Add(transpose);
             }
 
-            // 3. Scale (çıkış boyutuna)
-            filters.Add($"scale={outputWidth}:{outputHeight}");
+            // 3. Scale (çıkış boyutuna) - OBS gibi fast bilinear kullan
+            filters.Add($"scale={outputWidth}:{outputHeight}:flags=fast_bilinear");
 
             // 4. Format (BGR24 for WPF)
             filters.Add("format=bgr24");
 
             sb.Append($"-vf \"{string.Join(",", filters)}\" ");
 
-            // Output: stdout'a raw video
-            sb.Append("-f rawvideo -pix_fmt bgr24 pipe:1");
+            // Output: stdout'a raw video (flush_packets ile daha az gecikme)
+            sb.Append("-flush_packets 1 -f rawvideo -pix_fmt bgr24 pipe:1");
 
             return sb.ToString();
         }
@@ -401,6 +443,7 @@ namespace UniCast.Encoder
         /// <summary>
         /// Preview + tek platform yayın için FFmpeg argümanları.
         /// Split filter ile hem preview hem RTMP çıkışı.
+        /// OBS-level optimizasyonlar: low-latency input, fast scaling, preview decimation
         /// </summary>
         public static string BuildPreviewAndStreamArgs(
             string cameraName,
@@ -421,17 +464,23 @@ namespace UniCast.Encoder
             int cameraHeight = Math.Min(outputWidth, outputHeight);
             int rotation = NormalizeRotation(cameraRotation);
 
+            // === OBS-LEVEL LOW-LATENCY GLOBAL FLAGS ===
+            sb.Append("-probesize 32 -analyzeduration 0 ");
+            sb.Append("-fflags nobuffer ");
+            sb.Append("-flags low_delay ");
+
             // === INPUTS ===
 
-            // Input 0: Video (kamera)
-            sb.Append($"-f dshow -rtbufsize 100M ");
+            // Input 0: Video (kamera) - optimize edilmiş buffer
+            sb.Append($"-f dshow -rtbufsize 50M -thread_queue_size 512 ");
             sb.Append($"-video_size {cameraWidth}x{cameraHeight} -framerate {fps} ");
             sb.Append($"-i \"video={cameraName}\" ");
 
-            // Input 1: Audio
+            // Input 1: Audio - düşük buffer
             if (!string.IsNullOrWhiteSpace(audioDeviceName))
             {
-                sb.Append($"-f dshow -i \"audio={audioDeviceName}\" ");
+                sb.Append($"-f dshow -thread_queue_size 512 ");
+                sb.Append($"-i \"audio={audioDeviceName}\" ");
             }
             else
             {
@@ -444,20 +493,21 @@ namespace UniCast.Encoder
             {
                 chatOverlayIndex = 2;
                 sb.Append($"-f rawvideo -pix_fmt bgra -s {outputWidth}x{outputHeight} -r {fps} ");
+                sb.Append($"-thread_queue_size 256 ");
                 sb.Append($"-i \"\\\\.\\pipe\\{chatOverlayPipeName}\" ");
                 System.Diagnostics.Debug.WriteLine($"[FfmpegArgsBuilder] Chat overlay input eklendi: {chatOverlayPipeName}, {outputWidth}x{outputHeight}");
             }
 
-            // === FILTER COMPLEX ===
+            // === FILTER COMPLEX (OBS-STYLE OPTIMIZED) ===
             sb.Append("-filter_complex \"");
 
             string vCurrent = "[0:v]";
 
-            // 1. FPS
-            sb.Append($"{vCurrent}fps={fps}[v_fps];");
+            // 1. FPS - async mode for smoother output
+            sb.Append($"{vCurrent}fps={fps}:round=near[v_fps];");
             vCurrent = "[v_fps]";
 
-            // 2. Rotation
+            // 2. Rotation (optimized)
             if (rotation != 0)
             {
                 string transpose = rotation switch
@@ -474,22 +524,22 @@ namespace UniCast.Encoder
                 }
             }
 
-            // 3. Scale
-            sb.Append($"{vCurrent}scale={outputWidth}:{outputHeight}[v_scaled];");
+            // 3. Scale - OBS gibi fast_bilinear (en hızlı, yeterli kalite)
+            sb.Append($"{vCurrent}scale={outputWidth}:{outputHeight}:flags=fast_bilinear[v_scaled];");
             vCurrent = "[v_scaled]";
 
-            // 4. Chat overlay
+            // 4. Chat overlay - shortest=0 ile overlay stream beklemeden devam etsin
             if (chatOverlayIndex != -1)
             {
-                sb.Append($"{vCurrent}[{chatOverlayIndex}:v]overlay=0:0:eof_action=pass:format=auto[v_chat];");
+                sb.Append($"{vCurrent}[{chatOverlayIndex}:v]overlay=0:0:eof_action=pass:shortest=0:format=auto[v_chat];");
                 vCurrent = "[v_chat]";
             }
 
             // 5. Split: preview + stream
             sb.Append($"{vCurrent}split=2[preview][stream];");
 
-            // 6. Preview output format (BGR24)
-            sb.Append("[preview]format=bgr24[preview_out];");
+            // 6. Preview output format (BGR24) - fifo ile buffer overflow önle
+            sb.Append("[preview]fifo,format=bgr24[preview_out];");
 
             // 7. Stream output format (YUV420P)
             sb.Append("[stream]format=yuv420p[stream_out]");
@@ -498,20 +548,26 @@ namespace UniCast.Encoder
 
             // === OUTPUTS ===
 
-            // Output 1: Preview (stdout)
-            sb.Append("-map \"[preview_out]\" -f rawvideo -pix_fmt bgr24 pipe:1 ");
+            // === OUTPUTS (OBS-STYLE LOW-LATENCY) ===
+
+            // Output 1: Preview (stdout) - flush_packets ile minimum gecikme
+            sb.Append("-map \"[preview_out]\" -flush_packets 1 -f rawvideo -pix_fmt bgr24 pipe:1 ");
 
             // Output 2: RTMP stream
             sb.Append("-map \"[stream_out]\" -map 1:a ");
 
-            // Encoder
+            // Encoder - OBS-level low-latency
             string encParams = GetOptimalEncoderParams(encoderName, videoBitrateKbps, fps);
             sb.Append($"{encParams} ");
 
-            // Video settings
+            // Video settings - OBS-compatible
             int gopSize = fps * 2;
             sb.Append($"-maxrate {videoBitrateKbps}k -bufsize {videoBitrateKbps * 2}k ");
             sb.Append($"-g {gopSize} -keyint_min {gopSize} ");
+
+            // Düşük gecikme için ek ayarlar
+            sb.Append("-flags +low_delay ");
+            sb.Append("-max_muxing_queue_size 1024 ");
 
             // Audio settings
             sb.Append($"-c:a aac -b:a {audioBitrateKbps}k -ar 44100 ");
@@ -552,14 +608,20 @@ namespace UniCast.Encoder
             int cameraHeight = Math.Min(outputWidth, outputHeight);
             int rotation = NormalizeRotation(cameraRotation);
 
+            // === OBS-LEVEL LOW-LATENCY GLOBAL FLAGS ===
+            sb.Append("-probesize 32 -analyzeduration 0 ");
+            sb.Append("-fflags nobuffer ");
+            sb.Append("-flags low_delay ");
+
             // === INPUTS ===
-            sb.Append($"-f dshow -rtbufsize 100M ");
+            sb.Append($"-f dshow -rtbufsize 50M -thread_queue_size 512 ");
             sb.Append($"-video_size {cameraWidth}x{cameraHeight} -framerate {fps} ");
             sb.Append($"-i \"video={cameraName}\" ");
 
             if (!string.IsNullOrWhiteSpace(audioDeviceName))
             {
-                sb.Append($"-f dshow -i \"audio={audioDeviceName}\" ");
+                sb.Append($"-f dshow -thread_queue_size 512 ");
+                sb.Append($"-i \"audio={audioDeviceName}\" ");
             }
             else
             {
@@ -571,16 +633,17 @@ namespace UniCast.Encoder
             {
                 chatOverlayIndex = 2;
                 sb.Append($"-f rawvideo -pix_fmt bgra -s {outputWidth}x{outputHeight} -r {fps} ");
+                sb.Append($"-thread_queue_size 256 ");
                 sb.Append($"-i \"\\\\.\\pipe\\{chatOverlayPipeName}\" ");
                 System.Diagnostics.Debug.WriteLine($"[FfmpegArgsBuilder] Chat overlay input eklendi (multi): {chatOverlayPipeName}, {outputWidth}x{outputHeight}");
             }
 
-            // === FILTER COMPLEX ===
+            // === FILTER COMPLEX (OBS-STYLE OPTIMIZED) ===
             sb.Append("-filter_complex \"");
 
             string vCurrent = "[0:v]";
 
-            sb.Append($"{vCurrent}fps={fps}[v_fps];");
+            sb.Append($"{vCurrent}fps={fps}:round=near[v_fps];");
             vCurrent = "[v_fps]";
 
             if (rotation != 0)
@@ -599,25 +662,26 @@ namespace UniCast.Encoder
                 }
             }
 
-            sb.Append($"{vCurrent}scale={outputWidth}:{outputHeight}[v_scaled];");
+            // Scale - OBS gibi fast_bilinear
+            sb.Append($"{vCurrent}scale={outputWidth}:{outputHeight}:flags=fast_bilinear[v_scaled];");
             vCurrent = "[v_scaled]";
 
             if (chatOverlayIndex != -1)
             {
-                sb.Append($"{vCurrent}[{chatOverlayIndex}:v]overlay=0:0:eof_action=pass:format=auto[v_chat];");
+                sb.Append($"{vCurrent}[{chatOverlayIndex}:v]overlay=0:0:eof_action=pass:shortest=0:format=auto[v_chat];");
                 vCurrent = "[v_chat]";
             }
 
             sb.Append($"{vCurrent}split=2[preview][stream];");
-            sb.Append("[preview]format=bgr24[preview_out];");
+            sb.Append("[preview]fifo,format=bgr24[preview_out];");
             sb.Append("[stream]format=yuv420p[stream_out]");
 
             sb.Append("\" ");
 
-            // === OUTPUTS ===
+            // === OUTPUTS (OBS-STYLE LOW-LATENCY) ===
 
             // Output 1: Preview
-            sb.Append("-map \"[preview_out]\" -f rawvideo -pix_fmt bgr24 pipe:1 ");
+            sb.Append("-map \"[preview_out]\" -flush_packets 1 -f rawvideo -pix_fmt bgr24 pipe:1 ");
 
             // Output 2: Multi-platform tee muxer
             sb.Append("-map \"[stream_out]\" -map 1:a ");
@@ -628,6 +692,8 @@ namespace UniCast.Encoder
             int gopSize = fps * 2;
             sb.Append($"-maxrate {videoBitrateKbps}k -bufsize {videoBitrateKbps * 2}k ");
             sb.Append($"-g {gopSize} -keyint_min {gopSize} ");
+            sb.Append("-flags +low_delay ");
+            sb.Append("-max_muxing_queue_size 1024 ");
             sb.Append($"-c:a aac -b:a {audioBitrateKbps}k -ar 44100 ");
 
             // Tee muxer
