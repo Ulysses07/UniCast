@@ -24,10 +24,6 @@
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3595.46" />
 		<PackageReference Include="NAudio" Version="2.2.1" />
-
-		<PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
-		<PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
-		<PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.11.0.20250507" />
 		<PackageReference Include="Serilog" Version="4.3.0" />
 		<PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
@@ -50,6 +46,9 @@
 		<None Include="External\ffprobe.exe" Condition="Exists('External\ffprobe.exe')">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Services\Pipeline\" />
 	</ItemGroup>
 
 </Project>

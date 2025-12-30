@@ -9,6 +9,7 @@ using System.Windows.Media;
 using UniCast.App.Infrastructure;
 using UniCast.App.Services;
 using UniCast.App.Services.Capture;
+using UniCast.App.Services.Pipeline;  // FFmpegPreviewService için
 using UniCast.Core.Models;
 
 
@@ -19,10 +20,10 @@ namespace UniCast.App.ViewModels
 {
     public sealed class ControlViewModel : INotifyPropertyChanged, IDisposable
     {
-        private readonly IStreamController _stream;
+        // KALDIRILAN: IStreamController _stream - artık FFmpegPreviewService yayın işlemlerini de yapıyor
         private readonly Func<(ObservableCollection<TargetItem> targets, SettingsData settings)>? _provider;
 
-        private readonly PreviewService _preview = new();
+        private readonly FFmpegPreviewService _preview = new();  // YENİ: FFmpeg-First Pipeline (preview + yayın)
         private readonly AudioService _audioService = new();
 
         private CancellationTokenSource? _cts;
@@ -41,20 +42,14 @@ namespace UniCast.App.ViewModels
         private readonly Action<bool> _onMuteChangeHandler;
 
         // Parametresiz constructor
-        // DÜZELTME: StreamControllerAdapter kullanılıyor
-        private static readonly Lazy<StreamControllerAdapter> _defaultAdapter = new(() => new StreamControllerAdapter());
-
         public ControlViewModel() : this(
-            _defaultAdapter.Value,
             () => (new ObservableCollection<TargetItem>(TargetsStore.Load()), SettingsStore.Data))
         {
         }
 
         public ControlViewModel(
-            IStreamController stream,
             Func<(ObservableCollection<TargetItem> targets, SettingsData settings)> provider)
         {
-            _stream = stream;
             _provider = provider;
 
             // DÜZELTME: Handler'ları field'lara ata
@@ -138,6 +133,12 @@ namespace UniCast.App.ViewModels
             private set { _previewImage = value; OnPropertyChanged(); }
         }
 
+        /// <summary>Kameradan alınan gerçek genişlik</summary>
+        public int PreviewWidth => _preview.ActualWidth;
+
+        /// <summary>Kameradan alınan gerçek yükseklik</summary>
+        public int PreviewHeight => _preview.ActualHeight;
+
         /// <summary>
         /// DÜZELTME v55: Tüm preview başlatma işlemi arka planda
         /// - UI thread hiç bloklanmaz
@@ -159,7 +160,7 @@ namespace UniCast.App.ViewModels
                         .ConfigureAwait(false);
 
                     // 2. Preview'ı başlat (VideoCapture oluşturma dahil - yavaş işlem)
-                    await _preview.StartAsync(cameraIndex, s.Width, s.Height, s.Fps)
+                    await _preview.StartAsync(cameraIndex, s.Width, s.Height, s.Fps, s.CameraRotation)
                         .ConfigureAwait(false);
                 }
                 catch (Exception ex)
@@ -339,42 +340,37 @@ namespace UniCast.App.ViewModels
                 Status = "Başlatılıyor...";
                 Metric = "";
                 Advisory = "";
-                
-                // Preview çalışıyorsa, pipe streaming'i başlat
-                if (_preview.IsRunning)
+
+                // FFmpeg-First Pipeline: Preview açık değilse önce başlat
+                if (!_preview.IsRunning)
                 {
-                    Status = "Video pipe hazırlanıyor...";
-                    await _preview.StartStreamingAsync(_cts.Token);
-                    
-                    var pipeName = _preview.GetPipeName();
-                    if (!string.IsNullOrEmpty(pipeName))
+                    Status = "Kamera açılıyor...";
+                    System.Diagnostics.Debug.WriteLine("[ControlViewModel] Preview çalışmıyor, başlatılıyor...");
+
+                    // Kamera index'ini bul
+                    int cameraIndex = await GetCameraIndexAsync(settings.SelectedVideoDevice ?? settings.DefaultCamera);
+
+                    // Preview'ı başlat
+                    await _preview.StartAsync(cameraIndex, settings.Width, settings.Height, settings.Fps, settings.CameraRotation);
+
+                    // Preview'ın açılması için maksimum 5 saniye bekle
+                    var waitStart = DateTime.Now;
+                    while (!_preview.IsRunning && (DateTime.Now - waitStart).TotalSeconds < 5)
                     {
-                        // Rotation uygulandıktan sonraki boyutları hesapla
-                        var s = Services.SettingsStore.Data;
-                        int width = s.Width;
-                        int height = s.Height;
-                        
-                        // 90° veya 270° rotation varsa boyutlar yer değiştirir
-                        if (s.CameraRotation == 90 || s.CameraRotation == 270)
-                        {
-                            width = s.Height;
-                            height = s.Width;
-                        }
-                        
-                        _stream.SetPipeInput(pipeName, width, height, s.Fps);
-                        System.Diagnostics.Debug.WriteLine($"[ControlViewModel] Pipe input aktif: {pipeName}, {width}x{height}");
+                        await Task.Delay(100, _cts.Token);
+                    }
+
+                    if (!_preview.IsRunning)
+                    {
+                        Advisory = "Kamera açılamadı. Lütfen kamera ayarlarını kontrol edin.";
+                        IsLoading = false;
+                        return;
                     }
                 }
-                else
-                {
-                    // Preview çalışmıyorsa pipe kullanma
-                    _stream.ClearPipeInput();
-                }
-                
+
                 // Chat overlay ve diğer servislerin başlaması için event fire et
-                // (MainWindow bu event'i dinleyip chat overlay'i başlatacak)
                 StreamStarting?.Invoke(targets);
-                
+
                 // Chat overlay pipe'ının hazır olması için kısa bir süre bekle
                 var chatOverlayEnabled = Services.SettingsStore.Data.StreamChatOverlayEnabled;
                 if (chatOverlayEnabled)
@@ -383,7 +379,10 @@ namespace UniCast.App.ViewModels
                     await Task.Delay(1500);  // Pipe server'ın başlaması için bekle
                 }
 
-                var result = await _stream.StartWithResultAsync(targets, settings, _cts.Token);
+                // YENİ: FFmpegPreviewService üzerinden yayın başlat (tek FFmpeg process)
+                Status = "Yayın başlatılıyor...";
+                var targetList = new System.Collections.Generic.List<TargetItem>(targets);
+                var result = await _preview.StartStreamWithResultAsync(targetList, settings, _cts.Token);
 
                 if (result.Success)
                 {
@@ -399,17 +398,17 @@ namespace UniCast.App.ViewModels
                     // Chat ingestors için event fırlat
                     StreamStarted?.Invoke(targets);
 
-                    // DÜZELTME v27: Task referansını tut (fire-and-forget yerine tracked task)
+                    // Status monitor task - FFmpegPreviewService'den durumu izle
                     var token = _cts.Token;
                     _statusMonitorTask = Task.Run(async () =>
                     {
                         try
                         {
-                            while ((IsRunning || _stream.IsReconnecting) && !token.IsCancellationRequested)
+                            while ((IsRunning || _preview.IsReconnecting) && !token.IsCancellationRequested)
                             {
-                                Status = _stream.LastMessage ?? "Yayında";
-                                Metric = _stream.LastMetric ?? "";
-                                if (!string.IsNullOrEmpty(_stream.LastAdvisory)) Advisory = _stream.LastAdvisory;
+                                Status = _preview.LastMessage ?? "Yayında";
+                                Metric = _preview.LastMetric ?? "";
+                                if (!string.IsNullOrEmpty(_preview.LastAdvisory)) Advisory = _preview.LastAdvisory;
                                 await Task.Delay(200, token);
                             }
                         }
@@ -425,10 +424,6 @@ namespace UniCast.App.ViewModels
                     IsRunning = false;
                     Status = "Hata";
                     Advisory = result.UserMessage ?? "Bilinmeyen bir hata oluştu.";
-                    
-                    // Hata durumunda pipe'ı temizle
-                    _preview.StopStreaming();
-                    _stream.ClearPipeInput();
 
                     // Toast bildirimi göster
                     Services.ToastService.Instance.ShowError("Yayın başlatılamadı");
@@ -439,10 +434,6 @@ namespace UniCast.App.ViewModels
                 Status = "Kritik Hata";
                 Advisory = $"Beklenmedik hata: {ex.Message}";
                 IsRunning = false;
-                
-                // Hata durumunda pipe'ı temizle
-                _preview.StopStreaming();
-                _stream.ClearPipeInput();
             }
             finally
             {
@@ -458,18 +449,18 @@ namespace UniCast.App.ViewModels
             {
                 Status = "Durduruluyor...";
 
-                // DÜZELTME: CTS'i iptal et
+                // CTS'i iptal et
                 try
                 {
                     _cts?.Cancel();
                 }
                 catch (Exception ex)
                 {
-                    // DÜZELTME v26: Boş catch'e loglama eklendi
                     System.Diagnostics.Debug.WriteLine($"[ControlViewModel.StopAsync] CTS cancel hatası: {ex.Message}");
                 }
 
-                await _stream.StopAsync();
+                // YENİ: FFmpegPreviewService üzerinden yayını durdur (preview devam eder)
+                await _preview.StopStreamOnlyAsync();
             }
             catch (Exception ex)
             {
@@ -481,10 +472,6 @@ namespace UniCast.App.ViewModels
                 IsRunning = false;
                 Status = "Durduruldu";
                 Metric = "";
-                
-                // Streaming pipe'ı durdur (preview çalışmaya devam eder)
-                _preview.StopStreaming();
-                _stream.ClearPipeInput();
 
                 // Yayın süre sayacını durdur
                 StopStreamTimer();

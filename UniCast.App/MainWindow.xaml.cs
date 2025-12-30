@@ -134,7 +134,68 @@ namespace UniCast.App
                 }
             });
 
+            // 4. Ayar değişikliklerini dinle (chat overlay güncelleme için)
+            SettingsStore.SettingsChanged += OnSettingsChanged;
+
             Log.Debug("[MainWindow] Lazy initialization tamamlandı");
+        }
+
+        /// <summary>
+        /// Ayarlar değiştiğinde chat overlay'i günceller
+        /// </summary>
+        private void OnSettingsChanged()
+        {
+            try
+            {
+                // UI thread'de çalıştır
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    UpdateStreamChatOverlaySettings();
+                }));
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] OnSettingsChanged hatası");
+            }
+        }
+
+        /// <summary>
+        /// Stream Chat Overlay ayarlarını günceller (yayın sırasında)
+        /// </summary>
+        private void UpdateStreamChatOverlaySettings()
+        {
+            try
+            {
+                if (_streamChatOverlayService == null || !_streamChatOverlayService.IsRunning)
+                    return;
+
+                var settings = SettingsStore.Data;
+                var renderer = _streamChatOverlayService.Renderer;
+
+                // Pozisyon güncelle
+                renderer.Position = settings.StreamChatOverlayPosition switch
+                {
+                    "TopLeft" => ChatOverlayPosition.TopLeft,
+                    "TopRight" => ChatOverlayPosition.TopRight,
+                    "BottomRight" => ChatOverlayPosition.BottomRight,
+                    "Center" => ChatOverlayPosition.Center,
+                    _ => ChatOverlayPosition.BottomLeft
+                };
+
+                // Diğer ayarları güncelle
+                renderer.MaxVisibleMessages = settings.StreamChatOverlayMaxMessages;
+                renderer.MessageLifetimeSeconds = settings.StreamChatOverlayMessageLifetime;
+                renderer.FontSize = settings.StreamChatOverlayFontSize;
+                renderer.Opacity = settings.StreamChatOverlayOpacity;
+                renderer.EnableShadow = settings.StreamChatOverlayShadow;
+
+                Log.Debug("[MainWindow] Stream Chat Overlay ayarları güncellendi - Font: {FontSize}, Pozisyon: {Position}",
+                    settings.StreamChatOverlayFontSize, settings.StreamChatOverlayPosition);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[MainWindow] UpdateStreamChatOverlaySettings hatası");
+            }
         }
 
         private void InitializeUI()
@@ -321,7 +382,7 @@ namespace UniCast.App
                 }
 
                 Log.Information("[MainWindow] Stream başladı - {Count} chat ingestor aktif", _ingestorTasks.Count);
-                
+
                 // NOT: Chat overlay artık OnStreamStarting'de başlatılıyor (FFmpeg'den önce)
             }
             catch (Exception ex)
@@ -329,7 +390,7 @@ namespace UniCast.App
                 Log.Error(ex, "[MainWindow] OnStreamStarted hatası");
             }
         }
-        
+
         /// <summary>
         /// Stream başlamadan önce çağrılır - chat overlay'i başlatır
         /// </summary>
@@ -369,10 +430,22 @@ namespace UniCast.App
                     _streamChatOverlayService = null;
                 }
 
+                // DÜZELTME: Kameradan alınan GERÇEK boyutları kullan
+                int overlayWidth = _controlViewModel?.PreviewWidth ?? 0;
+                int overlayHeight = _controlViewModel?.PreviewHeight ?? 0;
+
+                // Fallback: Eğer boyutlar 0 ise settings'ten al
+                if (overlayWidth <= 0 || overlayHeight <= 0)
+                {
+                    overlayWidth = settings.Width > 0 ? settings.Width : 1920;
+                    overlayHeight = settings.Height > 0 ? settings.Height : 1080;
+                    Log.Warning("[MainWindow] Chat overlay: Gerçek boyut alınamadı, settings kullanılıyor: {W}x{H}", overlayWidth, overlayHeight);
+                }
+
                 // Yeni servis oluştur
                 _streamChatOverlayService = new StreamChatOverlayService(
-                    settings.Width > 0 ? settings.Width : 1920,
-                    settings.Height > 0 ? settings.Height : 1080,
+                    overlayWidth,
+                    overlayHeight,
                     "unicast_chat_overlay",
                     settings.Fps > 0 ? settings.Fps : 30);
 
@@ -967,6 +1040,7 @@ namespace UniCast.App
                         MainTabControl.SelectionChanged -= OnTabSelectionChanged;
                         PreviewKeyDown -= MainWindow_PreviewKeyDown;
                         Loaded -= MainWindow_Loaded;
+                        SettingsStore.SettingsChanged -= OnSettingsChanged;
                     }
                     catch (Exception ex)
                     {

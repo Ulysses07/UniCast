@@ -21,6 +21,12 @@ namespace UniCast.App.Services
         private static System.Threading.Timer? _autoSaveTimer;
         private static bool _isDirty;
 
+        /// <summary>
+        /// Ayarlar kaydedildiğinde tetiklenir.
+        /// UI thread'de çağrılmaz, dikkat!
+        /// </summary>
+        public static event Action? SettingsChanged;
+
         static SettingsStore()
         {
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -87,6 +93,8 @@ namespace UniCast.App.Services
         /// </summary>
         public static void Save()
         {
+            bool saved = false;
+
             lock (_lock)
             {
                 if (_data == null)
@@ -111,11 +119,25 @@ namespace UniCast.App.Services
                     File.Move(tempPath, SettingsPath);
 
                     _isDirty = false;
+                    saved = true;
                     Log.Debug("[SettingsStore] Ayarlar kaydedildi");
                 }
                 catch (Exception ex)
                 {
                     Log.Error(ex, "[SettingsStore] Kaydetme hatası");
+                }
+            }
+
+            // Lock dışında event fire et (deadlock önleme)
+            if (saved)
+            {
+                try
+                {
+                    SettingsChanged?.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "[SettingsStore] SettingsChanged event hatası");
                 }
             }
         }
@@ -315,7 +337,7 @@ namespace UniCast.App.Services
         public int Fps { get; set; } = 30;
         public string VideoEncoder { get; set; } = "libx264";
         public string VideoPreset { get; set; } = "veryfast";
-        
+
         /// <summary>
         /// Kamera döndürme açısı (derece).
         /// Kullanım: Kamerayı fiziksel olarak 90° döndürüp, yazılımda 270° seçerek

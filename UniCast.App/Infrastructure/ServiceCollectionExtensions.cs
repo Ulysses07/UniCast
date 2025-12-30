@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using UniCast.App.Services;
 using UniCast.App.Services.Capture;
+using UniCast.App.Services.Pipeline;
 using UniCast.App.ViewModels;
 using UniCast.Core.Chat;
 
@@ -16,9 +17,6 @@ namespace UniCast.App.Infrastructure
         {
             // --- Singleton Servisler (Uygulama boyunca tek instance) ---
 
-            // Stream Controller - Ana yayın yöneticisi
-            services.AddSingleton<IStreamController, StreamControllerAdapter>();
-
             // Device Service - Kamera/mikrofon listesi
             services.AddSingleton<IDeviceService, DeviceService>();
 
@@ -28,8 +26,9 @@ namespace UniCast.App.Infrastructure
             // Audio Service - Ses seviyesi izleme
             services.AddSingleton<IAudioService, AudioService>();
 
-            // Preview Service - Kamera önizleme (Singleton - tek kamera kaynağı)
-            services.AddSingleton<IPreviewService, PreviewService>();
+            // Preview Service - FFmpeg-First Pipeline (preview + yayın)
+            services.AddSingleton<FFmpegPreviewService>();
+            services.AddSingleton<IPreviewService>(sp => sp.GetRequiredService<FFmpegPreviewService>());
 
             // --- ViewModels ---
 
@@ -42,20 +41,18 @@ namespace UniCast.App.Infrastructure
             // ChatViewModel - Sohbet akışı
             services.AddTransient<ChatViewModel>();
 
-            // PreviewViewModel - DI'dan PreviewService alıyor
+            // PreviewViewModel - DI'dan IPreviewService alıyor
             services.AddTransient<PreviewViewModel>(sp =>
             {
                 var previewService = sp.GetRequiredService<IPreviewService>();
-                return new PreviewViewModel((PreviewService)previewService);
+                return new PreviewViewModel(previewService);
             });
 
-            // ControlViewModel - Ana kontrol paneli
+            // ControlViewModel - Ana kontrol paneli (artık IStreamController kullanmıyor)
             services.AddTransient<ControlViewModel>(sp =>
             {
-                var stream = sp.GetRequiredService<IStreamController>();
                 var targetsVm = sp.GetRequiredService<TargetsViewModel>();
                 return new ControlViewModel(
-                    stream,
                     () => (targetsVm.Targets, SettingsStore.Load())
                 );
             });

@@ -11,7 +11,7 @@ namespace UniCast.App.ViewModels
 {
     public sealed class PreviewViewModel : INotifyPropertyChanged, IDisposable
     {
-        private readonly PreviewService _service;
+        private readonly IPreviewService _service;
         private bool _disposed;
 
         private readonly Action<ImageSource> _onFrameHandler;
@@ -28,13 +28,13 @@ namespace UniCast.App.ViewModels
         public ICommand StartPreviewCommand { get; }
         public ICommand StopPreviewCommand { get; }
 
-        // Parametresiz constructor
-        public PreviewViewModel() : this(new PreviewService())
+        // Parametresiz constructor - FFmpegPreviewService kullan
+        public PreviewViewModel() : this(new FFmpegPreviewService())
         {
         }
 
-        // DÜZELTME: DI Constructor
-        public PreviewViewModel(PreviewService service)
+        // DI Constructor - IPreviewService alır (FFmpegPreviewService veya başka)
+        public PreviewViewModel(IPreviewService service)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
 

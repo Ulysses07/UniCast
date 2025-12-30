@@ -471,7 +471,7 @@ namespace UniCast.Core.Services
                 args.Append($"-s {config.Width}x{config.Height} ");
                 args.Append($"-r {config.Fps} ");
                 args.Append($"-i \"\\\\.\\pipe\\{config.PipeName}\" ");
-                
+
                 System.Diagnostics.Debug.WriteLine($"[StreamController] Pipe input: {config.PipeName}, {config.Width}x{config.Height}@{config.Fps}fps");
             }
             else
@@ -485,7 +485,17 @@ namespace UniCast.Core.Services
                 {
                     args.Append("-f dshow ");
                     args.Append("-rtbufsize 100M ");
+
+                    // Kamera çözünürlüğü - HER ZAMAN YATAY FORMAT (büyük x küçük)
+                    // Kameralar dikey çözünürlük desteklemez, FFmpeg filtreleriyle döndürülür
+                    int cameraWidth = Math.Max(config.Width, config.Height);   // Büyük olan (1920)
+                    int cameraHeight = Math.Min(config.Width, config.Height);  // Küçük olan (1080)
+
+                    args.Append($"-video_size {cameraWidth}x{cameraHeight} ");
+                    args.Append($"-framerate {config.Fps} ");
                     args.Append($"-i \"{videoSource}\" ");
+
+                    System.Diagnostics.Debug.WriteLine($"[StreamController] DirectShow input: {cameraWidth}x{cameraHeight}@{config.Fps}fps (camera always horizontal)");
                 }
                 else
                 {
@@ -505,7 +515,7 @@ namespace UniCast.Core.Services
                 // Sessiz audio üret (RTMP için gerekli) - süresiz
                 args.Append("-f lavfi -i anullsrc=r=44100:cl=stereo ");
             }
-            
+
             // INPUT 2: CHAT OVERLAY (varsa)
             if (hasChatOverlay)
             {
@@ -513,23 +523,42 @@ namespace UniCast.Core.Services
                 args.Append($"-s {config.Width}x{config.Height} ");
                 args.Append($"-r {config.Fps} ");
                 args.Append($"-i \"\\\\.\\pipe\\{config.ChatOverlayPipeName}\" ");
-                
+
                 System.Diagnostics.Debug.WriteLine($"[StreamController] Chat overlay pipe: {config.ChatOverlayPipeName}");
             }
 
-            // Video encoding
-            args.Append($"-c:v libx264 -preset {config.Preset} ");
-            args.Append($"-b:v {config.VideoBitrate}k ");
-            args.Append($"-maxrate {config.VideoBitrate}k -bufsize {config.VideoBitrate * 4}k ");
-            args.Append("-tune zerolatency ");
-            args.Append($"-g {config.Fps * 2} ");
+            // Video encoding - NVENC kullan (varsa), yoksa libx264
+            // NVENC çok daha hızlı ve CPU yükü yok
+            bool useNvenc = true; // TODO: HardwareEncoder'dan al
+
+            if (useNvenc)
+            {
+                // NVENC encoder - GPU hızlandırmalı
+                args.Append("-c:v h264_nvenc ");
+                args.Append("-preset p4 ");  // p1=fastest, p7=slowest, p4=balanced
+                args.Append("-tune ll ");    // low latency
+                args.Append("-rc cbr ");     // constant bitrate
+                args.Append($"-b:v {config.VideoBitrate}k ");
+                args.Append($"-maxrate {config.VideoBitrate}k -bufsize {config.VideoBitrate * 2}k ");
+                args.Append($"-g {config.Fps * 2} ");
+                args.Append("-bf 0 ");       // no B-frames for low latency
+            }
+            else
+            {
+                // Software fallback
+                args.Append($"-c:v libx264 -preset {config.Preset} ");
+                args.Append($"-b:v {config.VideoBitrate}k ");
+                args.Append($"-maxrate {config.VideoBitrate}k -bufsize {config.VideoBitrate * 4}k ");
+                args.Append("-tune zerolatency ");
+                args.Append($"-g {config.Fps * 2} ");
+            }
 
             // Video filtreleri - chat overlay varsa filter_complex kullan
             if (hasChatOverlay)
             {
                 // filter_complex ile overlay
                 var filterComplex = new System.Text.StringBuilder();
-                
+
                 // Rotation (pipe kullanılmıyorsa)
                 string rotationFilter = "";
                 if (!config.UsePipeInput)
@@ -541,7 +570,7 @@ namespace UniCast.Core.Services
                         270 or -90 => 270,
                         _ => 0
                     };
-                    
+
                     if (rotation == 90)
                         rotationFilter = "transpose=1,";
                     else if (rotation == 180)
@@ -549,16 +578,16 @@ namespace UniCast.Core.Services
                     else if (rotation == 270)
                         rotationFilter = "transpose=2,";
                 }
-                
+
                 // Video işleme: rotation + scale + pad + format
                 filterComplex.Append($"[0:v]{rotationFilter}fps={config.Fps},");
                 filterComplex.Append($"scale={config.Width}:{config.Height}:force_original_aspect_ratio=decrease,");
                 filterComplex.Append($"pad={config.Width}:{config.Height}:(ow-iw)/2:(oh-ih)/2,");
                 filterComplex.Append("format=yuva420p[v_main];");
-                
+
                 // Chat overlay'i video üzerine yerleştir
                 filterComplex.Append("[v_main][2:v]overlay=0:0:eof_action=pass:format=auto,format=yuv420p[v_out]");
-                
+
                 args.Append($"-filter_complex \"{filterComplex}\" ");
                 args.Append("-map \"[v_out]\" ");
             }
@@ -566,7 +595,7 @@ namespace UniCast.Core.Services
             {
                 // Basit video filtresi (chat overlay yok)
                 var filters = new System.Collections.Generic.List<string>();
-                
+
                 // Rotation filtresi - SADECE pipe kullanılmıyorsa ekle
                 if (!config.UsePipeInput)
                 {
@@ -577,7 +606,7 @@ namespace UniCast.Core.Services
                         270 or -90 => 270,
                         _ => 0
                     };
-                    
+
                     if (rotation == 90)
                         filters.Add("transpose=1");
                     else if (rotation == 180)
@@ -585,12 +614,12 @@ namespace UniCast.Core.Services
                     else if (rotation == 270)
                         filters.Add("transpose=2");
                 }
-                
+
                 filters.Add($"fps={config.Fps}");
                 filters.Add($"scale={config.Width}:{config.Height}:force_original_aspect_ratio=decrease");
                 filters.Add($"pad={config.Width}:{config.Height}:(ow-iw)/2:(oh-ih)/2");
                 filters.Add("format=yuv420p");
-                
+
                 args.Append($"-vf \"{string.Join(",", filters)}\" ");
                 args.Append("-map 0:v:0 ");
             }
@@ -720,7 +749,7 @@ namespace UniCast.Core.Services
         public int CameraRotation { get; set; } = 0;  // Kamera döndürme açısı (0, 90, 180, 270)
         public bool UsePipeInput { get; set; } = false;  // Preview'dan pipe ile video al
         public string? PipeName { get; set; }  // Named pipe adı
-        
+
         // Chat Overlay
         public bool ChatOverlayEnabled { get; set; } = false;
         public string? ChatOverlayPipeName { get; set; }

@@ -338,5 +338,331 @@ namespace UniCast.Encoder
 
         private static bool IsVertical(Platform p) => p == Platform.TikTok || p == Platform.Instagram;
         private static bool IsHorizontal(Platform p) => !IsVertical(p);
+
+        #region FFmpeg-First Pipeline Methods
+
+        /// <summary>
+        /// Sadece preview için FFmpeg argümanları oluşturur.
+        /// Kameradan okur, stdout'a raw BGR24 frame yazar.
+        /// </summary>
+        public static string BuildPreviewOnlyArgs(
+            string cameraName,
+            int outputWidth,
+            int outputHeight,
+            int fps,
+            int cameraRotation = 0)
+        {
+            var sb = new StringBuilder();
+
+            // Kamera her zaman yatay açılır (1920x1080, asla 1080x1920)
+            int cameraWidth = Math.Max(outputWidth, outputHeight);
+            int cameraHeight = Math.Min(outputWidth, outputHeight);
+
+            // Input: DirectShow kamera
+            sb.Append($"-f dshow -rtbufsize 100M ");
+            sb.Append($"-video_size {cameraWidth}x{cameraHeight} -framerate {fps} ");
+            sb.Append($"-i \"video={cameraName}\" ");
+
+            // Filter chain
+            var filters = new List<string>();
+
+            // 1. FPS sabitlə
+            filters.Add($"fps={fps}");
+
+            // 2. Rotation (gerekirse)
+            int rotation = NormalizeRotation(cameraRotation);
+            if (rotation != 0)
+            {
+                string transpose = rotation switch
+                {
+                    90 => "transpose=1",
+                    180 => "transpose=1,transpose=1",
+                    270 => "transpose=2",
+                    _ => ""
+                };
+                if (!string.IsNullOrEmpty(transpose))
+                    filters.Add(transpose);
+            }
+
+            // 3. Scale (çıkış boyutuna)
+            filters.Add($"scale={outputWidth}:{outputHeight}");
+
+            // 4. Format (BGR24 for WPF)
+            filters.Add("format=bgr24");
+
+            sb.Append($"-vf \"{string.Join(",", filters)}\" ");
+
+            // Output: stdout'a raw video
+            sb.Append("-f rawvideo -pix_fmt bgr24 pipe:1");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Preview + tek platform yayın için FFmpeg argümanları.
+        /// Split filter ile hem preview hem RTMP çıkışı.
+        /// </summary>
+        public static string BuildPreviewAndStreamArgs(
+            string cameraName,
+            string? audioDeviceName,
+            int outputWidth,
+            int outputHeight,
+            int fps,
+            int videoBitrateKbps,
+            int audioBitrateKbps,
+            string rtmpUrl,
+            string? encoderName = null,
+            int cameraRotation = 0,
+            string? chatOverlayPipeName = null)
+        {
+            var sb = new StringBuilder();
+
+            int cameraWidth = Math.Max(outputWidth, outputHeight);
+            int cameraHeight = Math.Min(outputWidth, outputHeight);
+            int rotation = NormalizeRotation(cameraRotation);
+
+            // === INPUTS ===
+
+            // Input 0: Video (kamera)
+            sb.Append($"-f dshow -rtbufsize 100M ");
+            sb.Append($"-video_size {cameraWidth}x{cameraHeight} -framerate {fps} ");
+            sb.Append($"-i \"video={cameraName}\" ");
+
+            // Input 1: Audio
+            if (!string.IsNullOrWhiteSpace(audioDeviceName))
+            {
+                sb.Append($"-f dshow -i \"audio={audioDeviceName}\" ");
+            }
+            else
+            {
+                sb.Append("-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 ");
+            }
+
+            // Input 2: Chat overlay (opsiyonel)
+            int chatOverlayIndex = -1;
+            if (!string.IsNullOrEmpty(chatOverlayPipeName))
+            {
+                chatOverlayIndex = 2;
+                sb.Append($"-f rawvideo -pix_fmt bgra -s {outputWidth}x{outputHeight} -r {fps} ");
+                sb.Append($"-i \"\\\\.\\pipe\\{chatOverlayPipeName}\" ");
+                System.Diagnostics.Debug.WriteLine($"[FfmpegArgsBuilder] Chat overlay input eklendi: {chatOverlayPipeName}, {outputWidth}x{outputHeight}");
+            }
+
+            // === FILTER COMPLEX ===
+            sb.Append("-filter_complex \"");
+
+            string vCurrent = "[0:v]";
+
+            // 1. FPS
+            sb.Append($"{vCurrent}fps={fps}[v_fps];");
+            vCurrent = "[v_fps]";
+
+            // 2. Rotation
+            if (rotation != 0)
+            {
+                string transpose = rotation switch
+                {
+                    90 => "transpose=1",
+                    180 => "transpose=1,transpose=1",
+                    270 => "transpose=2",
+                    _ => ""
+                };
+                if (!string.IsNullOrEmpty(transpose))
+                {
+                    sb.Append($"{vCurrent}{transpose}[v_rot];");
+                    vCurrent = "[v_rot]";
+                }
+            }
+
+            // 3. Scale
+            sb.Append($"{vCurrent}scale={outputWidth}:{outputHeight}[v_scaled];");
+            vCurrent = "[v_scaled]";
+
+            // 4. Chat overlay
+            if (chatOverlayIndex != -1)
+            {
+                sb.Append($"{vCurrent}[{chatOverlayIndex}:v]overlay=0:0:eof_action=pass:format=auto[v_chat];");
+                vCurrent = "[v_chat]";
+            }
+
+            // 5. Split: preview + stream
+            sb.Append($"{vCurrent}split=2[preview][stream];");
+
+            // 6. Preview output format (BGR24)
+            sb.Append("[preview]format=bgr24[preview_out];");
+
+            // 7. Stream output format (YUV420P)
+            sb.Append("[stream]format=yuv420p[stream_out]");
+
+            sb.Append("\" ");
+
+            // === OUTPUTS ===
+
+            // Output 1: Preview (stdout)
+            sb.Append("-map \"[preview_out]\" -f rawvideo -pix_fmt bgr24 pipe:1 ");
+
+            // Output 2: RTMP stream
+            sb.Append("-map \"[stream_out]\" -map 1:a ");
+
+            // Encoder
+            string encParams = GetOptimalEncoderParams(encoderName, videoBitrateKbps, fps);
+            sb.Append($"{encParams} ");
+
+            // Video settings
+            int gopSize = fps * 2;
+            sb.Append($"-maxrate {videoBitrateKbps}k -bufsize {videoBitrateKbps * 2}k ");
+            sb.Append($"-g {gopSize} -keyint_min {gopSize} ");
+
+            // Audio settings
+            sb.Append($"-c:a aac -b:a {audioBitrateKbps}k -ar 44100 ");
+
+            // RTMP output
+            sb.Append($"-f flv \"{rtmpUrl}\"");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Preview + çoklu platform yayın için FFmpeg argümanları.
+        /// Tee muxer ile tek encode, çoklu RTMP çıkışı.
+        /// </summary>
+        public static string BuildPreviewAndMultiStreamArgs(
+            string cameraName,
+            string? audioDeviceName,
+            int outputWidth,
+            int outputHeight,
+            int fps,
+            int videoBitrateKbps,
+            int audioBitrateKbps,
+            List<string> rtmpUrls,
+            string? encoderName = null,
+            int cameraRotation = 0,
+            string? chatOverlayPipeName = null)
+        {
+            if (rtmpUrls == null || rtmpUrls.Count == 0)
+                throw new ArgumentException("En az bir RTMP URL gerekli", nameof(rtmpUrls));
+
+            if (rtmpUrls.Count == 1)
+                return BuildPreviewAndStreamArgs(cameraName, audioDeviceName, outputWidth, outputHeight,
+                    fps, videoBitrateKbps, audioBitrateKbps, rtmpUrls[0], encoderName, cameraRotation, chatOverlayPipeName);
+
+            var sb = new StringBuilder();
+
+            int cameraWidth = Math.Max(outputWidth, outputHeight);
+            int cameraHeight = Math.Min(outputWidth, outputHeight);
+            int rotation = NormalizeRotation(cameraRotation);
+
+            // === INPUTS ===
+            sb.Append($"-f dshow -rtbufsize 100M ");
+            sb.Append($"-video_size {cameraWidth}x{cameraHeight} -framerate {fps} ");
+            sb.Append($"-i \"video={cameraName}\" ");
+
+            if (!string.IsNullOrWhiteSpace(audioDeviceName))
+            {
+                sb.Append($"-f dshow -i \"audio={audioDeviceName}\" ");
+            }
+            else
+            {
+                sb.Append("-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 ");
+            }
+
+            int chatOverlayIndex = -1;
+            if (!string.IsNullOrEmpty(chatOverlayPipeName))
+            {
+                chatOverlayIndex = 2;
+                sb.Append($"-f rawvideo -pix_fmt bgra -s {outputWidth}x{outputHeight} -r {fps} ");
+                sb.Append($"-i \"\\\\.\\pipe\\{chatOverlayPipeName}\" ");
+                System.Diagnostics.Debug.WriteLine($"[FfmpegArgsBuilder] Chat overlay input eklendi (multi): {chatOverlayPipeName}, {outputWidth}x{outputHeight}");
+            }
+
+            // === FILTER COMPLEX ===
+            sb.Append("-filter_complex \"");
+
+            string vCurrent = "[0:v]";
+
+            sb.Append($"{vCurrent}fps={fps}[v_fps];");
+            vCurrent = "[v_fps]";
+
+            if (rotation != 0)
+            {
+                string transpose = rotation switch
+                {
+                    90 => "transpose=1",
+                    180 => "transpose=1,transpose=1",
+                    270 => "transpose=2",
+                    _ => ""
+                };
+                if (!string.IsNullOrEmpty(transpose))
+                {
+                    sb.Append($"{vCurrent}{transpose}[v_rot];");
+                    vCurrent = "[v_rot]";
+                }
+            }
+
+            sb.Append($"{vCurrent}scale={outputWidth}:{outputHeight}[v_scaled];");
+            vCurrent = "[v_scaled]";
+
+            if (chatOverlayIndex != -1)
+            {
+                sb.Append($"{vCurrent}[{chatOverlayIndex}:v]overlay=0:0:eof_action=pass:format=auto[v_chat];");
+                vCurrent = "[v_chat]";
+            }
+
+            sb.Append($"{vCurrent}split=2[preview][stream];");
+            sb.Append("[preview]format=bgr24[preview_out];");
+            sb.Append("[stream]format=yuv420p[stream_out]");
+
+            sb.Append("\" ");
+
+            // === OUTPUTS ===
+
+            // Output 1: Preview
+            sb.Append("-map \"[preview_out]\" -f rawvideo -pix_fmt bgr24 pipe:1 ");
+
+            // Output 2: Multi-platform tee muxer
+            sb.Append("-map \"[stream_out]\" -map 1:a ");
+
+            string encParams = GetOptimalEncoderParams(encoderName, videoBitrateKbps, fps);
+            sb.Append($"{encParams} ");
+
+            int gopSize = fps * 2;
+            sb.Append($"-maxrate {videoBitrateKbps}k -bufsize {videoBitrateKbps * 2}k ");
+            sb.Append($"-g {gopSize} -keyint_min {gopSize} ");
+            sb.Append($"-c:a aac -b:a {audioBitrateKbps}k -ar 44100 ");
+
+            // Tee muxer
+            var teeOutputs = rtmpUrls.Select(url => $"[f=flv]{url}");
+            sb.Append($"-f tee \"{string.Join("|", teeOutputs)}\"");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Rotation değerini normalize et (0, 90, 180, 270)
+        /// </summary>
+        private static int NormalizeRotation(int rotation)
+        {
+            return rotation switch
+            {
+                90 or -270 => 90,
+                180 or -180 => 180,
+                270 or -90 => 270,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// Log için stream key'leri maskele
+        /// </summary>
+        public static string MaskStreamKeys(string args)
+        {
+            // rtmp://...../key formatındaki key'leri maskele
+            return System.Text.RegularExpressions.Regex.Replace(
+                args,
+                @"(rtmp[s]?://[^/]+/[^/]+/)([^\s\""]+)",
+                "$1****");
+        }
+
+        #endregion
     }
 }
